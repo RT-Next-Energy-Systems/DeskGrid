@@ -6,6 +6,8 @@
 
 - Settings: **Check for updates when DeskGrid starts** (on by default). Untick it and DeskGrid never contacts GitHub
   on its own; **Check for updates** still works when you press it.
+- Settings: a **Privacy** link next to the GitHub address opens the Privacy section of the README (the Traditional
+  Chinese one on a Chinese Windows).
 - The README (English and Traditional Chinese) has a **Privacy** section, which lists everything DeskGrid sends over
   the network, and a **Code signing policy** section.
 

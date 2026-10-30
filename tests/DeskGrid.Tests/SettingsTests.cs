@@ -1,10 +1,28 @@
+using System.Globalization;
 using System.IO;
 using DeskGrid.Folders;
 using DeskGrid.Resources;
 using DeskGrid.Tray;
+using DeskGrid.Updates;
 using Microsoft.Win32;
 
 namespace DeskGrid.Tests;
+
+public sealed class PrivacyLinkTests
+{
+    // Each language has its own README; a missing translation would fall back to the English address.
+    [Theory]
+    [InlineData("en", "#privacy")]
+    [InlineData("zh-TW", "README.zh-TW.md#")]
+    public void SettingsPrivacyUrl_PointsAtThePrivacySectionOfTheReadme(string culture, string expectedPart)
+    {
+        var url = Strings.ResourceManager.GetString("SettingsPrivacyUrl", new CultureInfo(culture));
+
+        Assert.NotNull(url);
+        Assert.StartsWith(UpdateChecker.RepositoryUrl, url);
+        Assert.Contains(expectedPart, url);
+    }
+}
 
 public sealed class WidgetFolderNameTests : IDisposable
 {

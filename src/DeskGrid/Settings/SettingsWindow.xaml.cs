@@ -78,6 +78,8 @@ internal partial class SettingsWindow : Window
 
     private void OnGitHub(object sender, RoutedEventArgs e) => ShellItem.Open(UpdateChecker.RepositoryUrl);
 
+    private void OnPrivacy(object sender, RoutedEventArgs e) => ShellItem.Open(Strings.SettingsPrivacyUrl);
+
     private void OnChangeLog(object sender, RoutedEventArgs e) => new ChangeLogWindow { Owner = this }.ShowDialog();
 
     private async void OnCheckUpdates(object sender, RoutedEventArgs e)
@@ -122,6 +124,7 @@ internal partial class SettingsWindow : Window
 
         // Without the scheme: shorter, and it is still plainly the web address.
         GitHubLink.Inlines.Add(UpdateChecker.RepositoryUrl["https://".Length..]);
+        PrivacyLink.Inlines.Add(Strings.SettingsPrivacy);
         ChangeLogButton.Content = Strings.SettingsChangeLog;
         ColumnsLabel.Text = Strings.SettingsColumns;
         DropModeLabel.Text = Strings.SettingsDropMode;

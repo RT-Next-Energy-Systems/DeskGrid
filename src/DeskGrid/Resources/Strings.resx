@@ -186,6 +186,12 @@ Using the default root folder instead:
   <data name="SettingsCheckAtStartup" xml:space="preserve">
     <value>Check for updates when DeskGrid starts</value>
   </data>
+  <data name="SettingsPrivacy" xml:space="preserve">
+    <value>Privacy</value>
+  </data>
+  <data name="SettingsPrivacyUrl" xml:space="preserve">
+    <value>https://github.com/Ryan970714/DeskGrid#privacy</value>
+  </data>
   <data name="SettingsChecking" xml:space="preserve">
     <value>Checking…</value>
   </data>

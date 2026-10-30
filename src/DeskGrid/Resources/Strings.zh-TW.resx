@@ -180,6 +180,12 @@
   <data name="SettingsCheckAtStartup" xml:space="preserve">
     <value>DeskGrid 啟動時檢查更新</value>
   </data>
+  <data name="SettingsPrivacy" xml:space="preserve">
+    <value>隱私</value>
+  </data>
+  <data name="SettingsPrivacyUrl" xml:space="preserve">
+    <value>https://github.com/Ryan970714/DeskGrid/blob/main/README.zh-TW.md#%E9%9A%B1%E7%A7%81</value>
+  </data>
   <data name="SettingsChecking" xml:space="preserve">
     <value>檢查中…</value>
   </data>

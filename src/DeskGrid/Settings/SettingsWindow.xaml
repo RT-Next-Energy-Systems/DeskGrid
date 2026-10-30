@@ -113,6 +113,7 @@
             <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,10,0,0" Orientation="Horizontal" VerticalAlignment="Center">
               <TextBlock x:Name="GitHubLabel" FontWeight="SemiBold" />
               <TextBlock Margin="8,0,0,0"><Hyperlink x:Name="GitHubLink" Click="OnGitHub" /></TextBlock>
+              <TextBlock Margin="16,0,0,0"><Hyperlink x:Name="PrivacyLink" Click="OnPrivacy" /></TextBlock>
             </StackPanel>
             <Button Grid.Row="2" Grid.Column="1" Margin="0,10,0,0" MinWidth="84" Padding="12,5" x:Name="ChangeLogButton" Click="OnChangeLog" />
           </Grid>

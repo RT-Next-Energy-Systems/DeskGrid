@@ -124,7 +124,8 @@ Tray menu → **Settings…**:
   (asked again next start).
 - **Check for updates when DeskGrid starts**: on by default; untick it and DeskGrid never contacts GitHub on its own
   (see [Privacy](#privacy)).
-- **GitHub**: the address of the project. **Change log…** lists what changed in each version.
+- **GitHub**: the address of the project. **Privacy** opens the [Privacy](#privacy) section of this README online.
+  **Change log…** lists what changed in each version.
 
 ### Files
 
