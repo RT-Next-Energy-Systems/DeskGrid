@@ -54,6 +54,7 @@ internal partial class PopupPanel : Window
     private readonly int _columns;
     private bool _closing;
     private bool _hiddenForDrag;
+    private PanelSide? _side;
     private List<PanelItem> _items = [];
     private PanelItem? _pressed;
     private Point _pressPoint;
@@ -188,6 +189,11 @@ internal partial class PopupPanel : Window
     /// <summary>Shows <paramref name="folder"/>'s current items.</summary>
     public void ShowFolder(WidgetFolder folder)
     {
+        if (Folder is null || !string.Equals(Folder.Name, folder.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            _side = null; // Something else to show: it may fit better on another side.
+        }
+
         Folder = folder;
         Heading.Text = folder.Name;
         ShowItems(folder.Items.Select(i => new PanelItem(i)), Strings.PanelEmpty);
@@ -198,6 +204,7 @@ internal partial class PopupPanel : Window
     {
         _list = folders;
         Folder = null;
+        _side = null;
         Heading.Text = Strings.AppName;
         ShowItems(folders.Select(f => new PanelItem(f)), Strings.PanelNoFolders);
     }
@@ -656,7 +663,13 @@ internal partial class PopupPanel : Window
         var monitor = MonitorArea.At(new ScreenPoint((_anchor.Left + _anchor.Right) / 2, (_anchor.Top + _anchor.Bottom) / 2));
         var width = monitor.ToPixels(size?.Width ?? Width);
         var height = monitor.ToPixels(size?.Height ?? Height);
-        var position = PanelPlacement.Place(_anchor, width, height, monitor.WorkArea, monitor.ToPixels(AnchorGap));
+        var gap = monitor.ToPixels(AnchorGap);
+
+        // The side is chosen once for what the panel shows. Growing to make room for something dragged in must not
+        // move it to another side: the cursor would be outside it, the room would be taken back, and the panel would
+        // jump back and forth.
+        _side ??= PanelPlacement.Side(_anchor, width, height, monitor.WorkArea, gap);
+        var position = PanelPlacement.Place(_anchor, width, height, monitor.WorkArea, gap, _side.Value);
         var flags = SET_WINDOW_POS_FLAGS.SWP_NOZORDER | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED;
         PInvoke.SetWindowPos(window, HWND.Null, position.X, position.Y, width, height,
             size is null ? flags | SET_WINDOW_POS_FLAGS.SWP_NOSIZE : flags);

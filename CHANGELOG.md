@@ -22,6 +22,10 @@
 - A widget being dragged moves above the other widgets, not under them.
 - Dragging an item out of a folder closes the folder after a moment instead of at once, so crossing from the folder
   to its widget doesn't close it.
+- A folder low on the screen no longer flickers wildly while something is dragged into it: making room for the new
+  item used to move it to another side of its widget and back, many times a second. A folder now stays on the side
+  it opened on.
+- A folder opened by a drag no longer gets taken over by the widget it covers.
 - No more error lines in the log from shell menu handlers declining a menu message.
 
 ### Changed

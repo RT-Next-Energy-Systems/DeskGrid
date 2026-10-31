@@ -35,6 +35,20 @@ public sealed class PanelPlacementTests
         Assert.Equal(new ScreenPoint(108, 100), PanelPlacement.Place(new ScreenRect(0, 300, 100, 400), 300, 500, WorkArea, Gap));
 
     [Fact]
+    public void Place_OnAGivenSide_StaysThere_WhenThePanelGrows()
+    {
+        // Measured on a 2880×1704 work area: the panel of a widget low on the screen opened below it; growing a row
+        // for an item dragged in used to move it to the right, away from the cursor, and back, again and again.
+        var anchor = new ScreenRect(150, 730, 300, 912);
+        var workArea = new ScreenRect(0, 0, 2880, 1704);
+        var side = PanelPlacement.Side(anchor, 504, 682, workArea, 16);
+
+        Assert.Equal(PanelSide.Below, side);
+        Assert.Equal(PanelSide.Right, PanelPlacement.Side(anchor, 504, 874, workArea, 16));
+        Assert.Equal(new ScreenPoint(0, 830), PanelPlacement.Place(anchor, 504, 874, workArea, 16, side));
+    }
+
+    [Fact]
     public void Place_TooBigForAnySide_ClampsIntoTheWorkArea() =>
         Assert.Equal(new ScreenPoint(0, 0), PanelPlacement.Place(new ScreenRect(400, 300, 500, 400), 2000, 2000, WorkArea, Gap));
 }

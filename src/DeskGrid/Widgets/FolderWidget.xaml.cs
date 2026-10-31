@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
@@ -8,6 +9,7 @@ using DeskGrid.Desktop;
 using DeskGrid.Diagnostics;
 using DeskGrid.Resources;
 using Windows.Win32;
+using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace DeskGrid.Widgets;
@@ -82,10 +84,16 @@ internal partial class FolderWidget : UserControl
     public ScreenRect? LabelBounds() => ScreenBounds(Halo);
 
     /// <summary>
-    /// Whether the cursor is on the widget. Drag events also come up from its parts while the cursor moves from one
-    /// to another; only this tells that it has left.
+    /// Whether the cursor is on the widget, and not on a window over it (an open panel covers the widgets below its
+    /// own). Drag events also come up from the widget's parts while the cursor moves from one to another; only this
+    /// tells that it has left.
     /// </summary>
-    public bool IsCursorOver() => ScreenBounds(this) is { } bounds && bounds.Contains(ScreenPoint.AtCursor());
+    public bool IsCursorOver()
+    {
+        var cursor = ScreenPoint.AtCursor();
+        return PresentationSource.FromVisual(this) is HwndSource source
+            && PInvoke.WindowFromPoint(new System.Drawing.Point(cursor.X, cursor.Y)) == new HWND(source.Handle);
+    }
 
     /// <summary>Sets the cell the widget fills (DIP); the content stays centered in it.</summary>
     public void SetCellSize(double width, double height) => (Width, Height) = (width, height);
