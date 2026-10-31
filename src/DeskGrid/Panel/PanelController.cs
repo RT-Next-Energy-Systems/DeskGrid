@@ -21,6 +21,10 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
 
     private PopupPanel? _panel;
 
+    // The panel an item is being dragged out of, while another panel (opened by holding the drag over a widget)
+    // is the one shown.
+    private PopupPanel? _dragSource;
+
     // The panel that a click on the taskbar closed (by taking the activation from it), and when. The request that
     // click sends comes a moment later and must not open the same panel again.
     private (string Key, long Time)? _closedForTaskbar;
@@ -80,6 +84,24 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
     /// </summary>
     public void OpenForDrag(WidgetFolder folder, ScreenRect anchor)
     {
+        if (_panel is { IsDragSource: true } source)
+        {
+            _dragSource = source;
+        }
+
+        // Back over the folder the item came from: its panel shows again, so the item can be put back.
+        if (_dragSource is { IsDragSource: true, Folder: { } home } origin && Same(home, folder))
+        {
+            if (_panel != origin)
+            {
+                _panel?.Dismiss();
+                _panel = origin;
+            }
+
+            origin.ShowAgainForDrag();
+            return;
+        }
+
         if (_panel is { } current)
         {
             if (current.Folder is { } shown && Same(shown, folder))
@@ -148,10 +170,22 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
         panel.DeleteRequested += (_, folder) => DeleteRequested?.Invoke(this, folder);
         panel.DragFinished += (_, _) =>
         {
-            // The panel opened during the drag takes over now.
+            if (_dragSource == panel)
+            {
+                _dragSource = null;
+            }
+
+            // A panel opened during the drag takes over if the item went into it, and is done otherwise.
             if (_panel is { } current && current != panel)
             {
-                current.Activate();
+                if (current.TookDrop)
+                {
+                    current.Activate();
+                }
+                else
+                {
+                    current.Dismiss();
+                }
             }
         };
         panel.Closed += (_, _) =>

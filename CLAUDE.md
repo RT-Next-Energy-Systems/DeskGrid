@@ -112,12 +112,14 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **名稱**：項目名稱用 Shell 顯示名稱（`SIGDN_NORMALDISPLAY`，與檔案總管一致，`.lnk`/`.url` 不顯示副檔名、其他依使用者「隱藏副檔名」設定）。
 - Button 的佈景主題樣式會強制黑字，項目樣式要明確綁回視窗 `Foreground`。
 - **面板內拖曳**：項目拖超過系統拖曳距離即以 OLE `DoDragDrop`（`FileDrop` + 自訂格式 `DeskGrid.PanelItem` / `DeskGrid.PanelFolder`）開始。放回同一個面板 → 重排（`WidgetCatalog.MoveItem` 改 `ItemOrder`）；放到桌面 / 資料夾由對方處理（Explorer 移動檔案）；放到別的 widget → `ItemImporter` 對 root 底下的檔案一律「移動」。拖曳中面板失焦不收合，結束後若已離開才收。
-- **拖出偵測**：游標是否在面板內一律用 `GetWindowRect` 實體像素比（DIP 換算會讓剛離開右 / 下邊的游標被判在內），且每次 `QueryContinueDrag` 都檢查，不只靠 `DragLeave`。拖曳中的重掃（`PopupPanel.Refresh`）延到放開後；影子落地前該項目的格即使被重建也保持隱藏（`_settlingItem`）。
+- **拖出偵測**：游標是否在面板內一律用 `GetWindowRect` 實體像素比（DIP 換算會讓剛離開右 / 下邊的游標被判在內）。`PopupPanel` 的 `_watch`（50 ms DispatcherTimer，`OnWatch`）看游標，不只靠 `DragLeave`：游標離開面板**與其 widget**（`_anchor`）超過 300 ms 才算拖出（`TakeOut`），從面板移到 widget 中間的空隙不會關。拖曳中的重掃（`PopupPanel.Refresh`）延到放開後；影子落地前該項目的格即使被重建也保持隱藏（`_settlingItem`）。
 - **所有資料夾列表**（`ShowList`，工作列 `--all`）：格子是資料夾（底板 + 2×2 預覽，`PanelItem.Folder`）；點一下在同一視窗 `ShowFolder`，標題左側 ← 回列表；列表模式不可拖動、不接受拖放、不可改名。
 - **重新量測**：換內容後量面板大小要先 `UpdateLayout()`（`MeasureContent`）——換 `ItemsSource` 只標記 WrapPanel，直接 `Frame.Measure` 會拿到舊尺寸。
 - **工作列按鈕再按一下 = 收合**：點工作列會先讓面板失焦關閉，之後同一次點擊的請求才從管線到達。關閉時若前景是 `Shell_TrayWnd`，`PanelController` 記下是哪個面板，3 秒內同一面板的工作列請求視為「收合」而不重開。
 - **拖曳動畫**（iOS 式）：`DragGhost` 是不接輸入的置頂分層視窗（純 Win32 視窗 + `UpdateLayeredWindow`，**不可用 `HwndSource`**：WPF 也會畫進去，ULW 失敗 → 黑色方塊），載著圖示跟游標（每次 `QueryContinueDrag` 更新位置、被新開的面板蓋住時重新置頂）；原格留空（容器 `Opacity=0`），其餘項目用 `TranslateTransform` 動畫滑到新格（`PopupPanel.Slide`）。拖離面板時缺口合起來；放下後影子飛到格子，被別處接走則縮小淡出。拖曳事件的 `DragLeave` 會從子元素冒上來，要以游標是否真的離開視窗判斷。
-- **拖到 widget 自動開面板**：`WidgetBoard` 的 widget 上拖曳停 550 ms（且該拖曳可放入）→ `DragHovered` → `PanelController.OpenForDrag`（不啟用）。原面板只 `HideForDrag`（DWM cloak），拖曳結束才關，因為 `DoDragDrop` 在它裡面跑。放進開著的面板：`ItemsDropped` → `ItemImporter.ImportTo` → `WidgetCatalog.PlaceNewItem`（先重掃才能指定位置）；放入前該面板先開缺口。
+- **拖到 widget 自動開面板**：`WidgetBoard` 的 widget 上拖曳停 550 ms（且該拖曳可放入，或是從**該資料夾**面板拖出的項目 `PanelDragData.IsFrom`）→ `DragHovered` → `PanelController.OpenForDrag`（不啟用）。原面板只 `HideForDrag`（DWM cloak），拖曳結束才關，因為 `DoDragDrop` 在它裡面跑（controller 記在 `_dragSource`）。拖回原資料夾的 widget → 原面板 `ShowAgainForDrag`（取消 cloak、原格留空）可放回。放進開著的面板：`ItemsDropped` → `ItemImporter.ImportTo` → `WidgetCatalog.PlaceNewItem`（先重掃才能指定位置）；放入前該面板先開缺口。widget 的 DragLeave 也會從子元素冒上來，用 `FolderWidget.IsCursorOver()`（實體像素）判斷是否真的離開，計時才不會一直重來。
+- **拖曳打開的面板自動收合**（2026-10-31，`OnWatch` 的 `_followsDrag`）：拖曳中游標離開面板與 widget 超過 300 ms → 關；放開滑鼠（左或右鍵）250 ms 後仍沒有東西放進來（`TookDrop`）→ 關；有放進來 → `Activate()`，Windows 不給焦點（來源是別的 App，例如 Explorer）時改等「在面板與 widget 以外按下滑鼠」才關（此時 Esc 無效）。拖曳來源是我們自己的面板時，`DragFinished` 直接決定：有放進來就啟用，否則關閉。
+- **widget 整格可點、可放**：`Highlight` 平時是 alpha=1 的底色（看不見但會被命中），否則格內透明處的放開會落到 Explorer 桌面、被當成「圖示落在 widget 上」再推開。拖曳 widget 時 `DesktopSurface.BringToFront()`，從其他 widget 上方經過。
 - **面板內右鍵**（2026-10-30）：檔案項目 → `ShellContextMenu`（`IShellItem.BindToHandler(BHID_SFUIObject)` 取 `IContextMenu`，`QueryContextMenu` 填原生選單，`TrackPopupMenuEx` 顯示，`InvokeCommand` 帶 `CMINVOKECOMMANDINFOEX` 執行）。是**傳統**選單（Win11「顯示其他選項」那個），沒有 Win11 精簡選單的公開 API。不傳 `CMF_CANRENAME`（重新命名要 Explorer 的 view 才能編輯，這裡沒有），按住 Shift 才傳 `CMF_EXTENDEDVERBS`。「傳送到」「開啟方式」等子選單與自繪項目靠 `IContextMenu2/3` 的 `HandleMenuMsg(2)`，由 `HwndSource.AddHook` 轉送 `WM_INITMENUPOPUP` / `WM_DRAWITEM` / `WM_MEASUREITEM` / `WM_MENUCHAR`。選單與指令執行期間 `_menuOpen` 為 true，`Deactivated` 不收合（刪除確認、內容視窗會搶走啟用，面板要活到指令結束）；結束後若面板已不是前景就收合。`ShellContextMenu` 不 `ReleaseComObject` 選單物件（交給 finalizer），因為「內容」「開啟方式」可能在 `InvokeCommand` 返回後還在別的執行緒用它。資料夾格（所有資料夾列表）與名稱列右鍵 → 自己的 WPF 選單（新增資料夾… / 刪除資料夾…），按下後先收合面板再觸發事件（兩者都會問問題）。
 - **標題改名**：面板標題滑過顯示鉛筆（Segoe MDL2 `E70F`），點擊變輸入框；Enter / 失焦確認、Esc 取消。`App.RenameFolder` 驗證（`WidgetFolderName.Validate`）後 `Directory.Move`；只差大小寫時經暫存名稱（`Directory.Move` 拒絕同名）；成功後面板先把自己的 `Folder` 改成新名，免得緊接的重掃找不到而關閉。
 
@@ -191,7 +193,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 6 | 拖放加入、TrayApp、開機自啟 | ✅ 2026-10-25 使用者驗證通過 |
 | 7 | GitHub Actions CI、self-contained 打包、README（含 SmartScreen 未簽章說明）、LICENSE (MIT) | ✅ 完成 2026-10-25，已推上 GitHub、CI 通過、v0.1.0 已發布，待使用者驗證 |
 | 8 | 刪除資料夾（右鍵 + 設定）、桌面圖示疊圖示建資料夾、修 bug | 完成 2026-10-29（建置 / 146 測試通過）；右鍵刪除與疊圖示拖曳因工具限制未能實機操作，待使用者驗證 |
-| 9 | 面板項目的 Windows 原生右鍵選單、面板 / widget 右鍵「新增 / 刪除資料夾」、開機自啟流程（`--autostart`、等桌面排好、第一次詢問）、README 的應用程式控制封鎖說明、修 bug | 完成 2026-10-30（建置 / 168 測試通過，v0.3.1 已發布；含拖資料夾到資源回收筒刪除，使用者實測成功）；原生選單以真實 `IContextMenu` 做了整合測試（顯示、阻塞、關閉），但沒有實際點選指令（電腦使用權限不含 DeskGrid 視窗），待使用者驗證 |
+| 9 | 面板項目的 Windows 原生右鍵選單、面板 / widget 右鍵「新增 / 刪除資料夾」、開機自啟流程（`--autostart`、等桌面排好、第一次詢問）、README 的應用程式控制封鎖說明、修 bug | 完成 2026-10-30（建置 / 168 測試通過，v0.3.1 已發布；含拖資料夾到資源回收筒刪除，使用者實測成功）；原生選單以真實 `IContextMenu` 做了整合測試（顯示、阻塞、關閉），但沒有實際點選指令（電腦使用權限不含 DeskGrid 視窗），待使用者驗證。2026-10-31 修拖曳與「拖曳時自動開 / 關資料夾」（181 測試），拖曳情境待使用者實測 |
 
 # 工作方式
 

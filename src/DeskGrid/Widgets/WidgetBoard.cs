@@ -7,7 +7,7 @@ using DeskGrid.Desktop;
 using DeskGrid.Diagnostics;
 using DeskGrid.Folders;
 using DeskGrid.Icons;
-using DeskGrid.Resources;
+using DeskGrid.Panel;
 using DeskGrid.Shell;
 
 namespace DeskGrid.Widgets;
@@ -377,6 +377,7 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
             View.DragStarted += (_, _) =>
             {
                 _dragOrigin = Surface.Position;
+                Surface.BringToFront(); // Carried over the other widgets, not under them.
                 board.WidgetDragStarted?.Invoke(board, EventArgs.Empty);
             };
             View.Dragged += (_, offset) => Surface.MoveTo(_dragOrigin.Offset(offset.X, offset.Y));
@@ -408,20 +409,31 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
                 e.Handled = true;
             };
 
-            // Held over a widget for a moment, a drag opens its folder, so the item can be put inside.
+            // Held over a widget for a moment, a drag opens its folder, so the item can be put inside; an item dragged
+            // out of this folder's panel opens it again, so it can be put back.
             _hover.Tick += (_, _) =>
             {
                 _hover.Stop();
-                board.DragHovered?.Invoke(board, new WidgetClickedEventArgs(Folder, board.BoundsOf(Surface)));
+                if (View.IsCursorOver())
+                {
+                    board.DragHovered?.Invoke(board, new WidgetClickedEventArgs(Folder, board.BoundsOf(Surface)));
+                }
             };
             View.DragEnter += (_, e) =>
             {
-                if (board.DropEffect(Folder.FullPath, e) != DragDropEffects.None)
+                if (board.DropEffect(Folder.FullPath, e) != DragDropEffects.None || PanelDragData.IsFrom(e.Data, Folder.Name))
                 {
                     _hover.Start();
                 }
             };
-            View.DragLeave += (_, _) => _hover.Stop();
+            View.DragLeave += (_, _) =>
+            {
+                // Also raised when the cursor only moves from one part of the widget to another.
+                if (!View.IsCursorOver())
+                {
+                    _hover.Stop();
+                }
+            };
         }
 
         public WidgetFolder Folder { get; private set; }

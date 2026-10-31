@@ -189,9 +189,10 @@ internal sealed class ShellContextMenu : IDisposable
                     return (uint)message is PInvoke.WM_DRAWITEM or PInvoke.WM_MEASUREITEM ? 1 : 0;
                 }
             }
-            catch (COMException exception)
+            catch (COMException)
             {
-                Log.Error("A shell context menu handler failed on a menu message", exception);
+                // A handler answers a failure code for a message that isn't for one of its items (several handlers
+                // share the menu): the window's own handling goes on.
             }
 
             return 0;

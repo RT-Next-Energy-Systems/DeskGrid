@@ -26,6 +26,10 @@ internal partial class FolderWidget : UserControl
     private const int MaxLabelLines = 2;
     private static readonly Brush HoverBrush = Frozen(new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF)));
 
+    // Invisible, but it makes the whole cell take clicks and drops: fully transparent pixels of the layered window
+    // let them through to the desktop, which would put a dropped icon on the widget's cell.
+    private static readonly Brush IdleBrush = Frozen(new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)));
+
     private static readonly Effect HaloEffect = Frozen(new DropShadowEffect { ShadowDepth = 0, BlurRadius = 5, Opacity = 1, Color = Colors.Black });
 
     private Task<BitmapSource>? _preview;
@@ -38,6 +42,7 @@ internal partial class FolderWidget : UserControl
         Width = CellWidth;
         Height = CellHeight;
         Label.MaxHeight = Label.FontSize * Label.FontFamily.LineSpacing * MaxLabelLines;
+        Highlight.Background = IdleBrush;
 
         // The owner decides what a drop means; the widget only shows that it is a target.
         AllowDrop = true;
@@ -74,17 +79,13 @@ internal partial class FolderWidget : UserControl
     }
 
     /// <summary>Where the name is on screen (physical pixels), or <see langword="null"/> while the widget isn't shown.</summary>
-    public ScreenRect? LabelBounds()
-    {
-        if (PresentationSource.FromVisual(Halo) is null || Halo.ActualWidth <= 0 || Halo.ActualHeight <= 0)
-        {
-            return null;
-        }
+    public ScreenRect? LabelBounds() => ScreenBounds(Halo);
 
-        var topLeft = Halo.PointToScreen(new Point(0, 0));
-        var bottomRight = Halo.PointToScreen(new Point(Halo.ActualWidth, Halo.ActualHeight));
-        return new ScreenRect((int)topLeft.X, (int)topLeft.Y, (int)bottomRight.X, (int)bottomRight.Y);
-    }
+    /// <summary>
+    /// Whether the cursor is on the widget. Drag events also come up from its parts while the cursor moves from one
+    /// to another; only this tells that it has left.
+    /// </summary>
+    public bool IsCursorOver() => ScreenBounds(this) is { } bounds && bounds.Contains(ScreenPoint.AtCursor());
 
     /// <summary>Sets the cell the widget fills (DIP); the content stays centered in it.</summary>
     public void SetCellSize(double width, double height) => (Width, Height) = (width, height);
@@ -101,7 +102,7 @@ internal partial class FolderWidget : UserControl
 
     protected override void OnMouseEnter(MouseEventArgs e) => Highlight.Background = HoverBrush;
 
-    protected override void OnMouseLeave(MouseEventArgs e) => Highlight.Background = null;
+    protected override void OnMouseLeave(MouseEventArgs e) => Highlight.Background = IdleBrush;
 
     protected override void OnDragEnter(DragEventArgs e)
     {
@@ -115,13 +116,17 @@ internal partial class FolderWidget : UserControl
 
     protected override void OnDragLeave(DragEventArgs e)
     {
-        Highlight.Background = null;
+        if (!IsCursorOver())
+        {
+            Highlight.Background = IdleBrush;
+        }
+
         base.OnDragLeave(e);
     }
 
     protected override void OnDrop(DragEventArgs e)
     {
-        Highlight.Background = null;
+        Highlight.Background = IdleBrush;
         base.OnDrop(e);
     }
 
@@ -180,6 +185,19 @@ internal partial class FolderWidget : UserControl
     private static bool IsBeyondDragThreshold(ScreenPoint offset) =>
         Math.Abs(offset.X) >= PInvoke.GetSystemMetrics(SYSTEM_METRICS_INDEX.SM_CXDRAG)
         || Math.Abs(offset.Y) >= PInvoke.GetSystemMetrics(SYSTEM_METRICS_INDEX.SM_CYDRAG);
+
+    // Where an element is on screen (physical pixels), or null while it isn't shown.
+    private static ScreenRect? ScreenBounds(FrameworkElement element)
+    {
+        if (PresentationSource.FromVisual(element) is null || element.ActualWidth <= 0 || element.ActualHeight <= 0)
+        {
+            return null;
+        }
+
+        var topLeft = element.PointToScreen(new Point(0, 0));
+        var bottomRight = element.PointToScreen(new Point(element.ActualWidth, element.ActualHeight));
+        return new ScreenRect((int)topLeft.X, (int)topLeft.Y, (int)bottomRight.X, (int)bottomRight.Y);
+    }
 
     private static T Frozen<T>(T freezable)
         where T : Freezable

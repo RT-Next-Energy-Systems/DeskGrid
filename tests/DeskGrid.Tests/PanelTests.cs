@@ -95,6 +95,32 @@ public sealed class PanelThemeTests
         new() { Style = PanelBackgroundStyle.Custom, CustomColor = color, CustomOpacity = opacity };
 }
 
+public sealed class PanelDragDataTests
+{
+    [Theory]
+    [InlineData("Games", true)]
+    [InlineData("GAMES", true)]
+    [InlineData("Work", false)]
+    public void IsFrom_TellsWhichPanelAnItemComesFrom(string folder, bool expected)
+    {
+        var data = new System.Windows.DataObject();
+        data.SetData(System.Windows.DataFormats.FileDrop, new[] { @"C:\DeskGrid\Games\Chess.lnk" });
+        data.SetData(PanelDragData.ItemFormat, "Chess.lnk");
+        data.SetData(PanelDragData.FolderFormat, "Games");
+
+        Assert.Equal(expected, PanelDragData.IsFrom(data, folder));
+    }
+
+    [Fact]
+    public void IsFrom_IsFalse_ForFilesFromElsewhere()
+    {
+        var data = new System.Windows.DataObject();
+        data.SetData(System.Windows.DataFormats.FileDrop, new[] { @"C:\DeskGrid\Games\Chess.lnk" });
+
+        Assert.False(PanelDragData.IsFrom(data, "Games"));
+    }
+}
+
 public sealed class PopupPanelTests : IDisposable
 {
     private readonly DispatcherThread _ui = new("Test UI");
@@ -163,6 +189,25 @@ public sealed class PopupPanelTests : IDisposable
         });
 
         Assert.True(shownFor >= TimeSpan.FromMilliseconds(90), $"The menu was up for only {shownFor.TotalMilliseconds} ms.");
+    }
+
+    [Fact]
+    public async Task PanelOpenedByADrag_ClosesItself_WhenTheDragEndsWithoutADrop()
+    {
+        var closed = new TaskCompletionSource();
+        await _ui.InvokeAsync(() =>
+        {
+            using var icons = new IconService();
+            var theme = PanelTheme.Resolve(new PanelBackground { Style = PanelBackgroundStyle.Dark }, false, false);
+
+            // Opened as for a drag held over its widget; no mouse button is down, so that drag is over.
+            var panel = new PopupPanel(new ScreenRect(200, 200, 201, 201), 3, theme, icons) { ActivateWhenShown = false, ShowActivated = false };
+            panel.ShowFolder(Folder("Dragged", 2));
+            panel.Closed += (_, _) => closed.SetResult();
+            panel.Show();
+        });
+
+        await closed.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
     }
 
     [System.Runtime.InteropServices.DllImport("user32.dll")]

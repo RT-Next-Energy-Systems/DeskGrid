@@ -132,6 +132,15 @@ internal sealed class IconMerger : IDisposable
     {
         if (PrimaryButtonDown())
         {
+            if (_releasedAt != 0)
+            {
+                // Pressed again before the last drag's target came down: that drag is over, this may be a new one
+                // (whose press was let pass while this watch was still running).
+                Stop();
+                OnPressed(this, EventArgs.Empty);
+                return;
+            }
+
             if (_grid is not null && IsBeyondDragThreshold(_pressedAt, ScreenPoint.AtCursor()))
             {
                 BeginDrag(_grid, _pressed!);

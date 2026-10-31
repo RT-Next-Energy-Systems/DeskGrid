@@ -11,6 +11,19 @@
 - The README (English and Traditional Chinese) has a **Privacy** section, which lists everything DeskGrid sends over
   the network, and a **Code signing policy** section.
 
+### Fixed
+
+- A folder that opened because something was held over it during a drag now closes again when the drag moves away
+  or ends somewhere else. Before, it stayed open and couldn't be closed by clicking elsewhere.
+- An item dragged out of a folder can be put back: hold it over that folder's widget and the folder opens again.
+- The whole cell of a widget takes drops (and clicks), not just the picture and the name. An icon let go just next
+  to the picture no longer lands on the desktop under the widget.
+- Holding a drag over a widget opens its folder reliably; moving across the widget no longer restarts the wait.
+- A widget being dragged moves above the other widgets, not under them.
+- Dragging an item out of a folder closes the folder after a moment instead of at once, so crossing from the folder
+  to its widget doesn't close it.
+- No more error lines in the log from shell menu handlers declining a menu message.
+
 ### Changed
 
 - The exe's product version is now exactly the release version (`0.3.3`, not `0.3.3+<commit>`), so every build of a

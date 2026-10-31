@@ -49,8 +49,17 @@ internal sealed class DesktopSurface(UIElement content, ScreenPoint position) : 
         _source.AddHook(KeepDesktopInactive);
 
         // Above the icon list view, so clicks land on us rather than on the icons.
-        PInvoke.SetWindowPos(new HWND(_source.Handle), HwndTop, 0, 0, 0, 0,
-            SET_WINDOW_POS_FLAGS.SWP_NOMOVE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
+        BringToFront();
+    }
+
+    /// <summary>Puts the window above its siblings: the icons and the other surfaces.</summary>
+    public void BringToFront()
+    {
+        if (_source is { IsDisposed: false } source)
+        {
+            PInvoke.SetWindowPos(new HWND(source.Handle), HwndTop, 0, 0, 0, 0,
+                SET_WINDOW_POS_FLAGS.SWP_NOMOVE | SET_WINDOW_POS_FLAGS.SWP_NOSIZE | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
+        }
     }
 
     public void MoveTo(ScreenPoint position)

@@ -34,13 +34,19 @@ internal partial class PopupPanel : Window
     private const double IconCenterY = 28; // button padding 4 + half of the 48 DIP icon
     private const double AnchorGap = 8;
 
-    // Marks a drag that started in a panel, so a panel can tell it from files dragged in from elsewhere.
-    private const string ItemFormat = "DeskGrid.PanelItem";
-    private const string FolderFormat = "DeskGrid.PanelFolder";
+    // Virtual-key codes of the mouse buttons (winuser.h); a drag can be made with either.
+    private const int LeftButton = 0x01;
+    private const int RightButton = 0x02;
 
     private static readonly TimeSpan ResizeTime = TimeSpan.FromMilliseconds(180);
     private static readonly Duration SlideDuration = new(TimeSpan.FromMilliseconds(200));
     private static readonly IEasingFunction SlideEasing = new CubicEase { EasingMode = EasingMode.EaseOut };
+
+    // During a drag: how long the cursor may be off the panel and its widget before the folder closes (long enough
+    // to cross from the widget to the panel), and, once the mouse button is up, how long the drop may take to arrive.
+    private static readonly TimeSpan WatchInterval = TimeSpan.FromMilliseconds(50);
+    private static readonly TimeSpan LeaveDelay = TimeSpan.FromMilliseconds(300);
+    private static readonly TimeSpan DropDelay = TimeSpan.FromMilliseconds(250);
 
     private readonly ScreenRect _anchor;
     private readonly PanelTheme _theme;
@@ -57,6 +63,15 @@ internal partial class PopupPanel : Window
     private bool _menuOpen;
     private DispatcherTimer? _resize;
     private ScreenCapture? _capture;
+
+    // Watches the cursor while a drag involves this panel: one of its items being dragged, or (for a panel opened
+    // by a drag held over its widget) the drag that opened it. See OnWatch.
+    private readonly DispatcherTimer _watch = new() { Interval = WatchInterval };
+    private readonly System.Diagnostics.Stopwatch _away = new();
+    private readonly System.Diagnostics.Stopwatch _released = new();
+    private bool _followsDrag;
+    private bool _tookDrop;
+    private bool _awaitsClick;
 
     // All folders, if this panel was opened as their list; null for the panel of a single folder.
     private IReadOnlyList<WidgetFolder>? _list;
@@ -95,7 +110,12 @@ internal partial class PopupPanel : Window
 
         SourceInitialized += OnSourceInitialized;
         Closing += (_, _) => _closing = true;
-        Closed += (_, _) => _capture?.Dispose();
+        Closed += (_, _) =>
+        {
+            _watch.Stop();
+            _capture?.Dispose();
+        };
+        _watch.Tick += OnWatch;
         // While an item is being dragged the drop target (the desktop, another app) takes activation; a command of
         // its context menu (a confirmation, the properties) does too, and the panel must outlive the command.
         Deactivated += (_, _) =>
@@ -161,6 +181,9 @@ internal partial class PopupPanel : Window
 
     /// <summary>Whether one of this panel's items is being dragged.</summary>
     public bool IsDragSource => _dragging;
+
+    /// <summary>Whether something dragged in from another place was dropped here.</summary>
+    public bool TookDrop => _tookDrop;
 
     /// <summary>Shows <paramref name="folder"/>'s current items.</summary>
     public void ShowFolder(WidgetFolder folder)
@@ -236,6 +259,24 @@ internal partial class PopupPanel : Window
         Backdrop.SetCloaked(new HWND(new WindowInteropHelper(this).Handle), true);
     }
 
+    /// <summary>
+    /// The item being dragged out of this panel came back over its widget: the panel shows again, with the item's
+    /// slot open where it was, so the item can be put back.
+    /// </summary>
+    public void ShowAgainForDrag()
+    {
+        if (!_hiddenForDrag || _dragIndex < 0)
+        {
+            return;
+        }
+
+        _hiddenForDrag = false;
+        _away.Reset();
+        _slot = _dragIndex;
+        Slide(landAt: _slot);
+        Backdrop.SetCloaked(new HWND(new WindowInteropHelper(this).Handle), false);
+    }
+
     protected override void OnDragOver(DragEventArgs e)
     {
         if (_hiddenForDrag)
@@ -286,17 +327,14 @@ internal partial class PopupPanel : Window
 
     protected override void OnDragLeave(DragEventArgs e)
     {
-        // DragLeave also arrives from the children while the cursor is still inside the window.
+        // DragLeave also arrives from the children while the cursor is still inside the window. An item of this
+        // panel that leaves is taken out by OnWatch, once it has been away for a moment.
         if (_closing || CursorOverWindow())
         {
             return;
         }
 
-        if (_dragIndex >= 0)
-        {
-            TakeOut();
-        }
-        else if (_gap >= 0)
+        if (_gap >= 0)
         {
             _gap = -1;
             Slide(gapAt: null);
@@ -310,7 +348,7 @@ internal partial class PopupPanel : Window
         {
             e.Effects = DragDropEffects.None;
         }
-        else if (IsOwnItem(e) && e.Data.GetData(ItemFormat) is string name)
+        else if (IsOwnItem(e) && e.Data.GetData(PanelDragData.ItemFormat) is string name)
         {
             _reordered = true;
             if (_slot >= 0)
@@ -333,6 +371,7 @@ internal partial class PopupPanel : Window
             Slide(gapAt: null);
             _resize?.Stop();
             Items.MinHeight = 0; // the refresh that follows sizes the window for the new item
+            _tookDrop = true;
             ItemsDropped?.Invoke(this, new ItemsDroppedEventArgs(folder.Name, paths, index));
             FitToContent();
 
@@ -355,8 +394,81 @@ internal partial class PopupPanel : Window
     }
 
     private bool IsOwnItem(DragEventArgs e) =>
-        _dragIndex >= 0 && e.Data.GetDataPresent(ItemFormat) && e.Data.GetData(FolderFormat) is string folder
-        && string.Equals(folder, Folder?.Name ?? ItemReorderedEventArgs.FolderList, StringComparison.OrdinalIgnoreCase);
+        _dragIndex >= 0 && PanelDragData.IsFrom(e.Data, Folder?.Name ?? ItemReorderedEventArgs.FolderList);
+
+    private static bool MouseButtonDown() =>
+        ((PInvoke.GetAsyncKeyState(LeftButton) | PInvoke.GetAsyncKeyState(RightButton)) & 0x8000) != 0;
+
+    // Whether the cursor has been off this panel and its widget for LeaveDelay.
+    private bool HasLeft()
+    {
+        if (CursorOverWindow() || _anchor.Contains(ScreenPoint.AtCursor()))
+        {
+            _away.Reset();
+            return false;
+        }
+
+        _away.Start();
+        return _away.Elapsed >= LeaveDelay;
+    }
+
+    // An item of this panel being dragged: once it has been away from the panel (and its widget) for a moment, the
+    // folder closes. DragLeave alone can't tell: it arrives only while the window is the drop target.
+    // A panel opened by a drag held over its widget closes when the drag moves away, or ends without a drop here.
+    // After a drop it stays and takes the focus; if Windows won't hand it the focus (the drag came from another
+    // app), a click elsewhere closes it.
+    private void OnWatch(object? sender, EventArgs e)
+    {
+        if (_closing)
+        {
+            _watch.Stop();
+        }
+        else if (_dragging)
+        {
+            if (!_hiddenForDrag && _dragIndex >= 0 && HasLeft())
+            {
+                TakeOut();
+            }
+        }
+        else if (!_followsDrag || IsActive)
+        {
+            _followsDrag = false;
+            _watch.Stop();
+        }
+        else if (_awaitsClick)
+        {
+            // A click on the widget itself closes the panel through the widget.
+            if (MouseButtonDown() && !CursorOverWindow() && !_anchor.Contains(ScreenPoint.AtCursor()))
+            {
+                Dismiss();
+            }
+        }
+        else if (MouseButtonDown())
+        {
+            _released.Reset();
+            if (HasLeft())
+            {
+                Dismiss();
+            }
+        }
+        else
+        {
+            _released.Start();
+            if (_released.Elapsed < DropDelay)
+            {
+                return;
+            }
+
+            if (!_tookDrop)
+            {
+                Dismiss();
+                return;
+            }
+
+            _awaitsClick = true;
+            Activate();
+        }
+    }
 
     // Compared in physical pixels, as the window manager does: in DIPs, a cursor that has just left through the
     // right or bottom edge can round back inside, and the panel would miss that the item was taken out.
@@ -513,6 +625,12 @@ internal partial class PopupPanel : Window
 
         // Before the first show, so the panel never flashes elsewhere.
         Reposition(window);
+
+        if (!ActivateWhenShown)
+        {
+            _followsDrag = true;
+            _watch.Start();
+        }
     }
 
     private void OnFirstFrame(object? sender, EventArgs e)
@@ -791,6 +909,8 @@ internal partial class PopupPanel : Window
         _ghost = new DragGhost(item.Icon, origin, item.IsFolder ? (Brush)Resources["TileBrush"] : null);
         _ghost.Show();
         _ghost.Lift();
+        _away.Reset();
+        _watch.Start();
         if (ContainerAt(index) is { } container)
         {
             container.Opacity = 0;
@@ -803,8 +923,8 @@ internal partial class PopupPanel : Window
             data.SetData(DataFormats.FileDrop, new[] { file.FullPath });
         }
 
-        data.SetData(ItemFormat, name);
-        data.SetData(FolderFormat, owner);
+        data.SetData(PanelDragData.ItemFormat, name);
+        data.SetData(PanelDragData.FolderFormat, owner);
 
         DragDrop.AddQueryContinueDragHandler(source, OnQueryContinueDrag);
         DragDropEffects effect;
@@ -826,13 +946,6 @@ internal partial class PopupPanel : Window
     {
         PInvoke.GetCursorPos(out var cursor);
         _ghost?.Follow(new ScreenPoint((int)Math.Round(cursor.X + _grab.X), (int)Math.Round(cursor.Y + _grab.Y)));
-
-        // DragLeave can be missed (it arrives only if the window is the drop target at that moment), so watch the
-        // cursor too: once it is off the panel, the item has been taken out.
-        if (!_hiddenForDrag && _dragIndex >= 0 && !CursorOverWindow())
-        {
-            TakeOut();
-        }
     }
 
     // The dragged item left the panel: the folder closes. The drag goes on inside this window, so it only disappears.
