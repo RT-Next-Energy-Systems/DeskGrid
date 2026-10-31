@@ -25,9 +25,6 @@ internal sealed class AppConfig
 
     public PanelBackground PanelBackground { get; set; } = new();
 
-    /// <summary>Whether a folder opens by growing out of its widget (and Windows' own animation effects are on).</summary>
-    public bool AnimatePanelOpening { get; set; } = true;
-
     /// <summary>Whether DeskGrid asks GitHub for a newer release a few seconds after it starts. The only network use that isn't the user's own request.</summary>
     public bool CheckForUpdatesAtStartup { get; set; } = true;
 

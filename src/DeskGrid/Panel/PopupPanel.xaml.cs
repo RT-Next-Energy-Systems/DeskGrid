@@ -40,15 +40,7 @@ internal partial class PopupPanel : Window
 
     private static readonly TimeSpan ResizeTime = TimeSpan.FromMilliseconds(180);
     private static readonly Duration SlideDuration = new(TimeSpan.FromMilliseconds(200));
-    // Frozen: shared by every panel, and panels may live on different threads (the tests have several).
-    private static readonly IEasingFunction SlideEasing = (IEasingFunction)new CubicEase { EasingMode = EasingMode.EaseOut }.GetAsFrozen();
-
-    // A widget's tile (FolderWidget): its size, and how far below the top of the cell it sits. The folder grows from it.
-    private const double TileSize = 48;
-    private const double TileInset = 4;
-
-    // DWM's rounded corners of a window (DWMWCP_ROUND).
-    private const double AcrylicCornerRadius = 8;
+    private static readonly IEasingFunction SlideEasing = new CubicEase { EasingMode = EasingMode.EaseOut };
 
     // During a drag: how long the cursor may be off the panel and its widget before the folder closes (long enough
     // to cross from the widget to the panel), and, once the mouse button is up, how long the drop may take to arrive.
@@ -62,8 +54,6 @@ internal partial class PopupPanel : Window
     private readonly int _columns;
     private bool _closing;
     private bool _hiddenForDrag;
-    private bool _cloakedUntilFirstFrame;
-    private PanelOpening? _opening;
     private PanelSide? _side;
     private List<PanelItem> _items = [];
     private PanelItem? _pressed;
@@ -125,7 +115,6 @@ internal partial class PopupPanel : Window
         {
             _watch.Stop();
             _capture?.Dispose();
-            _opening?.Close();
         };
         _watch.Tick += OnWatch;
         // While an item is being dragged the drop target (the desktop, another app) takes activation; a command of
@@ -190,9 +179,6 @@ internal partial class PopupPanel : Window
     /// the drag keeps the focus; <see cref="Window.Activate"/> it once the drag is over.
     /// </summary>
     public bool ActivateWhenShown { get; set; } = true;
-
-    /// <summary>Whether the panel first appears as its folder growing out of the widget (see <see cref="PanelOpening"/>).</summary>
-    public bool AnimateOpening { get; set; }
 
     /// <summary>Whether one of this panel's items is being dragged.</summary>
     public bool IsDragSource => _dragging;
@@ -636,7 +622,7 @@ internal partial class PopupPanel : Window
                 // The backdrop and the first frame of content arrive a moment apart; stay invisible until both
                 // are there, then appear in one piece.
                 Backdrop.SetCloaked(window, true);
-                _cloakedUntilFirstFrame = true;
+                ContentRendered += OnFirstFrame;
             }
             else
             {
@@ -646,18 +632,6 @@ internal partial class PopupPanel : Window
 
         // Before the first show, so the panel never flashes elsewhere.
         Reposition(window);
-
-        // Growing out of the widget, the panel itself shows only once it has grown.
-        if (AnimateOpening && !_cloakedUntilFirstFrame)
-        {
-            Backdrop.SetCloaked(window, true);
-            _cloakedUntilFirstFrame = true;
-        }
-
-        if (_cloakedUntilFirstFrame)
-        {
-            ContentRendered += OnFirstFrame;
-        }
 
         if (!ActivateWhenShown)
         {
@@ -672,77 +646,15 @@ internal partial class PopupPanel : Window
         // Let DWM compose that frame with the backdrop before the window is revealed.
         Dispatcher.BeginInvoke(() =>
         {
-            if (_closing || _hiddenForDrag)
+            if (!_closing && !_hiddenForDrag)
             {
-                return;
-            }
-
-            if (AnimateOpening)
-            {
-                GrowFromWidget();
-            }
-            else
-            {
-                Reveal();
+                Backdrop.SetCloaked(new HWND(new WindowInteropHelper(this).Handle), false);
+                if (ActivateWhenShown)
+                {
+                    Activate();
+                }
             }
         }, DispatcherPriority.ApplicationIdle);
-    }
-
-    private void Reveal()
-    {
-        if (_closing || _hiddenForDrag)
-        {
-            return;
-        }
-
-        Backdrop.SetCloaked(new HWND(new WindowInteropHelper(this).Handle), false);
-        if (ActivateWhenShown)
-        {
-            Activate();
-        }
-    }
-
-    // Plays the folder growing from the widget's tile to this panel, then shows the panel in its place.
-    private void GrowFromWidget()
-    {
-        PInvoke.GetWindowRect(new HWND(new WindowInteropHelper(this).Handle), out var bounds);
-        var monitor = MonitorArea.At(new ScreenPoint((_anchor.Left + _anchor.Right) / 2, (_anchor.Top + _anchor.Bottom) / 2));
-        var opening = _opening = new PanelOpening(
-            TileOf(_anchor, monitor),
-            new ScreenRect(bounds.left, bounds.top, bounds.right, bounds.bottom),
-            monitor.Dpi,
-            Frame,
-            // Acrylic is drawn by DWM for the panel's own window only; its plain color stands in.
-            Frame.Background ?? new SolidColorBrush(_theme.Background),
-            new SolidColorBrush(_theme.Outline),
-            _theme.UseAcrylic ? new CornerRadius(AcrylicCornerRadius) : Frame.CornerRadius);
-        opening.Grown += (_, _) =>
-        {
-            if (_opening == opening)
-            {
-                Reveal();
-                opening.FadeOut();
-            }
-        };
-        opening.Closed += (_, _) =>
-        {
-            if (_opening == opening)
-            {
-                _opening = null;
-            }
-        };
-        opening.Show();
-    }
-
-    // The widget's tile: centered at the top of its cell, as FolderWidget lays it out; or, for a panel asked for from
-    // the taskbar (whose anchor is the cursor), centered on the anchor.
-    private static ScreenRect TileOf(ScreenRect anchor, MonitorArea monitor)
-    {
-        var size = monitor.ToPixels(TileSize);
-        var inset = monitor.ToPixels(TileInset);
-        var left = (anchor.Left + anchor.Right - size) / 2;
-        var top = anchor.Bottom - anchor.Top >= size + inset ? anchor.Top + inset : (anchor.Top + anchor.Bottom - size) / 2;
-        return new ScreenRect(left, top, left + size, top + size);
     }
 
     // Moves the window to where it goes for its current size, or for (and to) a new size in DIPs.

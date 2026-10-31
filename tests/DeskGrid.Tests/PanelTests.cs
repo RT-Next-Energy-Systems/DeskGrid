@@ -227,57 +227,9 @@ public sealed class PopupPanelTests : IDisposable
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool EndMenu();
 
-    internal static WidgetFolder Folder(string name, int itemCount) =>
+    private static WidgetFolder Folder(string name, int itemCount) =>
         new(name, @"C:\DeskGrid.Tests\" + name,
             [.. Enumerable.Range(1, itemCount).Select(i => new FolderItem($"Item {i}.txt", $@"C:\DeskGrid.Tests\{name}\Item {i}.txt", DateTime.UnixEpoch))]);
-}
-
-// The panel closes when it loses activation, which a window of a test running alongside would take.
-[CollectionDefinition(nameof(PanelOpeningTests), DisableParallelization = true)]
-public sealed class PanelOpeningCollection;
-
-[Collection(nameof(PanelOpeningTests))]
-public sealed class PanelOpeningTests : IDisposable
-{
-    private readonly DispatcherThread _ui = new("Test UI");
-
-    public void Dispose() => _ui.Dispose();
-
-    [Fact]
-    public async Task AnimatedOpening_GrowsTheFolder_ThenLeavesThePanelOpen()
-    {
-        var done = new TaskCompletionSource<bool>();
-        await _ui.InvokeAsync(() =>
-        {
-            var icons = new IconService();
-            var theme = PanelTheme.Resolve(new PanelBackground { Style = PanelBackgroundStyle.Dark }, false, false);
-            var panel = new PopupPanel(new ScreenRect(200, 200, 276, 296), 3, theme, icons) { AnimateOpening = true, ShowActivated = false };
-            panel.ShowFolder(PopupPanelTests.Folder("Grows", 5));
-            var closed = false;
-            panel.Closed += (_, _) => closed = true;
-            panel.Show();
-
-            // The folder grows in a window of its own, which goes away once the panel is shown in its place.
-            var sawOpening = false;
-            var poll = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(20) };
-            poll.Tick += (_, _) =>
-            {
-                var opening = System.Windows.PresentationSource.CurrentSources.OfType<System.Windows.Interop.HwndSource>()
-                    .Any(s => s.RootVisual is PanelOpening);
-                sawOpening |= opening;
-                if (sawOpening && !opening)
-                {
-                    poll.Stop();
-                    done.SetResult(!closed && panel.IsVisible);
-                    panel.Close();
-                    icons.Dispose();
-                }
-            };
-            poll.Start();
-        });
-
-        Assert.True(await done.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
-    }
 }
 
 public sealed class DragGhostTests : IDisposable

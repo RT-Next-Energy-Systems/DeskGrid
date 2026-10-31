@@ -8,8 +8,6 @@
   on its own; **Check for updates** still works when you press it.
 - Settings: a **Privacy** link next to the GitHub address opens the Privacy section of the README (the Traditional
   Chinese one on a Chinese Windows).
-- A folder opens with an animation: it grows out of its widget into the full panel. Turn it off in Settings
-  (**Animate folders opening**); it is also off when Windows' own **Animation effects** are.
 - The README (English and Traditional Chinese) has a **Privacy** section, which lists everything DeskGrid sends over
   the network, and a **Code signing policy** section.
 

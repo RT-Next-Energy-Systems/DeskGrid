@@ -156,7 +156,6 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
         {
             ActivateWhenShown = activate,
             ShowActivated = activate,
-            AnimateOpening = config.AnimatePanelOpening && System.Windows.SystemParameters.ClientAreaAnimation,
             Renamer = (oldName, newName) => FolderRenamer?.Invoke(oldName, newName),
         };
         fill(panel);

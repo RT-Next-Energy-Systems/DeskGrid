@@ -78,7 +78,6 @@
               <TextBlock Width="40" Margin="8,0,0,0" VerticalAlignment="Center"
                          Text="{Binding Value, ElementName=OpacitySlider, StringFormat={}{0:P0}}" />
             </StackPanel>
-            <CheckBox Margin="0,12,0,0" MinWidth="0" x:Name="AnimateOpeningBox" />
           </StackPanel>
         </Border>
 

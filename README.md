@@ -117,8 +117,6 @@ Tray menu → **Settings…**:
 - **When a folder is deleted, the items inside it**: moved to the desktop (the default), or deleted along with it.
   If an item can't be moved, the folder is kept.
 - **Panel background**.
-- **Animate folders opening**: on by default; a folder grows out of its widget into its panel. Also off when Windows'
-  **Animation effects** are off.
 - **Taskbar**: **Pin all folders to taskbar…** makes the shortcut for one taskbar button that lists every folder; drag it
   onto the taskbar yourself (Windows only lets you do the pinning).
 - **Check for updates**: looks for a newer release. If there is one you can update (downloads it, checks its SHA-256,
