@@ -110,6 +110,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **定位**：在 `SourceInitialized`（第一次顯示前）用實體像素 `SetWindowPos`，不會閃到別處；內容變動（即時刷新）後重新定位。改大小一律先 `SetWindowPos` 新位置 + 新大小、再設 WPF 尺寸（`Resize`）：先長再移的話，貼螢幕底部時超出螢幕那段不會重畫，最後一列名稱被切掉。
 - **收合**：Esc、失去啟用（點外部）、點項目啟動後、再點同一個 widget；點另一個 widget 直接切換。**截圖例外**（`ScreenCapture`）：失焦時前景若是 Windows 截圖工具（`SnippingTool`、Win10 `ScreenClippingHost`）不收合，掛 `EVENT_SYSTEM_FOREGROUND` 等前景離開截圖工具，回到面板照常、到別處才收合。同時只有一個面板。資料夾內容變動時面板即時更新，資料夾消失則關閉。
 - **啟動**：`Process.Start(UseShellExecute=true)`（即 ShellExecuteEx），工作目錄 = 項目所在資料夾（捷徑自己的工作目錄優先），`ErrorDialog=true` 讓 Windows 顯示自己的錯誤（例如捷徑目標不存在）；UAC 取消等例外只記 log。
+- **開啟動畫**（2026-10-31）：面板第一次出現時內容從 widget 中心放大（0.85 → 1）並淡入，200 ms ease-out（`PrepareOpening` / `PlayOpening`，動 `Frame` 的 `RenderTransform` 與 `Opacity`，由 WPF 合成處理，成本可忽略）。Acrylic 背景是 DWM 畫的、不會跟著縮放 → 背景先出現、內容長出來；非 Acrylic 樣式整個面板一起動。Windows「動畫效果」關閉（`SystemParameters.ClientAreaAnimation`）時不播；沒有另外的設定開關。共用的 `SlideEasing` 必須 frozen（面板可能在不同執行緒，測試就有多個，未凍結會跨執行緒例外）。
 - **名稱**：項目名稱用 Shell 顯示名稱（`SIGDN_NORMALDISPLAY`，與檔案總管一致，`.lnk`/`.url` 不顯示副檔名、其他依使用者「隱藏副檔名」設定）。
 - Button 的佈景主題樣式會強制黑字，項目樣式要明確綁回視窗 `Foreground`。
 - **面板內拖曳**：項目拖超過系統拖曳距離即以 OLE `DoDragDrop`（`FileDrop` + 自訂格式 `DeskGrid.PanelItem` / `DeskGrid.PanelFolder`）開始。放回同一個面板 → 重排（`WidgetCatalog.MoveItem` 改 `ItemOrder`）；放到桌面 / 資料夾由對方處理（Explorer 移動檔案）；放到別的 widget → `ItemImporter` 對 root 底下的檔案一律「移動」。拖曳中面板失焦不收合，結束後若已離開才收。

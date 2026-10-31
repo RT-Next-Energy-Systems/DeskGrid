@@ -40,7 +40,11 @@ internal partial class PopupPanel : Window
 
     private static readonly TimeSpan ResizeTime = TimeSpan.FromMilliseconds(180);
     private static readonly Duration SlideDuration = new(TimeSpan.FromMilliseconds(200));
-    private static readonly IEasingFunction SlideEasing = new CubicEase { EasingMode = EasingMode.EaseOut };
+    // Frozen: shared by every panel, and panels may live on different threads (the tests have several).
+    private static readonly IEasingFunction SlideEasing = (IEasingFunction)new CubicEase { EasingMode = EasingMode.EaseOut }.GetAsFrozen();
+
+    // Opening, the content grows out of its widget from this size while it fades in.
+    private const double OpeningScale = 0.85;
 
     // During a drag: how long the cursor may be off the panel and its widget before the folder closes (long enough
     // to cross from the widget to the panel), and, once the mouse button is up, how long the drop may take to arrive.
@@ -54,6 +58,7 @@ internal partial class PopupPanel : Window
     private readonly int _columns;
     private bool _closing;
     private bool _hiddenForDrag;
+    private bool _cloakedUntilFirstFrame;
     private PanelSide? _side;
     private List<PanelItem> _items = [];
     private PanelItem? _pressed;
@@ -622,7 +627,7 @@ internal partial class PopupPanel : Window
                 // The backdrop and the first frame of content arrive a moment apart; stay invisible until both
                 // are there, then appear in one piece.
                 Backdrop.SetCloaked(window, true);
-                ContentRendered += OnFirstFrame;
+                _cloakedUntilFirstFrame = true;
             }
             else
             {
@@ -632,6 +637,8 @@ internal partial class PopupPanel : Window
 
         // Before the first show, so the panel never flashes elsewhere.
         Reposition(window);
+        PrepareOpening(window);
+        ContentRendered += OnFirstFrame;
 
         if (!ActivateWhenShown)
         {
@@ -643,18 +650,58 @@ internal partial class PopupPanel : Window
     private void OnFirstFrame(object? sender, EventArgs e)
     {
         ContentRendered -= OnFirstFrame;
+        if (!_cloakedUntilFirstFrame)
+        {
+            PlayOpening();
+            return;
+        }
+
         // Let DWM compose that frame with the backdrop before the window is revealed.
         Dispatcher.BeginInvoke(() =>
         {
             if (!_closing && !_hiddenForDrag)
             {
                 Backdrop.SetCloaked(new HWND(new WindowInteropHelper(this).Handle), false);
+                PlayOpening();
                 if (ActivateWhenShown)
                 {
                     Activate();
                 }
             }
         }, DispatcherPriority.ApplicationIdle);
+    }
+
+    // Holds the content small and transparent until the window is on screen, scaled toward the widget's center so
+    // the folder seems to grow out of it. Skipped when Windows' animation effects are turned off.
+    private void PrepareOpening(HWND window)
+    {
+        if (!SystemParameters.ClientAreaAnimation)
+        {
+            return;
+        }
+
+        PInvoke.GetWindowRect(window, out var bounds);
+        var width = Math.Max(1, bounds.right - bounds.left);
+        var height = Math.Max(1, bounds.bottom - bounds.top);
+        Frame.RenderTransformOrigin = new Point(
+            Math.Clamp(((_anchor.Left + _anchor.Right) / 2.0 - bounds.left) / width, 0, 1),
+            Math.Clamp(((_anchor.Top + _anchor.Bottom) / 2.0 - bounds.top) / height, 0, 1));
+        Frame.RenderTransform = new ScaleTransform(OpeningScale, OpeningScale);
+        Frame.Opacity = 0;
+    }
+
+    // Grows and fades the content in; a backdrop (acrylic) is already there at full size.
+    private void PlayOpening()
+    {
+        if (Frame.RenderTransform is not ScaleTransform scale)
+        {
+            return;
+        }
+
+        var grow = new DoubleAnimation(1, SlideDuration) { EasingFunction = SlideEasing };
+        scale.BeginAnimation(ScaleTransform.ScaleXProperty, grow);
+        scale.BeginAnimation(ScaleTransform.ScaleYProperty, grow);
+        Frame.BeginAnimation(OpacityProperty, new DoubleAnimation(1, SlideDuration) { EasingFunction = SlideEasing });
     }
 
     // Moves the window to where it goes for its current size, or for (and to) a new size in DIPs.

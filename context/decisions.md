@@ -462,3 +462,12 @@
 **Alternatives**: 拖入時不長高（空位要捲動才看得到）；跳邊後不因 DragLeave 收回（面板會離開游標，放不進去）。
 **Consequences**: 螢幕下方的 widget 開的面板長高時會往上移、蓋住 widget 下半部，不再跳到另一側。
 **Author**: Claude（依使用者回報）
+
+---
+
+### 2026-10-31 — 開啟面板的過場動畫，不加設定開關
+**Decision**: 面板出現時內容從 widget 中心放大（0.85 → 1）並淡入，200 ms ease-out；跟隨 Windows「動畫效果」設定，關閉時不播。DeskGrid 設定裡不另加開關。
+**Reason**: 使用者要求加動畫，並說「如果會佔用太多效能才在設定加開關（預設開）」。動畫只改一個元素的 RenderTransform / Opacity，由 WPF 合成處理，200 ms 內成本可忽略，不符合加開關的條件；跟隨系統設定，不想要動畫的人仍可關掉。
+**Alternatives**: 整個視窗（含 Acrylic 背景）從小放大（每幀 SetWindowPos + DWM 重畫背景，較耗資源；DWM 自己的轉場在 Acrylic 上看起來會頓，早已關閉）；加設定開關（YAGNI，使用者要求時再加）。
+**Consequences**: Acrylic 樣式是背景先出現、內容再長出來；收合沒有動畫。
+**Author**: 使用者要求，Claude 決定細節
