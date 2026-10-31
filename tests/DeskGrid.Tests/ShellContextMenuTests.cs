@@ -8,6 +8,7 @@ using DeskGrid.Threading;
 
 namespace DeskGrid.Tests;
 
+[Collection(nameof(ShellCollection))]
 public sealed class ShellContextMenuTests : IDisposable
 {
     private readonly DispatcherThread _sta = new("Test STA");

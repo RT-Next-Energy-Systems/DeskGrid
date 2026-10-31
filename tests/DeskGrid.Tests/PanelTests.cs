@@ -135,6 +135,7 @@ public sealed class PanelDragDataTests
     }
 }
 
+[Collection(nameof(ShellCollection))]
 public sealed class PopupPanelTests : IDisposable
 {
     private readonly DispatcherThread _ui = new("Test UI");

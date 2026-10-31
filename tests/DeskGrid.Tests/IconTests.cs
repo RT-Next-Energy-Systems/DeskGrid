@@ -98,6 +98,7 @@ public sealed class ShellImageTests : IDisposable
         Assert.Null(await _sta.InvokeAsync(() => ShellImage.GetIcon(_temp.Combine("missing.txt"), IconService.IconSize)));
 }
 
+[Collection(nameof(ShellCollection))]
 public sealed class IconServiceTests : IDisposable
 {
     private readonly TempDirectory _temp = new();

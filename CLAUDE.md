@@ -159,6 +159,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **桌面上不再有「新增資料夾」磚**（2026-10-29 使用者要求移除）：新增資料夾走系統匣「新增資料夾…」或疊圖示；原本「把檔案拖到磚上建資料夾」由疊圖示取代，config 的 `addTilePosition` 已移除（舊 config 裡的值載入時被忽略）。
 - **拖 widget 到資源回收筒**（2026-10-30）：`WidgetBoard.Entry` 的 `DragCompleted` 先問 `IsOverRecycleBin`（游標所在的桌面圖示格 `DesktopIconGrid.IconAt`，且圖示下的名稱 = `RecycleBin.DisplayName`，即 `::{645FF040-…}` 的 Shell 顯示名稱，跟顯示語言與改名走）。是 → widget 回到拖曳前的格子，再 `Dispatcher.BeginInvoke` 觸發 `DeleteRequested`（走原本「刪除資料夾…」確認，離開滑鼠事件處理再問）。實機（explorer 啟動的行程）驗證：名稱 `資源回收筒` 與桌面圖示一致、游標在圖示上才命中；沒有實際拖放（電腦使用權限不能拖）。**注意**：從 Claude 桌面 App 的 PowerShell 讀 Shell 名稱會是英文（行程 UI 語言不同），不能拿來比對。
 - **面板開著時拖 widget**：`WidgetBoard.WidgetDragStarted` → `PanelController.Close()`（原本面板留在 widget 的舊位置）。
+- **測試平行**：顯示視窗 / 選單 / 取 Shell 圖示的測試類別放在 `ShellCollection`（不平行）：同時只能有一個選單（第二個會關掉第一個）、別的測試視窗會搶走啟用讓面板收合。
 - **測試注意**：從 Claude 桌面 App（MSIX）啟動的行程（含 `dotnet test`）**不能把視窗掛到 Explorer 的桌面底下**（`HwndWrapper` 建立失敗，錯誤碼 0），所以 `DesktopSurface` / `IconMerger` 無法寫成單元測試；要驗證桌面行為，只能在真正的 DeskGrid 行程（用 `explorer.exe <exe>` 啟動）裡加暫時的探測碼並讀 log。
 
 ## 發布與 CI（階段 7）
@@ -194,7 +195,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 6 | 拖放加入、TrayApp、開機自啟 | ✅ 2026-10-25 使用者驗證通過 |
 | 7 | GitHub Actions CI、self-contained 打包、README（含 SmartScreen 未簽章說明）、LICENSE (MIT) | ✅ 完成 2026-10-25，已推上 GitHub、CI 通過、v0.1.0 已發布，待使用者驗證 |
 | 8 | 刪除資料夾（右鍵 + 設定）、桌面圖示疊圖示建資料夾、修 bug | 完成 2026-10-29（建置 / 146 測試通過）；右鍵刪除與疊圖示拖曳因工具限制未能實機操作，待使用者驗證 |
-| 9 | 面板項目的 Windows 原生右鍵選單、面板 / widget 右鍵「新增 / 刪除資料夾」、開機自啟流程（`--autostart`、等桌面排好、第一次詢問）、README 的應用程式控制封鎖說明、修 bug | 完成 2026-10-30（建置 / 168 測試通過，v0.3.1 已發布；含拖資料夾到資源回收筒刪除，使用者實測成功）；原生選單以真實 `IContextMenu` 做了整合測試（顯示、阻塞、關閉），但沒有實際點選指令（電腦使用權限不含 DeskGrid 視窗），待使用者驗證。2026-10-31 修拖曳與「拖曳時自動開 / 關資料夾」（181 測試），拖曳情境待使用者實測 |
+| 9 | 面板項目的 Windows 原生右鍵選單、面板 / widget 右鍵「新增 / 刪除資料夾」、開機自啟流程（`--autostart`、等桌面排好、第一次詢問）、README 的應用程式控制封鎖說明、修 bug | 完成 2026-10-30（建置 / 168 測試通過，v0.3.1 已發布；含拖資料夾到資源回收筒刪除，使用者實測成功）；原生選單以真實 `IContextMenu` 做了整合測試（顯示、阻塞、關閉），但沒有實際點選指令（電腦使用權限不含 DeskGrid 視窗），待使用者驗證。2026-10-31 修拖曳與「拖曳時自動開 / 關資料夾」（181 測試），拖曳情境待使用者實測；v0.3.3 發布（2026-10-31，含拖曳修正、啟動檢查更新開關、隱私連結） |
 
 # 工作方式
 
