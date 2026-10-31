@@ -183,6 +183,9 @@ Using the default root folder instead:
   <data name="SettingsCheckUpdates" xml:space="preserve">
     <value>Check for updates</value>
   </data>
+  <data name="SettingsAnimateOpening" xml:space="preserve">
+    <value>Animate folders opening</value>
+  </data>
   <data name="SettingsCheckAtStartup" xml:space="preserve">
     <value>Check for updates when DeskGrid starts</value>
   </data>

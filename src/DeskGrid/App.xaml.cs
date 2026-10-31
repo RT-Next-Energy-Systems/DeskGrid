@@ -510,6 +510,7 @@ public partial class App : Application
         config.DropMode = choice.DropMode;
         config.DeleteMode = choice.DeleteMode;
         config.PanelBackground = choice.PanelBackground;
+        config.AnimatePanelOpening = choice.AnimatePanelOpening;
         config.CheckForUpdatesAtStartup = choice.CheckForUpdatesAtStartup;
         _configStore.Save();
 

@@ -18,6 +18,7 @@ internal sealed record SettingsChoice(
     DropMode DropMode,
     DeleteMode DeleteMode,
     PanelBackground PanelBackground,
+    bool AnimatePanelOpening,
     bool CheckForUpdatesAtStartup);
 
 /// <summary>Edits a copy of the settings; <see cref="Applied"/> fires on OK with a validated choice.</summary>
@@ -47,6 +48,7 @@ internal partial class SettingsWindow : Window
         _customColor = PanelTheme.ParseColor(background.CustomColor) ?? PanelTheme.ParseColor(new PanelBackground().CustomColor)!.Value;
         ColorSwatch.Background = new SolidColorBrush(_customColor);
         OpacitySlider.Value = Math.Clamp(background.CustomOpacity, OpacitySlider.Minimum, OpacitySlider.Maximum);
+        AnimateOpeningBox.IsChecked = config.AnimatePanelOpening;
         CheckAtStartupBox.IsChecked = config.CheckForUpdatesAtStartup;
     }
 
@@ -140,6 +142,7 @@ internal partial class SettingsWindow : Window
         BackgroundCustom.Content = Strings.SettingsBackgroundCustom;
         ColorButton.Content = Strings.SettingsColor;
         OpacityLabel.Text = Strings.SettingsOpacity;
+        AnimateOpeningBox.Content = Strings.SettingsAnimateOpening;
         VersionLabel.Text = Strings.SettingsVersion;
         VersionText.Text = UpdateChecker.CurrentVersion.ToString(3);
         CheckUpdatesButton.Content = Strings.SettingsCheckUpdates;
@@ -190,6 +193,7 @@ internal partial class SettingsWindow : Window
             DropCopy.IsChecked == true ? DropMode.Copy : DropMode.Move,
             DeleteItems.IsChecked == true ? DeleteMode.DeleteItems : DeleteMode.MoveToDesktop,
             background,
+            AnimateOpeningBox.IsChecked == true,
             CheckAtStartupBox.IsChecked == true));
         Close();
     }

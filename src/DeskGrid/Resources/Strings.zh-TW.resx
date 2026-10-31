@@ -177,6 +177,9 @@
   <data name="SettingsCheckUpdates" xml:space="preserve">
     <value>檢查更新</value>
   </data>
+  <data name="SettingsAnimateOpening" xml:space="preserve">
+    <value>開啟資料夾時播放動畫</value>
+  </data>
   <data name="SettingsCheckAtStartup" xml:space="preserve">
     <value>DeskGrid 啟動時檢查更新</value>
   </data>
