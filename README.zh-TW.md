@@ -57,7 +57,7 @@ SmartScreen 會跳出警告。要繼續執行，請按 **其他資訊** → **�
 GitHub 的 Release 頁面會在檔案旁顯示 exe 的 SHA-256。檢查下載的檔案是否一致：
 
 ```powershell
-Get-FileHash .\DeskGrid-0.3.3-win-x64.exe -Algorithm SHA256
+Get-FileHash .\DeskGrid-0.3.4-win-x64.exe -Algorithm SHA256
 ```
 
 如果不想信任現成的執行檔，也可以[自己從原始碼建置](#從原始碼建置)。
