@@ -489,3 +489,14 @@
 **Alternatives**: 調整速度 / 曲線再試（使用者明確要取消）。
 **Consequences**: 舊 config 若有 `animatePanelOpening` 會被忽略。之後若要再做開啟動畫，要先跟使用者確認想要的效果，並注意：Acrylic 背景無法跟著縮放、面板視窗畫不到 widget 的位置。
 **Author**: 使用者要求
+
+
+---
+
+### 2026-11-01 — 多螢幕：widget 位置以設定檔為準，surface 漂移時搬回去
+**Decision**: (1) `DesktopSurface.Resync()` 比對視窗實際螢幕位置與 `Position`，不同就搬回；`DesktopHost` 每秒檢查並在 `WM_DISPLAYCHANGE` 立即執行，1.5 秒後發 `DisplayChanged`，`WidgetBoard.OnDisplayChanged` 依設定檔存的位置重擺。(2) 存檔位置不在任何螢幕上（螢幕被拔）→ 暫放最近螢幕、不覆蓋存檔，螢幕回來自動回去。(3) 面板 `Reposition` 一律帶 DIP 大小並處理 `WM_DPICHANGED`，混合 DPI 時也貼在 widget 旁。
+**Reason**: 使用者回報接外接螢幕並放在主螢幕左邊後，所有 widget 跑到左邊、在左邊開面板卻出現在主螢幕。原因：surface 是涵蓋所有螢幕的 Progman / DefView 的子視窗，在主螢幕左 / 上加螢幕時父視窗原點變負，子視窗 client 座標不變 → 螢幕上整批漂移；`Position` 與設定檔沒變，面板以 `Position` 定位所以開在主螢幕。實機用 `ChangeDisplaySettingsEx` 切換第二螢幕左右重現並驗證。
+**Alternatives**: 設定檔改存「螢幕 + 相對位移」（螢幕識別碼不穩：`\\.\DISPLAYn` 會重編、EDID id 同型號會撞，且主螢幕不變時螢幕座標本身穩定，未採用）；只在 `WM_DISPLAYCHANGE` 時搬（Explorer 調整父視窗的時機不固定，且漏訊息就永遠偏移，所以再加每秒檢查，成本是每秒對每個 widget 一次 `GetWindowRect`）。
+**Consequences**: 主螢幕被換成別台時（座標原點變了），存檔座標會對到不同的實體位置，這情況尚未處理。顯示設定改變時開著的面板會被關掉。
+**Author**: 使用者要求徹底修復，實作方式由我決定
+

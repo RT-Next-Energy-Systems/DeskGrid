@@ -66,6 +66,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **必須 layered**：24H2+ 的 Progman 是 composition-based，非 layered 子視窗不會被畫出；layered 也讓全透明像素可點穿。
 - **Explorer 重啟**：explorer 結束時跨行程子視窗會被一併銷毀 → `DesktopSurface.Lost` → `DesktopHost` 每秒重試，以新 `HwndSource` 掛到新的 DefView，沿用同一份 WPF content（狀態保留）。`TaskbarCreated` 廣播為第二觸發（需由隱藏的 top-level 視窗接收，message-only 視窗收不到廣播）。
 - **座標**：surface 位置為實體螢幕像素（`ScreenPoint`），掛載時轉 DefView client 座標。
+- **多螢幕**（2026-11-01，使用者回報「接外接螢幕、放在主螢幕左邊後 widget 全跑到左邊，且在左邊開的面板卻出現在主螢幕」）：桌面視窗（Progman / DefView）涵蓋所有螢幕，在主螢幕**左側或上方**加螢幕時它的原點會往負方向移，子視窗（surface）的 client 座標不變 → 在螢幕上整批漂移；`DesktopSurface.Position`（設定檔存的、面板定位用的）沒變，所以面板開在「邏輯位置」＝主螢幕。修法：`DesktopSurface.Resync()`（`GetWindowRect` 與 `Position` 不同就 `MoveTo`）由 `DesktopHost` 每秒檢查 + 收到 `WM_DISPLAYCHANGE`（隱藏的 top-level 視窗）立即執行；1.5 秒後（Explorer 重排完）發 `DisplayChanged` → `WidgetBoard.OnDisplayChanged`（重讀格線、依**設定檔存的位置**重新擺、關掉開著的面板）。存檔位置的中心不在任何螢幕工作區（螢幕被拔掉）→ 暫放最近螢幕最近空格，**不覆蓋存檔**，螢幕回來就回去（`WidgetBoard.Add` 與 `OnDisplayChanged`；拖曳才會存新位置）。實機重現並驗證：用 `ChangeDisplaySettingsEx`（`DM_POSITION`，`CDS_UPDATEREGISTRY | CDS_NORESET` 再用 NULL 套用；套用時 dm 必須傳 NULL）把第二螢幕在主螢幕右側（x=2880）與左側（x=-2360）間切換，Progman 矩形從 (0,0,5240,1800) 變 (-2360,0,2880,1800)，log 出現「Put 9 surface(s) back」，9 個 surface 螢幕座標不變；測完還原。
 - `WS_EX_NOPARENTNOTIFY`：避免 Explorer 執行緒卡住時透過 parent notify 卡住我們。
 
 ## Config / Folders 實作要點（階段 2）
@@ -107,6 +108,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **背景可自訂**（config `panelBackground`）：`system`（預設，Win11 22H2+ 系統 Acrylic + 系統深淺色；其他版本為不透明系統色）、`dark`、`light`（半透明）、`custom`（`customColor` #RRGGBB + `customOpacity` 0–1，字色依背景亮度自動黑/白）。設定介面在階段 6；目前手改 config 後重啟 app 生效。
 - **Acrylic 做法**（實測）：無邊框 `WS_POPUP` 視窗 DWM **不畫** system backdrop，必須保留框架：`SingleBorderWindow` + `WindowChrome(GlassFrameThickness=-1, CaptionHeight=0)` + 拿掉 `WS_SYSMENU`（否則 DWM 在延伸框架畫關閉鈕）+ composition 背景透明 + `DWMWA_SYSTEMBACKDROP_TYPE=TRANSIENTWINDOW`、`DWMWA_WINDOW_CORNER_PREFERENCE=ROUND`。**不可用 `SizeToContent`**（WPF 會多加已被 WindowChrome 移除的外框尺寸）→ 自己 Measure 內容後設 Width/Height。非 Acrylic 樣式用 layered 視窗（`AllowsTransparency`）自己畫圓角底色。
 - **固定在開啟的那一側**（2026-10-31）：`PanelPlacement.Side` 只在第一次定位（及換顯示別的資料夾 / 列表）時選；之後變大（拖入時 `MakeRoomForIncoming` 長一列、放入後重掃）只在同一側夾回工作區（可能蓋住 widget 一部分）。否則 widget 在螢幕下方時，長高後放不下 → 跳到右側 → 游標不在面板內 → DragLeave 收回 → 又放得下回到下方 → 無限來回 = 嚴重閃爍（使用者實測，log 證實）。
+- **多螢幕**（2026-11-01）：面板在 widget 中心所在螢幕的工作區定位，位置與大小一律用**該螢幕**的 DPI 換算（`Reposition(window, size)` 一律帶大小）。視窗先建在別的 DPI 的螢幕再被 `SetWindowPos` 搬走時，Windows 會送 `WM_DPICHANGED` 並建議一個由舊尺寸縮放的位置與大小，WPF 照單全收 → `OnWindowMessage` 收到後以 `_size`（要的 DIP 大小；不能信 `Width`/`Height`，WPF 已被改過）重新 `Reposition`。
 - **定位**：在 `SourceInitialized`（第一次顯示前）用實體像素 `SetWindowPos`，不會閃到別處；內容變動（即時刷新）後重新定位。改大小一律先 `SetWindowPos` 新位置 + 新大小、再設 WPF 尺寸（`Resize`）：先長再移的話，貼螢幕底部時超出螢幕那段不會重畫，最後一列名稱被切掉。
 - **收合**：Esc、失去啟用（點外部）、點項目啟動後、再點同一個 widget；點另一個 widget 直接切換。**截圖例外**（`ScreenCapture`）：失焦時前景若是 Windows 截圖工具（`SnippingTool`、Win10 `ScreenClippingHost`）不收合，掛 `EVENT_SYSTEM_FOREGROUND` 等前景離開截圖工具，回到面板照常、到別處才收合。同時只有一個面板。資料夾內容變動時面板即時更新，資料夾消失則關閉。
 - **啟動**：`Process.Start(UseShellExecute=true)`（即 ShellExecuteEx），工作目錄 = 項目所在資料夾（捷徑自己的工作目錄優先），`ErrorDialog=true` 讓 Windows 顯示自己的錯誤（例如捷徑目標不存在）；UAC 取消等例外只記 log。

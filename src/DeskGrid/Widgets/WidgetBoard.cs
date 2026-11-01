@@ -127,12 +127,14 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
     {
         var taken = TakenCells(except: null);
         ScreenPoint position;
+        var keep = false;
         if (SavedPosition(folder.Name) is { } saved)
         {
             // Without the desktop's icons to line up with (Explorer hasn't filled the desktop yet), snapping would move
             // a widget onto the fallback grid and save that: it stays where it was put until the icons can be read.
             var grid = GridOn(MonitorArea.At(saved));
-            position = grid.FollowsIcons ? grid.NearestFree(saved, taken) : saved;
+            keep = !IsOnAMonitor(saved);
+            position = grid.FollowsIcons || keep ? grid.NearestFree(saved, taken) : saved;
         }
         else
         {
@@ -143,7 +145,37 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
         _entries[folder.Name] = entry;
         ApplyCellSize(entry.View, entry.Surface);
         host.Add(entry.Surface);
-        return SavePosition(folder.Name, position);
+
+        // A widget whose monitor is gone waits on another one but remembers where it was put.
+        return !keep && SavePosition(folder.Name, position);
+    }
+
+    /// <summary>
+    /// The monitors changed. A widget belongs where it was put, and that is saved in screen coordinates, which don't
+    /// change when a monitor is added: the widgets stay on their monitor. One whose place is on no monitor now (the
+    /// monitor was unplugged) waits on the nearest one, without forgetting its place, and goes back when the monitor does.
+    /// </summary>
+    public void OnDisplayChanged()
+    {
+        _nativeIcons = host.ReadIconGrid();
+        foreach (var entry in _entries.Values)
+        {
+            var saved = SavedPosition(entry.Folder.Name) ?? entry.Surface.Position;
+            var position = IsOnAMonitor(saved)
+                ? saved
+                : GridOn(MonitorArea.At(saved)).NearestFree(saved, TakenCells(except: entry.Surface));
+            entry.Surface.MoveTo(position);
+            ApplyCellSize(entry.View, entry.Surface);
+        }
+
+        Log.Info($"Display configuration changed; {_entries.Count} widget(s) checked.");
+    }
+
+    // Whether a widget put at this position would be seen: its middle is on a monitor.
+    private bool IsOnAMonitor(ScreenPoint position)
+    {
+        var (width, height) = CellSize(MonitorArea.At(position));
+        return MonitorArea.Containing(position.Offset(width / 2, height / 2)) is not null;
     }
 
     /// <summary>

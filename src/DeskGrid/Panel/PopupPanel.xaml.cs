@@ -55,6 +55,7 @@ internal partial class PopupPanel : Window
     private bool _closing;
     private bool _hiddenForDrag;
     private PanelSide? _side;
+    private Size _size; // The size the panel should have, in DIPs of its monitor.
     private List<PanelItem> _items = [];
     private PanelItem? _pressed;
     private Point _pressPoint;
@@ -631,7 +632,8 @@ internal partial class PopupPanel : Window
         }
 
         // Before the first show, so the panel never flashes elsewhere.
-        Reposition(window);
+        HwndSource.FromHwnd(window).AddHook(OnWindowMessage);
+        Reposition(window, new Size(Width, Height));
 
         if (!ActivateWhenShown)
         {
@@ -657,12 +659,13 @@ internal partial class PopupPanel : Window
         }, DispatcherPriority.ApplicationIdle);
     }
 
-    // Moves the window to where it goes for its current size, or for (and to) a new size in DIPs.
-    private void Reposition(HWND window, Size? size = null)
+    // Moves the window to where it goes (next to its widget, on the widget's monitor) and gives it this size in DIPs of that monitor.
+    private void Reposition(HWND window, Size size)
     {
+        _size = size;
         var monitor = MonitorArea.At(new ScreenPoint((_anchor.Left + _anchor.Right) / 2, (_anchor.Top + _anchor.Bottom) / 2));
-        var width = monitor.ToPixels(size?.Width ?? Width);
-        var height = monitor.ToPixels(size?.Height ?? Height);
+        var width = monitor.ToPixels(size.Width);
+        var height = monitor.ToPixels(size.Height);
         var gap = monitor.ToPixels(AnchorGap);
 
         // The side is chosen once for what the panel shows. Growing to make room for something dragged in must not
@@ -670,9 +673,27 @@ internal partial class PopupPanel : Window
         // jump back and forth.
         _side ??= PanelPlacement.Side(_anchor, width, height, monitor.WorkArea, gap);
         var position = PanelPlacement.Place(_anchor, width, height, monitor.WorkArea, gap, _side.Value);
-        var flags = SET_WINDOW_POS_FLAGS.SWP_NOZORDER | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED;
         PInvoke.SetWindowPos(window, HWND.Null, position.X, position.Y, width, height,
-            size is null ? flags | SET_WINDOW_POS_FLAGS.SWP_NOSIZE : flags);
+            SET_WINDOW_POS_FLAGS.SWP_NOZORDER | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED);
+    }
+
+    // The window was moved to a monitor with another DPI. Windows then proposes a size and place of its own (the old ones
+    // scaled), which WPF takes; the panel puts itself where it belongs for the new DPI.
+    private nint OnWindowMessage(nint window, int message, nint wParam, nint lParam, ref bool handled)
+    {
+        if ((uint)message == PInvoke.WM_DPICHANGED)
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (!_closing)
+                {
+                    (Width, Height) = (_size.Width, _size.Height);
+                    Reposition(new HWND(window), _size);
+                }
+            }, DispatcherPriority.Send);
+        }
+
+        return 0;
     }
 
     // ---- Renaming the folder ----

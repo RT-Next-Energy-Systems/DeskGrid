@@ -68,6 +68,11 @@ public partial class App : Application
 
         _desktopHost = new DesktopHost();
         _desktopHost.IconsChanged += (_, _) => _board?.ClearIconsOffWidgets();
+        _desktopHost.DisplayChanged += (_, _) =>
+        {
+            _panels?.Close(); // Its widget may be on another monitor now.
+            _board?.OnDisplayChanged();
+        };
         _desktopHost.Start();
         _icons = new IconService();
         _panels = new PanelController(_configStore, _icons);

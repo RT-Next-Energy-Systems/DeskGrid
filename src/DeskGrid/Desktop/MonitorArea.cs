@@ -12,9 +12,27 @@ internal readonly record struct MonitorArea(ScreenRect WorkArea, uint Dpi)
     public static MonitorArea Primary => At(new ScreenPoint(0, 0));
 
     /// <summary>The monitor containing <paramref name="point"/>, or the nearest one.</summary>
-    public static unsafe MonitorArea At(ScreenPoint point)
+    public static MonitorArea At(ScreenPoint point) =>
+        Of(PInvoke.MonitorFromPoint(new Point(point.X, point.Y), MONITOR_FROM_FLAGS.MONITOR_DEFAULTTONEAREST));
+
+    /// <summary>
+    /// The monitor whose work area contains <paramref name="point"/>, or <see langword="null"/> if none does: the point
+    /// is on no monitor (one was unplugged or moved) or under the taskbar.
+    /// </summary>
+    public static MonitorArea? Containing(ScreenPoint point)
     {
-        var monitor = PInvoke.MonitorFromPoint(new Point(point.X, point.Y), MONITOR_FROM_FLAGS.MONITOR_DEFAULTTONEAREST);
+        var monitor = PInvoke.MonitorFromPoint(new Point(point.X, point.Y), MONITOR_FROM_FLAGS.MONITOR_DEFAULTTONULL);
+        if (monitor.IsNull)
+        {
+            return null;
+        }
+
+        var area = Of(monitor);
+        return area.WorkArea.Contains(point) ? area : null;
+    }
+
+    private static unsafe MonitorArea Of(HMONITOR monitor)
+    {
         var info = new MONITORINFO { cbSize = (uint)sizeof(MONITORINFO) };
         PInvoke.GetMonitorInfo(monitor, ref info);
         PInvoke.GetDpiForMonitor(monitor, MONITOR_DPI_TYPE.MDT_EFFECTIVE_DPI, out var dpi, out _).ThrowOnFailure();

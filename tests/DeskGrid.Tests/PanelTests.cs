@@ -51,6 +51,45 @@ public sealed class PanelPlacementTests
     [Fact]
     public void Place_TooBigForAnySide_ClampsIntoTheWorkArea() =>
         Assert.Equal(new ScreenPoint(0, 0), PanelPlacement.Place(new ScreenRect(400, 300, 500, 400), 2000, 2000, WorkArea, Gap));
+
+    [Fact]
+    public void Place_OnAMonitorLeftOfThePrimary_StaysNextToTheWidgetOnThatMonitor()
+    {
+        // A second monitor to the left of the primary has negative coordinates (here 2360 x 1704 from x = -2360).
+        var workArea = new ScreenRect(-2360, 160, 0, 1704);
+        var anchor = new ScreenRect(-300, 200, -150, 382);
+
+        var position = PanelPlacement.Place(anchor, 504, 400, workArea, 16);
+
+        Assert.Equal(new ScreenPoint(-504, 398), position); // Centered would stick out past the monitor's right edge.
+        Assert.True(position.X >= workArea.Left && position.X + 504 <= workArea.Right);
+    }
+
+    [Fact]
+    public void Place_AtTheLeftEdgeOfAMonitorLeftOfThePrimary_ClampsToThatMonitor()
+    {
+        var workArea = new ScreenRect(-2360, 160, 0, 1704);
+
+        var position = PanelPlacement.Place(new ScreenRect(-2360, 200, -2210, 382), 504, 400, workArea, 16);
+
+        Assert.Equal(-2360, position.X);
+    }
+}
+
+public sealed class MonitorAreaTests
+{
+    [Fact]
+    public void Containing_APointOnThePrimaryMonitor_IsThatMonitor()
+    {
+        var primary = MonitorArea.Primary;
+        var inside = new ScreenPoint(primary.WorkArea.Left + 10, primary.WorkArea.Top + 10);
+
+        Assert.Equal(primary, MonitorArea.Containing(inside));
+    }
+
+    [Fact]
+    public void Containing_APointOnNoMonitor_IsNull() =>
+        Assert.Null(MonitorArea.Containing(new ScreenPoint(-300_000, -300_000)));
 }
 
 public sealed class PanelThemeTests

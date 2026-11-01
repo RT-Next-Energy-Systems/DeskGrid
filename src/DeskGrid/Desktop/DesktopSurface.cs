@@ -76,6 +76,25 @@ internal sealed class DesktopSurface(UIElement content, ScreenPoint position) : 
             SET_WINDOW_POS_FLAGS.SWP_NOSIZE | SET_WINDOW_POS_FLAGS.SWP_NOZORDER | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
     }
 
+    /// <summary>
+    /// Puts the window back at <see cref="Position"/> if it has drifted. A child window keeps its place relative to
+    /// its parent, and the desktop spans every monitor: add one on the left of or above the primary and the desktop's
+    /// origin moves, taking the window with it.
+    /// </summary>
+    /// <returns>Whether the window had to be moved.</returns>
+    public bool Resync()
+    {
+        if (_source is not { IsDisposed: false } source
+            || !PInvoke.GetWindowRect(new HWND(source.Handle), out var rect)
+            || (rect.left == Position.X && rect.top == Position.Y))
+        {
+            return false;
+        }
+
+        MoveTo(Position);
+        return true;
+    }
+
     public void Dispose() => Release();
 
     // Clicking a surface must not activate the desktop: Explorer swallows the click that activates it,

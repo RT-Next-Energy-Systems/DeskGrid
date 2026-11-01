@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Plugging in a second monitor, or arranging it to the left of (or above) the main one, no longer moves the
+  widgets. They used to slide onto the other monitor, and their folders then opened on the main monitor. Widgets
+  now stay exactly where they were put.
+- A folder always opens next to its widget, on the same monitor as the widget, also when the monitors have
+  different scaling.
+- If a monitor is unplugged, its widgets wait on the nearest monitor and go back to their places when it returns.
+  Their saved places are no longer overwritten.
+
 ## 0.3.3
 
 ### Added

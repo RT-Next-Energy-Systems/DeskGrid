@@ -16,13 +16,33 @@ internal sealed class DesktopHost : IDisposable
 {
     private static readonly TimeSpan SettlePollInterval = TimeSpan.FromMilliseconds(500);
 
+    // Windows sends a burst of display changes while monitors are plugged in or dragged around in Settings.
+    private static readonly TimeSpan DisplaySettleDelay = TimeSpan.FromMilliseconds(1500);
+
     private readonly List<DesktopSurface> _surfaces = [];
     private readonly DispatcherTimer _retryTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private readonly DispatcherTimer _driftTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private readonly DispatcherTimer _displaySettled = new() { Interval = DisplaySettleDelay };
     private readonly DesktopIconWatcher _iconWatcher = new();
     private HwndSource? _shellEventsWindow;
     private IconLayer? _layer;
 
-    public DesktopHost() => _retryTimer.Tick += (_, _) => EnsureAttached();
+    public DesktopHost()
+    {
+        _retryTimer.Tick += (_, _) => EnsureAttached();
+        _driftTimer.Tick += (_, _) => PutSurfacesBack();
+        _displaySettled.Tick += (_, _) =>
+        {
+            _displaySettled.Stop();
+            DisplayChanged?.Invoke(this, EventArgs.Empty);
+        };
+    }
+
+    /// <summary>
+    /// Monitors were added, removed or rearranged, and Explorer has had a moment to adapt. The surfaces are back at
+    /// their <see cref="DesktopSurface.Position"/> by then; what belongs where is for the owner to decide.
+    /// </summary>
+    public event EventHandler? DisplayChanged;
 
     /// <summary>Desktop icons were added, removed or moved.</summary>
     public event EventHandler? IconsChanged
@@ -97,6 +117,7 @@ internal sealed class DesktopHost : IDisposable
     public void Start()
     {
         _shellEventsWindow = ShellMessageWindow.Create("DeskGrid.ShellEvents", ShellEventsHook);
+        _driftTimer.Start();
         EnsureAttached();
     }
 
@@ -116,6 +137,8 @@ internal sealed class DesktopHost : IDisposable
     public void Dispose()
     {
         _retryTimer.Stop();
+        _driftTimer.Stop();
+        _displaySettled.Stop();
         _iconWatcher.Dispose();
         foreach (var surface in _surfaces)
         {
@@ -180,7 +203,25 @@ internal sealed class DesktopHost : IDisposable
             Log.Info("TaskbarCreated received.");
             EnsureAttached();
         }
+        else if ((uint)msg == PInvoke.WM_DISPLAYCHANGE)
+        {
+            Log.Info("Display configuration changed.");
+            PutSurfacesBack();
+            _displaySettled.Stop();
+            _displaySettled.Start();
+        }
 
         return IntPtr.Zero;
+    }
+
+    // The desktop window spans all monitors and moves when one is added on its left or top; its children, our
+    // surfaces, move with it on the screen. Each surface knows where it belongs and goes back there.
+    private void PutSurfacesBack()
+    {
+        var moved = _surfaces.Count(s => s.Resync());
+        if (moved > 0)
+        {
+            Log.Info($"Put {moved} surface(s) back where they belong; the desktop window had moved.");
+        }
     }
 }
