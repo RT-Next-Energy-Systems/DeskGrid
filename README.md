@@ -61,7 +61,7 @@ a downloaded copy can be refused with "An Application Control policy has blocked
 GitHub shows the SHA-256 of the exe on the release page, next to the file. To check that your download matches:
 
 ```powershell
-Get-FileHash .\DeskGrid-0.3.4-win-x64.exe -Algorithm SHA256
+Get-FileHash .\DeskGrid-0.3.5-win-x64.exe -Algorithm SHA256
 ```
 
 If you'd rather not trust a binary, [build it yourself](#build-from-source).

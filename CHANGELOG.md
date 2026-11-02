@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.5
+
+### Fixed
+
+- A widget no longer loses its saved place when one of its shortcuts is deleted or locked while DeskGrid reads
+  the folder.
+- Shortcut icons are redrawn when the program they point to is updated.
+- DeskGrid no longer freezes for a while when a shortcut points to a network share that is offline.
+- DeskGrid starts even if `config.json` is briefly locked by a virus scanner or sync client.
+- An error in a single action (a drag, a menu command, a timer) is logged and DeskGrid keeps running, instead of
+  all widgets disappearing from the desktop.
+- The update dialog shows an unexpected failure instead of leaving its buttons disabled, and a failed download no
+  longer leaves a partial file behind.
+- Widgets are placed at sign-in even if reading the desktop's icons fails.
+- Taskbar buttons keep working after a rare communication error.
+
 ## 0.3.4
 
 ### Fixed
