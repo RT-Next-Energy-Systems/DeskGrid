@@ -8,7 +8,7 @@ namespace DeskGrid.Icons;
 /// <summary>
 /// Item icons and the widget previews built from them. Shell calls run on a dedicated STA thread so a
 /// slow handler never stalls the UI. Results are frozen bitmaps cached until the file changes (keyed by
-/// path and last-write time). Not thread-safe: call from the UI thread.
+/// path and last-write time, plus the target's for shortcuts). Not thread-safe: call from the UI thread.
 /// </summary>
 internal sealed class IconService : IDisposable
 {
@@ -33,7 +33,7 @@ internal sealed class IconService : IDisposable
     public Task<BitmapSource> GetPreviewAsync(WidgetFolder widget)
     {
         var shown = widget.Items.Take(PreviewComposer.Slots).ToList();
-        var key = string.Join('\n', shown.Select(i => $"{i.FullPath}|{i.LastWriteTimeUtc.Ticks}"));
+        var key = string.Join('\n', shown.Select(i => $"{i.FullPath}|{i.LastWriteTimeUtc.Ticks}|{i.TargetWriteTimeUtc.Ticks}"));
         if (_previews.TryGetValue(widget.FullPath, out var cached) && cached.Key == key)
         {
             return cached.Image;
@@ -68,8 +68,8 @@ internal sealed class IconService : IDisposable
         return await _shellThread.InvokeAsync(() => PreviewComposer.Compose(icons));
     }
 
-    private readonly record struct IconKey(string Path, DateTime LastWriteTimeUtc)
+    private readonly record struct IconKey(string Path, DateTime LastWriteTimeUtc, DateTime TargetWriteTimeUtc)
     {
-        public static IconKey Of(FolderItem item) => new(item.FullPath, item.LastWriteTimeUtc);
+        public static IconKey Of(FolderItem item) => new(item.FullPath, item.LastWriteTimeUtc, item.TargetWriteTimeUtc);
     }
 }

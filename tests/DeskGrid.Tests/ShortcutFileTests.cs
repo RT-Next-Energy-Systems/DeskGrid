@@ -30,6 +30,29 @@ public sealed class ShortcutFileTests : IDisposable
         Assert.Equal("DeskGrid.Pin.Test", id);
     }
 
+    [Fact]
+    public async Task TryGetTarget_ReturnsThePathTheShortcutPointsTo()
+    {
+        var target = _temp.CreateFile("tool.exe");
+        var shortcut = _temp.Combine("tool.lnk");
+
+        var read = await _sta.InvokeAsync(() =>
+        {
+            ShortcutFile.Create(shortcut, target);
+            return ShortcutFile.TryGetTarget(shortcut);
+        });
+
+        Assert.Equal(target, read, ignoreCase: true);
+    }
+
+    [Fact]
+    public async Task TryGetTarget_UnreadableShortcut_ReturnsNull()
+    {
+        var broken = _temp.CreateFile("broken.lnk");
+
+        Assert.Null(await _sta.InvokeAsync(() => ShortcutFile.TryGetTarget(broken)));
+    }
+
     // Through the Shell's own property system, as the taskbar reads it.
     private static string? ReadProperty(string path, string property)
     {

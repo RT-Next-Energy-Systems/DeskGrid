@@ -1,5 +1,6 @@
 using System.IO;
 using DeskGrid.Diagnostics;
+using DeskGrid.Shell;
 
 namespace DeskGrid.Folders;
 
@@ -75,7 +76,7 @@ internal sealed class FolderScanner : IDisposable
             {
                 var items = folder.GetFiles("*", VisibleEntries)
                     .OrderBy(f => f.Name, NaturalStringComparer.Instance)
-                    .Select(f => new FolderItem(f.Name, f.FullName, f.LastWriteTimeUtc))
+                    .Select(f => new FolderItem(f.Name, f.FullName, f.LastWriteTimeUtc, TargetWriteTime(f)))
                     .ToList();
                 widgets.Add(new WidgetFolder(folder.Name, folder.FullName, items));
             }
@@ -87,6 +88,18 @@ internal sealed class FolderScanner : IDisposable
         }
 
         return widgets;
+    }
+
+    // A shortcut shows its target's icon, so it has to be redrawn when the target is replaced (an app update).
+    private static DateTime TargetWriteTime(FileInfo file)
+    {
+        if (!file.Extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase) || ShortcutFile.TryGetTarget(file.FullName) is not { } target)
+        {
+            return default;
+        }
+
+        var written = File.GetLastWriteTimeUtc(target);
+        return written.Year == 1601 ? default : written; // 1601: the target doesn't exist
     }
 
     public void Dispose()

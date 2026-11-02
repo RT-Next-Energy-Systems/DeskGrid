@@ -1,5 +1,6 @@
 using System.IO;
 using DeskGrid.Folders;
+using DeskGrid.Shell;
 using DeskGrid.Threading;
 
 namespace DeskGrid.Tests;
@@ -35,6 +36,26 @@ public sealed class FolderScannerTests : IDisposable
         Assert.Equal(["Games", "Work"], widgets.Select(w => w.Name));
         Assert.Equal(["item2.url", "item10.lnk"], widgets[0].Items.Select(i => i.Name));
         Assert.Equal(["notes.txt"], widgets[1].Items.Select(i => i.Name));
+    }
+
+    [Fact]
+    public async Task Scan_ShortcutItemCarriesItsTargetsWriteTime()
+    {
+        var target = _root.CreateFile("tool.exe");
+        var written = new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc);
+        File.SetLastWriteTimeUtc(target, written);
+        _root.CreateFile(@"Games\notes.txt");
+
+        var widgets = await _ui.InvokeAsync(() =>
+        {
+            ShortcutFile.Create(_root.Combine(@"Games\tool.lnk"), target);
+            using var scanner = new FolderScanner(_root.Path);
+            return scanner.Scan();
+        });
+
+        var items = widgets!.Single().Items.ToDictionary(i => i.Name);
+        Assert.Equal(written, items["tool.lnk"].TargetWriteTimeUtc);
+        Assert.Equal(default, items["notes.txt"].TargetWriteTimeUtc);
     }
 
     [Fact]

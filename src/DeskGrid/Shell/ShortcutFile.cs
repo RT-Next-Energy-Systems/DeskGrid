@@ -9,9 +9,38 @@ using Windows.Win32.UI.Shell.PropertiesSystem;
 
 namespace DeskGrid.Shell;
 
-/// <summary>Writes .lnk files. Call on an STA thread (the UI thread is one).</summary>
+/// <summary>Reads and writes .lnk files. Call on an STA thread (the UI thread is one).</summary>
 internal static class ShortcutFile
 {
+    /// <summary>
+    /// The file or folder path <paramref name="shortcutPath"/> points to, or <see langword="null"/> if it has none
+    /// (a Store app, a virtual folder) or can't be read.
+    /// </summary>
+    public static unsafe string? TryGetTarget(string shortcutPath)
+    {
+        var link = (IShellLinkW)new ShellLink();
+        try
+        {
+            ((IPersistFile)link).Load(shortcutPath, STGM.STGM_READ);
+            Span<char> target = stackalloc char[260];
+            fixed (char* buffer = target)
+            {
+                link.GetPath(buffer, target.Length, null, 0);
+            }
+
+            var length = target.IndexOf('\0');
+            return length > 0 ? new string(target[..length]) : null;
+        }
+        catch (COMException)
+        {
+            return null;
+        }
+        finally
+        {
+            Marshal.ReleaseComObject(link);
+        }
+    }
+
     /// <summary>
     /// Creates <paramref name="shortcutPath"/>, a shortcut that opens <paramref name="target"/> (a file or folder),
     /// or starts it with <paramref name="arguments"/> if it is a program, showing <paramref name="iconPath"/> if given.

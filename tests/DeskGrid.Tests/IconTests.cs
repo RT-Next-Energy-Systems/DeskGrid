@@ -123,6 +123,19 @@ public sealed class IconServiceTests : IDisposable
     }
 
     [Fact]
+    public void GetIconAsync_ShortcutIsRedrawnWhenItsTargetChanges()
+    {
+        var item = Item("a.txt");
+        var icon = _icons.GetIconAsync(item);
+        var changed = item with { TargetWriteTimeUtc = DateTime.UtcNow };
+
+        Assert.NotSame(icon, _icons.GetIconAsync(changed));
+        Assert.NotSame(
+            _icons.GetPreviewAsync(new WidgetFolder("W", _temp.Path, [item])),
+            _icons.GetPreviewAsync(new WidgetFolder("W", _temp.Path, [changed])));
+    }
+
+    [Fact]
     public async Task GetPreviewAsync_IsRebuiltOnlyWhenAShownItemChanges()
     {
         var items = new[] { "1.txt", "2.txt", "3.txt", "4.txt", "5.txt" }.Select(Item).ToList();

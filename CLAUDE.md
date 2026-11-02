@@ -85,7 +85,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **一律圖示，不用內容縮圖**：`SIIGBF_ICONONLY`，捷徑取目標圖示、不含箭頭 overlay。實測 256px 時 Shell 永遠回傳 256×256（`SCALEUP` 無差別）。
 - **Alpha**：Shell 回傳的 DIB section 是**直通（非預乘）alpha**（實測許多像素 RGB > A），以 `Bgra32` 建 `BitmapSource`；`CreateBitmapSourceFromHBitmap` 會丟掉 alpha，不可用。bottom-up DIB 要翻列。
 - **執行緒**：Shell 呼叫與預覽合成都在專用 STA 執行緒（`DispatcherThread "DeskGrid.Shell"`）；結果皆為 frozen bitmap，可跨執行緒。`IconService` 本身只在 UI 執行緒呼叫（快取是一般 Dictionary）。
-- **快取**：僅記憶體。圖示 key = (路徑, LastWriteTimeUtc)，快取的是 `Task`，同時重複請求只取一次。預覽 key = 前 4 個項目的 (路徑, ticks)，第 5 個以後變動不重建。`Retain(widgets)` 在每次 catalog 刷新時清掉已消失/已變更的項目。
+- **快取**：僅記憶體。圖示 key = (路徑, LastWriteTimeUtc, 捷徑目標的 LastWriteTimeUtc)（`FolderItem.TargetWriteTimeUtc`，`FolderScanner` 掃描時用 `ShortcutFile.TryGetTarget` 讀 .lnk 目標；程式更新換圖示時捷徑本身沒變，只看 .lnk 會一直顯示舊圖示；目標改變要等下次重掃才會重畫），快取的是 `Task`，同時重複請求只取一次。預覽 key = 前 4 個項目的 (路徑, ticks)，第 5 個以後變動不重建。`Retain(widgets)` 在每次 catalog 刷新時清掉已消失/已變更的項目。
 - **預覽版面**（`PreviewComposer`）：256×256 透明圖，2×2、間距 8%、依列填滿；不足 4 個留空格。資料夾底色由 widget 自己畫（階段 4）。
 
 ## Widgets 實作要點（階段 4）
