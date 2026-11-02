@@ -39,11 +39,11 @@ internal static class UpdateInstaller
             return (null, Strings.UpdateFolderNotWritable);
         }
 
+        var file = Path.Combine(WorkFolder, $"DeskGrid-{release.Version.ToString(3)}.exe");
         try
         {
             using var client = UpdateChecker.CreateClient(Timeout.InfiniteTimeSpan);
             Directory.CreateDirectory(WorkFolder);
-            var file = Path.Combine(WorkFolder, $"DeskGrid-{release.Version.ToString(3)}.exe");
             using (var response = await client.GetAsync(release.ExeUrl, HttpCompletionOption.ResponseHeadersRead, cancellation))
             {
                 response.EnsureSuccessStatusCode();
@@ -77,6 +77,7 @@ internal static class UpdateInstaller
         catch (Exception exception) when (exception is HttpRequestException or IOException or UnauthorizedAccessException or TaskCanceledException)
         {
             Log.Error("Downloading the update failed", exception);
+            DeleteQuietly(file); // Half a download is of no use.
             return (null, exception.Message);
         }
     }
@@ -117,6 +118,18 @@ internal static class UpdateInstaller
             }
             Start-Process -FilePath {{Quote(targetExe)}}
             """, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+
+    private static void DeleteQuietly(string file)
+    {
+        try
+        {
+            File.Delete(file);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            // Overwritten by the next download.
+        }
+    }
 
     // A PowerShell single-quoted string.
     private static string Quote(string value) => "'" + value.Replace("'", "''") + "'";

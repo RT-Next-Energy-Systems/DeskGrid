@@ -21,6 +21,7 @@ internal sealed class FolderScanner : IDisposable
     private readonly SynchronizationContext _context;
     private readonly FileSystemWatcher _watcher;
     private readonly Timer _debounceTimer;
+    private Dictionary<string, (DateTime LinkWritten, string? Target)> _shortcutTargets = new(StringComparer.OrdinalIgnoreCase);
     private bool _disposed;
 
     public FolderScanner(string rootPath)
@@ -70,13 +71,14 @@ internal sealed class FolderScanner : IDisposable
         }
 
         var widgets = new List<WidgetFolder>();
+        var seen = new Dictionary<string, (DateTime LinkWritten, string? Target)>(StringComparer.OrdinalIgnoreCase);
         foreach (var folder in folders.OrderBy(f => f.Name, NaturalStringComparer.Instance))
         {
             try
             {
                 var items = folder.GetFiles("*", VisibleEntries)
                     .OrderBy(f => f.Name, NaturalStringComparer.Instance)
-                    .Select(f => new FolderItem(f.Name, f.FullName, f.LastWriteTimeUtc, TargetWriteTime(f)))
+                    .Select(f => new FolderItem(f.Name, f.FullName, f.LastWriteTimeUtc, TargetWriteTime(f, seen)))
                     .ToList();
                 widgets.Add(new WidgetFolder(folder.Name, folder.FullName, items));
             }
@@ -87,19 +89,52 @@ internal sealed class FolderScanner : IDisposable
             }
         }
 
+        _shortcutTargets = seen; // Shortcuts that are gone drop out of the cache.
         return widgets;
     }
 
     // A shortcut shows its target's icon, so it has to be redrawn when the target is replaced (an app update).
-    private static DateTime TargetWriteTime(FileInfo file)
+    // Where a shortcut points is read from the .lnk only when the .lnk changed; every scan still looks at the target.
+    private DateTime TargetWriteTime(FileInfo file, Dictionary<string, (DateTime LinkWritten, string? Target)> seen)
     {
-        if (!file.Extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase) || ShortcutFile.TryGetTarget(file.FullName) is not { } target)
+        if (!file.Extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase))
+        {
+            return default;
+        }
+
+        if (!_shortcutTargets.TryGetValue(file.FullName, out var known) || known.LinkWritten != file.LastWriteTimeUtc)
+        {
+            known = (file.LastWriteTimeUtc, ShortcutFile.TryGetTarget(file.FullName));
+        }
+
+        seen[file.FullName] = known;
+
+        // A target on a network share that is down would hold this (UI) thread for the length of the connection timeout.
+        if (known.Target is not { } target || IsOnNetwork(target))
         {
             return default;
         }
 
         var written = File.GetLastWriteTimeUtc(target);
         return written.Year == 1601 ? default : written; // 1601: the target doesn't exist
+    }
+
+    private static bool IsOnNetwork(string path)
+    {
+        var root = Path.GetPathRoot(path);
+        if (string.IsNullOrEmpty(root))
+        {
+            return false;
+        }
+
+        try
+        {
+            return root.StartsWith(@"\\", StringComparison.Ordinal) || new DriveInfo(root).DriveType == DriveType.Network;
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
     }
 
     public void Dispose()

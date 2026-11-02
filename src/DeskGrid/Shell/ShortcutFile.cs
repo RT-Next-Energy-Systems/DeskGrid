@@ -31,8 +31,9 @@ internal static class ShortcutFile
             var length = target.IndexOf('\0');
             return length > 0 ? new string(target[..length]) : null;
         }
-        catch (COMException)
+        catch (Exception exception) when (exception is COMException or IOException or UnauthorizedAccessException)
         {
+            // The marshaller turns "file not found", "access denied" and "sharing violation" into their .NET types.
             return null;
         }
         finally

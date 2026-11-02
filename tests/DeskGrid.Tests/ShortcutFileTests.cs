@@ -53,6 +53,15 @@ public sealed class ShortcutFileTests : IDisposable
         Assert.Null(await _sta.InvokeAsync(() => ShortcutFile.TryGetTarget(broken)));
     }
 
+    // A shortcut deleted while a scan was reading it must not throw: the scan would drop the whole widget.
+    [Fact]
+    public async Task TryGetTarget_MissingShortcut_ReturnsNull()
+    {
+        var missing = _temp.Combine("gone.lnk");
+
+        Assert.Null(await _sta.InvokeAsync(() => ShortcutFile.TryGetTarget(missing)));
+    }
+
     // Through the Shell's own property system, as the taskbar reads it.
     private static string? ReadProperty(string path, string property)
     {

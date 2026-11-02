@@ -68,9 +68,10 @@ internal sealed class InstanceChannel : IDisposable
             {
                 Log.Info("A request from another DeskGrid timed out.");
             }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            catch (Exception exception)
             {
-                // A client that vanished mid-message, or a name clash: log, then keep listening.
+                // A client that vanished mid-message, or a name clash: log, then keep listening. Nobody awaits this
+                // loop, so anything that ended it would silently stop taskbar buttons from working.
                 Log.Error("Reading a request from another DeskGrid failed", exception);
                 try
                 {

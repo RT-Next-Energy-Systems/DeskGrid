@@ -500,3 +500,12 @@
 **Consequences**: 主螢幕被換成別台時（座標原點變了），存檔座標會對到不同的實體位置，這情況尚未處理。顯示設定改變時開著的面板會被關掉。
 **Author**: 使用者要求徹底修復，實作方式由我決定
 
+
+---
+
+### 2026-11-02 — 掃描對單一捷徑 / 網路目標的穩健性
+**Decision**: (1) `ShortcutFile.TryGetTarget` 的 `Load` 把 `IOException` / `UnauthorizedAccessException` 也當「讀不到」回 null（marshaller 把 `0x80070002` 轉成 `FileNotFoundException`）。(2) `FolderScanner` 以 `.lnk` 修改時間快取捷徑指向的路徑，每次掃描只重讀目標的時間戳；目標在網路（UNC 或網路磁碟機）時不讀時間戳（視為 `default`）。(3) `ConfigStore.Open` 讀檔遇 `IOException` / `UnauthorizedAccessException` 重試 4 次（間隔 250 ms），仍失敗才丟出，不退回預設值。(4) `InstanceChannel` 監聽迴圈捕捉所有例外後繼續；`App` 記錄 `AppDomain` / `TaskScheduler` 未處理例外。
+**Reason**: (1) 掃描中 `.lnk` 被刪或被別的程式鎖住時，例外被 `Scan` 的逐資料夾 catch 接住 → 整個 widget 不在結果裡 → `Reconcile` 當它消失，清掉位置與排序（已寫測試重現）。(2) 掃描在 UI 執行緒，斷線的網路共用讀時間戳會卡到連線逾時，每次重掃一次。(3) 登入時病毒掃描 / 同步程式短暫鎖住 config 會讓啟動直接當掉；退回預設值則會把真正的設定覆蓋掉。(4) 沒有人 await 監聽任務，任何例外都會讓工作列按鈕無聲失效。
+**Alternatives**: 單一資料夾讀失敗時保留舊的掃描結果（較大改動，捷徑已涵蓋常見成因）；網路目標改在背景讀時間戳（複雜度高，換到的只是網路捷徑的圖示在目標更新時自動重畫）。
+**Consequences**: 指向網路位置的捷徑在目標更新後圖示不會自動重畫（要重啟）。單一資料夾因其他原因讀失敗仍會暫時從掃描消失。
+**Author**: 使用者要求（/goal），實作方式由我決定

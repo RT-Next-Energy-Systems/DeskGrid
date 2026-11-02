@@ -59,6 +59,8 @@ public partial class App : Application
         }
 
         DispatcherUnhandledException += OnUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += (_, args) => Log.Error("Unhandled exception on a background thread", (Exception)args.ExceptionObject);
+        TaskScheduler.UnobservedTaskException += (_, args) => Log.Error("Unobserved task exception", args.Exception);
         Log.Info("DeskGrid starting.");
 
         _configStore = ConfigStore.Open(ConfigStore.DefaultFilePath);
@@ -370,9 +372,19 @@ public partial class App : Application
     private async Task CheckForUpdatesAtStartupAsync()
     {
         await Task.Delay(StartupUpdateCheckDelay);
-        if (_configStore!.Config.CheckForUpdatesAtStartup)
+        if (!_configStore!.Config.CheckForUpdatesAtStartup)
+        {
+            return;
+        }
+
+        // Nobody awaits this method: a failure has to be logged, or it vanishes with the task.
+        try
         {
             await CheckForUpdatesAsync(manual: false, owner: null);
+        }
+        catch (Exception exception)
+        {
+            Log.Error("The startup update check failed", exception);
         }
     }
 

@@ -16,6 +16,10 @@ internal sealed class ConfigStore
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 
+    private const int ReadAttempts = 4;
+
+    private static readonly TimeSpan ReadRetryDelay = TimeSpan.FromMilliseconds(250);
+
     private ConfigStore(string filePath, AppConfig config)
     {
         FilePath = filePath;
@@ -40,17 +44,30 @@ internal sealed class ConfigStore
             return new ConfigStore(filePath, new AppConfig());
         }
 
-        try
+        for (var attempt = 1; ; attempt++)
         {
-            using var stream = File.OpenRead(filePath);
-            return new ConfigStore(filePath, JsonSerializer.Deserialize<AppConfig>(stream, JsonOptions) ?? new AppConfig());
-        }
-        catch (JsonException exception)
-        {
-            var backupPath = $"{filePath}.{DateTime.Now:yyyyMMdd-HHmmss}.bad";
-            File.Move(filePath, backupPath);
-            Log.Error($"Invalid config moved to {backupPath}; using defaults", exception);
-            return new ConfigStore(filePath, new AppConfig());
+            try
+            {
+                using var stream = File.OpenRead(filePath);
+                return new ConfigStore(filePath, JsonSerializer.Deserialize<AppConfig>(stream, JsonOptions) ?? new AppConfig());
+            }
+            catch (FileNotFoundException)
+            {
+                return new ConfigStore(filePath, new AppConfig());
+            }
+            catch (JsonException exception)
+            {
+                var backupPath = $"{filePath}.{DateTime.Now:yyyyMMdd-HHmmss}.bad";
+                File.Move(filePath, backupPath);
+                Log.Error($"Invalid config moved to {backupPath}; using defaults", exception);
+                return new ConfigStore(filePath, new AppConfig());
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException && attempt < ReadAttempts)
+            {
+                // Briefly locked by a virus scanner or sync client, e.g. at sign-in. Defaults would overwrite the real settings.
+                Log.Error($"Reading {filePath} failed (attempt {attempt}); retrying", exception);
+                Thread.Sleep(ReadRetryDelay);
+            }
         }
     }
 

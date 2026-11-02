@@ -58,6 +58,28 @@ public sealed class FolderScannerTests : IDisposable
         Assert.Equal(default, items["notes.txt"].TargetWriteTimeUtc);
     }
 
+    // Where a shortcut points is remembered between scans; the target's own write time is not.
+    [Fact]
+    public async Task Scan_RescanSeesATargetThatChangedUnderAnUnchangedShortcut()
+    {
+        var target = _root.CreateFile("tool.exe");
+        File.SetLastWriteTimeUtc(target, new DateTime(2026, 1, 2, 3, 4, 5, DateTimeKind.Utc));
+        var updated = new DateTime(2026, 6, 7, 8, 9, 10, DateTimeKind.Utc);
+        _root.CreateFile(@"Games\notes.txt");
+
+        var (first, second) = await _ui.InvokeAsync(() =>
+        {
+            ShortcutFile.Create(_root.Combine(@"Games\tool.lnk"), target);
+            using var scanner = new FolderScanner(_root.Path);
+            var before = scanner.Scan()!.Single().Items.Single(i => i.Name == "tool.lnk").TargetWriteTimeUtc;
+            File.SetLastWriteTimeUtc(target, updated);
+            return (before, scanner.Scan()!.Single().Items.Single(i => i.Name == "tool.lnk").TargetWriteTimeUtc);
+        });
+
+        Assert.NotEqual(updated, first);
+        Assert.Equal(updated, second);
+    }
+
     [Fact]
     public async Task Scan_ReturnsNullWhenRootIsGone()
     {
