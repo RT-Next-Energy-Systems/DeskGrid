@@ -966,6 +966,12 @@ internal partial class PopupPanel : Window
         {
             effect = DragDrop.DoDragDrop(source, data, DragDropEffects.Move | DragDropEffects.Copy | DragDropEffects.Link);
         }
+        catch (System.Runtime.InteropServices.COMException exception)
+        {
+            // The drag couldn't run: put the icon back rather than leave it floating over the desktop.
+            Diagnostics.Log.Error("Dragging an item failed", exception);
+            effect = DragDropEffects.None;
+        }
         finally
         {
             DragDrop.RemoveQueryContinueDragHandler(source, OnQueryContinueDrag);

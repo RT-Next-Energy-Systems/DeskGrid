@@ -509,3 +509,12 @@
 **Alternatives**: 單一資料夾讀失敗時保留舊的掃描結果（較大改動，捷徑已涵蓋常見成因）；網路目標改在背景讀時間戳（複雜度高，換到的只是網路捷徑的圖示在目標更新時自動重畫）。
 **Consequences**: 指向網路位置的捷徑在目標更新後圖示不會自動重畫（要重啟）。單一資料夾因其他原因讀失敗仍會暫時從掃描消失。
 **Author**: 使用者要求（/goal），實作方式由我決定
+
+---
+
+### 2026-11-02（二）— 執行中的未處理例外只記 log，不結束程式
+**Decision**: `App.OnUnhandledException` 在啟動完成後（`_started`）把 `DispatcherUnhandledException` 標為 `Handled`（`OutOfMemoryException` 除外）；啟動途中仍照舊結束。同時：`MonitorArea.Of` 取不到 DPI 時退回 96（不再丟例外）、`ScreenCapture.IsTool` 也接 `InvalidOperationException` / `Win32Exception`、`DoDragDrop` 失敗時把拖曳影子收掉、`ShellContextMenu` 接 `UnauthorizedAccessException`、空資料夾刪不掉只記 log、開機等桌面排好時讀取失敗改為照常往下（以前 `StartWidgetsAsync` 會無聲失敗、widget 永遠不出現）。
+**Reason**: 常駐程式的事件處理（拖曳、選單指令、計時器）出一次錯就整個結束，桌面上所有 widget 會一起消失。
+**Alternatives**: 維持結束（避免狀態不一致，但使用者看到的是全部消失）；每種例外各自 try/catch（漏一個就當掉）。
+**Consequences**: 同一個例外若每次計時器都發生，會一直寫 log（log 超過 512 KB 會輪替）。
+**Author**: 使用者要求（/goal），實作方式由我決定

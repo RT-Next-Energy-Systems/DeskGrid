@@ -35,7 +35,13 @@ internal readonly record struct MonitorArea(ScreenRect WorkArea, uint Dpi)
     {
         var info = new MONITORINFO { cbSize = (uint)sizeof(MONITORINFO) };
         PInvoke.GetMonitorInfo(monitor, ref info);
-        PInvoke.GetDpiForMonitor(monitor, MONITOR_DPI_TYPE.MDT_EFFECTIVE_DPI, out var dpi, out _).ThrowOnFailure();
+
+        // A monitor that was unplugged a moment ago answers with a failure; assume the standard DPI rather than throw
+        // out of a timer or an event handler.
+        if (!PInvoke.GetDpiForMonitor(monitor, MONITOR_DPI_TYPE.MDT_EFFECTIVE_DPI, out var dpi, out _).Succeeded || dpi == 0)
+        {
+            dpi = 96;
+        }
 
         var work = info.rcWork;
         return new MonitorArea(new ScreenRect(work.left, work.top, work.right, work.bottom), dpi);

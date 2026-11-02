@@ -306,7 +306,15 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
         if (added == 0)
         {
             config.Widgets.Remove(name);
-            Directory.Delete(folder);
+            try
+            {
+                Directory.Delete(folder);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                Log.Error($"Removing the empty folder \"{folder}\" failed", exception);
+            }
+
             merge.Drop.Effects = DragDropEffects.None;
             return;
         }

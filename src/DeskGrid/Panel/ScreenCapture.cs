@@ -61,9 +61,9 @@ internal sealed class ScreenCapture : IDisposable
             using var process = Process.GetProcessById((int)processId);
             return Tools.Contains(process.ProcessName, StringComparer.OrdinalIgnoreCase);
         }
-        catch (ArgumentException)
+        catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception)
         {
-            return false; // Already exited.
+            return false; // Already exited, or not ours to look at.
         }
     }
 

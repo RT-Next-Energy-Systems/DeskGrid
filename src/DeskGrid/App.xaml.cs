@@ -41,6 +41,7 @@ public partial class App : Application
     private InstanceChannel? _instanceChannel;
     private string? _pendingOpen;
     private bool _checkingUpdates;
+    private bool _started;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -98,6 +99,7 @@ public partial class App : Application
         _instanceChannel = new InstanceChannel(name => Dispatcher.BeginInvoke(() => OpenPanel(name)));
         _ = StartWidgetsAsync(startedByWindows: AutoStart.WasStartedByWindows(e.Args));
         _ = CheckForUpdatesAtStartupAsync();
+        _started = true;
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -135,8 +137,13 @@ public partial class App : Application
         configStore.Save();
     }
 
-    private static void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e) =>
+    // Once running, a failure in one handler (a drag, a menu command, a timer) is logged and the app carries on: ending
+    // the process would take every widget off the desktop. Before that there is nothing to carry on with.
+    private void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+    {
         Log.Error("Unhandled exception", e.Exception);
+        e.Handled = _started && e.Exception is not OutOfMemoryException;
+    }
 
     private IReadOnlyList<TrayMenuItem> TrayMenu() =>
     [
@@ -190,6 +197,11 @@ public partial class App : Application
             catch (OperationCanceledException)
             {
                 return;
+            }
+            catch (Exception exception)
+            {
+                // Reading the desktop's icons failed: place the widgets anyway rather than never showing them.
+                Log.Error("Waiting for the desktop at sign-in failed; going ahead", exception);
             }
         }
 

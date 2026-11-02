@@ -78,7 +78,7 @@ internal sealed class ShellContextMenu : IDisposable
 
             return new ShellContextMenu(menu, handle) { ItemCount = PInvoke.GetMenuItemCount(handle) };
         }
-        catch (Exception exception) when (exception is COMException or System.IO.IOException)
+        catch (Exception exception) when (exception is COMException or System.IO.IOException or UnauthorizedAccessException)
         {
             Log.Error($"No shell context menu for \"{path}\"", exception);
             if (!handle.IsNull)
@@ -144,7 +144,7 @@ internal sealed class ShellContextMenu : IDisposable
         {
             _menu.InvokeCommand((CMINVOKECOMMANDINFO*)&invoke);
         }
-        catch (COMException exception)
+        catch (Exception exception) when (exception is COMException or System.IO.IOException or UnauthorizedAccessException)
         {
             Log.Error("Running a shell context menu command failed", exception);
         }
