@@ -26,6 +26,24 @@ public sealed class ConfigStoreTests : IDisposable
         Assert.Empty(config.Widgets);
     }
 
+    // A virus scanner or sync client holding the file for a moment must not make the settings come back as defaults.
+    [Fact]
+    public async Task Open_FileLockedBriefly_WaitsAndReadsTheSavedSettings()
+    {
+        var store = ConfigStore.Open(ConfigPath);
+        store.Config.PanelColumns = 5;
+        store.Save();
+
+        using (var held = new FileStream(ConfigPath, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            var reading = Task.Run(() => ConfigStore.Open(ConfigPath).Config.PanelColumns);
+            await Task.Delay(300, TestContext.Current.CancellationToken);
+            held.Dispose();
+
+            Assert.Equal(5, await reading);
+        }
+    }
+
     [Fact]
     public void Save_ThenOpen_RoundTrips()
     {
