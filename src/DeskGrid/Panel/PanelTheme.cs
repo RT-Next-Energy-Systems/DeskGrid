@@ -47,7 +47,7 @@ internal sealed record PanelTheme(bool UseAcrylic, Color Background, Color Foreg
         {
             return ColorConverter.ConvertFromString(text) is Color color ? color : null;
         }
-        catch (FormatException)
+        catch (Exception exception) when (exception is FormatException or NotSupportedException or ArgumentException)
         {
             Log.Info($"Invalid panel color \"{text}\"; using the default.");
             return null;

@@ -64,6 +64,12 @@ internal partial class UpdateDialog : Window
         {
             problem = await _apply(new Progress<UpdateProgress>(Show));
         }
+        catch (Exception exception)
+        {
+            // Shown in the dialog; left to escape from an async void handler it would leave the buttons disabled for good.
+            Diagnostics.Log.Error("Applying the update failed", exception);
+            problem = exception.Message;
+        }
         finally
         {
             _downloading = false;
