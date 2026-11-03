@@ -24,6 +24,7 @@ internal sealed class FolderScanner : IDisposable
     private readonly SynchronizationContext _context;
     private readonly Timer _debounceTimer;
     private readonly Timer _recoveryTimer;
+    private readonly ShortcutTargetWatcher _targetWatcher;
     private FileSystemWatcher _watcher;
     private Dictionary<string, (DateTime LinkWritten, string? Target)> _shortcutTargets = new(StringComparer.OrdinalIgnoreCase);
     private bool _started;
@@ -36,6 +37,7 @@ internal sealed class FolderScanner : IDisposable
             ?? throw new InvalidOperationException($"{nameof(FolderScanner)} must be created on a thread with a SynchronizationContext.");
         _debounceTimer = new Timer(_ => OnQuiet());
         _recoveryTimer = new Timer(_ => TryRecover());
+        _targetWatcher = new ShortcutTargetWatcher(RestartDebounce);
         _watcher = CreateWatcher();
     }
 
@@ -89,6 +91,9 @@ internal sealed class FolderScanner : IDisposable
         }
 
         _shortcutTargets = seen; // Shortcuts that are gone drop out of the cache.
+
+        // A target that is replaced (an app update) changes no widget folder, so it is watched where it lives.
+        _targetWatcher.Watch(seen.Values.Select(v => v.Target).OfType<string>().Where(t => !IsOnNetwork(t)));
         return widgets;
     }
 
@@ -142,6 +147,7 @@ internal sealed class FolderScanner : IDisposable
         _watcher.Dispose();
         _debounceTimer.Dispose();
         _recoveryTimer.Dispose();
+        _targetWatcher.Dispose();
     }
 
     private FileSystemWatcher CreateWatcher()

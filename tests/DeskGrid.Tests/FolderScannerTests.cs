@@ -169,6 +169,30 @@ public sealed class FolderScannerRenameTests : IDisposable
         Assert.Equal(["Fresh"], widgets!.Select(w => w.Name));
     }
 
+    // An app update replaces the program a shortcut points to; no widget folder changes, but the icon must be redrawn.
+    [Fact]
+    public async Task Changed_IsRaised_WhenAShortcutsTargetIsWritten()
+    {
+        using var apps = new TempDirectory(); // Outside the watched root, as program folders are.
+        var target = apps.CreateFile("tool.exe");
+        _root.CreateFile(@"Games\notes.txt");
+        var changes = 0;
+        var scanner = await _ui.InvokeAsync(() =>
+        {
+            ShortcutFile.Create(_root.Combine(@"Games\tool.lnk"), target);
+            var scanner = new FolderScanner(_root.Path);
+            scanner.Changed += (_, _) => Interlocked.Increment(ref changes);
+            scanner.Start();
+            scanner.Scan(); // Learns where the shortcut points, and starts watching there.
+            return scanner;
+        });
+
+        await File.WriteAllTextAsync(target, "a newer version", TestContext.Current.CancellationToken);
+        await WaitUntilAsync(() => Volatile.Read(ref changes) > 0);
+
+        await _ui.InvokeAsync(scanner.Dispose);
+    }
+
     private static async Task WaitUntilAsync(Func<bool> condition)
     {
         var deadline = DateTime.UtcNow.AddSeconds(10);
