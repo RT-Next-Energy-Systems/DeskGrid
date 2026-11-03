@@ -255,6 +255,9 @@
   <data name="ChangeLogTitle" xml:space="preserve">
     <value>更新紀錄</value>
   </data>
+  <data name="ChangeLogResource" xml:space="preserve">
+    <value>CHANGELOG.zh-TW.md</value>
+  </data>
   <data name="ChangeLogMissing" xml:space="preserve">
     <value>這個版本沒有附更新紀錄。</value>
   </data>

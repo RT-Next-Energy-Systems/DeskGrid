@@ -266,6 +266,10 @@ Using the default root folder instead:
   <data name="ChangeLogTitle" xml:space="preserve">
     <value>Change log</value>
   </data>
+  <data name="ChangeLogResource" xml:space="preserve">
+    <comment>Not shown: the name of the built-in change log file for this language. Keep in step with CHANGELOG.md.</comment>
+    <value>CHANGELOG.md</value>
+  </data>
   <data name="ChangeLogMissing" xml:space="preserve">
     <value>This build has no change log.</value>
   </data>

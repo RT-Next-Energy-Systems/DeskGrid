@@ -1,4 +1,5 @@
 using System.IO;
+using DeskGrid.Resources;
 
 namespace DeskGrid.Settings;
 
@@ -17,17 +18,18 @@ internal enum ChangeLogKind
 internal sealed record ChangeLogLine(ChangeLogKind Kind, string Text);
 
 /// <summary>
-/// The change log (<c>CHANGELOG.md</c>, built into the exe) as lines the settings window can lay out. It reads only
-/// the subset of Markdown that file uses: <c>##</c> and <c>###</c> headings and <c>-</c> items that may wrap.
+/// The change log (<c>CHANGELOG.md</c> and its Chinese twin, built into the exe) as lines the settings window can lay
+/// out. It reads only the subset of Markdown those files use: <c>##</c> and <c>###</c> headings and <c>-</c> items that may wrap.
 /// </summary>
 internal static class ChangeLog
 {
-    private const string ResourceName = "CHANGELOG.md";
+    /// <summary>The change log built into this exe in the interface language, or <see langword="null"/> if the build has none.</summary>
+    public static string? ReadEmbedded() => ReadEmbedded(Strings.ChangeLogResource);
 
-    /// <summary>The change log built into this exe, or <see langword="null"/> if the build has none.</summary>
-    public static string? ReadEmbedded()
+    /// <summary>The embedded change log file named <paramref name="resourceName"/>, or <see langword="null"/> if there is none.</summary>
+    public static string? ReadEmbedded(string resourceName)
     {
-        using var stream = typeof(ChangeLog).Assembly.GetManifestResourceStream(ResourceName);
+        using var stream = typeof(ChangeLog).Assembly.GetManifestResourceStream(resourceName);
         if (stream is null)
         {
             return null;
