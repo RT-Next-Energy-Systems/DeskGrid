@@ -527,3 +527,12 @@
 **Alternatives**: 整個程序 `ProcessRenderMode = SoftwareOnly`（同樣 83 MB，但面板 Acrylic 依賴 DWM 延伸框架，軟體繪圖可能變黑，且使用者在用電腦無法充分目視驗證）；把圖示快取縮成顯示尺寸（約省 13 MB，但高 DPI 畫質可能變）；改 framework-dependent 發布（exe 小很多但要使用者裝 runtime，改變發布方式）。程式碼本身 analyzer 掃過幾乎沒有死碼，不做大重構。
 **Consequences**: 開過面板後 D3D 裝置仍會建立（實測約 146 MB，之後回落）。日文等其他語系的 Windows 上，WPF 內建文字（文字框右鍵）改顯示英文——DeskGrid 本身也只有 en / zh-TW。
 **Author**: Claude（依使用者 /goal）
+
+---
+
+### 2026-11-03（二）— 處理 GitHub issues：可程式化的先做，其餘列出原因
+**Decision**: 依 issue 內容實作 #9（拿不到焦點的拖曳面板用 Esc 關）、#12（已刪資料夾的釘選按鈕 → 開列表）、#13（面板位置取點擊當下的游標，`OpenMessage` 隨管線送出）、#16（`CHANGELOG.zh-TW.md` + `ChangeLogResource` 字串）、#18（`MenuTheme`，未公開 uxtheme ordinal）、#20（`PanelNavigation` 方向鍵）、#21（`WM_SETTINGCHANGE` → 與顯示變更共用同一條重新吸附流程）、#22（拖曳中 Esc，輪詢 `GetAsyncKeyState`）、#24（根目錄回復 watcher）、#25（`ShortcutTargetWatcher`）。沒做的：#19（Start 功能表拖曳的資料格式沒實測過，盲寫風險高）、#1–#7（要實機）、#8（要使用者填 SignPath 申請）、#10 / #23 / #26 / #11（需求待使用者決定）、#14（研究：無公開 API）、#15（觀察中，連跑 5 次 239 測試全過）、#17（要乾淨桌面截圖）。
+**Reason**: AGENTS.md：需求不清楚要問、實機做不到的不宣稱已驗證。
+**Alternatives**: #18 不碰未公開 API，只改文件說明（但 issue 就是要選單變深色）；#25 用定時重掃（簡單，但每分鐘多一次全掃，且不即時）；#22 用低階鍵盤 hook（需要全域 hook，比 30 ms 輪詢重）；#13 固定開在工作列上方（要猜工作列位置與方向）。
+**Consequences**: 所有新行為只有單元測試，拖曳 / 工作列 / 深色選單 / 工作列變更都沒實機驗證。`MenuTheme` 依賴 uxtheme ordinal 135 / 136，Windows 更新可能拿掉，測試會先警告。
+**Author**: 使用者要求「完成所有 issue」，實作方式由我決定

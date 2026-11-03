@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Arrow keys, Home and End move through the items of an open folder; Enter opens the one that has the keyboard.
+- Pressing Esc while dragging a widget puts it back where it was.
+- The tray menu and the menu of a folder item follow the system's dark mode.
+- The change log window shows a Traditional Chinese change log on a Chinese interface.
+- A shortcut's icon is redrawn as soon as the program it points to is updated, not only when something in the
+  folder changes.
+
+### Fixed
+
+- A folder opened from a taskbar button opens where the button was clicked, even if the mouse has moved on by the time
+  DeskGrid has started.
+- A taskbar button pinned for a folder that was deleted now opens the list of all folders instead of doing nothing.
+- If the root folder is deleted and made again while DeskGrid runs, DeskGrid notices changes in it again without a restart.
+- Widgets snap to the desktop's cells again after the taskbar, the desktop icon spacing or the display scaling
+  changed.
+- A folder opened by a drag from another app (which Windows won't give the keyboard) closes with Esc once something
+  was dropped into it.
+
 ## 0.3.5
 
 ### Fixed
