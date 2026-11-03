@@ -518,3 +518,12 @@
 **Alternatives**: 維持結束（避免狀態不一致，但使用者看到的是全部消失）；每種例外各自 try/catch（漏一個就當掉）。
 **Consequences**: 同一個例外若每次計時器都發生，會一直寫 log（log 超過 512 KB 會輪替）。
 **Author**: 使用者要求（/goal），實作方式由我決定
+
+---
+
+### 2026-11-03 — 輕量化：widget 軟體繪圖、exe 只帶用得到的語系
+**Decision**: `DesktopSurface` 與 `ShellMessageWindow` 的 `HwndSource` 設 `RenderMode.SoftwareOnly`；csproj 加 `SatelliteResourceLanguages=en;zh-Hant;zh-TW`。面板（`PopupPanel`）維持硬體繪圖。
+**Reason**: 使用者要求在功能完全一致下輕量化。實測閒置 private 117 → 83 MB（managed heap 只有 4 MB，其餘是 WPF 的 D3D 裝置）；exe 65.1 → 61.9 MB。widget 截圖與硬體繪圖逐像素比對只差邊緣抗鋸齒（≤ 15/255）。
+**Alternatives**: 整個程序 `ProcessRenderMode = SoftwareOnly`（同樣 83 MB，但面板 Acrylic 依賴 DWM 延伸框架，軟體繪圖可能變黑，且使用者在用電腦無法充分目視驗證）；把圖示快取縮成顯示尺寸（約省 13 MB，但高 DPI 畫質可能變）；改 framework-dependent 發布（exe 小很多但要使用者裝 runtime，改變發布方式）。程式碼本身 analyzer 掃過幾乎沒有死碼，不做大重構。
+**Consequences**: 開過面板後 D3D 裝置仍會建立（實測約 146 MB，之後回落）。日文等其他語系的 Windows 上，WPF 內建文字（文字框右鍵）改顯示英文——DeskGrid 本身也只有 en / zh-TW。
+**Author**: Claude（依使用者 /goal）

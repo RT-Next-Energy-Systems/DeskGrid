@@ -12,6 +12,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- Regenerate with tools/make-icon.ps1. -->
     <ApplicationIcon>Assets\DeskGrid.ico</ApplicationIcon>
+    <!-- Only the languages DeskGrid speaks: without this, WPF's resources in a dozen more languages add 3.4 MB to the exe.
+         zh-Hant is where WPF's own Traditional Chinese texts (e.g. a text box's Cut / Copy / Paste) live. -->
+    <SatelliteResourceLanguages>en;zh-Hant;zh-TW</SatelliteResourceLanguages>
 
     <!-- Release builds override Version from the git tag (see .github/workflows/release.yml). -->
     <Version>0.3.5</Version>

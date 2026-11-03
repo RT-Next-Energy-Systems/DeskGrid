@@ -133,7 +133,7 @@ internal partial class PopupPanel : Window
                 _capture?.Dispose();
                 _capture = ScreenCapture.WaitUntilDone(foreground =>
                 {
-                    if (foreground != new HWND(new WindowInteropHelper(this).Handle))
+                    if (foreground != Hwnd)
                     {
                         Dismiss();
                     }
@@ -186,6 +186,8 @@ internal partial class PopupPanel : Window
 
     /// <summary>Whether something dragged in from another place was dropped here.</summary>
     public bool TookDrop => _tookDrop;
+
+    private HWND Hwnd => new(new WindowInteropHelper(this).Handle);
 
     /// <summary>Shows <paramref name="folder"/>'s current items.</summary>
     public void ShowFolder(WidgetFolder folder)
@@ -264,7 +266,7 @@ internal partial class PopupPanel : Window
     public void HideForDrag()
     {
         _hiddenForDrag = true;
-        Backdrop.SetCloaked(new HWND(new WindowInteropHelper(this).Handle), true);
+        Backdrop.SetCloaked(Hwnd, true);
     }
 
     /// <summary>
@@ -282,7 +284,7 @@ internal partial class PopupPanel : Window
         _away.Reset();
         _slot = _dragIndex;
         Slide(landAt: _slot);
-        Backdrop.SetCloaked(new HWND(new WindowInteropHelper(this).Handle), false);
+        Backdrop.SetCloaked(Hwnd, false);
     }
 
     protected override void OnDragOver(DragEventArgs e)
@@ -483,7 +485,7 @@ internal partial class PopupPanel : Window
     private bool CursorOverWindow()
     {
         PInvoke.GetCursorPos(out var cursor);
-        PInvoke.GetWindowRect(new HWND(new WindowInteropHelper(this).Handle), out var bounds);
+        PInvoke.GetWindowRect(Hwnd, out var bounds);
         return cursor.X >= bounds.left && cursor.X < bounds.right && cursor.Y >= bounds.top && cursor.Y < bounds.bottom;
     }
 
@@ -609,7 +611,7 @@ internal partial class PopupPanel : Window
 
     private void OnSourceInitialized(object? sender, EventArgs e)
     {
-        var window = new HWND(new WindowInteropHelper(this).Handle);
+        var window = Hwnd;
         if (_theme.UseAcrylic)
         {
             HwndSource.FromHwnd(window).CompositionTarget.BackgroundColor = Colors.Transparent;
@@ -650,7 +652,7 @@ internal partial class PopupPanel : Window
         {
             if (!_closing && !_hiddenForDrag)
             {
-                Backdrop.SetCloaked(new HWND(new WindowInteropHelper(this).Handle), false);
+                Backdrop.SetCloaked(Hwnd, false);
                 if (ActivateWhenShown)
                 {
                     Activate();
@@ -820,7 +822,7 @@ internal partial class PopupPanel : Window
         _menuOpen = true;
         try
         {
-            menu.Show(HwndSource.FromHwnd(new WindowInteropHelper(this).Handle), new ScreenPoint(cursor.X, cursor.Y));
+            menu.Show(HwndSource.FromHwnd(Hwnd), new ScreenPoint(cursor.X, cursor.Y));
         }
         finally
         {

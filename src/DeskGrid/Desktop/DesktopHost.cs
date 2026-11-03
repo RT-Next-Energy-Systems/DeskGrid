@@ -3,7 +3,6 @@ using System.Windows.Interop;
 using System.Windows.Threading;
 using DeskGrid.Diagnostics;
 using Windows.Win32;
-using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace DeskGrid.Desktop;

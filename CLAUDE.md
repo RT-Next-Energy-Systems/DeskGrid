@@ -68,6 +68,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **座標**：surface 位置為實體螢幕像素（`ScreenPoint`），掛載時轉 DefView client 座標。
 - **多螢幕**（2026-11-01，使用者回報「接外接螢幕、放在主螢幕左邊後 widget 全跑到左邊，且在左邊開的面板卻出現在主螢幕」）：桌面視窗（Progman / DefView）涵蓋所有螢幕，在主螢幕**左側或上方**加螢幕時它的原點會往負方向移，子視窗（surface）的 client 座標不變 → 在螢幕上整批漂移；`DesktopSurface.Position`（設定檔存的、面板定位用的）沒變，所以面板開在「邏輯位置」＝主螢幕。修法：`DesktopSurface.Resync()`（`GetWindowRect` 與 `Position` 不同就 `MoveTo`）由 `DesktopHost` 每秒檢查 + 收到 `WM_DISPLAYCHANGE`（隱藏的 top-level 視窗）立即執行；1.5 秒後（Explorer 重排完）發 `DisplayChanged` → `WidgetBoard.OnDisplayChanged`（重讀格線、依**設定檔存的位置**重新擺、關掉開著的面板）。存檔位置的中心不在任何螢幕工作區（螢幕被拔掉）→ 暫放最近螢幕最近空格，**不覆蓋存檔**，螢幕回來就回去（`WidgetBoard.Add` 與 `OnDisplayChanged`；拖曳才會存新位置）。實機重現並驗證：用 `ChangeDisplaySettingsEx`（`DM_POSITION`，`CDS_UPDATEREGISTRY | CDS_NORESET` 再用 NULL 套用；套用時 dm 必須傳 NULL）把第二螢幕在主螢幕右側（x=2880）與左側（x=-2360）間切換，Progman 矩形從 (0,0,5240,1800) 變 (-2360,0,2880,1800)，log 出現「Put 9 surface(s) back」，9 個 surface 螢幕座標不變；測完還原。
 - `WS_EX_NOPARENTNOTIFY`：避免 Explorer 執行緒卡住時透過 parent notify 卡住我們。
+- **軟體繪圖**（2026-11-03，輕量化）：widget 的 `DesktopSurface` 與隱藏的 `ShellMessageWindow` 設 `CompositionTarget.RenderMode = SoftwareOnly`，沒開過面板前不建 Direct3D 裝置（實測 private 117 → 83 MB，widget 截圖與硬體繪圖只差邊緣抗鋸齒 ≤ 15/255）。面板維持硬體繪圖：軟體繪圖下 DWM 延伸框架（Acrylic）可能變黑；整個程序設 `ProcessRenderMode` 不可用。開過面板後 D3D 裝置會建立（約 +60 MB，之後會回落）。
 
 ## Config / Folders 實作要點（階段 2）
 
@@ -167,7 +168,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 ## 發布與 CI（階段 7）
 
 - **GitHub**：公開 repo `Ryan970714/DeskGrid`，預設分支 `main`，MIT（著作權人 Ryan Kuo）。README 英文（`README.md`）+ 繁中（`README.zh-TW.md`），內容需保持一致。
-- **打包**：`Properties/PublishProfiles/win-x64.pubxml`：self-contained、PublishSingleFile、`IncludeNativeLibrariesForSelfExtract`（WPF 原生 DLL 也包進 exe，首次執行解到 %TEMP%）、壓縮、無 pdb。WPF 不支援 trimming。`.gitignore` 範本會忽略 `*.pubxml`，已為這個 profile 加例外。
+- **打包**：`Properties/PublishProfiles/win-x64.pubxml`：self-contained、PublishSingleFile、`IncludeNativeLibrariesForSelfExtract`（WPF 原生 DLL 也包進 exe，首次執行解到 %TEMP%）、壓縮、無 pdb。WPF 不支援 trimming。`SatelliteResourceLanguages=en;zh-Hant;zh-TW` 只帶用得到的語系（WPF 自己的文字如文字框右鍵在 `zh-Hant`），exe 65.1 → 61.9 MB。`.gitignore` 範本會忽略 `*.pubxml`，已為這個 profile 加例外。
 - **CI**（`.github/workflows/ci.yml`）：push 到 main 與 PR → windows-latest、.NET 10.0.x → build、test、publish，exe 上傳為 artifact。
 - **Release**（`release.yml`）：推 `v*` tag → test → 以 tag 版本號 publish → `gh release create`，只附 `DeskGrid-<版本>-win-x64.exe`。csproj 的 `<Version>` 是本機建置的預設值。
 - **未簽章**：README 說明 SmartScreen「其他資訊 → 仍要執行」與 SHA256 驗證。

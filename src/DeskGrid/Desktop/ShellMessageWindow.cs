@@ -23,6 +23,7 @@ internal static class ShellMessageWindow
             Width = 0,
             Height = 0,
         });
+        source.CompositionTarget.RenderMode = RenderMode.SoftwareOnly;
         PInvoke.ChangeWindowMessageFilterEx(new HWND(source.Handle), TaskbarCreatedMessage, WINDOW_MESSAGE_FILTER_ACTION.MSGFLT_ALLOW, null);
         source.AddHook(hook);
         return source;

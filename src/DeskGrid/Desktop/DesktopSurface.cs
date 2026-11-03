@@ -44,7 +44,11 @@ internal sealed class DesktopSurface(UIElement content, ScreenPoint position) : 
             PositionX = origin.X,
             PositionY = origin.Y,
         };
-        _source = new HwndSource(parameters) { SizeToContent = SizeToContent.WidthAndHeight, RootVisual = content };
+        _source = new HwndSource(parameters) { SizeToContent = SizeToContent.WidthAndHeight };
+        // A layered window is read back from the GPU after every frame anyway; drawn in software, the widgets need no
+        // Direct3D device of their own, which costs a third of the process's memory (measured: 117 → 83 MB private).
+        _source.CompositionTarget.RenderMode = RenderMode.SoftwareOnly;
+        _source.RootVisual = content;
         _source.Disposed += OnSourceDisposed;
         _source.AddHook(KeepDesktopInactive);
 
