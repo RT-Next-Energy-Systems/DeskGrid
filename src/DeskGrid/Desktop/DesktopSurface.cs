@@ -16,6 +16,7 @@ internal sealed class DesktopSurface(UIElement content, ScreenPoint position) : 
     private static readonly HWND HwndTop = HWND.Null;
 
     private HwndSource? _source;
+    private bool _visible = true;
 
     /// <summary>Top-left corner in physical screen pixels.</summary>
     public ScreenPoint Position { get; private set; } = position;
@@ -54,6 +55,14 @@ internal sealed class DesktopSurface(UIElement content, ScreenPoint position) : 
 
         // Above the icon list view, so clicks land on us rather than on the icons.
         BringToFront();
+        ApplyVisibility();
+    }
+
+    /// <summary>Shows or hides the window (it stays attached); a new window starts as this says.</summary>
+    public void SetVisible(bool visible)
+    {
+        _visible = visible;
+        ApplyVisibility();
     }
 
     /// <summary>Puts the window above its siblings: the icons and the other surfaces.</summary>
@@ -119,6 +128,14 @@ internal sealed class DesktopSurface(UIElement content, ScreenPoint position) : 
         var point = new System.Drawing.Point(position.X, position.Y);
         PInvoke.ScreenToClient(parent, ref point);
         return point;
+    }
+
+    private void ApplyVisibility()
+    {
+        if (_source is { IsDisposed: false } source)
+        {
+            PInvoke.ShowWindow(new HWND(source.Handle), _visible ? SHOW_WINDOW_CMD.SW_SHOWNA : SHOW_WINDOW_CMD.SW_HIDE);
+        }
     }
 
     private void Release()

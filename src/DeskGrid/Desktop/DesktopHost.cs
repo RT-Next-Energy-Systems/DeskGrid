@@ -24,12 +24,17 @@ internal sealed class DesktopHost : IDisposable
     private readonly DispatcherTimer _displaySettled = new() { Interval = DisplaySettleDelay };
     private readonly DesktopIconWatcher _iconWatcher = new();
     private HwndSource? _shellEventsWindow;
+    private bool _iconsVisible = true;
     private IconLayer? _layer;
 
     public DesktopHost()
     {
         _retryTimer.Tick += (_, _) => EnsureAttached();
-        _driftTimer.Tick += (_, _) => PutSurfacesBack();
+        _driftTimer.Tick += (_, _) =>
+        {
+            PutSurfacesBack();
+            FollowIconVisibility();
+        };
         _displaySettled.Tick += (_, _) =>
         {
             _displaySettled.Stop();
@@ -178,6 +183,7 @@ internal sealed class DesktopHost : IDisposable
         try
         {
             surface.AttachTo(layer.Handle);
+            surface.SetVisible(_iconsVisible);
             return true;
         }
         catch (Win32Exception exception)
@@ -230,6 +236,29 @@ internal sealed class DesktopHost : IDisposable
         or 0x002E // SPI_SETICONMETRICS
         or 0x002F // SPI_SETWORKAREA
         or 0x009F; // SPI_SETLOGICALDPIOVERRIDE
+
+    // "Show desktop icons" off hides the icon list view, and the widgets go with it: they are the desktop's icons too.
+    // Explorer sends no event for it, so it is looked at with the other once-a-second checks.
+    private void FollowIconVisibility()
+    {
+        if (_layer is not { } layer || !PInvoke.IsWindow(layer.Handle))
+        {
+            return;
+        }
+
+        var listView = layer.FindListView();
+        if (listView.IsNull || PInvoke.IsWindowVisible(listView) == _iconsVisible)
+        {
+            return;
+        }
+
+        _iconsVisible = !_iconsVisible;
+        Log.Info(_iconsVisible ? "Desktop icons shown; showing the widgets." : "Desktop icons hidden; hiding the widgets.");
+        foreach (var surface in _surfaces)
+        {
+            surface.SetVisible(_iconsVisible);
+        }
+    }
 
     // The desktop window spans all monitors and moves when one is added on its left or top; its children, our
     // surfaces, move with it on the screen. Each surface knows where it belongs and goes back there.
