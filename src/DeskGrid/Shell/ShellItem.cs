@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using DeskGrid.Diagnostics;
 using Windows.Win32;
 using Windows.Win32.UI.Shell;
+using Windows.Win32.UI.Shell.Common;
 
 namespace DeskGrid.Shell;
 
@@ -53,6 +54,48 @@ internal static class ShellItem
         finally
         {
             PInvoke.ILFree(item);
+        }
+    }
+
+    /// <summary>
+    /// The name of a Shell item given as an absolute identifier list, and whether the item is a file or folder
+    /// (<see langword="false"/> for a virtual one, such as an app of the Start menu).
+    /// </summary>
+    public static unsafe (string Name, bool IsFile) Describe(byte[] idList)
+    {
+        fixed (byte* pidl = idList)
+        {
+            PInvoke.SHCreateItemFromIDList(*(ITEMIDLIST*)pidl, out IShellItem item).ThrowOnFailure();
+            try
+            {
+                return (ReadName(item, SIGDN.SIGDN_NORMALDISPLAY) ?? "", ReadName(item, SIGDN.SIGDN_FILESYSPATH) is not null);
+            }
+            finally
+            {
+                Marshal.ReleaseComObject(item);
+            }
+        }
+    }
+
+    // The name in the given form, or null if the item has none (a virtual item has no file system path).
+    private static unsafe string? ReadName(IShellItem item, SIGDN form)
+    {
+        try
+        {
+            item.GetDisplayName(form, out var name);
+            try
+            {
+                return name.ToString();
+            }
+            finally
+            {
+                Marshal.FreeCoTaskMem((nint)name.Value);
+            }
+        }
+        catch (Exception exception) when (exception is COMException or ArgumentException or IOException or NotSupportedException)
+        {
+            // The marshaller turns the HRESULT into whichever of these fits it; E_INVALIDARG, for a form the item doesn't have.
+            return null;
         }
     }
 

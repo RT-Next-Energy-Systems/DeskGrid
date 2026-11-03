@@ -5,6 +5,7 @@ using Windows.Win32.System.Com;
 using Windows.Win32.System.Com.StructuredStorage;
 using Windows.Win32.System.Variant;
 using Windows.Win32.UI.Shell;
+using Windows.Win32.UI.Shell.Common;
 using Windows.Win32.UI.Shell.PropertiesSystem;
 
 namespace DeskGrid.Shell;
@@ -35,6 +36,28 @@ internal static class ShortcutFile
         {
             // The marshaller turns "file not found", "access denied" and "sharing violation" into their .NET types.
             return null;
+        }
+        finally
+        {
+            Marshal.ReleaseComObject(link);
+        }
+    }
+
+    /// <summary>
+    /// Creates <paramref name="shortcutPath"/>, a shortcut to the Shell item <paramref name="idList"/> (an absolute
+    /// identifier list): for things that have no file path, like the apps of the Start menu.
+    /// </summary>
+    public static unsafe void CreateFromIdList(string shortcutPath, byte[] idList)
+    {
+        var link = (IShellLinkW)new ShellLink();
+        try
+        {
+            fixed (byte* pidl = idList)
+            fixed (char* file = shortcutPath)
+            {
+                link.SetIDList((ITEMIDLIST*)pidl);
+                ((IPersistFile)link).Save(file, true);
+            }
         }
         finally
         {

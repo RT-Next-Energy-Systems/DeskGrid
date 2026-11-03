@@ -402,9 +402,12 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
     // The cursor shows what the first droppable item would do.
     private DragDropEffects DropEffect(string folderPath, DragEventArgs e)
     {
-        var action = DroppedPaths(e)
-            .Select(path => ItemImporter.Plan(path, folderPath, configStore.Config.DropMode, FolderPaths.Desktops, configStore.Config.RootPath))
-            .FirstOrDefault(a => a != ImportAction.None);
+        // Apps of the Start menu are made into shortcuts, as programs are; there is nothing to plan before the drop.
+        var action = DroppedItems.OffersApps(e.Data)
+            ? ImportAction.CreateShortcut
+            : DroppedPaths(e)
+                .Select(path => ItemImporter.Plan(path, folderPath, configStore.Config.DropMode, FolderPaths.Desktops, configStore.Config.RootPath))
+                .FirstOrDefault(a => a != ImportAction.None);
         var effect = action switch
         {
             ImportAction.Move => DragDropEffects.Move,
@@ -421,7 +424,8 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
 
     private void ImportDropped(string folderPath, DragEventArgs e)
     {
-        var added = ItemImporter.Import(DroppedPaths(e), folderPath, configStore.Config.DropMode, FolderPaths.Desktops, configStore.Config.RootPath);
+        using var dropped = DroppedItems.Read(e.Data);
+        var added = ItemImporter.Import(dropped.Paths, folderPath, configStore.Config.DropMode, FolderPaths.Desktops, configStore.Config.RootPath);
 
         // We moved, copied or linked the files ourselves. Never report Move: the source would then
         // delete what it thinks it still has.

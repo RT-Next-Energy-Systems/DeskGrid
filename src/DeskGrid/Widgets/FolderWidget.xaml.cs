@@ -8,6 +8,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using DeskGrid.Desktop;
 using DeskGrid.Diagnostics;
+using DeskGrid.Folders;
 using DeskGrid.Resources;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -142,7 +143,7 @@ internal partial class FolderWidget : UserControl
 
     protected override void OnDragEnter(DragEventArgs e)
     {
-        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        if (DroppedItems.Offers(e.Data))
         {
             Highlight.Background = HoverBrush;
         }

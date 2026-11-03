@@ -545,3 +545,12 @@
 **Alternatives**: #23 保持顯示（不改）；#26 偵測選取用 Explorer 的 list view 選取狀態（要跨行程讀 `LVM_GETITEMSTATE`，仍畫不出 widget 的選取框）、只做視覺不做拖動；#11 關閉 issue。
 **Consequences**: 框選與一起拖動依賴 `EVENT_SYSTEM_CAPTURESTART` 與按下點／游標推算框，Explorer 的框選實際判定（圖示圖片 + 名稱區）以內縮 15% / 10% 近似；全部沒有實機驗證。
 **Author**: 使用者決定，實作方式由我決定
+
+---
+
+### 2026-11-03（四）— #27 面板緊貼工作列、#19 開始功能表 App 拖入
+**Decision**: #27：`PanelPlacement` 在算邊與位置前先把錨點夾進工作區（`Within`）。#19：不改 `ItemImporter`，把 `Shell IDList Array` 的虛擬項目先做成暫存 `.lnk` 再當一般拖入的捷徑處理（`DroppedItems`）。
+**Reason**: #27 的截圖看不到，依描述（開面板後與工作列有距離、偶發）推測錨點在工作列上、離工作區邊緣的距離隨游標位置變動。#19 讓三個放開處與 `ItemImporter` 的規則（捷徑複製、同名編號）不必各自認識 PIDL。
+**Alternatives**: #27 固定開在工作列上方（要猜工作列方向）；#19 讓 `ItemImporter` 直接收 PIDL（要改 `Plan` / 三個呼叫端 / 事件參數的型別）、或對虛擬項目用 `shell:AppsFolder\AUMID` 字串建 `.lnk`（要自己取 AUMID，且 `SetIDList` 更直接）。
+**Consequences**: 暫存 `.lnk` 在放開後即刪；程序在放開途中被殺會留下 `%TEMP%\DeskGrid\drops\` 的空殼，沒有啟動時清理。#19 的資料格式假設沒實測。
+**Author**: 使用者要求，實作方式由我決定

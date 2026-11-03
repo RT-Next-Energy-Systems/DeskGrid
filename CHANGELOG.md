@@ -14,11 +14,15 @@
   them. (Ctrl+A still selects only Explorer's icons.)
 - Files can be dropped on a folder in the all-folders list.
 - Folders are hidden while Windows' "Show desktop icons" is off, and come back with the icons.
+- Apps can be dragged from the Start menu onto a folder (its widget, its open panel, or its entry in the all-folders
+  list); they become shortcuts.
 
 ### Fixed
 
 - A folder opened from a taskbar button opens where the button was clicked, even if the mouse has moved on by the time
   DeskGrid has started.
+- A folder opened from a taskbar button now sits right above the taskbar, instead of floating higher or lower
+  depending on where in the button the mouse was.
 - A taskbar button pinned for a folder that was deleted now opens the list of all folders instead of doing nothing.
 - If the root folder is deleted and made again while DeskGrid runs, DeskGrid notices changes in it again without a restart.
 - Widgets snap to the desktop's cells again after the taskbar, the desktop icon spacing or the display scaling

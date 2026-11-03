@@ -310,12 +310,11 @@ internal partial class PopupPanel : Window
         else if (Folder is null)
         {
             // The list of folders takes its own folders being rearranged, and files dropped on a folder.
-            var target = e.Data.GetDataPresent(DataFormats.FileDrop) ? FolderUnder(e.GetPosition(Items)) : null;
+            var target = DroppedItems.Offers(e.Data) ? FolderUnder(e.GetPosition(Items)) : null;
             TintDropTarget(target ?? -1);
-            e.Effects = target is null ? DragDropEffects.None
-                : (e.AllowedEffects & DragDropEffects.Copy) != 0 ? DragDropEffects.Copy : DragDropEffects.Move;
+            e.Effects = target is null ? DragDropEffects.None : IncomingEffect(e);
         }
-        else if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        else if (DroppedItems.Offers(e.Data))
         {
             // From another panel or another app: open a gap where it would go.
             if (_gap < 0)
@@ -330,7 +329,7 @@ internal partial class PopupPanel : Window
                 Slide(gapAt: gap);
             }
 
-            e.Effects = (e.AllowedEffects & DragDropEffects.Copy) != 0 ? DragDropEffects.Copy : DragDropEffects.Move;
+            e.Effects = IncomingEffect(e);
         }
         else
         {
@@ -339,6 +338,13 @@ internal partial class PopupPanel : Window
 
         e.Handled = true;
     }
+
+    // What the cursor shows for something dropped from elsewhere: whichever of copying and linking (the Start menu offers
+    // that) the source allows; the drop is handled the same either way.
+    private static DragDropEffects IncomingEffect(DragEventArgs e) =>
+        (e.AllowedEffects & DragDropEffects.Copy) != 0 ? DragDropEffects.Copy
+        : (e.AllowedEffects & DragDropEffects.Link) != 0 ? DragDropEffects.Link
+        : DragDropEffects.Move;
 
     protected override void OnDragLeave(DragEventArgs e)
     {
@@ -380,10 +386,11 @@ internal partial class PopupPanel : Window
             // Files dropped on a folder of the list go into that folder, after what it has.
             var target = FolderUnder(e.GetPosition(Items));
             TintDropTarget(-1);
-            if (target is { } slot && _items[slot].Folder is { } onto && e.Data.GetData(DataFormats.FileDrop) is string[] { Length: > 0 } dropped)
+            using var dropped = target is not null ? DroppedItems.Read(e.Data) : null;
+            if (target is { } slot && _items[slot].Folder is { } onto && dropped is { Paths.Count: > 0 })
             {
                 _tookDrop = true;
-                ItemsDropped?.Invoke(this, new ItemsDroppedEventArgs(onto.Name, dropped, onto.Items.Count));
+                ItemsDropped?.Invoke(this, new ItemsDroppedEventArgs(onto.Name, dropped.Paths, onto.Items.Count));
                 e.Effects = DragDropEffects.Copy; // We did it ourselves; never report Move.
             }
             else
@@ -391,8 +398,9 @@ internal partial class PopupPanel : Window
                 e.Effects = DragDropEffects.None;
             }
         }
-        else if (e.Data.GetData(DataFormats.FileDrop) is string[] { Length: > 0 } paths)
+        else if (DroppedItems.Read(e.Data) is { Paths.Count: > 0 } items)
         {
+            using var _ = items;
             var folder = Folder;
             var index = _gap >= 0 ? _gap : _items.Count;
             _gap = -1;
@@ -401,7 +409,7 @@ internal partial class PopupPanel : Window
             _resize?.Stop();
             Items.MinHeight = 0; // the refresh that follows sizes the window for the new item
             _tookDrop = true;
-            ItemsDropped?.Invoke(this, new ItemsDroppedEventArgs(folder.Name, paths, index));
+            ItemsDropped?.Invoke(this, new ItemsDroppedEventArgs(folder.Name, items.Paths, index));
             FitToContent();
 
             // We moved or copied the files ourselves; never report Move, or the source would delete them again.
