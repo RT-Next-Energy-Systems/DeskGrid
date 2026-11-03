@@ -48,6 +48,27 @@ public sealed class PanelPlacementTests
         Assert.Equal(new ScreenPoint(0, 830), PanelPlacement.Place(anchor, 504, 874, workArea, 16, side));
     }
 
+    // A panel asked for from the taskbar is anchored at the cursor, which is on the taskbar below the work area.
+    [Theory]
+    [InlineData(802)] // At the taskbar's top edge...
+    [InlineData(825)] // ...in its middle...
+    [InlineData(850)] // ...or at its bottom: the panel sits the same distance above the taskbar.
+    public void Place_FromTheTaskbar_SitsAtTheSameGapAboveTheWorkAreaWhereverTheCursorWas(int cursorY)
+    {
+        var position = PanelPlacement.Place(new ScreenRect(500, cursorY, 501, cursorY + 1), 300, 200, WorkArea, Gap);
+
+        Assert.Equal(new ScreenPoint(350, 800 - 1 - Gap - 200), position);
+    }
+
+    [Fact]
+    public void Within_MovesAnAnchorOnlyAsFarAsNeeded()
+    {
+        Assert.Equal(new ScreenRect(10, 20, 30, 40), PanelPlacement.Within(new ScreenRect(10, 20, 30, 40), WorkArea));
+        Assert.Equal(new ScreenRect(500, 799, 501, 800), PanelPlacement.Within(new ScreenRect(500, 850, 501, 851), WorkArea));
+        Assert.Equal(new ScreenRect(0, 0, 1, 1), PanelPlacement.Within(new ScreenRect(-30, -9, -29, -8), WorkArea));
+        Assert.Equal(new ScreenRect(999, 400, 1000, 401), PanelPlacement.Within(new ScreenRect(1040, 400, 1041, 401), WorkArea));
+    }
+
     [Fact]
     public void Place_TooBigForAnySide_ClampsIntoTheWorkArea() =>
         Assert.Equal(new ScreenPoint(0, 0), PanelPlacement.Place(new ScreenRect(400, 300, 500, 400), 2000, 2000, WorkArea, Gap));
