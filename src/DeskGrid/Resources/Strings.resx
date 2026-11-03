@@ -204,9 +204,6 @@ Using the default root folder instead:
   <data name="SettingsUpdateAvailable" xml:space="preserve">
     <value>Version {0} is available.</value>
   </data>
-  <data name="PanelMoreOptions" xml:space="preserve">
-    <value>Show more options</value>
-  </data>
   <data name="WidgetDelete" xml:space="preserve">
     <value>Delete folder…</value>
   </data>

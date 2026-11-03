@@ -918,46 +918,22 @@ internal partial class PopupPanel : Window
         }
 
         PInvoke.GetCursorPos(out var cursor);
-        var at = new ScreenPoint(cursor.X, cursor.Y);
-        var owner = HwndSource.FromHwnd(Hwnd);
         _menuOpen = true;
-
-        // What was picked runs once the short menu is gone: a command may ask something or open a window.
-        Action? picked = null;
-        void ShowFull() => menu.Show(owner, at);
-        void Finish()
+        try
         {
-            try
-            {
-                picked?.Invoke();
-            }
-            finally
-            {
-                menu.Dispose();
-                _menuOpen = false;
-            }
-
-            // A command that opened something (the file, a dialog, the properties) has taken the focus: this panel is done.
-            if (!IsActive)
-            {
-                Dismiss();
-            }
+            menu.Show(HwndSource.FromHwnd(Hwnd), new ScreenPoint(cursor.X, cursor.Y));
+        }
+        finally
+        {
+            menu.Dispose();
+            _menuOpen = false;
         }
 
-        var compact = CompactShellMenu.IsWanted
-            ? CompactShellMenu.Build(menu, entry => picked = () => menu.Run(entry, owner, at), () => picked = ShowFull)
-            : null;
-        if (compact is null)
+        // A command that opened something (the file, a dialog, the properties) has taken the focus: this panel is done.
+        if (!IsActive)
         {
-            picked = ShowFull;
-            Finish();
-            return;
+            Dismiss();
         }
-
-        compact.PlacementTarget = this;
-        compact.Placement = PlacementMode.MousePoint;
-        compact.Closed += (_, _) => Dispatcher.BeginInvoke(DispatcherPriority.Background, Finish);
-        compact.IsOpen = true;
     }
 
     // "New folder", and "Delete folder" where a folder is meant. The panel closes first: both ask something.

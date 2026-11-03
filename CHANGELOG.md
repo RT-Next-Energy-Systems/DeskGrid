@@ -2,11 +2,6 @@
 
 ## Unreleased
 
-### Added
-
-- On Windows 11, right-clicking an item in an open folder first shows a short menu like File Explorer's (Cut, Copy,
-  Delete, Open, Properties); "Show more options" opens the full menu, which Shift+right-click still shows directly.
-
 ### Fixed
 
 - The color picker, the folder picker and the buttons of Windows message boxes now use the language chosen in

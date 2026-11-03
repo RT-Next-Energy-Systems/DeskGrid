@@ -36,28 +36,6 @@ public sealed class ShellContextMenuTests : IDisposable
     }
 
     [Fact]
-    public async Task ReadEntries_NamesTheCommandsTheShortMenuOffers()
-    {
-        var file = _directory.CreateFile("notes.txt");
-
-        var entries = await _sta.InvokeAsync(() =>
-        {
-            using var menu = ShellContextMenu.Load(file)!;
-            return menu.ReadEntries();
-        });
-
-        foreach (var verb in new[] { "cut", "copy", "delete", "properties" })
-        {
-            var entry = Assert.Single(entries, entry => entry.Verb.Equals(verb, StringComparison.OrdinalIgnoreCase));
-
-            // The text is the menu's own, without the keyboard mark or the shortcut shown after it.
-            Assert.False(string.IsNullOrWhiteSpace(entry.Text));
-            Assert.DoesNotContain('&', entry.Text);
-            Assert.DoesNotContain('\t', entry.Text);
-        }
-    }
-
-    [Fact]
     public async Task Show_ClosedWithoutAChoice_RunsNothing()
     {
         var file = _directory.CreateFile("notes.txt");

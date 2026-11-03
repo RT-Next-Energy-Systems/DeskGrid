@@ -198,9 +198,6 @@
   <data name="SettingsUpdateAvailable" xml:space="preserve">
     <value>有新版本 {0}。</value>
   </data>
-  <data name="PanelMoreOptions" xml:space="preserve">
-    <value>顯示其他選項</value>
-  </data>
   <data name="WidgetDelete" xml:space="preserve">
     <value>刪除資料夾…</value>
   </data>
