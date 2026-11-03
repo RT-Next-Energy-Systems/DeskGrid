@@ -399,8 +399,27 @@ internal partial class PopupPanel : Window
             Dismiss();
             e.Handled = true;
         }
+        else if (!e.Handled && !HeadingEditor.IsKeyboardFocusWithin && PanelNavigation.NextSlot(e.Key, FocusedSlot(), _items.Count, _columns) is { } slot)
+        {
+            FocusItem(slot);
+            e.Handled = true;
+        }
 
         base.OnKeyDown(e);
+    }
+
+    // The slot of the item that has the keyboard, or null if none has.
+    private int? FocusedSlot() =>
+        Keyboard.FocusedElement is FrameworkElement { DataContext: PanelItem item } && _items.IndexOf(item) is >= 0 and var slot ? slot : null;
+
+    // The container is a ContentPresenter; the button the item template makes is its only child.
+    private void FocusItem(int slot)
+    {
+        if (ContainerAt(slot) is { } container && VisualTreeHelper.GetChild(container, 0) is Button button)
+        {
+            button.Focus();
+            button.BringIntoView();
+        }
     }
 
     private bool IsOwnItem(DragEventArgs e) =>
