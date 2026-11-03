@@ -35,6 +35,9 @@ internal partial class FolderWidget : UserControl
     // let them through to the desktop, which would put a dropped icon on the widget's cell.
     private static readonly Brush IdleBrush = Frozen(new SolidColorBrush(Color.FromArgb(1, 0, 0, 0)));
 
+    // A widget picked by a rubber band round the desktop, like a selected desktop icon.
+    private static readonly Brush SelectedBrush = Frozen(new SolidColorBrush(Color.FromArgb(0x55, 0xFF, 0xFF, 0xFF)));
+
     private static readonly Effect HaloEffect = Frozen(new DropShadowEffect { ShadowDepth = 0, BlurRadius = 5, Opacity = 1, Color = Colors.Black });
 
     private Task<BitmapSource>? _preview;
@@ -84,6 +87,20 @@ internal partial class FolderWidget : UserControl
 
     public event EventHandler? DeleteRequested;
 
+    /// <summary>Whether the widget is selected (picked by a rubber band, to be dragged along with the others).</summary>
+    public bool IsSelected
+    {
+        get;
+        set
+        {
+            field = value;
+            Highlight.Background = IsMouseOver ? HoverBrush : RestingBrush;
+        }
+    }
+
+    // What the cell looks like when the mouse isn't on it.
+    private Brush RestingBrush => IsSelected ? SelectedBrush : IdleBrush;
+
     /// <summary>Whether the name has a dark halo for legibility over a light wallpaper.</summary>
     public bool HasHalo
     {
@@ -121,7 +138,7 @@ internal partial class FolderWidget : UserControl
 
     protected override void OnMouseEnter(MouseEventArgs e) => Highlight.Background = HoverBrush;
 
-    protected override void OnMouseLeave(MouseEventArgs e) => Highlight.Background = IdleBrush;
+    protected override void OnMouseLeave(MouseEventArgs e) => Highlight.Background = RestingBrush;
 
     protected override void OnDragEnter(DragEventArgs e)
     {
@@ -137,7 +154,7 @@ internal partial class FolderWidget : UserControl
     {
         if (!IsCursorOver())
         {
-            Highlight.Background = IdleBrush;
+            Highlight.Background = RestingBrush;
         }
 
         base.OnDragLeave(e);
@@ -145,7 +162,7 @@ internal partial class FolderWidget : UserControl
 
     protected override void OnDrop(DragEventArgs e)
     {
-        Highlight.Background = IdleBrush;
+        Highlight.Background = RestingBrush;
         base.OnDrop(e);
     }
 

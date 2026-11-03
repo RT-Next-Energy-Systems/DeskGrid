@@ -29,8 +29,10 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
     private static readonly TimeSpan HaloInterval = TimeSpan.FromSeconds(2);
 
     private readonly Dictionary<string, Entry> _entries = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<Entry> _selected = [];
     private DispatcherTimer? _haloTimer;
     private IconMerger? _merger;
+    private MarqueeSelector? _marquee;
     private DesktopIconGrid? _nativeIcons;
 
     public event EventHandler<WidgetClickedEventArgs>? WidgetClicked;
@@ -56,6 +58,7 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
         var present = folders.Select(f => f.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var name in _entries.Keys.Where(n => !present.Contains(n)).ToList())
         {
+            _selected.Remove(_entries[name]);
             _entries[name].Release(host);
             _entries.Remove(name);
         }
@@ -95,6 +98,13 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
             _merger.MergeRequested += (_, merge) => MergeIcons(merge);
         }
 
+        if (_marquee is null)
+        {
+            _marquee = new MarqueeSelector(host);
+            _marquee.Started += (_, _) => ClearSelection();
+            _marquee.Changed += (_, band) => SelectWithin(band);
+        }
+
         UpdateHalos();
     }
 
@@ -102,12 +112,52 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
     {
         _haloTimer?.Stop();
         _merger?.Dispose();
+        _marquee?.Dispose();
         foreach (var entry in _entries.Values)
         {
             entry.Release(host);
         }
 
         _entries.Clear();
+    }
+
+    /// <summary>
+    /// The mouse went down somewhere else on the desktop, or a widget was clicked: nothing stays selected. A selected widget
+    /// is one a rubber band took in; all selected widgets move together when one of them is dragged.
+    /// </summary>
+    public void ClearSelection()
+    {
+        foreach (var entry in _selected)
+        {
+            entry.View.IsSelected = false;
+        }
+
+        _selected.Clear();
+    }
+
+    // The widgets whose picture and name the rubber band touches are selected, the others not.
+    private void SelectWithin(ScreenRect band)
+    {
+        foreach (var entry in _entries.Values)
+        {
+            var selected = band.Intersects(WidgetGrid.IconArea(BoundsOf(entry.Surface)));
+            if (selected ? _selected.Add(entry) : _selected.Remove(entry))
+            {
+                entry.View.IsSelected = selected;
+            }
+        }
+    }
+
+    // Who moves when this widget is dragged: all the selected ones if it is one of them, else it alone.
+    private List<Entry> DragGroup(Entry dragged)
+    {
+        if (_selected.Contains(dragged))
+        {
+            return [.. _selected];
+        }
+
+        ClearSelection();
+        return [dragged];
     }
 
     // Cells are exactly as big as the desktop's icon cells, so a widget looks and sits like a shortcut.
@@ -422,6 +472,7 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
 
         private readonly DispatcherTimer _hover;
         private ScreenPoint _dragOrigin;
+        private List<Entry> _group = []; // Who moves with this widget while it is dragged (itself, or the selection).
 
         public Entry(WidgetBoard board, WidgetFolder folder, ScreenPoint position)
         {
@@ -430,29 +481,56 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
             Surface = new DesktopSurface(View, position);
             _hover = new DispatcherTimer { Interval = HoverOpenDelay };
 
-            View.Clicked += (_, _) => board.WidgetClicked?.Invoke(board, new WidgetClickedEventArgs(Folder, board.BoundsOf(Surface)));
+            View.Clicked += (_, _) =>
+            {
+                board.ClearSelection();
+                board.WidgetClicked?.Invoke(board, new WidgetClickedEventArgs(Folder, board.BoundsOf(Surface)));
+            };
             View.PinRequested += (_, _) => board.PinRequested?.Invoke(board, Folder);
             View.NewFolderRequested += (_, _) => board.NewFolderRequested?.Invoke(board, EventArgs.Empty);
             View.DeleteRequested += (_, _) => board.DeleteRequested?.Invoke(board, Folder);
             View.DragStarted += (_, _) =>
             {
-                _dragOrigin = Surface.Position;
-                Surface.BringToFront(); // Carried over the other widgets, not under them.
+                _group = board.DragGroup(this);
+                foreach (var member in _group)
+                {
+                    member._dragOrigin = member.Surface.Position;
+                    member.Surface.BringToFront(); // Carried over the other widgets, not under them.
+                }
+
                 board.WidgetDragStarted?.Invoke(board, EventArgs.Empty);
             };
-            View.Dragged += (_, offset) => Surface.MoveTo(_dragOrigin.Offset(offset.X, offset.Y));
-            View.DragCancelled += (_, _) => Surface.MoveTo(_dragOrigin); // Its cell is where it was saved: nothing to snap or store.
+            View.Dragged += (_, offset) =>
+            {
+                foreach (var member in _group)
+                {
+                    member.Surface.MoveTo(member._dragOrigin.Offset(offset.X, offset.Y));
+                }
+            };
+            View.DragCancelled += (_, _) =>
+            {
+                // Their cells are where they were saved: nothing to snap or store.
+                foreach (var member in _group)
+                {
+                    member.Surface.MoveTo(member._dragOrigin);
+                }
+            };
             View.DragCompleted += (_, _) =>
             {
                 // Let go over the Recycle Bin: the widget goes back where it came from, and its folder is offered for
-                // deletion (after this input handler, since that asks).
-                var overRecycleBin = board.IsOverRecycleBin();
+                // deletion (after this input handler, since that asks). Only for one widget: a whole selection is not
+                // deleted by a slip.
+                var overRecycleBin = _group.Count == 1 && board.IsOverRecycleBin();
                 if (overRecycleBin)
                 {
                     Surface.MoveTo(_dragOrigin);
                 }
 
-                board.Snap(Surface, position => board.SavePosition(Folder.Name, position));
+                foreach (var member in _group)
+                {
+                    board.Snap(member.Surface, position => board.SavePosition(member.Folder.Name, position));
+                }
+
                 if (overRecycleBin)
                 {
                     View.Dispatcher.BeginInvoke(() => board.DeleteRequested?.Invoke(board, Folder));

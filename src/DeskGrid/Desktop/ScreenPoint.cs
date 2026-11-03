@@ -24,4 +24,12 @@ internal readonly record struct ScreenRect(int Left, int Top, int Right, int Bot
 
     public bool Contains(ScreenPoint point) =>
         point.X >= Left && point.X < Right && point.Y >= Top && point.Y < Bottom;
+
+    /// <summary>Whether the two rectangles share any area (touching edges don't).</summary>
+    public bool Intersects(ScreenRect other) =>
+        Left < other.Right && other.Left < Right && Top < other.Bottom && other.Top < Bottom;
+
+    /// <summary>The rectangle with the two points as opposite corners, whichever way round they are; both pixels are inside it.</summary>
+    public static ScreenRect Between(ScreenPoint a, ScreenPoint b) =>
+        new(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y), Math.Max(a.X, b.X) + 1, Math.Max(a.Y, b.Y) + 1);
 }

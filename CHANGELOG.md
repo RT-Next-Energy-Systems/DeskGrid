@@ -10,6 +10,10 @@
 - The change log window shows a Traditional Chinese change log on a Chinese interface.
 - A shortcut's icon is redrawn as soon as the program it points to is updated, not only when something in the
   folder changes.
+- The rubber band drawn on the desktop also selects the folders it touches; dragging one selected folder moves all of
+  them. (Ctrl+A still selects only Explorer's icons.)
+- Files can be dropped on a folder in the all-folders list.
+- Folders are hidden while Windows' "Show desktop icons" is off, and come back with the icons.
 
 ### Fixed
 

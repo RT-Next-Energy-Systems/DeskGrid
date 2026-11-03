@@ -536,3 +536,12 @@
 **Alternatives**: #18 不碰未公開 API，只改文件說明（但 issue 就是要選單變深色）；#25 用定時重掃（簡單，但每分鐘多一次全掃，且不即時）；#22 用低階鍵盤 hook（需要全域 hook，比 30 ms 輪詢重）；#13 固定開在工作列上方（要猜工作列位置與方向）。
 **Consequences**: 所有新行為只有單元測試，拖曳 / 工作列 / 深色選單 / 工作列變更都沒實機驗證。`MenuTheme` 依賴 uxtheme ordinal 135 / 136，Windows 更新可能拿掉，測試會先警告。
 **Author**: 使用者要求「完成所有 issue」，實作方式由我決定
+
+---
+
+### 2026-11-03（三）— 使用者回答 #10 / #23 / #26 / #11 的決策題
+**Decision**: #10：就是桌面「新增資料夾」磚被移除，不是 bug，關閉 issue。#23：「顯示桌面圖示」關閉時 widget 跟著隱藏（`DesktopHost` 每秒看 list view 可見性）。#26：框選時一併選取 widget 並可一起拖動（`MarqueeSelector`），Ctrl+A / Ctrl 加選不做。#11：做外部檔案拖到「所有資料夾」列表的資料夾格。
+**Reason**: 使用者在 AskUserQuestion 中選定。#23 先實測確認 Explorer 只隱藏 `SysListView32`（原本 widget 會留著）。
+**Alternatives**: #23 保持顯示（不改）；#26 偵測選取用 Explorer 的 list view 選取狀態（要跨行程讀 `LVM_GETITEMSTATE`，仍畫不出 widget 的選取框）、只做視覺不做拖動；#11 關閉 issue。
+**Consequences**: 框選與一起拖動依賴 `EVENT_SYSTEM_CAPTURESTART` 與按下點／游標推算框，Explorer 的框選實際判定（圖示圖片 + 名稱區）以內縮 15% / 10% 近似；全部沒有實機驗證。
+**Author**: 使用者決定，實作方式由我決定

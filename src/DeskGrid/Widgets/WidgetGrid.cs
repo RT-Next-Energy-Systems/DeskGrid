@@ -54,6 +54,17 @@ internal sealed class WidgetGrid(
         return clear.Count > 0 ? clear : cells;
     }
 
+    /// <summary>
+    /// The part of a widget's <paramref name="cell"/> a rubber band has to touch to select it: the picture and the name,
+    /// not the margin around them (like a desktop icon, which isn't picked by brushing its cell).
+    /// </summary>
+    public static ScreenRect IconArea(ScreenRect cell)
+    {
+        var insetX = cell.Width * 15 / 100;
+        var insetY = cell.Height * 10 / 100;
+        return new ScreenRect(cell.Left + insetX, cell.Top + insetY, cell.Right - insetX, cell.Bottom - insetY);
+    }
+
     /// <summary>Whether <paramref name="obstacle"/> covers enough of <paramref name="cell"/> to make it unusable.</summary>
     public static bool Covers(ScreenRect obstacle, ScreenRect cell)
     {
