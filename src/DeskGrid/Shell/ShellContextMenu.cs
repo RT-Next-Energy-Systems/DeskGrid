@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Windows.Interop;
 using DeskGrid.Desktop;
 using DeskGrid.Diagnostics;
@@ -17,7 +18,7 @@ namespace DeskGrid.Shell;
 /// Rename is left out (<c>CMF_CANRENAME</c> not set): it needs the view Explorer would host the item in to edit the
 /// name, and there is none here.
 /// </remarks>
-internal sealed class ShellContextMenu : IDisposable
+internal sealed partial class ShellContextMenu : IDisposable
 {
     // Command ids the shell may use, from QueryContextMenu's range; the one chosen is the verb offset + FirstCommand.
     private const uint FirstCommand = 1;
@@ -26,6 +27,8 @@ internal sealed class ShellContextMenu : IDisposable
     private const uint InvokeUnicode = 0x4000; // CMIC_MASK_UNICODE
     private const uint InvokePoint = 0x20000000; // CMIC_MASK_PTINVOKE
     private const int ShiftKey = 0x10; // VK_SHIFT
+    private const uint VerbUnicode = 0x4; // GCS_VERBW
+    private const int TextLength = 256;
 
     // BHID_SFUIObject: ask an item for its UI objects (here the context menu).
     private static readonly Guid UiObjectHandler = new("3981E225-F559-11D3-8E3A-00C04F6837D5");
@@ -128,8 +131,88 @@ internal sealed class ShellContextMenu : IDisposable
             return false;
         }
 
+        Invoke(chosen, window, at);
+        return true;
+    }
+
+    /// <summary>
+    /// The plain commands at the top level of the menu that have a canonical name (open, cut, copy, delete,
+    /// properties...), for a menu of our own that offers some of them. Submenus, owner-drawn items and the
+    /// ones that add themselves without a name (most extensions) are not included.
+    /// </summary>
+    public unsafe IReadOnlyList<Entry> ReadEntries()
+    {
+        var entries = new List<Entry>();
+        var text = stackalloc char[TextLength];
+        var verb = stackalloc char[TextLength];
+        for (var position = 0u; position < ItemCount; position++)
+        {
+            var id = PInvoke.GetMenuItemID(_handle, (int)position);
+
+            // 0 is a separator, -1 a submenu.
+            if (id is 0 or uint.MaxValue || id < FirstCommand || id > LastCommand)
+            {
+                continue;
+            }
+
+            *verb = '\0';
+            if (!TryGetVerb(id - FirstCommand, verb))
+            {
+                continue; // Not every handler can name its commands.
+            }
+
+            var length = PInvoke.GetMenuString(_handle, position, new PWSTR(text), TextLength, MENU_ITEM_FLAGS.MF_BYPOSITION);
+            var name = new string(verb);
+            if (name.Length > 0 && length > 0)
+            {
+                entries.Add(new Entry(name, DisplayText(new string(text, 0, length)), id));
+            }
+        }
+
+        return entries;
+    }
+
+    // IContextMenu::GetCommandString through the vtable (slot 5, after IUnknown's three and QueryContextMenu and
+    // InvokeCommand): the wrapper generated for it throws NotImplementedException.
+    private unsafe bool TryGetVerb(uint offset, char* verb)
+    {
+        var self = Marshal.GetComInterfaceForObject<IContextMenu, IContextMenu>(_menu);
+        try
+        {
+            var getCommandString = (delegate* unmanaged[Stdcall]<nint, nuint, uint, uint*, char*, uint, int>)(*(nint**)self)[5];
+            return getCommandString(self, offset, VerbUnicode, null, verb, TextLength) >= 0;
+        }
+        finally
+        {
+            Marshal.Release(self);
+        }
+    }
+
+    /// <summary>Runs a command read by <see cref="ReadEntries"/>, as if it had been chosen from the shell's own menu.</summary>
+    public void Run(Entry entry, HwndSource owner, ScreenPoint at) => Invoke(entry.Command, new HWND(owner.Handle), at);
+
+    /// <summary>One command of the shell's menu: its canonical name, the text the menu shows, and its id.</summary>
+    public sealed record Entry(string Verb, string Text, uint Command);
+
+    // "Cop&y\tCtrl+C" and "複製(&C)" both become the plain name.
+    private static string DisplayText(string text)
+    {
+        var tab = text.IndexOf('\t');
+        if (tab >= 0)
+        {
+            text = text[..tab];
+        }
+
+        return MnemonicMarks().Replace(text, "").Trim();
+    }
+
+    [GeneratedRegex(@"\(&.\)|&")]
+    private static partial Regex MnemonicMarks();
+
+    private unsafe void Invoke(uint command, HWND window, ScreenPoint at)
+    {
         // The id is the verb's offset in the lower word, as MAKEINTRESOURCE.
-        var verb = chosen - FirstCommand;
+        var verb = command - FirstCommand;
         var invoke = new CMINVOKECOMMANDINFOEX
         {
             cbSize = (uint)sizeof(CMINVOKECOMMANDINFOEX),
@@ -149,8 +232,6 @@ internal sealed class ShellContextMenu : IDisposable
         {
             Log.Error("Running a shell context menu command failed", exception);
         }
-
-        return true;
     }
 
     // The menu object itself is left to the finalizer: a command that runs on after Show returns (the properties

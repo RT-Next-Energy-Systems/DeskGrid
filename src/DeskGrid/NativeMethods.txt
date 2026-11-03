@@ -114,3 +114,6 @@ GetMenuItemCount
 SetThreadPreferredUILanguages
 GetThreadUILanguage
 MUI_LANGUAGE_NAME
+GetMenuItemID
+GetMenuString
+MENU_ITEM_FLAGS
