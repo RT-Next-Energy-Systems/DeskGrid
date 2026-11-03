@@ -14,6 +14,7 @@ using DeskGrid.Taskbar;
 using DeskGrid.Updates;
 using DeskGrid.Tray;
 using DeskGrid.Widgets;
+using Windows.Win32;
 
 namespace DeskGrid;
 
@@ -39,20 +40,21 @@ public partial class App : Application
     private WidgetCatalog? _catalog;
     private SettingsWindow? _settings;
     private InstanceChannel? _instanceChannel;
-    private string? _pendingOpen;
+    private OpenMessage? _pendingOpen;
     private bool _checkingUpdates;
     private bool _started;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        var openRequest = OpenRequest.Parse(e.Args) is { } requested ? OpenMessageAtCursor(requested) : (OpenMessage?)null;
         _singleInstance = new Mutex(initiallyOwned: true, SingleInstanceName, out var isFirstInstance);
         if (!isFirstInstance)
         {
             Log.Info("DeskGrid is already running; this instance exits.");
-            if (OpenRequest.Parse(e.Args) is { } folderName)
+            if (openRequest is { } request)
             {
-                InstanceChannel.Send(folderName);
+                InstanceChannel.Send(request);
             }
 
             Shutdown();
@@ -95,8 +97,8 @@ public partial class App : Application
         _panels.DeleteRequested += (_, folder) => DeleteFolder(folder);
         _panels.FolderRenamer = RenameFolder;
         _tray = new TrayIcon(Strings.AppName, TrayMenu);
-        _pendingOpen = OpenRequest.Parse(e.Args);
-        _instanceChannel = new InstanceChannel(name => Dispatcher.BeginInvoke(() => OpenPanel(name)));
+        _pendingOpen = openRequest;
+        _instanceChannel = new InstanceChannel(message => Dispatcher.BeginInvoke(() => OpenPanel(message)));
         _ = StartWidgetsAsync(startedByWindows: AutoStart.WasStartedByWindows(e.Args));
         _ = CheckForUpdatesAtStartupAsync();
         _started = true;
@@ -236,10 +238,10 @@ public partial class App : Application
             board.Show(catalog.Widgets);
             _panels!.Refresh(catalog.Widgets);
 
-            if (_pendingOpen is { } name)
+            if (_pendingOpen is { } request)
             {
                 _pendingOpen = null;
-                OpenPanel(name);
+                OpenPanel(request);
             }
         };
 
@@ -255,23 +257,35 @@ public partial class App : Application
         (_board, _catalog) = (null, null);
     }
 
-    // A taskbar button was clicked: show that folder's panel, or the list of all folders, above it.
-    private void OpenPanel(string folderName)
+    // The cursor is read at once: it is where the user clicked the taskbar button, not where it is a second later.
+    private static OpenMessage OpenMessageAtCursor(string name)
     {
-        if (folderName == OpenRequest.AllFolders)
+        PInvoke.GetCursorPos(out var cursor);
+        return new OpenMessage(name, cursor.X, cursor.Y);
+    }
+
+    // A taskbar button was clicked: show that folder's panel, or the list of all folders, where it was clicked.
+    private void OpenPanel(OpenMessage request)
+    {
+        if (_catalog is not { } catalog)
         {
-            if (_catalog is { } catalog)
-            {
-                _panels!.ToggleListAtCursor(catalog.Widgets);
-            }
+            return;
         }
-        else if (_catalog?.Widgets.FirstOrDefault(w => string.Equals(w.Name, folderName, StringComparison.OrdinalIgnoreCase)) is { } folder)
+
+        var at = new ScreenRect(request.CursorX, request.CursorY, request.CursorX + 1, request.CursorY + 1);
+        if (request.Name == OpenRequest.AllFolders)
         {
-            _panels!.ToggleAtCursor(folder);
+            _panels!.ToggleList(catalog.Widgets, at);
+        }
+        else if (catalog.Widgets.FirstOrDefault(w => string.Equals(w.Name, request.Name, StringComparison.OrdinalIgnoreCase)) is { } folder)
+        {
+            _panels!.ToggleFolderFromTaskbar(folder, at);
         }
         else
         {
-            Log.Info($"Taskbar asked for \"{folderName}\", which is not a widget folder.");
+            // A button pinned for a folder that has been deleted: show the folders there are instead of doing nothing.
+            Log.Info($"Taskbar asked for \"{request.Name}\", which is not a widget folder; showing all folders.");
+            _panels!.ToggleList(catalog.Widgets, at);
         }
     }
 

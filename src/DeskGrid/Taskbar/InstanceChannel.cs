@@ -21,9 +21,9 @@ internal sealed class InstanceChannel : IDisposable
     private readonly CancellationTokenSource _stop = new();
 
     /// <summary>Listens for requests. <paramref name="onRequest"/> runs on a thread-pool thread.</summary>
-    public InstanceChannel(Action<string> onRequest) => _ = ListenAsync(onRequest, _stop.Token);
+    public InstanceChannel(Action<OpenMessage> onRequest) => _ = ListenAsync(onRequest, _stop.Token);
 
-    public static void Send(string folderName)
+    public static void Send(OpenMessage message)
     {
         try
         {
@@ -31,7 +31,7 @@ internal sealed class InstanceChannel : IDisposable
             using var client = new NamedPipeClientStream(".", PipeName, PipeDirection.Out);
             client.Connect(2000);
             using var writer = new StreamWriter(client) { AutoFlush = true };
-            writer.WriteLine(folderName);
+            writer.WriteLine(message.Format());
         }
         catch (Exception exception) when (exception is IOException or TimeoutException or UnauthorizedAccessException)
         {
@@ -41,7 +41,7 @@ internal sealed class InstanceChannel : IDisposable
 
     public void Dispose() => _stop.Cancel();
 
-    private static async Task ListenAsync(Action<string> onRequest, CancellationToken stop)
+    private static async Task ListenAsync(Action<OpenMessage> onRequest, CancellationToken stop)
     {
         while (!stop.IsCancellationRequested)
         {
@@ -55,9 +55,16 @@ internal sealed class InstanceChannel : IDisposable
                 using var patience = CancellationTokenSource.CreateLinkedTokenSource(stop);
                 patience.CancelAfter(RequestTimeout);
                 using var reader = new StreamReader(server);
-                if (await reader.ReadLineAsync(patience.Token) is { Length: > 0 } name)
+                if (await reader.ReadLineAsync(patience.Token) is { Length: > 0 } line)
                 {
-                    onRequest(name);
+                    if (OpenMessage.TryParse(line) is { } message)
+                    {
+                        onRequest(message);
+                    }
+                    else
+                    {
+                        Log.Info("Ignored a malformed request from another DeskGrid.");
+                    }
                 }
             }
             catch (OperationCanceledException) when (stop.IsCancellationRequested)

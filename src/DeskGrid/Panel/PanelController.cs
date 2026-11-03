@@ -60,8 +60,8 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
         Open(anchor, activate: true, panel => panel.ShowFolder(folder));
     }
 
-    /// <summary>Opens the list of all folders at the cursor (asked for from the taskbar), or closes it if it is open.</summary>
-    public void ToggleListAtCursor(IReadOnlyList<WidgetFolder> folders)
+    /// <summary>Opens the list of all folders at <paramref name="anchor"/> (asked for from the taskbar), or closes it if it is open.</summary>
+    public void ToggleList(IReadOnlyList<WidgetFolder> folders, ScreenRect anchor)
     {
         if (ClosedByThisRequest(ListKey))
         {
@@ -75,7 +75,7 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
             return;
         }
 
-        Open(CursorRect(), activate: true, panel => panel.ShowList(folders));
+        Open(anchor, activate: true, panel => panel.ShowList(folders));
     }
 
     /// <summary>
@@ -122,12 +122,12 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
         Open(anchor, activate: false, panel => panel.ShowFolder(folder));
     }
 
-    /// <summary>Like <see cref="Toggle"/>, for a panel asked for from outside the desktop (e.g. the taskbar): opens at the cursor.</summary>
-    public void ToggleAtCursor(WidgetFolder folder)
+    /// <summary>Like <see cref="Toggle"/>, for a panel asked for from the taskbar: opens at <paramref name="anchor"/>, where the button was clicked.</summary>
+    public void ToggleFolderFromTaskbar(WidgetFolder folder, ScreenRect anchor)
     {
         if (!ClosedByThisRequest(folder.Name))
         {
-            Toggle(folder, CursorRect());
+            Toggle(folder, anchor);
         }
     }
 
@@ -141,12 +141,6 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
     }
 
     public void Close() => _panel?.Dismiss();
-
-    private static ScreenRect CursorRect()
-    {
-        PInvoke.GetCursorPos(out var cursor);
-        return new ScreenRect(cursor.X, cursor.Y, cursor.X + 1, cursor.Y + 1);
-    }
 
     private void Open(ScreenRect anchor, bool activate, Action<PopupPanel> fill)
     {
