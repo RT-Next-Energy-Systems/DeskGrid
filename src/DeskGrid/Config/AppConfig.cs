@@ -25,6 +25,10 @@ internal sealed class AppConfig
 
     public PanelBackground PanelBackground { get; set; } = new();
 
+    public PanelOpenMode PanelOpenMode { get; set; } = PanelOpenMode.Nearby;
+
+    public AppLanguage Language { get; set; } = AppLanguage.System;
+
     /// <summary>Whether DeskGrid asks GitHub for a newer release a few seconds after it starts. The only network use that isn't the user's own request.</summary>
     public bool CheckForUpdatesAtStartup { get; set; } = true;
 
@@ -70,6 +74,25 @@ internal enum PanelBackgroundStyle
     Dark,
     Light,
     Custom,
+}
+
+/// <summary>Where a folder's panel opens.</summary>
+internal enum PanelOpenMode
+{
+    /// <summary>Next to the widget, as big as its items need.</summary>
+    Nearby,
+
+    /// <summary>In the middle of the widget's screen, always the same size (set by the column count), whatever is in the folder.</summary>
+    Centered,
+}
+
+/// <summary>The language of DeskGrid's own texts.</summary>
+internal enum AppLanguage
+{
+    /// <summary>Traditional Chinese if Windows is set to it, English otherwise.</summary>
+    System,
+    English,
+    TraditionalChinese,
 }
 
 /// <summary>What dropping a desktop shortcut onto a widget does. Dropped .exe files always get a new shortcut.</summary>

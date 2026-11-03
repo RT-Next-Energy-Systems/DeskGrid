@@ -22,6 +22,8 @@ public sealed class ConfigStoreTests : IDisposable
         Assert.Equal(DropMode.Move, config.DropMode);
         Assert.Equal(DeleteMode.MoveToDesktop, config.DeleteMode);
         Assert.True(config.CheckForUpdatesAtStartup);
+        Assert.Equal(PanelOpenMode.Nearby, config.PanelOpenMode);
+        Assert.Equal(AppLanguage.System, config.Language);
         Assert.Equal(PanelBackgroundStyle.System, config.PanelBackground.Style);
         Assert.Empty(config.Widgets);
     }

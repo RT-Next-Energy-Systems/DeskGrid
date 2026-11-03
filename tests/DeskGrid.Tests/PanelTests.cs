@@ -15,6 +15,19 @@ public sealed class PanelPlacementTests
     private static readonly ScreenRect WorkArea = new(0, 0, 1000, 800);
 
     [Fact]
+    public void Center_PutsThePanelInTheMiddleOfTheWorkArea() =>
+        Assert.Equal(new ScreenPoint(350, 300), PanelPlacement.Center(300, 200, WorkArea));
+
+    [Fact]
+    public void Center_OnASecondMonitor_StaysInsideItsWorkArea()
+    {
+        var second = new ScreenRect(1000, 0, 2000, 800);
+
+        Assert.Equal(new ScreenPoint(1350, 300), PanelPlacement.Center(300, 200, second));
+        Assert.Equal(new ScreenPoint(1000, 0), PanelPlacement.Center(3000, 2000, second));
+    }
+
+    [Fact]
     public void Place_BelowAndCentered_WhenThereIsRoom() =>
         Assert.Equal(new ScreenPoint(300, 108), PanelPlacement.Place(new ScreenRect(400, 0, 500, 100), 300, 200, WorkArea, Gap));
 
@@ -221,6 +234,37 @@ public sealed class PopupPanelTests : IDisposable
 
         // One row of folders, then the most rows a panel shows (4) of the 17 items.
         Assert.Equal(3 * 96, folderHeight - listHeight, precision: 0);
+    }
+
+    [Fact]
+    public async Task Centered_EveryFolderAndTheList_HaveTheSameSize_ThatFollowsTheColumns()
+    {
+        var sizes = await _ui.InvokeAsync(() =>
+        {
+            using var icons = new IconService();
+            var theme = PanelTheme.Resolve(new PanelBackground { Style = PanelBackgroundStyle.Dark }, false, false);
+            var anchor = new ScreenRect(0, 0, 1, 1);
+            var result = new List<(double Width, double Height)>();
+            foreach (var columns in new[] { 3, 5 })
+            {
+                var panel = new PopupPanel(anchor, columns, theme, icons) { OpenMode = PanelOpenMode.Centered };
+                foreach (var folder in new[] { Folder("Empty", 0), Folder("One", 1), Folder("Big", 40) })
+                {
+                    panel.ShowFolder(folder);
+                    result.Add((panel.Width, panel.Height));
+                }
+
+                panel.ShowList([Folder("A", 1), Folder("B", 2)]);
+                result.Add((panel.Width, panel.Height));
+                panel.Close();
+            }
+
+            return result;
+        });
+
+        Assert.Single(sizes.Take(4).Distinct());
+        Assert.Single(sizes.Skip(4).Distinct());
+        Assert.True(sizes[4].Width > sizes[0].Width);
     }
 
     [Fact]

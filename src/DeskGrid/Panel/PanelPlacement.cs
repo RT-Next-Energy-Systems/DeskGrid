@@ -21,6 +21,11 @@ internal static class PanelPlacement
     public static ScreenPoint Place(ScreenRect anchor, int width, int height, ScreenRect workArea, int gap) =>
         Place(anchor, width, height, workArea, gap, Side(anchor, width, height, workArea, gap));
 
+    /// <summary>In the middle of <paramref name="workArea"/>, or at its top left corner if the panel is bigger than it.</summary>
+    public static ScreenPoint Center(int width, int height, ScreenRect workArea) => new(
+        Math.Max(workArea.Left, (workArea.Left + workArea.Right - width) / 2),
+        Math.Max(workArea.Top, (workArea.Top + workArea.Bottom - height) / 2));
+
     /// <summary>The first side of below, above, left and right where a panel of this size fits; below if none.</summary>
     public static PanelSide Side(ScreenRect anchor, int width, int height, ScreenRect workArea, int gap)
     {

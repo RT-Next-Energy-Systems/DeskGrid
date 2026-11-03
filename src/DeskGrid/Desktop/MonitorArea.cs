@@ -49,4 +49,7 @@ internal readonly record struct MonitorArea(ScreenRect WorkArea, uint Dpi)
 
     /// <summary>Converts device-independent units (1/96 inch) to this monitor's pixels.</summary>
     public int ToPixels(double dip) => (int)Math.Round(dip * Dpi / 96);
+
+    /// <summary>Converts this monitor's pixels to device-independent units.</summary>
+    public double ToDips(int pixels) => pixels * 96.0 / Dpi;
 }

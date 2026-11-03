@@ -4,6 +4,10 @@ using DeskGrid.Folders;
 using DeskGrid.Resources;
 using DeskGrid.Tray;
 using DeskGrid.Updates;
+using DeskGrid.Config;
+using DeskGrid.Panel;
+using DeskGrid.Settings;
+using DeskGrid.Threading;
 using Microsoft.Win32;
 
 namespace DeskGrid.Tests;
@@ -154,5 +158,49 @@ public sealed class AutoStartTests : IDisposable
     {
         using var run = _root.OpenSubKey(RunKey);
         return run?.GetValue(AutoStart.ValueName) as string;
+    }
+}
+
+[Collection(nameof(ShellCollection))]
+public sealed class SettingsWindowTests : IDisposable
+{
+    private readonly DispatcherThread _ui = new("Test UI");
+    private readonly TempDirectory _root = new();
+
+    public void Dispose()
+    {
+        _ui.Dispose();
+        _root.Dispose();
+    }
+
+    [Theory]
+    [InlineData("System", "Custom")]
+    [InlineData("Dark", "Light")]
+    [InlineData("Custom", "System")]
+    public async Task Ok_ReportsTheBackgroundThatIsChecked(string initialName, string pickedName)
+    {
+        var initial = Enum.Parse<PanelBackgroundStyle>(initialName);
+        var picked = Enum.Parse<PanelBackgroundStyle>(pickedName);
+        var choice = await _ui.InvokeAsync(() =>
+        {
+            if (System.Windows.Application.Current is null)
+            {
+                // The windows take their card styles from App.xaml.
+                var app = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown };
+                app.Resources["Card"] = new System.Windows.Style(typeof(System.Windows.Controls.Border));
+                app.Resources["CardTitle"] = new System.Windows.Style(typeof(System.Windows.Controls.TextBlock));
+            }
+
+            var config = new AppConfig { RootPath = _root.Path, PanelBackground = new PanelBackground { Style = initial } };
+            var window = new SettingsWindow(config);
+            SettingsChoice? applied = null;
+            window.Applied += (_, c) => applied = c;
+            window.Show();
+            window.BackgroundRadioFor(picked).IsChecked = true;
+            window.OkButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            return applied;
+        });
+
+        Assert.Equal(picked, choice?.PanelBackground.Style);
     }
 }

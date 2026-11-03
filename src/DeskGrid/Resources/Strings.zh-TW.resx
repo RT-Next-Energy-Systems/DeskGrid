@@ -264,4 +264,34 @@
   <data name="ButtonClose" xml:space="preserve">
     <value>關閉</value>
   </data>
+  <data name="SettingsLanguage" xml:space="preserve">
+    <value>語言</value>
+  </data>
+  <data name="SettingsLanguageSystem" xml:space="preserve">
+    <value>跟隨 Windows</value>
+  </data>
+  <data name="SettingsOpenMode" xml:space="preserve">
+    <value>資料夾展開方式</value>
+  </data>
+  <data name="SettingsOpenNearby" xml:space="preserve">
+    <value>附近展開（貼著資料夾）</value>
+  </data>
+  <data name="SettingsOpenCentered" xml:space="preserve">
+    <value>置中展開（螢幕中央）</value>
+  </data>
+  <data name="SettingsOpenModeHint" xml:space="preserve">
+    <value>置中展開：所有資料夾都在同一個位置、以同樣大小展開，大小由面板欄數決定。</value>
+  </data>
+  <data name="LanguageNameEnglish" xml:space="preserve">
+    <comment>Not translated: a language is always listed under its own name.</comment>
+    <value>English</value>
+  </data>
+  <data name="LanguageNameChinese" xml:space="preserve">
+    <comment>Not translated: a language is always listed under its own name.</comment>
+    <value>繁體中文</value>
+  </data>
+  <data name="AppName" xml:space="preserve">
+    <comment>Not translated: the product name.</comment>
+    <value>DeskGrid</value>
+  </data>
 </root>

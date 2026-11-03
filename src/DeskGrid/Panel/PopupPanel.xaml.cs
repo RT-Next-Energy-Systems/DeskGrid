@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Shell;
 using System.Windows.Threading;
+using DeskGrid.Config;
 using DeskGrid.Desktop;
 using DeskGrid.Folders;
 using DeskGrid.Icons;
@@ -33,12 +34,14 @@ internal partial class PopupPanel : Window
     private const double ItemHeight = 96;
     private const double IconCenterY = 28; // button padding 4 + half of the 48 DIP icon
     private const double AnchorGap = 8;
+    private const double ScrollBarWidth = 6; // The thumb's width in the style in PopupPanel.xaml.
 
     // Virtual-key codes of the mouse buttons (winuser.h); a drag can be made with either.
     private const int LeftButton = 0x01;
     private const int RightButton = 0x02;
     private const int EscapeKey = 0x1B; // VK_ESCAPE
 
+    private static readonly Size Unbounded = new(double.PositiveInfinity, double.PositiveInfinity);
     private static readonly TimeSpan ResizeTime = TimeSpan.FromMilliseconds(180);
     private static readonly Duration SlideDuration = new(TimeSpan.FromMilliseconds(200));
     private static readonly IEasingFunction SlideEasing = new CubicEase { EasingMode = EasingMode.EaseOut };
@@ -182,6 +185,14 @@ internal partial class PopupPanel : Window
     /// the drag keeps the focus; <see cref="Window.Activate"/> it once the drag is over.
     /// </summary>
     public bool ActivateWhenShown { get; set; } = true;
+
+    /// <summary>
+    /// Where the panel opens. <see cref="PanelOpenMode.Centered"/> panels have one fixed size (the column count wide and
+    /// as many rows high, fewer if the screen is too short) and fill it by scrolling.
+    /// </summary>
+    public PanelOpenMode OpenMode { get; init; } = PanelOpenMode.Nearby;
+
+    private bool IsCentered => OpenMode == PanelOpenMode.Centered;
 
     /// <summary>Whether one of this panel's items is being dragged.</summary>
     public bool IsDragSource => _dragging;
@@ -624,14 +635,43 @@ internal partial class PopupPanel : Window
     private Size MeasureContent()
     {
         UpdateLayout();
-        Frame.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        if (IsCentered)
+        {
+            FixItemsSize();
+        }
+
+        Frame.Measure(Unbounded);
         return Frame.DesiredSize;
     }
+
+    // The items' area of a centered panel: columns x rows cells, plus the room of the scroll bar so that it doesn't
+    // widen the panel when it appears. Rows are as many as columns, fewer if the panel would not fit the screen.
+    private void FixItemsSize()
+    {
+        Scroller.MaxHeight = double.PositiveInfinity;
+        Scroller.Width = _columns * ItemWidth + ScrollBarWidth;
+        Scroller.Height = _columns * ItemHeight;
+        Frame.Measure(Unbounded);
+
+        var monitor = AnchorMonitor();
+        var available = monitor.ToDips(monitor.WorkArea.Bottom - monitor.WorkArea.Top) - 2 * AnchorGap;
+        var chrome = Frame.DesiredSize.Height - Scroller.Height;
+        var rows = (int)Math.Floor((available - chrome) / ItemHeight);
+        Scroller.Height = Math.Clamp(rows, 1, _columns) * ItemHeight;
+    }
+
+    private MonitorArea AnchorMonitor() =>
+        MonitorArea.At(new ScreenPoint((_anchor.Left + _anchor.Right) / 2, (_anchor.Top + _anchor.Bottom) / 2));
 
     // Makes room for one more item (a new row if the last one is full) while something is dragged over, or takes
     // the room back, growing or shrinking the window smoothly.
     private void MakeRoomForIncoming(bool incoming)
     {
+        if (IsCentered)
+        {
+            return; // Always the same size; what comes in scrolls.
+        }
+
         var rows = (_items.Count + (incoming ? 1 : 0) + _columns - 1) / _columns;
         var currentRows = Math.Max(1, (_items.Count + _columns - 1) / _columns);
         Items.MinHeight = incoming && rows > currentRows ? rows * ItemHeight : 0;
@@ -715,16 +755,25 @@ internal partial class PopupPanel : Window
     private void Reposition(HWND window, Size size)
     {
         _size = size;
-        var monitor = MonitorArea.At(new ScreenPoint((_anchor.Left + _anchor.Right) / 2, (_anchor.Top + _anchor.Bottom) / 2));
+        var monitor = AnchorMonitor();
         var width = monitor.ToPixels(size.Width);
         var height = monitor.ToPixels(size.Height);
         var gap = monitor.ToPixels(AnchorGap);
 
-        // The side is chosen once for what the panel shows. Growing to make room for something dragged in must not
-        // move it to another side: the cursor would be outside it, the room would be taken back, and the panel would
-        // jump back and forth.
-        _side ??= PanelPlacement.Side(_anchor, width, height, monitor.WorkArea, gap);
-        var position = PanelPlacement.Place(_anchor, width, height, monitor.WorkArea, gap, _side.Value);
+        ScreenPoint position;
+        if (IsCentered)
+        {
+            position = PanelPlacement.Center(width, height, monitor.WorkArea);
+        }
+        else
+        {
+            // The side is chosen once for what the panel shows. Growing to make room for something dragged in must not
+            // move it to another side: the cursor would be outside it, the room would be taken back, and the panel would
+            // jump back and forth.
+            _side ??= PanelPlacement.Side(_anchor, width, height, monitor.WorkArea, gap);
+            position = PanelPlacement.Place(_anchor, width, height, monitor.WorkArea, gap, _side.Value);
+        }
+
         PInvoke.SetWindowPos(window, HWND.Null, position.X, position.Y, width, height,
             SET_WINDOW_POS_FLAGS.SWP_NOZORDER | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED);
     }

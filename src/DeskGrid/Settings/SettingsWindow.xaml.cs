@@ -18,7 +18,12 @@ internal sealed record SettingsChoice(
     DropMode DropMode,
     DeleteMode DeleteMode,
     PanelBackground PanelBackground,
+    PanelOpenMode PanelOpenMode,
+    AppLanguage Language,
     bool CheckForUpdatesAtStartup);
+
+/// <summary>One line of the language list: the language and the name it is shown under.</summary>
+internal sealed record LanguageOption(AppLanguage Language, string Label);
 
 /// <summary>Edits a copy of the settings; <see cref="Applied"/> fires on OK with a validated choice.</summary>
 internal partial class SettingsWindow : Window
@@ -39,11 +44,14 @@ internal partial class SettingsWindow : Window
         RootBox.Text = config.RootPath;
         ColumnsBox.ItemsSource = Enumerable.Range(1, MaxColumns).ToList();
         ColumnsBox.SelectedItem = Math.Clamp(config.PanelColumns, 1, MaxColumns);
+        (config.PanelOpenMode == PanelOpenMode.Centered ? OpenCentered : OpenNearby).IsChecked = true;
+        LanguageBox.ItemsSource = LanguageOptions();
+        LanguageBox.SelectedValue = config.Language;
         (config.DropMode == DropMode.Copy ? DropCopy : DropMove).IsChecked = true;
         (config.DeleteMode == DeleteMode.DeleteItems ? DeleteItems : DeleteMove).IsChecked = true;
 
         var background = config.PanelBackground;
-        BackgroundRadio(background.Style).IsChecked = true;
+        BackgroundRadioFor(background.Style).IsChecked = true;
         _customColor = PanelTheme.ParseColor(background.CustomColor) ?? PanelTheme.ParseColor(new PanelBackground().CustomColor)!.Value;
         ColorSwatch.Background = new SolidColorBrush(_customColor);
         OpacitySlider.Value = Math.Clamp(background.CustomOpacity, OpacitySlider.Minimum, OpacitySlider.Maximum);
@@ -102,9 +110,9 @@ internal partial class SettingsWindow : Window
     }
 
     private PanelBackgroundStyle SelectedBackground =>
-        Enum.GetValues<PanelBackgroundStyle>().First(style => BackgroundRadio(style).IsChecked == true);
+        Enum.GetValues<PanelBackgroundStyle>().First(style => BackgroundRadioFor(style).IsChecked == true);
 
-    private System.Windows.Controls.RadioButton BackgroundRadio(PanelBackgroundStyle style) => style switch
+    internal System.Windows.Controls.RadioButton BackgroundRadioFor(PanelBackgroundStyle style) => style switch
     {
         PanelBackgroundStyle.Dark => BackgroundDark,
         PanelBackgroundStyle.Light => BackgroundLight,
@@ -112,9 +120,21 @@ internal partial class SettingsWindow : Window
         _ => BackgroundSystem,
     };
 
+    private static LanguageOption[] LanguageOptions() =>
+    [
+        new(AppLanguage.System, Strings.SettingsLanguageSystem),
+        new(AppLanguage.English, Strings.LanguageNameEnglish),
+        new(AppLanguage.TraditionalChinese, Strings.LanguageNameChinese),
+    ];
+
     private void LocalizeTexts()
     {
         Title = Strings.SettingsTitle;
+        LanguageLabel.Text = Strings.SettingsLanguage;
+        OpenModeLabel.Text = Strings.SettingsOpenMode;
+        OpenNearby.Content = Strings.SettingsOpenNearby;
+        OpenCentered.Content = Strings.SettingsOpenCentered;
+        OpenModeHint.Text = Strings.SettingsOpenModeHint;
         RootLabel.Text = Strings.SettingsRootFolder;
         BrowseButton.Content = Strings.SettingsBrowse;
         OpenRootButton.Content = Strings.SettingsOpen;
@@ -190,6 +210,8 @@ internal partial class SettingsWindow : Window
             DropCopy.IsChecked == true ? DropMode.Copy : DropMode.Move,
             DeleteItems.IsChecked == true ? DeleteMode.DeleteItems : DeleteMode.MoveToDesktop,
             background,
+            OpenCentered.IsChecked == true ? PanelOpenMode.Centered : PanelOpenMode.Nearby,
+            (AppLanguage)LanguageBox.SelectedValue,
             CheckAtStartupBox.IsChecked == true));
         Close();
     }

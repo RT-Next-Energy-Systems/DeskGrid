@@ -148,6 +148,9 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
         var theme = PanelTheme.Resolve(config.PanelBackground, PanelTheme.SystemUsesDarkTheme, Backdrop.IsAcrylicSupported);
         var panel = new PopupPanel(anchor, Math.Clamp(config.PanelColumns, MinColumns, MaxColumns), theme, icons)
         {
+            // Held over a widget by a drag, a panel has to be at that widget: the cursor can't travel across the screen
+            // to a centered one without the drag counting as having left.
+            OpenMode = activate ? config.PanelOpenMode : PanelOpenMode.Nearby,
             ActivateWhenShown = activate,
             ShowActivated = activate,
             Renamer = (oldName, newName) => FolderRenamer?.Invoke(oldName, newName),

@@ -67,6 +67,7 @@ public partial class App : Application
         Log.Info("DeskGrid starting.");
 
         _configStore = ConfigStore.Open(ConfigStore.DefaultFilePath);
+        UiLanguage.Apply(_configStore.Config.Language);
         EnsureUsableRootFolder(_configStore);
         _autoStart = AutoStart.ForCurrentUser();
         _autoStart.UpdatePath();
@@ -553,6 +554,9 @@ public partial class App : Application
         config.DropMode = choice.DropMode;
         config.DeleteMode = choice.DeleteMode;
         config.PanelBackground = choice.PanelBackground;
+        config.PanelOpenMode = choice.PanelOpenMode;
+        config.Language = choice.Language;
+        UiLanguage.Apply(config.Language);
         config.CheckForUpdatesAtStartup = choice.CheckForUpdatesAtStartup;
         _configStore.Save();
 

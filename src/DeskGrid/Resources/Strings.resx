@@ -276,4 +276,30 @@ Using the default root folder instead:
   <data name="ButtonClose" xml:space="preserve">
     <value>Close</value>
   </data>
+  <data name="SettingsLanguage" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="SettingsLanguageSystem" xml:space="preserve">
+    <value>Follow Windows</value>
+  </data>
+  <data name="SettingsOpenMode" xml:space="preserve">
+    <value>Where a folder opens</value>
+  </data>
+  <data name="SettingsOpenNearby" xml:space="preserve">
+    <value>Next to the folder</value>
+  </data>
+  <data name="SettingsOpenCentered" xml:space="preserve">
+    <value>In the center of the screen</value>
+  </data>
+  <data name="SettingsOpenModeHint" xml:space="preserve">
+    <value>Centered: every folder opens in the same place at the same size, set by the column count.</value>
+  </data>
+  <data name="LanguageNameEnglish" xml:space="preserve">
+    <comment>Not translated: a language is always listed under its own name.</comment>
+    <value>English</value>
+  </data>
+  <data name="LanguageNameChinese" xml:space="preserve">
+    <comment>Not translated: a language is always listed under its own name.</comment>
+    <value>繁體中文</value>
+  </data>
 </root>

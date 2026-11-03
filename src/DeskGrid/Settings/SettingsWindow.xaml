@@ -23,6 +23,13 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
       <StackPanel Margin="0,0,4,0">
         <Border Style="{StaticResource Card}">
+          <DockPanel>
+            <ComboBox x:Name="LanguageBox" DockPanel.Dock="Right" Width="150" DisplayMemberPath="Label" SelectedValuePath="Language" />
+            <TextBlock x:Name="LanguageLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
+          </DockPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}">
           <StackPanel>
             <TextBlock x:Name="RootLabel" Style="{StaticResource CardTitle}" />
             <DockPanel>
@@ -38,6 +45,17 @@
             <ComboBox x:Name="ColumnsBox" DockPanel.Dock="Right" Width="80" />
             <TextBlock x:Name="ColumnsLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
           </DockPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}">
+          <StackPanel>
+            <TextBlock x:Name="OpenModeLabel" Style="{StaticResource CardTitle}" TextWrapping="Wrap" />
+            <StackPanel Orientation="Horizontal">
+              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="OpenNearby" GroupName="OpenMode" />
+              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="OpenCentered" GroupName="OpenMode" />
+            </StackPanel>
+            <TextBlock x:Name="OpenModeHint" Margin="0,8,0,0" Opacity="0.75" TextWrapping="Wrap" />
+          </StackPanel>
         </Border>
 
         <Border Style="{StaticResource Card}">
