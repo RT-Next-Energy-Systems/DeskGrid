@@ -38,6 +38,20 @@ public sealed class PanelNavigationTests
     public void NextSlot_IgnoresOtherKeys(Key key) =>
         Assert.Null(PanelNavigation.NextSlot(key, current: 2, count: 7, columns: 3));
 
+    // Seven items in three columns of 76 x 96: 0 1 2 / 3 4 5 / 6
+    [Theory]
+    [InlineData(10, 10, 0)]
+    [InlineData(80, 10, 1)]
+    [InlineData(227, 95, 2)]
+    [InlineData(80, 100, 4)]
+    [InlineData(10, 200, 6)]
+    [InlineData(80, 200, null)] // The empty cell after the last item.
+    [InlineData(228, 10, null)] // Right of the grid.
+    [InlineData(-1, 10, null)]
+    [InlineData(10, -1, null)]
+    public void SlotAtPoint_FindsTheItemUnderAPoint(double x, double y, int? expected) =>
+        Assert.Equal(expected, PanelNavigation.SlotAtPoint(x, y, columns: 3, count: 7, cellWidth: 76, cellHeight: 96));
+
     [Fact]
     public void NextSlot_IsNull_ForAnEmptyPanel() =>
         Assert.Null(PanelNavigation.NextSlot(Key.Down, current: null, count: 0, columns: 3));

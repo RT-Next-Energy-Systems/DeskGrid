@@ -6,6 +6,21 @@ namespace DeskGrid.Panel;
 internal static class PanelNavigation
 {
     /// <summary>
+    /// The slot of the item under a point of the item grid, or <see langword="null"/> outside the grid (left of, above or
+    /// right of it) and on the empty cells after the last item.
+    /// </summary>
+    public static int? SlotAtPoint(double x, double y, int columns, int count, double cellWidth, double cellHeight)
+    {
+        if (x < 0 || y < 0 || x >= columns * cellWidth)
+        {
+            return null;
+        }
+
+        var slot = (int)(y / cellHeight) * columns + (int)(x / cellWidth);
+        return slot < count ? slot : null;
+    }
+
+    /// <summary>
     /// The slot an arrow, Home or End key moves to from <paramref name="current"/> (<see langword="null"/> when nothing
     /// is selected yet), or <see langword="null"/> if <paramref name="key"/> is no navigation key or there is nothing
     /// to select. The selection stops at the edges instead of wrapping.

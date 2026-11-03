@@ -95,6 +95,7 @@ internal partial class PopupPanel : Window
 
     // Something dragged over this panel from elsewhere: the slot left open for it, or -1.
     private int _gap = -1;
+    private int _dropTarget = -1; // The folder of the list that files are being dragged over, or -1.
 
     /// <summary>Call <see cref="ShowFolder"/> or <see cref="ShowList"/> before showing the panel.</summary>
     public PopupPanel(ScreenRect anchor, int columns, PanelTheme theme, IconService icons)
@@ -308,8 +309,11 @@ internal partial class PopupPanel : Window
         }
         else if (Folder is null)
         {
-            // The list of folders only takes its own folders being rearranged.
-            e.Effects = DragDropEffects.None;
+            // The list of folders takes its own folders being rearranged, and files dropped on a folder.
+            var target = e.Data.GetDataPresent(DataFormats.FileDrop) ? FolderUnder(e.GetPosition(Items)) : null;
+            TintDropTarget(target ?? -1);
+            e.Effects = target is null ? DragDropEffects.None
+                : (e.AllowedEffects & DragDropEffects.Copy) != 0 ? DragDropEffects.Copy : DragDropEffects.Move;
         }
         else if (e.Data.GetDataPresent(DataFormats.FileDrop))
         {
@@ -345,6 +349,7 @@ internal partial class PopupPanel : Window
             return;
         }
 
+        TintDropTarget(-1);
         if (_gap >= 0)
         {
             _gap = -1;
@@ -370,12 +375,25 @@ internal partial class PopupPanel : Window
 
             e.Effects = DragDropEffects.Move;
         }
-        else if (Folder is not { } folder)
+        else if (Folder is null)
         {
-            e.Effects = DragDropEffects.None;
+            // Files dropped on a folder of the list go into that folder, after what it has.
+            var target = FolderUnder(e.GetPosition(Items));
+            TintDropTarget(-1);
+            if (target is { } slot && _items[slot].Folder is { } onto && e.Data.GetData(DataFormats.FileDrop) is string[] { Length: > 0 } dropped)
+            {
+                _tookDrop = true;
+                ItemsDropped?.Invoke(this, new ItemsDroppedEventArgs(onto.Name, dropped, onto.Items.Count));
+                e.Effects = DragDropEffects.Copy; // We did it ourselves; never report Move.
+            }
+            else
+            {
+                e.Effects = DragDropEffects.None;
+            }
         }
         else if (e.Data.GetData(DataFormats.FileDrop) is string[] { Length: > 0 } paths)
         {
+            var folder = Folder;
             var index = _gap >= 0 ? _gap : _items.Count;
             _gap = -1;
             // Close the gap: if nothing could be added, no refresh rebuilds the items.
@@ -515,6 +533,7 @@ internal partial class PopupPanel : Window
     private void ShowItems(IEnumerable<PanelItem> items, string emptyHint)
     {
         _pressed = null;
+        _dropTarget = -1; // The cells are made anew.
         _items = [.. items];
         Items.ItemsSource = _items;
         EmptyHint.Text = emptyHint;
@@ -1073,6 +1092,32 @@ internal partial class PopupPanel : Window
     // ---- Sliding the items ----
 
     private Point SlotOrigin(int slot) => new(slot % _columns * ItemWidth, slot / _columns * ItemHeight);
+
+    // The slot of the item at a point of the item list, or null where there is none (outside the grid, or past the last item).
+    private int? FolderUnder(Point point) =>
+        PanelNavigation.SlotAtPoint(point.X, point.Y, _columns, _items.Count, ItemWidth, ItemHeight);
+
+    // Tints the folder files are being dragged over (-1: none). The mouse isn't "over" anything during a drag, so the
+    // hover look of a cell has to be set by hand.
+    private void TintDropTarget(int slot)
+    {
+        if (slot == _dropTarget)
+        {
+            return;
+        }
+
+        SetCellBackground(_dropTarget, Brushes.Transparent);
+        _dropTarget = slot;
+        SetCellBackground(slot, (Brush)Resources["HoverBrush"]);
+    }
+
+    private void SetCellBackground(int slot, Brush brush)
+    {
+        if (ContainerAt(slot) is { } container && VisualTreeHelper.GetChild(container, 0) is Button button)
+        {
+            button.Tag = brush;
+        }
+    }
 
     private ScreenPoint SlotCenter(int slot)
     {
