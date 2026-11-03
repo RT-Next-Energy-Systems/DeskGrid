@@ -17,11 +17,16 @@ internal sealed class FolderScanner : IDisposable
     // Skips hidden and system entries (desktop.ini, Office lock files) and unreadable ones.
     private static readonly EnumerationOptions VisibleEntries = new();
 
+    // How often to look for a root folder that was deleted to come back.
+    private static readonly TimeSpan RecoveryInterval = TimeSpan.FromSeconds(1);
+
     private readonly string _rootPath;
     private readonly SynchronizationContext _context;
-    private readonly FileSystemWatcher _watcher;
     private readonly Timer _debounceTimer;
+    private readonly Timer _recoveryTimer;
+    private FileSystemWatcher _watcher;
     private Dictionary<string, (DateTime LinkWritten, string? Target)> _shortcutTargets = new(StringComparer.OrdinalIgnoreCase);
+    private bool _started;
     private bool _disposed;
 
     public FolderScanner(string rootPath)
@@ -29,19 +34,9 @@ internal sealed class FolderScanner : IDisposable
         _rootPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(rootPath));
         _context = SynchronizationContext.Current
             ?? throw new InvalidOperationException($"{nameof(FolderScanner)} must be created on a thread with a SynchronizationContext.");
-        _debounceTimer = new Timer(_ => Post(() => Changed?.Invoke(this, EventArgs.Empty)));
-
-        _watcher = new FileSystemWatcher(_rootPath)
-        {
-            IncludeSubdirectories = true,
-            InternalBufferSize = 64 * 1024,
-            NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite | NotifyFilters.Attributes,
-        };
-        _watcher.Created += OnEntryChanged;
-        _watcher.Deleted += OnEntryChanged;
-        _watcher.Changed += OnEntryChanged;
-        _watcher.Renamed += OnEntryRenamed;
-        _watcher.Error += OnWatcherError;
+        _debounceTimer = new Timer(_ => OnQuiet());
+        _recoveryTimer = new Timer(_ => TryRecover());
+        _watcher = CreateWatcher();
     }
 
     /// <summary>Raised once changes have settled for <see cref="DebounceDelay"/>; call <see cref="Scan"/> to see them.</summary>
@@ -51,7 +46,11 @@ internal sealed class FolderScanner : IDisposable
 
     public event EventHandler<ItemRenamedEventArgs>? ItemRenamed;
 
-    public void Start() => _watcher.EnableRaisingEvents = true;
+    public void Start()
+    {
+        _started = true;
+        _watcher.EnableRaisingEvents = true;
+    }
 
     /// <summary>
     /// Reads the current folders, in natural name order. Returns <see langword="null"/> when the root
@@ -142,6 +141,89 @@ internal sealed class FolderScanner : IDisposable
         _disposed = true;
         _watcher.Dispose();
         _debounceTimer.Dispose();
+        _recoveryTimer.Dispose();
+    }
+
+    private FileSystemWatcher CreateWatcher()
+    {
+        var watcher = new FileSystemWatcher(_rootPath)
+        {
+            IncludeSubdirectories = true,
+            InternalBufferSize = 64 * 1024,
+            NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite | NotifyFilters.Attributes,
+        };
+        watcher.Created += OnEntryChanged;
+        watcher.Deleted += OnEntryChanged;
+        watcher.Changed += OnEntryChanged;
+        watcher.Renamed += OnEntryRenamed;
+        watcher.Error += OnWatcherError;
+        return watcher;
+    }
+
+    // Changes have settled. A watcher dies with the folder it watches, so if the root is gone it has to be rebuilt
+    // once the root is back; the rescan meanwhile reports it as unreadable.
+    private void OnQuiet()
+    {
+        if (!Directory.Exists(_rootPath))
+        {
+            BeginRecovery();
+        }
+
+        Post(() => Changed?.Invoke(this, EventArgs.Empty));
+    }
+
+    private void BeginRecovery()
+    {
+        try
+        {
+            _recoveryTimer.Change(RecoveryInterval, RecoveryInterval);
+        }
+        catch (ObjectDisposedException)
+        {
+            // Raced with Dispose.
+        }
+    }
+
+    // Runs on a timer thread, every RecoveryInterval until the root exists again.
+    private void TryRecover()
+    {
+        if (!Directory.Exists(_rootPath))
+        {
+            return;
+        }
+
+        try
+        {
+            _recoveryTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+        }
+        catch (ObjectDisposedException)
+        {
+            return;
+        }
+
+        Post(RebuildWatcher);
+    }
+
+    private void RebuildWatcher()
+    {
+        FileSystemWatcher fresh;
+        try
+        {
+            fresh = CreateWatcher();
+            fresh.EnableRaisingEvents = _started;
+        }
+        catch (Exception exception) when (exception is ArgumentException or IOException or UnauthorizedAccessException)
+        {
+            // Gone again before the watcher could attach.
+            Log.Error($"Cannot watch root folder {_rootPath}; will retry", exception);
+            BeginRecovery();
+            return;
+        }
+
+        _watcher.Dispose();
+        _watcher = fresh;
+        Log.Info($"Watching root folder {_rootPath} again.");
+        Changed?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnEntryChanged(object sender, FileSystemEventArgs e)
@@ -179,6 +261,9 @@ internal sealed class FolderScanner : IDisposable
         // Typically an overflowing buffer: individual events were lost, so rescan everything.
         Log.Error("Folder watcher error; rescanning", e.GetException());
         RestartDebounce();
+
+        // Or the watcher died with its folder: rebuild it as soon as there is a folder to watch.
+        BeginRecovery();
     }
 
     // "Root\Widget" -> ["Widget"], "Root\Widget\Item.lnk" -> ["Widget", "Item.lnk"].

@@ -141,6 +141,44 @@ public sealed class FolderScannerRenameTests : IDisposable
         Assert.Equal(["Games/a.lnk>b.lnk", "Games>Play"], renames);
     }
 
+    // A FileSystemWatcher dies with the folder it watches: after the root is deleted and made again, changes in it must
+    // still be noticed without restarting.
+    [Fact]
+    public async Task Changed_IsRaisedForNewFolders_AfterTheRootWasDeletedAndRecreated()
+    {
+        var changes = 0;
+        var scanner = await _ui.InvokeAsync(() =>
+        {
+            var scanner = new FolderScanner(_root.Path);
+            scanner.Changed += (_, _) => Interlocked.Increment(ref changes);
+            scanner.Start();
+            return scanner;
+        });
+
+        Directory.Delete(_root.Path, recursive: true);
+        await Task.Delay(TimeSpan.FromSeconds(1), TestContext.Current.CancellationToken);
+        Directory.CreateDirectory(_root.Path);
+        await WaitUntilAsync(() => Volatile.Read(ref changes) > 0); // The rebuild's own rescan request.
+
+        var before = Volatile.Read(ref changes);
+        Directory.CreateDirectory(_root.Combine("Fresh"));
+        await WaitUntilAsync(() => Volatile.Read(ref changes) > before);
+
+        var widgets = await _ui.InvokeAsync(scanner.Scan);
+        await _ui.InvokeAsync(scanner.Dispose);
+        Assert.Equal(["Fresh"], widgets!.Select(w => w.Name));
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(10);
+        while (!condition())
+        {
+            Assert.True(DateTime.UtcNow < deadline, "Timed out waiting for the scanner.");
+            await Task.Delay(50, TestContext.Current.CancellationToken);
+        }
+    }
+
     // Starts a scanner, runs the file system change, and returns the renames it reported once the change has settled.
     private async Task<List<string>> WatchAsync(Action change)
     {
