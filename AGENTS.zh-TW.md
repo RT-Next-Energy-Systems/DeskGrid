@@ -1,9 +1,31 @@
-# Language
+# 語言政策
 
-- 回答使用者：繁體中文
-- Code（變數、函式、註解）：英文
-- Commit message：英文（conventional commits）
-- `CLAUDE.md`、`AGENTS.md`、`context/*.md`：繁體中文；之後的 README 以英文為主（開源）
+DeskGrid 是雙語專案：**英文與繁體中文（zh-TW）**，兩種語言地位相同，每次修改都必須讓兩者保持同步。本節是 App、文件，以及參與開發的人（與其 AI 助理）共同遵守的政策。
+
+> 本檔與 `AGENTS.md`（英文）互為雙語版，修改時兩份一起改。
+
+## App（使用者看得到的部分）
+
+- 使用者在設定 →「語言」選擇：*跟隨 Windows*（預設；Windows 為 zh-TW / zh-HK / zh-MO / zh-Hant 時用繁體中文，否則英文）、*English* 或 *繁體中文*。存在 `config.json` 的 `language`（`AppConfig.Language`）；`UiLanguage.Apply`（`src/DeskGrid/Resources/UiLanguage.cs`）在啟動時與套用設定時切換整個程序的語言。
+- **所有使用者看得到的文字都放在 `src/DeskGrid/Resources/Strings.resx`（英文，neutral）與 `Strings.zh-TW.resx`。** C# 與 XAML 不寫死介面文字（語言本身的名稱是唯一例外，且它也是資源）。新增 key 時**兩個檔案同一次修改一起加**，`{0}` 佔位符要一致，每種語言寫自然的說法，不要逐字硬翻。
+- 文字在建立視窗、選單或對話框時才取（`Strings.X`）；不可快取在 `static` 欄位或建構時的常數裡，否則切換語言時改不到。
+- 由檔案顯示的文字遵守同一條規則：`CHANGELOG.md` / `CHANGELOG.zh-TW.md` 編進 exe（資源字串 `ChangeLogResource` 指定該語言用哪一個），資源字串 `SettingsPrivacyUrl` 指到該語言 README 的隱私段落（`README.md#privacy`、`README.zh-TW.md#隱私`）。改 README 標題時要同步改這個網址。
+- Windows 自己的部分（例如 `MessageBox` 的按鈕、檔案總管的右鍵選單）跟著 Windows 的語言而不是 DeskGrid 的設定，這裡改不了。
+- `UiLanguageTests` 會在某個 key 只存在於一種語言、或譯文少了佔位符時失敗，不要放寬它。
+- 要加第三種語言：`Strings.<culture>.resx`、`AppLanguage` 新值、`UiLanguage.Resolve` 的分支、設定視窗的選項、下列每份文件的 `.<culture>.md`，以及 csproj 的 `SatelliteResourceLanguages`。
+
+## 文件
+
+- **所有進版控的 Markdown 都有兩種語言版：** `NAME.md` 是英文、`NAME.zh-TW.md` 是繁體中文（`README` 與 `CHANGELOG` 本來就是這樣）。涵蓋 `README`、`CHANGELOG`、`CLAUDE`、`AGENTS`、`context/decisions`、`context/project-summary`。
+- 改其中一份就要改另一份，**同一個 commit**：章節、標題順序、事實都一致。`MarkdownPairsTests` 比對每一對的標題結構，缺雙語版或缺章節都會失敗。新文件要加進該測試的清單，而且兩種語言都要寫。
+- `context/decisions` 兩種語言都維持只能新增：新紀錄兩份都加。
+- 不在範圍內：作者的本機工作筆記（`context/current-task.md`、`progress.md`、`todo.md`、`session-log.md`；已加入 `.gitignore`，繁體中文，格式自由）與 `LICENSE`（法律文字，只有英文）。
+- 翻譯時程式碼、路徑、指令、識別字原樣保留，只翻譯它們周圍的文字。
+
+## 程式碼與溝通
+
+- 程式碼（變數、函式、註解）、commit message、分支名稱：英文（conventional commits）。
+- 回答專案擁有者：繁體中文。協作者用什麼語言寫就用什麼語言回答。issue 與 PR 可用任一語言；對決策有影響時，補上另一種語言的重點。
 
 # Coding Principles
 
@@ -15,7 +37,7 @@
 - 類別預設 `internal sealed`；private 欄位 `_camelCase`
 - Win32 API 一律透過 CsWin32（加到 `src/DeskGrid/NativeMethods.txt`），不手寫 `DllImport`
 - 建置零警告（`TreatWarningsAsErrors`）；CA1416 已在 `Directory.Build.props` 以註解說明原因後關閉
-- 純邏輯（Config、Folders 等）要有 xUnit 測試；使用者介面文字一律放 `Resources/Strings*.resx`（en + zh-TW）
+- 純邏輯（Config、Folders 等）要有 xUnit 測試；使用者介面文字一律放 `Resources/Strings*.resx`（en + zh-TW，見「語言政策」）
 - XAML 不可引用本組件的型別（含 `x:Static` 到 `Strings`、`clr-namespace:DeskGrid.*`），文字在 code-behind 設定（原因見 CLAUDE.md 階段 6）
 - 實機測試若要模擬滑鼠鍵盤：先問使用者；每次點擊 / 按鍵前確認游標下或前景是 DeskGrid 的視窗；使用者正在用電腦時不要做
 - 不使用第三方 UI 框架
@@ -41,7 +63,7 @@
 
 # Markdown 自動維護
 
-工作完成後自動維護 `context/*.md`（見 `CLAUDE.md` 的 Session 結束流程），不要等待使用者提醒。新增功能、修改功能、修 Bug、Refactor、更新 Architecture/API/Folder 都要同步更新相關 Markdown。
+工作完成後自動維護 `context/*.md`（見 `CLAUDE.md` 的 Session 結束流程），不要等待使用者提醒。新增功能、修改功能、修 Bug、Refactor、更新 Architecture/API/Folder 都要同步更新相關 Markdown——**兩種語言版都要**（見「語言政策」）。
 
 # 多人協作
 
@@ -66,7 +88,7 @@
 - 分支 `main`。commit 訊息用英文 conventional commits（`feat:`、`fix:`、`test:`、`chore:`、`docs:`）。
 - 直接在 `main` 上開發時，**push 前先 `git pull --rebase`**，避免兩人的 commit 互撞；不要 force push。
 - commit 作者 email 必須是綁在自己 GitHub 帳號上的，貢獻才會算進 Contributors。
-- **發 release 只有專案擁有者（Ryan Kuo）做**：推 `v*` tag 會直接觸發 `release.yml` 發布。其他人不要推 `v*` tag、不要改版本號（csproj `<Version>`）與 `CHANGELOG.md` 的版本標題。
+- **發 release 只有專案擁有者（Ryan Kuo）做**：推 `v*` tag 會直接觸發 `release.yml` 發布。其他人不要推 `v*` tag、不要改版本號（csproj `<Version>`）與 `CHANGELOG.md` / `CHANGELOG.zh-TW.md` 的版本標題。
 - 不要把 token、密碼、個人 `config.json` / log 貼進 issue、commit 或 PR。
 
 ## 本機筆記與記憶不會同步

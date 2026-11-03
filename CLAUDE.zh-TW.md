@@ -2,13 +2,15 @@
 
 Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯示內部 App 的 2×2 縮圖預覽，點擊展開格子面板，點外部或 Esc 收合。每個 widget 對應一個實體資料夾，改資料夾內容即同步。之後以 MIT 開源，程式碼需整潔、可維護。
 
+> 本檔與 `CLAUDE.md`（英文）互為雙語版，修改時兩份一起改。見 `AGENTS.md`「語言政策」。
+
 # Session 啟動流程
 
-> 備註：`context/` 內的 `current-task.md`、`progress.md`、`todo.md`、`session-log.md` 是作者的本機工作筆記，未納入版控（見 `.gitignore`）；公開 repo 只有 `decisions.md` 與 `project-summary.md`。
+> 備註：`context/` 內的 `current-task.md`、`progress.md`、`todo.md`、`session-log.md` 是作者的本機工作筆記，未納入版控（見 `.gitignore`）；公開 repo 只有 `decisions.md` 與 `project-summary.md`（各有英文與繁體中文兩個版本：`NAME.md` / `NAME.zh-TW.md`）。
 
 每次新的 Session，依序閱讀：
 
-1. `AGENTS.md`
+1. `AGENTS.md`（含**語言政策**：App 與所有文件都是雙語）
 2. `context/project-summary.md`
 3. `context/current-task.md`
 4. `context/progress.md`
@@ -41,11 +43,11 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 模組 | 資料夾 | 職責 |
 |---|---|---|
 | DesktopHost | `Desktop/` | 把 widget 視窗掛在桌面圖示層（所有一般視窗後方）；相容舊版與 Win11 24H2+ 桌面階層；Explorer 重啟後自動重新掛載 |
-| ConfigStore | `Config/` | `%APPDATA%\DeskGrid\config.json`，只存 widget 位置、面板欄數、項目排序、根目錄路徑、拖入模式，以及面板背景（2026-10-24 使用者同意新增）、刪除資料夾時項目的處理方式（`deleteMode`）、是否問過開機自啟（`autoStartAsked`，2026-10-30）、啟動時是否檢查更新（`checkForUpdatesAtStartup`，預設開，2026-10-30） |
+| ConfigStore | `Config/` | `%APPDATA%\DeskGrid\config.json`，只存 widget 位置、面板欄數、項目排序、根目錄路徑、拖入模式，以及面板背景（2026-10-24 使用者同意新增）、刪除資料夾時項目的處理方式（`deleteMode`）、是否問過開機自啟（`autoStartAsked`，2026-10-30）、啟動時是否檢查更新（`checkForUpdatesAtStartup`，預設開，2026-10-30）、面板展開位置（`panelOpenMode`：`nearby` / `centered`，2026-11-03）、介面語言（`language`：`system` / `english` / `traditionalChinese`，2026-11-03） |
 | FolderScanner | `Folders/` | 根目錄預設 `%USERPROFILE%\DeskGrid\`，每個子資料夾 = 一個 widget；FileSystemWatcher 監聽 Created/Deleted/Renamed/Changed，300ms debounce；Renamed 要轉移 config 中的位置與排序；根目錄位於使用者桌面時拒絕並提示 |
 | IconService | `Icons/` | IShellItemImageFactory 取 256px 圖示；依排序取前 4 個合成 2×2 預覽；快取，資料夾變動才重建 |
 | FolderWidget | `Widgets/` | 桌面上的資料夾圖示 + 名稱，可拖動並存位置（`FolderWidget` 視圖、`WidgetBoard` 同步與擺放、`WidgetGrid` 格線） |
-| PopupPanel | `Panel/` | 格子面板（預設 3 欄，超過可捲動，不分頁）；點項目用 ShellExecute 啟動；點外部 / Esc / 失焦收合 |
+| PopupPanel | `Panel/` | 格子面板（預設 3 欄，超過可捲動，不分頁）；點項目用 ShellExecute 啟動；點外部 / Esc / 失焦收合；可在 widget 旁或螢幕中央展開（`PanelOpenMode`） |
 | TrayApp | `Tray/`、`Settings/` | 系統匣選單：新增資料夾、設定、開機自啟開關、結束（`TrayIcon`、`AutoStart`；設定視窗、更新紀錄視窗與新增資料夾對話框在 `Settings/`）。「開啟根目錄」「釘選所有資料夾到工作列」「GitHub 網址」「更新紀錄」在設定視窗裡（2026-10-30） |
 | 拖放加入 | `Folders/ItemImporter` | 拖到 widget 的檔案依規則建捷徑 / 移動 / 複製 |
 | 刪除資料夾 | `Folders/FolderDeleter`、`Shell/RecycleBin` | widget 右鍵刪除：資料夾進資源回收筒，內容依設定先移到桌面或一併刪除 |
@@ -55,7 +57,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | （輔助）Shell | `Shell/` | Shell 互通：`ShellImage`（圖示）、`ShellItem`（ShellExecute 開啟、顯示名稱）、`ShortcutFile`（建 .lnk）、`ShellContextMenu`（Explorer 對檔案的右鍵選單）、`RecycleBin` |
 | （輔助）Log | `Diagnostics/` | 簡易 append-only log |
 | （輔助）DispatcherThread | `Threading/` | 獨立 STA 執行緒上的 WPF Dispatcher（Shell / WPF 影像用；測試也拿來當 UI 執行緒） |
-| （輔助）Strings | `Resources/` | `Strings.resx`（en，neutral）+ `Strings.zh-TW.resx`；build 時產生強型別 `DeskGrid.Resources.Strings` |
+| （輔助）Strings | `Resources/` | `Strings.resx`（en，neutral）+ `Strings.zh-TW.resx`；build 時產生強型別 `DeskGrid.Resources.Strings`。`UiLanguage` 決定語言（設定的選擇或 Windows 語言）並整個程序切換 |
 
 ## DesktopHost 實作要點（階段 1 實測）
 
@@ -112,6 +114,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 ## Panel 實作要點（階段 5）
 
 - **外觀**（使用者選定）：開在 widget 旁（下 → 上 → 左 → 右，先放得下者，另一軸夾回工作區）；項目 48 DIP 圖示、76×96 DIP 格；上方顯示資料夾名稱；最多顯示 4 列，超過捲動（細捲軸）。
+- **展開位置**（2026-11-03，config `panelOpenMode`，設定「資料夾展開方式」）：兩種模式。**附近展開**（`PanelOpenMode.Nearby`，預設）即上述行為：開在 widget 旁，大小依項目數（最多 4 列）。**置中展開**（`PanelOpenMode.Centered`）讓每個資料夾的面板都開在 widget 所在螢幕工作區的正中央（`PanelPlacement.Center`），且無論資料夾裡有多少項目都是**同樣大小**，不同資料夾的位置與大小不會不一致：寬 `columns` 欄、高 `columns` 列（正方形；只有螢幕工作區太矮時才減列，`PopupPanel.FixItemsSize`），項目在裡面捲動（捲軸的位置永遠預留，出現時不會把面板撐寬；空資料夾的提示與項目共用同一格，所以空資料夾一樣高；`MakeRoomForIncoming` 不調整大小）。所有資料夾列表也是同樣大小。拖曳停在 widget 上而開啟的面板（`OpenForDrag`，不啟用）**一律附近展開**，不管設定：游標沒辦法橫越整個螢幕到置中的面板而不被當成離開。設定在面板開啟時讀取（`PanelController.Open`）。沒有實機驗證（單元測試驗證大小與位置的計算）。
 - **背景可自訂**（config `panelBackground`）：`system`（預設，Win11 22H2+ 系統 Acrylic + 系統深淺色；其他版本為不透明系統色）、`dark`、`light`（半透明）、`custom`（`customColor` #RRGGBB + `customOpacity` 0–1，字色依背景亮度自動黑/白）。設定介面在階段 6；目前手改 config 後重啟 app 生效。
 - **Acrylic 做法**（實測）：無邊框 `WS_POPUP` 視窗 DWM **不畫** system backdrop，必須保留框架：`SingleBorderWindow` + `WindowChrome(GlassFrameThickness=-1, CaptionHeight=0)` + 拿掉 `WS_SYSMENU`（否則 DWM 在延伸框架畫關閉鈕）+ composition 背景透明 + `DWMWA_SYSTEMBACKDROP_TYPE=TRANSIENTWINDOW`、`DWMWA_WINDOW_CORNER_PREFERENCE=ROUND`。**不可用 `SizeToContent`**（WPF 會多加已被 WindowChrome 移除的外框尺寸）→ 自己 Measure 內容後設 Width/Height。非 Acrylic 樣式用 layered 視窗（`AllowsTransparency`）自己畫圓角底色。
 - **固定在開啟的那一側**（2026-10-31）：`PanelPlacement.Side` 只在第一次定位（及換顯示別的資料夾 / 列表）時選；之後變大（拖入時 `MakeRoomForIncoming` 長一列、放入後重掃）只在同一側夾回工作區（可能蓋住 widget 一部分）。否則 widget 在螢幕下方時，長高後放不下 → 跳到右側 → 游標不在面板內 → DragLeave 收回 → 又放得下回到下方 → 無限來回 = 嚴重閃爍（使用者實測，log 證實）。
@@ -149,10 +152,18 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
   - **開機流程**（2026-10-30）：帶 `--autostart` 的啟動會先 `DesktopHost.WaitUntilSettledAsync`（`DesktopReadiness`，每 0.5 秒在背景執行緒讀桌面圖示位置，連兩次相同才算好；逾時 45 秒照常往下）再建 widget。使用者自己啟動時桌面一定好了，不等。原因：登入時 list view 已存在但圖示還沒排好，格線沒有錨點 → widget 被吸到退回用的格線並寫回 config，覆蓋真正的位置。`WidgetBoard.Add` 另有防線：讀不到圖示格線（`WidgetGrid.FollowsIcons` 為 false）時，有存位置的 widget 不吸附、不存檔。
   - **第一次執行**：config `autoStartAsked` 為 false 時，widget 出現後問一次「要不要開機啟動」（已啟用的使用者靜默標記）；之後只能從系統匣選單切換。登錄寫入被拒（群組原則）時 `ReportAutoStart` 會跳警告。
 - **單一執行個體**：`Local\DeskGrid.SingleInstance` mutex，第二個直接結束。
-- **設定視窗**：根目錄（`OpenFolderDialog`；旁邊「開啟」用框裡的路徑在 Explorer 開，資料夾不存在就提示）、欄數 1–8、桌面捷徑拖入模式、刪除模式、面板背景（自訂色用 comdlg32 `ChooseColor`）、「工作列」卡片（`PinAllFolders` 回呼 → `App.PinAllFoldersToTaskbar`）、版本 / 檢查更新（含「啟動時檢查更新」勾選）、GitHub 網址（`UpdateChecker.RepositoryUrl`）、「隱私」連結（資源字串 `SettingsPrivacyUrl`，依語言指到 README 的隱私段落；README 改標題要同步改）與「更新紀錄…」（`ChangeLogWindow`，內容是編進 exe 的 `CHANGELOG.md`（英文）或 `CHANGELOG.zh-TW.md`（繁中介面，由資源字串 `ChangeLogResource` 選；csproj `<EmbeddedResource LogicalName=… WithCulture="false">`，沒有 `WithCulture="false"` 的話 MSBuild 會把 `.zh-TW.md` 當成衛星組件資源），`ChangeLog.Parse` 只認 `##` / `###` / `- `；**兩份要一起維護**，`ChangeLogTests` 檢查版本與項目數一致）。卡片放在 `ScrollViewer`，視窗 `MaxHeight` = 工作區高度，螢幕太矮時捲動、確定 / 取消固定在下方。非模態、確定 / 取消；**非模態視窗的 `IsCancel` 不會自動關窗**，要自己 `Close()`。根目錄變更 → 重建 catalog 與 widget；其他設定 → 存檔、關閉已開面板。
+- **設定視窗**：語言（*跟隨 Windows* / *English* / *繁體中文*，config `language`；按「確定」後整個程序立即套用，`UiLanguage.Apply`，之後開啟的視窗與選單都用新語言）、根目錄（`OpenFolderDialog`；旁邊「開啟」用框裡的路徑在 Explorer 開，資料夾不存在就提示）、欄數 1–8、資料夾展開位置（附近 / 置中，config `panelOpenMode`）、桌面捷徑拖入模式、刪除模式、面板背景（自訂色用 comdlg32 `ChooseColor`）、「工作列」卡片（`PinAllFolders` 回呼 → `App.PinAllFoldersToTaskbar`）、版本 / 檢查更新（含「啟動時檢查更新」勾選）、GitHub 網址（`UpdateChecker.RepositoryUrl`）、「隱私」連結（資源字串 `SettingsPrivacyUrl`，依語言指到 README 的隱私段落；README 改標題要同步改）與「更新紀錄…」（`ChangeLogWindow`，內容是編進 exe 的 `CHANGELOG.md`（英文）或 `CHANGELOG.zh-TW.md`（繁中介面，由資源字串 `ChangeLogResource` 選；csproj `<EmbeddedResource LogicalName=… WithCulture="false">`，沒有 `WithCulture="false"` 的話 MSBuild 會把 `.zh-TW.md` 當成衛星組件資源），`ChangeLog.Parse` 只認 `##` / `###` / `- `；**兩份要一起維護**，`ChangeLogTests` 檢查版本與項目數一致）。卡片放在 `ScrollViewer`，視窗 `MaxHeight` = 工作區高度，螢幕太矮時捲動、確定 / 取消固定在下方。非模態、確定 / 取消；**非模態視窗的 `IsCancel` 不會自動關窗**，要自己 `Close()`。根目錄變更 → 重建 catalog 與 widget；其他設定 → 存檔、關閉已開面板。
 - **Fluent 視窗**（設定、新增資料夾、更新）：`ThemeMode="System"`；卡片樣式 `Card` / `CardTitle` 在 `App.xaml`；`FluentWindow.UseOpaqueBackground` 關掉 Mica 改不透明底色，文字才能用 ClearType。
 - **XAML 不可引用本組件型別**（例如 `x:Static` 到 `Strings`）：`Strings` 在 build 時才產生在 `obj/`，WPF 的暫時標記組件編譯不到。介面文字在 code-behind 設定。
 - **App 圖示**：`tools/make-icon.ps1` 產生 `src/DeskGrid/Assets/DeskGrid.ico`（多尺寸 PNG ICO）。
+
+## 介面語言（2026-11-03）
+
+- **兩種語言、由使用者選**：英文與繁體中文。設定「語言」：*跟隨 Windows*（預設；Windows 介面語言為 zh-TW / zh-HK / zh-MO / zh-Hant 時用繁體中文，否則英文——簡體中文與其他語言都是英文）、*English*、*繁體中文*；config `language`。
+- **切換方式**：`UiLanguage.Apply(AppLanguage)` 設定 `CultureInfo.DefaultThreadCurrentUICulture`、目前執行緒的 `CurrentUICulture`（WPF 自己的文字，例如文字框的剪下 / 複製 / 貼上來自 `zh-Hant` 衛星組件，也跟著變）與 `Strings.Culture`；啟動時載入 config 後立刻執行，並在 `App.ApplySettings` 再執行。文字在建立視窗、選單或對話框時才取，所以之後開啟的東西都用新語言；widget 只顯示資料夾名稱；已開的面板在按「確定」時關閉。`UiLanguage` 記住 Windows 自己的介面語言（在第一次 `Apply` 之前讀取），之後才能再選回「跟隨 Windows」。
+- **政策**（細節見 `AGENTS.md`「語言政策」）：所有介面文字放 `Strings.resx` + `Strings.zh-TW.resx`（`UiLanguageTests` 檢查 key 與佔位符一致）；不可把 `Strings.X` 快取在 `static`；更新紀錄（`ChangeLogResource`）與隱私連結（`SettingsPrivacyUrl`）跟著語言；**所有進版控的 Markdown 都有 `NAME.md`（英文）+ `NAME.zh-TW.md`（繁體中文）兩個版本，結構相同**（`MarkdownPairsTests`）。
+- Windows 自己的部分（`MessageBox` 的按鈕、檔案總管的右鍵選單）跟著 Windows 的語言，不受這個設定影響。
+- 沒有實機驗證：執行中切換語言（單元測試驗證語言的選擇、key 一致與文件成對）。
 
 ## 版本檢查與更新
 
@@ -194,7 +205,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - 支援項目：`.lnk` / `.url` / `.exe` / 一般檔案
 - 啟動一律用 ShellExecute
 - Per-Monitor V2 DPI aware（MVP 先確保單螢幕正確，多螢幕列為後續）
-- 介面文字放資源檔，支援 zh-TW / en
+- 介面文字放資源檔，支援英文與繁體中文（zh-TW），使用者可在設定選擇語言；**所有進版控的 Markdown 都有兩種語言版**（`NAME.md` + `NAME.zh-TW.md`）——見 `AGENTS.md`「語言政策」
 
 # 開發階段與進度
 
@@ -211,6 +222,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 7 | GitHub Actions CI、self-contained 打包、README（含 SmartScreen 未簽章說明）、LICENSE (MIT) | ✅ 完成 2026-10-25，已推上 GitHub、CI 通過、v0.1.0 已發布，待使用者驗證 |
 | 8 | 刪除資料夾（右鍵 + 設定）、桌面圖示疊圖示建資料夾、修 bug | 完成 2026-10-29（建置 / 146 測試通過）；右鍵刪除與疊圖示拖曳因工具限制未能實機操作，待使用者驗證 |
 | 9 | 面板項目的 Windows 原生右鍵選單、面板 / widget 右鍵「新增 / 刪除資料夾」、開機自啟流程（`--autostart`、等桌面排好、第一次詢問）、README 的應用程式控制封鎖說明、修 bug | 完成 2026-10-30（建置 / 168 測試通過，v0.3.1 已發布；含拖資料夾到資源回收筒刪除，使用者實測成功）；原生選單以真實 `IContextMenu` 做了整合測試（顯示、阻塞、關閉），但沒有實際點選指令（電腦使用權限不含 DeskGrid 視窗），待使用者驗證。2026-10-31 修拖曳與「拖曳時自動開 / 關資料夾」（181 測試），拖曳情境待使用者實測；v0.3.3 發布（2026-10-31，含拖曳修正、啟動檢查更新開關、隱私連結）；v0.3.4 發布（2026-11-01，多螢幕修正）；v0.3.5 發布（2026-11-02，穩健性修正：捷徑掃描、config 鎖定、未處理例外、更新對話框） |
+| 10 | 介面語言選擇（英文 / 繁體中文）、雙語文件政策、面板展開位置（附近 / 置中） | 完成 2026-11-03（建置 / 測試通過）；沒有實機驗證：執行中切換語言、置中展開面板在真實桌面上的樣子 |
 
 # 工作方式
 
@@ -228,9 +240,11 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 1. 更新 `context/current-task.md`
 2. 更新 `context/progress.md`
 3. 更新 `context/todo.md`
-4. 若有架構修改／設計修改／重要決策 → 新增一筆到 `context/decisions.md`（只能新增，不得覆蓋既有紀錄）
-5. 若專案摘要改變 → 更新 `context/project-summary.md`（保持精簡，1–3 頁，不寫工作日誌）
+4. 若有架構修改／設計修改／重要決策 → 新增一筆到 `context/decisions.md`（只能新增，不得覆蓋既有紀錄）——**兩種語言版都要**（`decisions.md` 與 `decisions.zh-TW.md`）
+5. 若專案摘要改變 → 更新 `context/project-summary.md`（保持精簡，1–3 頁，不寫工作日誌）——**兩種語言版都要**
 6. 新增一筆到 `context/session-log.md`（最新放最上方，每筆不超過 10 行）
+
+修改 `CLAUDE.md`、`AGENTS.md`、`README`、`CHANGELOG` 時同樣兩種語言一起改（見 `AGENTS.md`「語言政策」）。
 
 完成後輸出：**本次完成內容**、**如何手動測試**、**已知問題**、**下一步建議**。不要重新輸出所有 Markdown 內容。
 

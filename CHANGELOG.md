@@ -4,6 +4,10 @@
 
 ### Added
 
+- Language setting: DeskGrid can be set to English or Traditional Chinese, or follow Windows. It applies as soon as
+  the settings are accepted, and the change log and the privacy link follow it.
+- "Where a folder opens" setting: a folder can open in the middle of the screen instead of next to its icon. Every
+  folder then opens in the same place at the same size, which depends on the number of columns.
 - Arrow keys, Home and End move through the items of an open folder; Enter opens the one that has the keyboard.
 - Pressing Esc while dragging a widget puts it back where it was.
 - The tray menu and the menu of a folder item follow the system's dark mode.

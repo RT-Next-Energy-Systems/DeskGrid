@@ -111,8 +111,12 @@ Items keep the order they were added in; new items go last, or where you drop th
 
 Tray menu → **Settings…**:
 
+- **Language**: English, Traditional Chinese (繁體中文), or follow Windows (the default). It applies as soon as you press OK;
+  the change log and the privacy link follow it.
 - **Root folder**: where the folders live. It can't be on the desktop (its folders would show up twice). **Open** shows it in Explorer.
 - **Panel columns** (1–8).
+- **Where a folder opens**: next to its icon (the default), or in the middle of the screen. A centered folder always
+  opens in the same place at the same size, whatever it holds: as wide as the column count, and as tall.
 - **Desktop shortcuts dropped on a folder**: moved off the desktop, or copied.
 - **When a folder is deleted, the items inside it**: moved to the desktop (the default), or deleted along with it.
   If an item can't be moved, the folder is kept.
@@ -210,7 +214,9 @@ Each folder is a small per-pixel transparent WPF window parented to Explorer's `
 window that holds the desktop icons, placed above the icon list. That is what keeps it behind other
 windows yet clickable, and it works with both the classic desktop layout and the one in Windows 11
 24H2. When Explorer restarts and takes those windows with it, DeskGrid re-attaches them.
-`CLAUDE.md` and `context/` hold the design notes and decisions.
+`CLAUDE.md` and `context/` hold the design notes and decisions. DeskGrid is bilingual: every document comes in English
+(`NAME.md`) and Traditional Chinese (`NAME.zh-TW.md`) and every text in the app in both languages; the rules for
+contributors are in "Language policy" in `AGENTS.md`.
 
 ## License
 

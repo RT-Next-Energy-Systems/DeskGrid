@@ -1,6 +1,8 @@
 ﻿# Decisions
 
 > 只能新增，不得覆蓋或刪除既有紀錄。若某個決策後來被推翻，新增一筆新紀錄說明並引用原紀錄的日期，不要修改原紀錄。
+>
+> 本檔與 `decisions.md`（英文）互為雙語版：每一筆新紀錄兩份都要加。見 `AGENTS.md`「語言政策」。
 
 ---
 
@@ -554,3 +556,15 @@
 **Alternatives**: #27 固定開在工作列上方（要猜工作列方向）；#19 讓 `ItemImporter` 直接收 PIDL（要改 `Plan` / 三個呼叫端 / 事件參數的型別）、或對虛擬項目用 `shell:AppsFolder\AUMID` 字串建 `.lnk`（要自己取 AUMID，且 `SetIDList` 更直接）。
 **Consequences**: 暫存 `.lnk` 在放開後即刪；程序在放開途中被殺會留下 `%TEMP%\DeskGrid\drops\` 的空殼，沒有啟動時清理。#19 的資料格式假設沒實測。
 **Author**: 使用者要求，實作方式由我決定
+
+---
+
+### 2026-11-03（五）— 雙語 App 與文件：可選語言、`NAME.md` + `NAME.zh-TW.md`、置中展開面板
+**Decision**:
+1. **App 語言**：新增設定「語言」（config `language`：`system` / `english` / `traditionalChinese`；預設 `system`＝Windows 為 zh-TW / zh-HK / zh-MO / zh-Hant 時用繁體中文，否則英文）。`UiLanguage.Apply` 在啟動與套用設定時切換整個程序（`DefaultThreadCurrentUICulture`、`CurrentUICulture`、`Strings.Culture`）；文字在建立視窗 / 選單 / 對話框時才取，所以不必重新啟動。更新紀錄與隱私連結跟著語言（本來就有各語言的資源）。
+2. **文件**：所有進版控的 Markdown 都有 `NAME.md`（英文）與 `NAME.zh-TW.md`（繁體中文）兩個版本，結構相同。`CLAUDE`、`AGENTS`、`context/decisions`、`context/project-summary` 新增英文版（原本的中文檔用 `git mv` 改名為 `*.zh-TW.md`，保留歷史）；`README` 與 `CHANGELOG` 本來就是這樣。政策寫在 `AGENTS.md`（「語言政策」）與 `CLAUDE.md`，每位開發者的 AI 助理都會先讀到。`UiLanguageTests`（resx 的 key 與佔位符一致）與 `MarkdownPairsTests`（雙語版存在、標題結構相同）把關。本機、已 gitignore 的工作筆記與 `LICENSE` 不在範圍內。
+3. **面板展開位置**：新增設定「資料夾展開方式」（config `panelOpenMode`）：*附近展開*（原本的行為，預設）或*置中展開*：開在 widget 所在螢幕工作區的正中央，無論資料夾裡有多少東西都是同樣大小——寬 `columns` 欄、高 `columns` 列（只有螢幕太矮時才減列），項目在裡面捲動，捲軸的位置永遠預留。拖曳停在 widget 上而開啟的面板一律附近展開。
+**Reason**: 使用者要求整個 App 與所有文件都能選擇雙語（繁體中文 / 英文），並把政策寫進對應文件，讓他或另一位開發者的 AI 助理之後繼續沿用；以及兩種展開資料夾的方式，第二種是為了不讓不同資料夾因為 App 數量不同而開在不同位置、不同大小（大小取自設定的欄數）。
+**Alternatives**: 文件：repo 內只留英文（否決：擁有者與部分協作者用中文）；中文檔沿用 `CLAUDE.md` 這個原名（否決：`README` / `CHANGELOG` 已經是英文用原名，而且英文的 `CLAUDE.md` 才是任何協作者的助理預設會載入的）；一個檔案放兩種語言（檔案很長、diff 雜亂、無法依語言編進 exe）。語言：只能重新啟動才切換（文字本來就在建立時才取，多寫程式沒好處）；用自己的對話框取代 `MessageBox`，讓按鈕跟著設定（為了幾個按鈕太大）。置中展開：選正方形（列數＝欄數）作為「由欄數決定」的大小——使用者沒指定列數；固定寬度、高度隨內容的做法否決，因為那正是要避免的不一致。
+**Consequences**: 之後每次改文件都是同一個 commit 內改兩份（測試檢查得出結構，檢查不出譯文本身）。Windows 自己的部分（`MessageBox` 按鈕、檔案總管右鍵選單）跟著 Windows 的語言而不是設定。列數＝欄數的置中面板在 8 欄時很高，會被裁到螢幕放得下。`project-summary` 仍保留舊的「Current Status」文字（照原樣翻譯）。本筆取代 2026-10-24「文件語言」那一筆。沒有實機驗證：執行中切換語言、置中展開面板在真實桌面上的樣子。
+**Author**: 使用者要求；細節由 Claude 決定（正方形的大小與「拖曳開啟的面板一律附近展開」使用者沒有指定）

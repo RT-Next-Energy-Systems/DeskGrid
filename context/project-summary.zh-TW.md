@@ -1,5 +1,7 @@
 # Project Summary
 
+> 語言政策：本檔與 `project-summary.md`（英文）互為雙語版，修改時兩份一起改。見 `AGENTS.md`「語言政策」。
+
 ## Project Name
 DeskGrid（repo 目錄名 DeskGrid）
 
@@ -22,6 +24,7 @@ Directory.Build.props     shared settings (nullable, x64, warnings as errors)
 global.json               SDK 10.0.x (rollForward latestFeature)
 .github/workflows/        ci.yml (build/test/publish), release.yml (v* tag → GitHub Release)
 README.md, README.zh-TW.md, LICENSE (MIT)
+CLAUDE.md, AGENTS.md, CHANGELOG.md        英文；各有繁體中文雙語版 NAME.zh-TW.md
 src/DeskGrid/
   DeskGrid.csproj
   app.manifest            PerMonitorV2, asInvoker
@@ -34,7 +37,7 @@ src/DeskGrid/
   Folders/                FolderScanner, WidgetCatalog, RootFolder, FolderPaths, ItemImporter, FolderDeleter, DesktopFiles, WidgetFolderName, NaturalStringComparer, records
   Icons/                  IconService, PreviewComposer
   Panel/                  PopupPanel (XAML), PanelController, PanelPlacement, PanelTheme, Backdrop, PanelItem
-  Resources/              Strings.resx (en), Strings.zh-TW.resx
+  Resources/              Strings.resx (en), Strings.zh-TW.resx, UiLanguage（選擇語言）
   Settings/               SettingsWindow (XAML), NewFolderDialog (XAML), ColorDialog
   Shell/                  ShellImage, ShellItem, ShortcutFile, RecycleBin
   Threading/              DispatcherThread (STA worker)
@@ -42,7 +45,7 @@ src/DeskGrid/
   Widgets/                FolderWidget (XAML), WidgetBoard, WidgetGrid, IconMerger
 tests/DeskGrid.Tests/  xUnit v3
 tools/                    make-icon.ps1
-context/                  session context docs
+context/                  session context docs（decisions 與本摘要在版控內，各有兩種語言版）
 ```
 
 ## Core Modules
