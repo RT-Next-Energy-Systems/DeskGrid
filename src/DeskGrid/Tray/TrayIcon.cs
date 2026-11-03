@@ -2,6 +2,7 @@ using System.Windows.Interop;
 using System.Windows.Threading;
 using DeskGrid.Desktop;
 using DeskGrid.Diagnostics;
+using DeskGrid.Shell;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.Controls;
@@ -97,6 +98,7 @@ internal sealed class TrayIcon : IDisposable
     private unsafe void ShowMenu()
     {
         var items = _menu();
+        MenuTheme.FollowSystem(); // Before the menu is made, so a change of the system theme since the last time shows.
         var menu = PInvoke.CreatePopupMenu();
         try
         {

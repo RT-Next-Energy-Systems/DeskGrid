@@ -17,6 +17,8 @@ GetCursorPos
 GetDpiForMonitor
 GetForegroundWindow
 GetModuleHandle
+GetProcAddress
+LoadLibrary
 GetMonitorInfo
 GetObject
 GetParent

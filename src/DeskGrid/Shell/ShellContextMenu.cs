@@ -104,6 +104,7 @@ internal sealed class ShellContextMenu : IDisposable
     public unsafe bool Show(HwndSource owner, ScreenPoint at)
     {
         var window = new HWND(owner.Handle);
+        MenuTheme.FollowSystem();
 
         // Submenus (Send to, Open with) fill themselves and owner-draw their items through these messages.
         var messages = new MenuMessages(_menu as IContextMenu2, _menu as IContextMenu3);
