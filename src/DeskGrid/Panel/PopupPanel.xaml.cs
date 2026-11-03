@@ -37,6 +37,7 @@ internal partial class PopupPanel : Window
     // Virtual-key codes of the mouse buttons (winuser.h); a drag can be made with either.
     private const int LeftButton = 0x01;
     private const int RightButton = 0x02;
+    private const int EscapeKey = 0x1B; // VK_ESCAPE
 
     private static readonly TimeSpan ResizeTime = TimeSpan.FromMilliseconds(180);
     private static readonly Duration SlideDuration = new(TimeSpan.FromMilliseconds(200));
@@ -425,6 +426,9 @@ internal partial class PopupPanel : Window
     private bool IsOwnItem(DragEventArgs e) =>
         _dragIndex >= 0 && PanelDragData.IsFrom(e.Data, Folder?.Name ?? ItemReorderedEventArgs.FolderList);
 
+    // Without the focus the panel gets no key events; Escape is looked for instead.
+    private static bool EscapeDown() => (PInvoke.GetAsyncKeyState(EscapeKey) & 0x8000) != 0;
+
     private static bool MouseButtonDown() =>
         ((PInvoke.GetAsyncKeyState(LeftButton) | PInvoke.GetAsyncKeyState(RightButton)) & 0x8000) != 0;
 
@@ -445,7 +449,7 @@ internal partial class PopupPanel : Window
     // folder closes. DragLeave alone can't tell: it arrives only while the window is the drop target.
     // A panel opened by a drag held over its widget closes when the drag moves away, or ends without a drop here.
     // After a drop it stays and takes the focus; if Windows won't hand it the focus (the drag came from another
-    // app), a click elsewhere closes it.
+    // app), Escape or a click elsewhere closes it.
     private void OnWatch(object? sender, EventArgs e)
     {
         if (_closing)
@@ -467,7 +471,7 @@ internal partial class PopupPanel : Window
         else if (_awaitsClick)
         {
             // A click on the widget itself closes the panel through the widget.
-            if (MouseButtonDown() && !CursorOverWindow() && !_anchor.Contains(ScreenPoint.AtCursor()))
+            if (EscapeDown() || (MouseButtonDown() && !CursorOverWindow() && !_anchor.Contains(ScreenPoint.AtCursor())))
             {
                 Dismiss();
             }
