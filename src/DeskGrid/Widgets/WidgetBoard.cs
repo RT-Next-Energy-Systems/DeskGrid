@@ -158,17 +158,37 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
     public void OnDisplayChanged()
     {
         _nativeIcons = host.ReadIconGrid();
+        var configChanged = false;
         foreach (var entry in _entries.Values)
         {
             var saved = SavedPosition(entry.Folder.Name) ?? entry.Surface.Position;
-            var position = IsOnAMonitor(saved)
-                ? saved
-                : GridOn(MonitorArea.At(saved)).NearestFree(saved, TakenCells(except: entry.Surface));
+            var grid = GridOn(MonitorArea.At(saved));
+            ScreenPoint position;
+            if (!IsOnAMonitor(saved))
+            {
+                position = grid.NearestFree(saved, TakenCells(except: entry.Surface));
+            }
+            else if (grid.FollowsIcons)
+            {
+                // The cells themselves may have moved (icon spacing, taskbar size, DPI): land on the nearest one of today's.
+                position = grid.NearestFree(saved, TakenCells(except: entry.Surface));
+                configChanged |= SavePosition(entry.Folder.Name, position);
+            }
+            else
+            {
+                position = saved;
+            }
+
             entry.Surface.MoveTo(position);
             ApplyCellSize(entry.View, entry.Surface);
         }
 
-        Log.Info($"Display configuration changed; {_entries.Count} widget(s) checked.");
+        if (configChanged)
+        {
+            configStore.Save();
+        }
+
+        Log.Info($"Display or desktop layout changed; {_entries.Count} widget(s) checked.");
     }
 
     // Whether a widget put at this position would be seen: its middle is on a monitor.
@@ -421,6 +441,7 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
                 board.WidgetDragStarted?.Invoke(board, EventArgs.Empty);
             };
             View.Dragged += (_, offset) => Surface.MoveTo(_dragOrigin.Offset(offset.X, offset.Y));
+            View.DragCancelled += (_, _) => Surface.MoveTo(_dragOrigin); // Its cell is where it was saved: nothing to snap or store.
             View.DragCompleted += (_, _) =>
             {
                 // Let go over the Recycle Bin: the widget goes back where it came from, and its folder is offered for

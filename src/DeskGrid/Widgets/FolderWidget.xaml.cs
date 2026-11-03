@@ -5,6 +5,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using DeskGrid.Desktop;
 using DeskGrid.Diagnostics;
 using DeskGrid.Resources;
@@ -26,6 +27,8 @@ internal partial class FolderWidget : UserControl
     public const double CellHeight = 96;
 
     private const int MaxLabelLines = 2;
+    private const int EscapeKey = 0x1B; // VK_ESCAPE
+    private static readonly TimeSpan EscapeWatchInterval = TimeSpan.FromMilliseconds(30);
     private static readonly Brush HoverBrush = Frozen(new SolidColorBrush(Color.FromArgb(0x33, 0xFF, 0xFF, 0xFF)));
 
     // Invisible, but it makes the whole cell take clicks and drops: fully transparent pixels of the layered window
@@ -38,6 +41,9 @@ internal partial class FolderWidget : UserControl
     private ScreenPoint _pressPoint;
     private bool _dragging;
 
+    // Widgets never take the keyboard (they don't activate), so Escape during a drag is looked for, not received.
+    private readonly DispatcherTimer _escapeWatch;
+
     public FolderWidget()
     {
         InitializeComponent();
@@ -45,6 +51,8 @@ internal partial class FolderWidget : UserControl
         Height = CellHeight;
         Label.MaxHeight = Label.FontSize * Label.FontFamily.LineSpacing * MaxLabelLines;
         Highlight.Background = IdleBrush;
+        _escapeWatch = new DispatcherTimer(EscapeWatchInterval, DispatcherPriority.Input, (_, _) => CancelDragOnEscape(), Dispatcher);
+        _escapeWatch.Stop();
 
         // The owner decides what a drop means; the widget only shows that it is a target.
         AllowDrop = true;
@@ -66,6 +74,9 @@ internal partial class FolderWidget : UserControl
     public event EventHandler<ScreenPoint>? Dragged;
 
     public event EventHandler? DragCompleted;
+
+    /// <summary>Raised when Escape ended a drag: the widget is to go back to where it was. No click or completion follows.</summary>
+    public event EventHandler? DragCancelled;
 
     public event EventHandler? PinRequested;
 
@@ -157,6 +168,7 @@ internal partial class FolderWidget : UserControl
         if (!_dragging && IsBeyondDragThreshold(offset))
         {
             _dragging = true;
+            _escapeWatch.Start();
             DragStarted?.Invoke(this, EventArgs.Empty);
         }
 
@@ -175,6 +187,7 @@ internal partial class FolderWidget : UserControl
 
         var wasDragging = _dragging;
         _dragging = false;
+        _escapeWatch.Stop();
         ReleaseMouseCapture();
         (wasDragging ? DragCompleted : Clicked)?.Invoke(this, EventArgs.Empty);
         e.Handled = true;
@@ -186,8 +199,22 @@ internal partial class FolderWidget : UserControl
         if (_dragging)
         {
             _dragging = false;
+            _escapeWatch.Stop();
             DragCompleted?.Invoke(this, EventArgs.Empty);
         }
+    }
+
+    private void CancelDragOnEscape()
+    {
+        if (!_dragging || (PInvoke.GetAsyncKeyState(EscapeKey) & 0x8000) == 0)
+        {
+            return;
+        }
+
+        _dragging = false;
+        _escapeWatch.Stop();
+        ReleaseMouseCapture(); // The button is still down; its release is ignored now that nothing is captured.
+        DragCancelled?.Invoke(this, EventArgs.Empty);
     }
 
     private static bool IsBeyondDragThreshold(ScreenPoint offset) =>

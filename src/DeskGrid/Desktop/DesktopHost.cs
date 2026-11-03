@@ -38,8 +38,9 @@ internal sealed class DesktopHost : IDisposable
     }
 
     /// <summary>
-    /// Monitors were added, removed or rearranged, and Explorer has had a moment to adapt. The surfaces are back at
-    /// their <see cref="DesktopSurface.Position"/> by then; what belongs where is for the owner to decide.
+    /// Monitors were added, removed or rearranged, or the work area, icon spacing or DPI scaling changed, and Explorer
+    /// has had a moment to adapt. The surfaces are back at their <see cref="DesktopSurface.Position"/> by then; what
+    /// belongs where is for the owner to decide.
     /// </summary>
     public event EventHandler? DisplayChanged;
 
@@ -209,9 +210,26 @@ internal sealed class DesktopHost : IDisposable
             _displaySettled.Stop();
             _displaySettled.Start();
         }
+        else if ((uint)msg == PInvoke.WM_SETTINGCHANGE && ChangesDesktopLayout((nuint)wParam))
+        {
+            Log.Info($"Desktop layout setting changed (SPI 0x{(nuint)wParam:X}).");
+            _displaySettled.Stop();
+            _displaySettled.Start();
+        }
 
         return IntPtr.Zero;
     }
+
+    /// <summary>
+    /// Whether a <c>WM_SETTINGCHANGE</c> with this <c>SPI_*</c> value in <c>wParam</c> moves the cells widgets sit on:
+    /// the work area (the taskbar moved or was resized), the desktop icon spacing, or the DPI scaling.
+    /// </summary>
+    internal static bool ChangesDesktopLayout(nuint action) => action is
+        0x000D // SPI_ICONHORIZONTALSPACING
+        or 0x0018 // SPI_ICONVERTICALSPACING
+        or 0x002E // SPI_SETICONMETRICS
+        or 0x002F // SPI_SETWORKAREA
+        or 0x009F; // SPI_SETLOGICALDPIOVERRIDE
 
     // The desktop window spans all monitors and moves when one is added on its left or top; its children, our
     // surfaces, move with it on the screen. Each surface knows where it belongs and goes back there.
