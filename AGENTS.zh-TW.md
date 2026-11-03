@@ -10,7 +10,7 @@ DeskGrid 是雙語專案：**英文與繁體中文（zh-TW）**，兩種語言�
 - **所有使用者看得到的文字都放在 `src/DeskGrid/Resources/Strings.resx`（英文，neutral）與 `Strings.zh-TW.resx`。** C# 與 XAML 不寫死介面文字（語言本身的名稱是唯一例外，且它也是資源）。新增 key 時**兩個檔案同一次修改一起加**，`{0}` 佔位符要一致，每種語言寫自然的說法，不要逐字硬翻。
 - 文字在建立視窗、選單或對話框時才取（`Strings.X`）；不可快取在 `static` 欄位或建構時的常數裡，否則切換語言時改不到。
 - 由檔案顯示的文字遵守同一條規則：`CHANGELOG.md` / `CHANGELOG.zh-TW.md` 編進 exe（資源字串 `ChangeLogResource` 指定該語言用哪一個），資源字串 `SettingsPrivacyUrl` 指到該語言 README 的隱私段落（`README.md#privacy`、`README.zh-TW.md#隱私`）。改 README 標題時要同步改這個網址。
-- Windows 自己的部分（例如 `MessageBox` 的按鈕、檔案總管的右鍵選單）跟著 Windows 的語言而不是 DeskGrid 的設定，這裡改不了。
+- 由 UI 執行緒顯示的 Windows 內建對話框（色彩選擇器、資料夾選擇器、`MessageBox` 的按鈕）的語言取自執行緒而不是 `CultureInfo`：`UiLanguage.Apply` 會設定該執行緒的偏好 UI 語言（`SetThreadPreferredUILanguages`），所以要在 UI 執行緒呼叫。我們的對話框以外由 Windows 或其他程式畫出的內容（例如其他程式加進檔案總管右鍵選單的項目）仍是 Windows 的語言。
 - `UiLanguageTests` 會在某個 key 只存在於一種語言、或譯文少了佔位符時失敗，不要放寬它。
 - 要加第三種語言：`Strings.<culture>.resx`、`AppLanguage` 新值、`UiLanguage.Resolve` 的分支、設定視窗的選項、下列每份文件的 `.<culture>.md`，以及 csproj 的 `SatelliteResourceLanguages`。
 

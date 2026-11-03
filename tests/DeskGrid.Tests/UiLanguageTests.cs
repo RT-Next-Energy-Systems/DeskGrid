@@ -46,3 +46,25 @@ public sealed class UiLanguageTests
     private static string[] Placeholders(string text) =>
         [.. Regex.Matches(text, @"\{\d+\}").Select(m => m.Value).Order()];
 }
+
+public sealed class WindowsDialogLanguageTests
+{
+    // The dialogs Windows shows (color picker, MessageBox buttons) read the language of the thread that shows them.
+    [Theory]
+    [InlineData("English", "en-US", 0x0409)]
+    [InlineData("TraditionalChinese", "zh-TW", 0x0404)]
+    public void SetWindowsDialogLanguage_ChangesTheLanguageOfTheCallingThread(string language, string culture, int expectedLangId)
+    {
+        // A thread of its own: the setting belongs to the thread, and must not leak into the test runner's.
+        var langId = 0;
+        var thread = new Thread(() =>
+        {
+            UiLanguage.SetWindowsDialogLanguage(Enum.Parse<AppLanguage>(language), new CultureInfo(culture));
+            langId = (int)Windows.Win32.PInvoke.GetThreadUILanguage();
+        });
+        thread.Start();
+        thread.Join();
+
+        Assert.Equal(expectedLangId, langId);
+    }
+}

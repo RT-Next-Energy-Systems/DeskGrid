@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- The color picker, the folder picker and the buttons of Windows message boxes now use the language chosen in
+  DeskGrid's settings instead of Windows' language.
+
 ## 0.4.0
 
 ### Added

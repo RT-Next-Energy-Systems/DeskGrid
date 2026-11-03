@@ -162,7 +162,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **兩種語言、由使用者選**：英文與繁體中文。設定「語言」：*跟隨 Windows*（預設；Windows 介面語言為 zh-TW / zh-HK / zh-MO / zh-Hant 時用繁體中文，否則英文——簡體中文與其他語言都是英文）、*English*、*繁體中文*；config `language`。
 - **切換方式**：`UiLanguage.Apply(AppLanguage)` 設定 `CultureInfo.DefaultThreadCurrentUICulture`、目前執行緒的 `CurrentUICulture`（WPF 自己的文字，例如文字框的剪下 / 複製 / 貼上來自 `zh-Hant` 衛星組件，也跟著變）與 `Strings.Culture`；啟動時載入 config 後立刻執行，並在 `App.ApplySettings` 再執行。文字在建立視窗、選單或對話框時才取，所以之後開啟的東西都用新語言；widget 只顯示資料夾名稱；已開的面板在按「確定」時關閉。`UiLanguage` 記住 Windows 自己的介面語言（在第一次 `Apply` 之前讀取），之後才能再選回「跟隨 Windows」。
 - **政策**（細節見 `AGENTS.md`「語言政策」）：所有介面文字放 `Strings.resx` + `Strings.zh-TW.resx`（`UiLanguageTests` 檢查 key 與佔位符一致）；不可把 `Strings.X` 快取在 `static`；更新紀錄（`ChangeLogResource`）與隱私連結（`SettingsPrivacyUrl`）跟著語言；**所有進版控的 Markdown 都有 `NAME.md`（英文）+ `NAME.zh-TW.md`（繁體中文）兩個版本，結構相同**（`MarkdownPairsTests`）。
-- Windows 自己的部分（`MessageBox` 的按鈕、檔案總管的右鍵選單）跟著 Windows 的語言，不受這個設定影響。
+- 由 UI 執行緒顯示的 Windows 內建對話框（色彩選擇器、資料夾選擇器、`MessageBox` 的按鈕）的語言取自執行緒：`UiLanguage.Apply` 對 UI 執行緒呼叫 `SetThreadPreferredUILanguages`（「跟隨 Windows」時清除；測試 `WindowsDialogLanguageTests` 檢查 `GetThreadUILanguage`）。其他程式加進檔案總管右鍵選單的項目仍是 Windows 的語言。沒有在螢幕上看過另一種語言的色彩選擇器。
 - 沒有實機驗證：執行中切換語言（單元測試驗證語言的選擇、key 一致與文件成對）。
 
 ## 版本檢查與更新
