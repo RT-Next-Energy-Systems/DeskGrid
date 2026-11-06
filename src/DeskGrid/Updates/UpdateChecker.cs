@@ -17,9 +17,13 @@ internal sealed record ReleaseInfo(Version Version, string Tag, string PageUrl, 
 internal static class UpdateChecker
 {
     /// <summary>The project's home on GitHub.</summary>
-    public const string RepositoryUrl = "https://github.com/Ryan970714/DeskGrid";
+    /// <remarks>
+    /// Moved from Ryan970714/DeskGrid in November 2026. GitHub redirects the old address, which 0.4.1 and older still
+    /// ask, but only for as long as no other repository takes that name.
+    /// </remarks>
+    public const string RepositoryUrl = "https://github.com/RT-Next-Energy-Systems/DeskGrid";
 
-    private const string LatestReleaseUrl = "https://api.github.com/repos/Ryan970714/DeskGrid/releases/latest";
+    private const string LatestReleaseUrl = "https://api.github.com/repos/RT-Next-Energy-Systems/DeskGrid/releases/latest";
     private const string ExeSuffix = "-win-x64.exe";
 
     public static Version CurrentVersion { get; } = Normalize(typeof(UpdateChecker).Assembly.GetName().Version ?? new Version(0, 0, 0));

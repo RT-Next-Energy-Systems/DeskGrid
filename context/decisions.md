@@ -595,3 +595,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Real screenshots on a clean test desktop (still the better picture, needs the user); mock-ups drawn by hand (would not be the app). The Windows 11 acrylic can't be drawn this way, hence the "Dark" background.
 **Consequences**: The pictures show 0.4.1 and the current layout; when the windows change they have to be drawn again (the probe is described here, not kept). Drawing them showed that "Change log…" and "Check for updates" didn't line up (the Fluent style puts a button at the left of its cell); both now stretch over their column. The rest of #5 that can be judged from the pictures (the cards, the startup-check checkbox, the new folder and update dialogs, in both languages, light and dark) looked right; how they behave on the real desktop is still for the user to see.
 **Author**: The user asked to do every issue that can be done; the way of making the pictures was decided by Claude
+
+---
+
+### 2026-11-06 (3) — The app follows the repository to `RT-Next-Energy-Systems/DeskGrid`
+**Decision**: The repository was moved from `Ryan970714/DeskGrid` to `RT-Next-Energy-Systems/DeskGrid` (GitHub said so on the push). `UpdateChecker.RepositoryUrl` and the update check's API address, the privacy link of both languages (`SettingsPrivacyUrl`), `CLAUDE.md` and the project summary now use the new address. (The local `origin` remote still names the old one and pushes through the redirect; changing it is left to the user.) `UpdateCheckerTests.PrivacyLink_IsInTheRepository` checks that the privacy links start with `RepositoryUrl`. Older records here keep the old name: they were true when written.
+**Reason**: The user chose it when asked. The old address still works through GitHub's redirect (measured: the API answers 301 to `/repositories/<id>/…`, `HttpClient` follows it, and the release it returns links to the new address), but only until someone else takes `Ryan970714/DeskGrid`.
+**Alternatives**: Keep the old address and rely on the redirect (nothing to change, but the update check of every new version would hang on another account's name).
+**Consequences**: 0.4.1 and older keep asking the old address and depend on the redirect; versions from the next release on ask the new one. The SignPath application (#8) should name the new repository.
+**Author**: The user decided; Claude made the change

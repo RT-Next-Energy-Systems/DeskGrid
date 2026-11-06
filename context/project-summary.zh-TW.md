@@ -58,7 +58,7 @@ DesktopHost（`Desktop/`）、ConfigStore（`Config/`）、FolderScanner + Widge
 階段 7：CI、打包、README、LICENSE（MVP 最後一個階段）。
 
 ## Current Status
-階段 1–6 使用者驗證通過。階段 7 完成於本機：單一 exe 打包並實際執行成功、CI 與 Release workflow、README（en / zh-TW）、MIT LICENSE；待推上公開 repo `Ryan970714/DeskGrid` 並確認 CI 通過。
+階段 1–6 使用者驗證通過。階段 7 完成於本機：單一 exe 打包並實際執行成功、CI 與 Release workflow、README（en / zh-TW）、MIT LICENSE；待推上公開 repo `RT-Next-Energy-Systems/DeskGrid`（當時是 `Ryan970714/DeskGrid`） 並確認 CI 通過。
 
 ## Known Issues
 - 舊版桌面階層（Win10 / Win11 ≤ 23H2）程式路徑尚未實機測試。

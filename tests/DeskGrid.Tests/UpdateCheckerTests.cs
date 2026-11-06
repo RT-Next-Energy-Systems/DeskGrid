@@ -10,7 +10,7 @@ public sealed class UpdateCheckerTests
     private static readonly string Release = $$"""
         {
           "tag_name": "v0.2.0",
-          "html_url": "https://github.com/Ryan970714/DeskGrid/releases/tag/v0.2.0",
+          "html_url": "https://github.com/RT-Next-Energy-Systems/DeskGrid/releases/tag/v0.2.0",
           "draft": false,
           "prerelease": false,
           "assets": [
@@ -19,6 +19,17 @@ public sealed class UpdateCheckerTests
           ]
         }
         """;
+
+    // The settings window's privacy link goes to the README of the same repository the update check asks.
+    [Theory]
+    [InlineData("en")]
+    [InlineData("zh-TW")]
+    public void PrivacyLink_IsInTheRepository(string culture)
+    {
+        var link = DeskGrid.Resources.Strings.ResourceManager.GetString("SettingsPrivacyUrl", new System.Globalization.CultureInfo(culture))!;
+
+        Assert.Matches("^" + System.Text.RegularExpressions.Regex.Escape(UpdateChecker.RepositoryUrl) + "[#/]", link);
+    }
 
     [Fact]
     public void ParseRelease_FindsTheVersionTheExeAndItsDigest()

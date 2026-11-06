@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Changed
+
+- The project moved to `github.com/RT-Next-Energy-Systems/DeskGrid`: the update check, the GitHub link and the privacy
+  link in Settings now go there. (Older versions keep working through GitHub's redirect from the old address.)
+
 ### Fixed
 
 - Dropping a whole drive (such as `D:\`) on a folder put a shortcut called `.lnk` at the root of that drive; it now

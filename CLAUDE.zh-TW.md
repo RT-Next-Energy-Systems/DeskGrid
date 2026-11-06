@@ -167,7 +167,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 
 ## 版本檢查與更新
 
-- **來源**：`https://api.github.com/repos/Ryan970714/DeskGrid/releases/latest`（匿名，每小時 60 次上限夠用）；略過 draft / prerelease；tag 去掉 `v` 後與組件版本（csproj `<Version>`）比 major.minor.build。exe 資產用字尾 `-win-x64.exe` 找（舊 v0.1.0 資產叫 `DeskFolders-…`），校驗檔是 `<exe 名>.sha256`。
+- **來源**：`https://api.github.com/repos/RT-Next-Energy-Systems/DeskGrid/releases/latest`（匿名，每小時 60 次上限夠用）；略過 draft / prerelease；tag 去掉 `v` 後與組件版本（csproj `<Version>`）比 major.minor.build。exe 資產用字尾 `-win-x64.exe` 找（舊 v0.1.0 資產叫 `DeskFolders-…`），校驗檔是 `<exe 名>.sha256`。
 - **三個選項**：更新（下載 → 驗 SHA256（取自 release 資產的 API `digest` 欄位）→ `apply-update.ps1` 等本程序結束後 `Move-Item` 蓋掉 exe 再啟動；只有發布的單檔 exe 做得到，`UpdateInstaller.CanReplaceSelf`，開發版與無法寫入的資料夾改開 release 頁）、維持（config `skippedUpdateVersion` 記下該 tag，自動檢查不再提醒，手動檢查仍會彈）、取消（什麼都不存，下次啟動再提醒）。
 - **觸發**：啟動後 8 秒自動檢查一次（網路失敗只記 log，不打擾）；設定視窗顯示目前版本與「檢查更新」按鈕，結果文字顯示在按鈕旁。
 - **可關閉**（2026-10-30，SignPath Foundation 條款要求連網行為要揭露且能關）：設定視窗「DeskGrid 啟動時檢查更新」（config `checkForUpdatesAtStartup`，預設開）。關掉後 DeskGrid 不會自己連網，只有使用者按「檢查更新」或選「更新」才連 GitHub。README 的「隱私 / Privacy」列出所有網路行為，新增網路行為時要同步改。
@@ -190,7 +190,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 
 ## 發布與 CI（階段 7）
 
-- **GitHub**：公開 repo `Ryan970714/DeskGrid`，預設分支 `main`，MIT（著作權人 Ryan Kuo）。README 英文（`README.md`）+ 繁中（`README.zh-TW.md`），內容需保持一致。其中的截圖在 `docs/images/`（`NAME.png` + `NAME.zh-TW.png`），由真正的 UI 類別配上 Windows 內建 App 繪製，不是從桌面截取（做法見 `context/decisions.md` 2026-11-06（二））；視窗改了就要重畫。
+- **GitHub**：公開 repo `RT-Next-Energy-Systems/DeskGrid`（2026 年 11 月由 `Ryan970714/DeskGrid` 搬過來；GitHub 會把舊位址轉址，0.4.1 以前的版本檢查更新仍用舊位址），預設分支 `main`，MIT（著作權人 Ryan Kuo）。README 英文（`README.md`）+ 繁中（`README.zh-TW.md`），內容需保持一致。其中的截圖在 `docs/images/`（`NAME.png` + `NAME.zh-TW.png`），由真正的 UI 類別配上 Windows 內建 App 繪製，不是從桌面截取（做法見 `context/decisions.md` 2026-11-06（二））；視窗改了就要重畫。
 - **打包**：`Properties/PublishProfiles/win-x64.pubxml`：self-contained、PublishSingleFile、`IncludeNativeLibrariesForSelfExtract`（WPF 原生 DLL 也包進 exe，首次執行解到 %TEMP%）、壓縮、無 pdb。WPF 不支援 trimming。`SatelliteResourceLanguages=en;zh-Hant;zh-TW` 只帶用得到的語系（WPF 自己的文字如文字框右鍵在 `zh-Hant`），exe 65.1 → 61.9 MB。`.gitignore` 範本會忽略 `*.pubxml`，已為這個 profile 加例外。
 - **CI**（`.github/workflows/ci.yml`）：push 到 main 與 PR → windows-latest、.NET 10.0.x → build、test、publish，exe 上傳為 artifact。
 - **Release**（`release.yml`）：推 `v*` tag → test → 以 tag 版本號 publish → `gh release create`，只附 `DeskGrid-<版本>-win-x64.exe`。csproj 的 `<Version>` 是本機建置的預設值。

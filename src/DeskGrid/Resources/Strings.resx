@@ -190,7 +190,7 @@ Using the default root folder instead:
     <value>Privacy</value>
   </data>
   <data name="SettingsPrivacyUrl" xml:space="preserve">
-    <value>https://github.com/Ryan970714/DeskGrid#privacy</value>
+    <value>https://github.com/RT-Next-Energy-Systems/DeskGrid#privacy</value>
   </data>
   <data name="SettingsChecking" xml:space="preserve">
     <value>Checking…</value>

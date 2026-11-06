@@ -597,3 +597,12 @@
 **Alternatives**: 在乾淨的測試桌面上實際截圖（仍是更好的圖，需要使用者）；手繪示意圖（就不是 App 本身了）。Windows 11 的毛玻璃無法這樣繪製，所以用「深色」背景。
 **Consequences**: 圖呈現的是 0.4.1 與目前的版面；視窗改了就要重畫（探測程式記在這裡，沒有保留）。繪製時發現「更新紀錄…」與「檢查更新」沒有對齊（Fluent 樣式把按鈕放在格子左邊），兩者現在都撐滿所在的欄。#5 中能從圖判斷的部分（各卡片、啟動時檢查更新的勾選框、新增資料夾與更新對話框，兩種語言、淺色與深色）看起來都正確；在真實桌面上的表現仍待使用者確認。
 **Author**: 使用者要求做完所有能做的 issue；繪製圖的方式由 Claude 決定
+
+---
+
+### 2026-11-06（三）— App 跟著 repo 改用 `RT-Next-Energy-Systems/DeskGrid`
+**Decision**: repo 已從 `Ryan970714/DeskGrid` 搬到 `RT-Next-Energy-Systems/DeskGrid`（push 時 GitHub 提示）。`UpdateChecker.RepositoryUrl` 與檢查更新的 API 位址、兩種語言的隱私連結（`SettingsPrivacyUrl`）、`CLAUDE.md` 與專案摘要都改用新位址。（本機的 `origin` remote 仍是舊位址，透過轉址 push；要不要改由使用者決定。）`UpdateCheckerTests.PrivacyLink_IsInTheRepository` 檢查隱私連結以 `RepositoryUrl` 開頭。這裡較早的紀錄保留舊名稱：寫下時是正確的。
+**Reason**: 詢問後由使用者決定。舊位址透過 GitHub 的轉址仍可使用（實測：API 回 301 到 `/repositories/<id>/…`，`HttpClient` 會跟著轉，回傳的 release 連到新位址），但只到有人取用 `Ryan970714/DeskGrid` 這個名稱為止。
+**Alternatives**: 保留舊位址、依賴轉址（不必改，但之後每個新版本的檢查更新都會掛在別人帳號的名稱上）。
+**Consequences**: 0.4.1 以前的版本仍查詢舊位址、依賴轉址；下一版起查詢新位址。SignPath 申請（#8）應填新的 repo。
+**Author**: 使用者決定；Claude 修改

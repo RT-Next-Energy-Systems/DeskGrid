@@ -58,7 +58,7 @@ See `AGENTS.md`.
 Stage 7: CI, packaging, README, LICENSE (the last stage of the MVP).
 
 ## Current Status
-Stages 1–6 were verified by the user. Stage 7 is done locally: the single-file exe is packaged and runs, CI and Release workflows, README (en / zh-TW), MIT LICENSE; still to do: push to the public repo `Ryan970714/DeskGrid` and confirm CI passes.
+Stages 1–6 were verified by the user. Stage 7 is done locally: the single-file exe is packaged and runs, CI and Release workflows, README (en / zh-TW), MIT LICENSE; still to do: push to the public repo `RT-Next-Energy-Systems/DeskGrid` (then `Ryan970714/DeskGrid`) and confirm CI passes.
 
 ## Known Issues
 - The legacy desktop hierarchy (Win10 / Win11 ≤ 23H2) code path has not been tested on a real machine.
