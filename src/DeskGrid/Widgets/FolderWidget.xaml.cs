@@ -48,6 +48,11 @@ internal partial class FolderWidget : UserControl
     // Widgets never take the keyboard (they don't activate), so Escape during a drag is looked for, not received.
     private readonly DispatcherTimer _escapeWatch;
 
+    // The right-click menu; its texts are read each time it opens.
+    private readonly MenuItem _pin = new();
+    private readonly MenuItem _create = new();
+    private readonly MenuItem _delete = new();
+
     public FolderWidget()
     {
         InitializeComponent();
@@ -61,13 +66,14 @@ internal partial class FolderWidget : UserControl
         // The owner decides what a drop means; the widget only shows that it is a target.
         AllowDrop = true;
 
-        var pin = new MenuItem { Header = Strings.WidgetPinToTaskbar };
-        pin.Click += (_, _) => PinRequested?.Invoke(this, EventArgs.Empty);
-        var create = new MenuItem { Header = Strings.TrayNewFolder };
-        create.Click += (_, _) => NewFolderRequested?.Invoke(this, EventArgs.Empty);
-        var delete = new MenuItem { Header = Strings.WidgetDelete };
-        delete.Click += (_, _) => DeleteRequested?.Invoke(this, EventArgs.Empty);
-        ContextMenu = new ContextMenu { Items = { pin, create, new Separator(), delete } };
+        _pin.Click += (_, _) => PinRequested?.Invoke(this, EventArgs.Empty);
+        _create.Click += (_, _) => NewFolderRequested?.Invoke(this, EventArgs.Empty);
+        _delete.Click += (_, _) => DeleteRequested?.Invoke(this, EventArgs.Empty);
+        ContextMenu = new ContextMenu { Items = { _pin, _create, new Separator(), _delete } };
+
+        // A widget lives as long as its folder; the language may change in the meantime.
+        ContextMenuOpening += (_, _) => LocalizeMenu();
+        LocalizeMenu();
     }
 
     public event EventHandler? Clicked;
@@ -123,6 +129,10 @@ internal partial class FolderWidget : UserControl
         return PresentationSource.FromVisual(this) is HwndSource source
             && PInvoke.WindowFromPoint(new System.Drawing.Point(cursor.X, cursor.Y)) == new HWND(source.Handle);
     }
+
+    /// <summary>Puts the right-click menu's texts in the current interface language.</summary>
+    internal void LocalizeMenu() =>
+        (_pin.Header, _create.Header, _delete.Header) = (Strings.WidgetPinToTaskbar, Strings.TrayNewFolder, Strings.WidgetDelete);
 
     /// <summary>Sets the cell the widget fills (DIP); the content stays centered in it.</summary>
     public void SetCellSize(double width, double height) => (Width, Height) = (width, height);

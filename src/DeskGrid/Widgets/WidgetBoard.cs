@@ -303,11 +303,17 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
         }
     }
 
-    // A widget was dragged and let go: snap it to the nearest free cell.
-    private void Snap(DesktopSurface surface, Func<ScreenPoint, bool> savePosition)
+    // Widgets were dragged and let go: each snaps to the nearest free cell. The desktop's icons are read once for all.
+    private void Snap(IEnumerable<Entry> dropped)
     {
         _nativeIcons = host.ReadIconGrid();
-        if (Place(surface, savePosition))
+        var configChanged = false;
+        foreach (var entry in dropped)
+        {
+            configChanged |= Place(entry.Surface, position => SavePosition(entry.Folder.Name, position));
+        }
+
+        if (configChanged)
         {
             configStore.Save();
         }
@@ -530,10 +536,7 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
                     Surface.MoveTo(_dragOrigin);
                 }
 
-                foreach (var member in _group)
-                {
-                    board.Snap(member.Surface, position => board.SavePosition(member.Folder.Name, position));
-                }
+                board.Snap(_group);
 
                 if (overRecycleBin)
                 {

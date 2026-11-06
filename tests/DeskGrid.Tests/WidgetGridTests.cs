@@ -95,6 +95,16 @@ public sealed class WidgetGridTests
         Assert.Equal(new ScreenPoint(100, 0), grid.FirstFree(Taken()));
     }
 
+    [Fact]
+    public void Obstacles_WhenTheCellsClearOfIconsAreTaken_ACellUnderAnIconBeatsSharingOneWithAWidget()
+    {
+        // Two cells: (100, 0) is clear but has a widget, (0, 0) is under an icon and has none.
+        var grid = new WidgetGrid(new ScreenRect(0, 0, 200, 200), 100, 200, null, [new ScreenRect(0, 0, 100, 200)]);
+
+        Assert.Equal(new ScreenPoint(0, 0), grid.NearestFree(new ScreenPoint(100, 0), Taken((100, 0))));
+        Assert.Equal(new ScreenPoint(0, 0), grid.FirstFree(Taken((100, 0))));
+    }
+
     [Theory]
     [InlineData(0, 0, true)] // Same cell.
     [InlineData(30, 60, true)] // Off the grid, still on most of the cell.

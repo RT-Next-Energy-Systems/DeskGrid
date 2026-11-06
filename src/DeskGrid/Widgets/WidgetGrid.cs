@@ -40,18 +40,14 @@ internal sealed class WidgetGrid(
     public ScreenPoint NearestFree(ScreenPoint position, IReadOnlySet<ScreenPoint> taken) =>
         Candidates(taken).MinBy(c => DistanceSquared(c, position));
 
-    // Free cells; else cells not covered by icons; else all cells.
+    // Cells with neither a widget nor an icon; else cells without a widget (an icon is pushed off it, see
+    // WidgetBoard.ClearIconsOffWidgets); else all cells. Never a widget's cell while one without a widget is left.
     private List<ScreenPoint> Candidates(IReadOnlySet<ScreenPoint> taken)
     {
         var cells = Cells().ToList();
-        var clear = cells.Where(c => !IsCovered(c)).ToList();
-        var free = clear.Where(c => !taken.Contains(c)).ToList();
-        if (free.Count > 0)
-        {
-            return free;
-        }
-
-        return clear.Count > 0 ? clear : cells;
+        var untaken = cells.Where(c => !taken.Contains(c)).ToList();
+        var free = untaken.Where(c => !IsCovered(c)).ToList();
+        return free.Count > 0 ? free : untaken.Count > 0 ? untaken : cells;
     }
 
     /// <summary>
