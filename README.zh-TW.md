@@ -21,6 +21,18 @@
 - 會檢查 GitHub 上的新版本，並可自行更新
 - 介面支援英文與繁體中文，依 Windows 顯示語言自動切換
 
+## 螢幕截圖
+
+桌面上的資料夾，其中一個已開啟（面板背景「深色」）：
+
+![桌面上的四個資料夾，「工具」資料夾在它的圖示旁開啟](docs/images/desktop.zh-TW.png)
+
+設定：
+
+<img src="docs/images/settings.zh-TW.png" width="420" alt="設定視窗">
+
+這些圖由 DeskGrid 自己的視窗繪製，內容是 Windows 內建的 App，背景用純色代替桌面。
+
 ## 系統需求
 
 Windows 10 22H2 或 Windows 11，64 位元。不需安裝 .NET：下載的是自帶執行環境的單一 exe。

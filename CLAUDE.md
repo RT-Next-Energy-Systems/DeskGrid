@@ -190,7 +190,7 @@ One folder per module, `src/DeskGrid/<Folder>/`, namespace `DeskGrid.<Folder>`.
 
 ## Release and CI (stage 7)
 
-- **GitHub**: public repo `Ryan970714/DeskGrid`, default branch `main`, MIT (copyright holder Ryan Kuo). README in English (`README.md`) + Traditional Chinese (`README.zh-TW.md`), whose contents must stay consistent.
+- **GitHub**: public repo `Ryan970714/DeskGrid`, default branch `main`, MIT (copyright holder Ryan Kuo). README in English (`README.md`) + Traditional Chinese (`README.zh-TW.md`), whose contents must stay consistent. Their screenshots are in `docs/images/` (`NAME.png` + `NAME.zh-TW.png`), drawn from the real UI classes with Windows' own apps, not taken from a desktop (how: `context/decisions.md` 2026-11-06 (2)); redraw them when the windows change.
 - **Packaging**: `Properties/PublishProfiles/win-x64.pubxml`: self-contained, PublishSingleFile, `IncludeNativeLibrariesForSelfExtract` (WPF's native DLLs are bundled in the exe too, extracted to %TEMP% at first run), compressed, no pdb. WPF doesn't support trimming. `SatelliteResourceLanguages=en;zh-Hant;zh-TW` brings only the languages that are used (WPF's own texts, such as a text box's context menu, are in `zh-Hant`), exe 65.1 → 61.9 MB. The `.gitignore` template ignores `*.pubxml`; an exception was added for this profile.
 - **CI** (`.github/workflows/ci.yml`): push to main and PRs → windows-latest, .NET 10.0.x → build, test, publish, the exe uploaded as an artifact.
 - **Release** (`release.yml`): push a `v*` tag → test → publish with the tag's version number → `gh release create`, attaching only `DeskGrid-<version>-win-x64.exe`. The csproj's `<Version>` is the default for local builds.

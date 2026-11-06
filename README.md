@@ -24,6 +24,19 @@ Every folder is a real folder on disk, so whatever you change there shows up on 
 - Checks GitHub for new versions and can update itself
 - English and Traditional Chinese, following the Windows display language
 
+## Screenshots
+
+Folders on the desktop, one of them open (panel background "Dark"):
+
+![Four folders on the desktop, with the Tools folder open next to its icon](docs/images/desktop.png)
+
+Settings:
+
+<img src="docs/images/settings.png" width="420" alt="The settings window">
+
+The pictures are drawn by DeskGrid's own windows, filled with apps that come with Windows, on a plain background
+instead of a desktop.
+
 ## Requirements
 
 Windows 10 22H2 or Windows 11, 64-bit. No .NET install needed: the download is a single self-contained exe.

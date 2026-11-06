@@ -19,6 +19,7 @@
 - A taskbar button clicked while DeskGrid was still starting at sign-in opens its folder once the folders are read,
   instead of not at all.
 - "Browse…" in Settings no longer fails when the root folder box holds a path with invalid characters.
+- In Settings, the "Change log…" button lines up with "Check for updates" above it.
 
 ## 0.4.1
 
