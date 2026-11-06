@@ -11,8 +11,14 @@ namespace DeskGrid.Folders;
 /// </summary>
 internal static class FolderDeleter
 {
+    // ERROR_NOT_SAME_DEVICE, as an HRESULT: the same drive letter, but another volume mounted in a folder.
+    private const int NotSameDevice = unchecked((int)0x80070011);
+
     // Skips hidden and system entries (desktop.ini), like the scanner does.
     private static readonly EnumerationOptions VisibleEntries = new();
+
+    // Everything, for copying a folder whole.
+    private static readonly EnumerationOptions AllEntries = new() { AttributesToSkip = 0 };
 
     /// <summary>The entries of <paramref name="folder"/> the user sees: files and subfolders, not hidden or system ones.</summary>
     public static List<string> Entries(string folder)
@@ -68,7 +74,7 @@ internal static class FolderDeleter
                 var target = ItemImporter.UniquePath(destination, Path.GetFileName(entry));
                 if (Directory.Exists(entry))
                 {
-                    Directory.Move(entry, target);
+                    MoveDirectory(entry, target);
                 }
                 else
                 {
@@ -83,5 +89,60 @@ internal static class FolderDeleter
         }
 
         return stuck;
+    }
+
+    // Directory.Move can't go to another drive (the root folder on D:, the desktop on C:), where File.Move just copies:
+    // there the folder is copied, then the original deleted.
+    private static void MoveDirectory(string source, string target)
+    {
+        try
+        {
+            Directory.Move(source, target);
+        }
+        catch (IOException exception) when (!SameRoot(source, target) || exception.HResult == NotSameDevice)
+        {
+            CopyThenDelete(source, target);
+        }
+    }
+
+    private static bool SameRoot(string a, string b) =>
+        string.Equals(Path.GetPathRoot(Path.GetFullPath(a)), Path.GetPathRoot(Path.GetFullPath(b)), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Moves a folder the slow way, with everything in it (hidden files too). If the copy fails, the original stays.</summary>
+    internal static void CopyThenDelete(string source, string target)
+    {
+        try
+        {
+            CopyDirectory(source, target);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            try
+            {
+                Directory.Delete(target, recursive: true);
+            }
+            catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException)
+            {
+                Log.Error($"Removing the partial copy \"{target}\" failed", cleanup);
+            }
+
+            throw;
+        }
+
+        Directory.Delete(source, recursive: true);
+    }
+
+    private static void CopyDirectory(string source, string target)
+    {
+        Directory.CreateDirectory(target);
+        foreach (var file in Directory.EnumerateFiles(source, "*", AllEntries))
+        {
+            File.Copy(file, Path.Combine(target, Path.GetFileName(file)));
+        }
+
+        foreach (var folder in Directory.EnumerateDirectories(source, "*", AllEntries))
+        {
+            CopyDirectory(folder, Path.Combine(target, Path.GetFileName(folder)));
+        }
     }
 }

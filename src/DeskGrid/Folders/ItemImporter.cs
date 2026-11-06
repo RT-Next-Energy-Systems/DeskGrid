@@ -130,13 +130,20 @@ internal static class ItemImporter
     }
 
     // "notepad.exe" -> "notepad.lnk", "report.pdf" -> "report.pdf.lnk", "D:\Photos" -> "Photos.lnk", "D:\" -> "D.lnk".
-    private static string ShortcutName(string target)
+    // A root keeps its separator ("D:\"), so it has no file name: the name is made of what is left of the path once the
+    // characters a file name can't have are taken out. Never a path itself, or the shortcut would land outside the folder.
+    internal static string ShortcutName(string target)
     {
         var trimmed = Path.TrimEndingDirectorySeparator(target);
         var name = string.Equals(Path.GetExtension(trimmed), ".exe", StringComparison.OrdinalIgnoreCase)
             ? Path.GetFileNameWithoutExtension(trimmed)
             : Path.GetFileName(trimmed);
-        return (name.Length > 0 ? name : trimmed.TrimEnd(':')) + ".lnk";
+        if (name.Length == 0)
+        {
+            name = string.Join(' ', trimmed.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        return name + ".lnk";
     }
 
     private static bool IsShortcut(string path) =>

@@ -99,6 +99,21 @@ public sealed class ItemImporterTests : IDisposable
         Assert.Equal([Path.Combine(Widget, "report.pdf (2).lnk")], added);
     }
 
+    [Theory]
+    [InlineData(@"C:\Windows\notepad.exe", "notepad.lnk")]
+    [InlineData(@"C:\Docs\report.pdf", "report.pdf.lnk")]
+    [InlineData(@"D:\Photos", "Photos.lnk")]
+    [InlineData(@"D:\Photos\", "Photos.lnk")]
+    [InlineData(@"D:\", "D.lnk")]
+    [InlineData(@"\\server\share\", "server share.lnk")]
+    public void ShortcutName_IsAFileName_EvenForADrive(string target, string expected)
+    {
+        var name = ItemImporter.ShortcutName(target);
+
+        Assert.Equal(expected, name);
+        Assert.Equal(name, Path.GetFileName(name));
+    }
+
     [Fact]
     public void UniquePath_AddsANumberBeforeTheExtension()
     {

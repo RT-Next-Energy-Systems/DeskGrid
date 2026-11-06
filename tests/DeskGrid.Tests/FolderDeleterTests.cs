@@ -50,6 +50,35 @@ public sealed class FolderDeleterTests : IDisposable
     }
 
     [Fact]
+    public void CopyThenDelete_MovesAFolderWithEverythingInIt()
+    {
+        _temp.CreateFile(@"root\Dev\Notes\Deep\plan.txt");
+        _temp.CreateFile(@"root\Dev\Notes\desktop.ini", FileAttributes.Hidden | FileAttributes.System);
+        var source = Path.Combine(Folder, "Notes");
+        var target = Path.Combine(Desktop, "Notes");
+
+        FolderDeleter.CopyThenDelete(source, target);
+
+        Assert.False(Directory.Exists(source));
+        Assert.True(File.Exists(Path.Combine(target, "todo.txt")));
+        Assert.True(File.Exists(Path.Combine(target, "Deep", "plan.txt")));
+        Assert.True(File.Exists(Path.Combine(target, "desktop.ini")));
+    }
+
+    [Fact]
+    public void CopyThenDelete_WhenACopyFails_KeepsTheOriginalAndLeavesNoPartialCopy()
+    {
+        var source = Path.Combine(Folder, "Notes");
+        var target = Path.Combine(Desktop, "Notes");
+        using var locked = new FileStream(Path.Combine(source, "todo.txt"), FileMode.Open, FileAccess.Read, FileShare.None);
+
+        Assert.ThrowsAny<IOException>(() => FolderDeleter.CopyThenDelete(source, target));
+
+        Assert.True(File.Exists(Path.Combine(source, "todo.txt")));
+        Assert.False(Directory.Exists(target));
+    }
+
+    [Fact]
     public void DeleteItems_LeavesTheDesktopAlone()
     {
         var problem = FolderDeleter.Delete(Folder, DeleteMode.DeleteItems, Desktop, Recycle);

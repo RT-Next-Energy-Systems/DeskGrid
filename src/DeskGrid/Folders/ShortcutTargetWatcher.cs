@@ -77,12 +77,19 @@ internal sealed class ShortcutTargetWatcher(Action changed) : IDisposable
             set => _names = value;
         }
 
-        // Null when the folder can't be watched (gone, no access): its shortcuts just refresh with the next scan.
+        // Null when the folder can't be watched (gone, no access): its shortcuts just refresh with the next scan. A broken
+        // shortcut's folder that doesn't exist is the usual case and asked about again at every scan, so it isn't logged.
         public static FolderWatch? TryStart(string folder, HashSet<string> names, Action changed)
         {
+            if (!Directory.Exists(folder))
+            {
+                return null;
+            }
+
+            FileSystemWatcher? watcher = null;
             try
             {
-                var watcher = new FileSystemWatcher(folder)
+                watcher = new FileSystemWatcher(folder)
                 {
                     NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
                 };
@@ -92,6 +99,7 @@ internal sealed class ShortcutTargetWatcher(Action changed) : IDisposable
             }
             catch (Exception exception) when (exception is ArgumentException or IOException or UnauthorizedAccessException)
             {
+                watcher?.Dispose();
                 Log.Info($"Not watching shortcut targets in \"{folder}\": {exception.Message}");
                 return null;
             }
