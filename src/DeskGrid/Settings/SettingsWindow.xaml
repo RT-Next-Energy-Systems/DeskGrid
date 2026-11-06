@@ -124,7 +124,8 @@
               <TextBlock x:Name="VersionText" Margin="8,0,0,0" Opacity="0.75" />
               <TextBlock x:Name="UpdateStatus" Margin="12,0,12,0" Opacity="0.75" TextTrimming="CharacterEllipsis" MaxWidth="170" />
             </StackPanel>
-            <Button Grid.Row="0" Grid.Column="1" MinWidth="84" Padding="12,5" x:Name="CheckUpdatesButton" Click="OnCheckUpdates" />
+            <!-- Stretched: the Fluent style puts a button at the left of its cell, and the narrower one would not line up. -->
+            <Button Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" MinWidth="84" Padding="12,5" x:Name="CheckUpdatesButton" Click="OnCheckUpdates" />
 
             <CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,10,0,0" MinWidth="0" x:Name="CheckAtStartupBox" />
 
@@ -133,7 +134,7 @@
               <TextBlock Margin="8,0,0,0"><Hyperlink x:Name="GitHubLink" Click="OnGitHub" /></TextBlock>
               <TextBlock Margin="16,0,0,0"><Hyperlink x:Name="PrivacyLink" Click="OnPrivacy" /></TextBlock>
             </StackPanel>
-            <Button Grid.Row="2" Grid.Column="1" Margin="0,10,0,0" MinWidth="84" Padding="12,5" x:Name="ChangeLogButton" Click="OnChangeLog" />
+            <Button Grid.Row="2" Grid.Column="1" Margin="0,10,0,0" HorizontalAlignment="Stretch" MinWidth="84" Padding="12,5" x:Name="ChangeLogButton" Click="OnChangeLog" />
           </Grid>
         </Border>
       </StackPanel>
