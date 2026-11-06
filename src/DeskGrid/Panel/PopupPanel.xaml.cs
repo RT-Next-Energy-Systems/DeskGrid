@@ -44,7 +44,9 @@ internal partial class PopupPanel : Window
     private static readonly Size Unbounded = new(double.PositiveInfinity, double.PositiveInfinity);
     private static readonly TimeSpan ResizeTime = TimeSpan.FromMilliseconds(180);
     private static readonly Duration SlideDuration = new(TimeSpan.FromMilliseconds(200));
-    private static readonly IEasingFunction SlideEasing = new CubicEase { EasingMode = EasingMode.EaseOut };
+    // Frozen: shared by every panel, and an animation copies it when it starts, which an unfrozen one allows only on
+    // the thread that made it.
+    private static readonly IEasingFunction SlideEasing = (IEasingFunction)new CubicEase { EasingMode = EasingMode.EaseOut }.GetAsFrozen();
 
     // During a drag: how long the cursor may be off the panel and its widget before the folder closes (long enough
     // to cross from the widget to the panel), and, once the mouse button is up, how long the drop may take to arrive.
@@ -409,22 +411,25 @@ internal partial class PopupPanel : Window
                 e.Effects = DragDropEffects.None;
             }
         }
-        else if (DroppedItems.Read(e.Data) is { Paths.Count: > 0 } items)
+        else
         {
-            using var _ = items;
-            var folder = Folder;
+            using var items = DroppedItems.Read(e.Data);
             var index = _gap >= 0 ? _gap : _items.Count;
             _gap = -1;
             // Close the gap: if nothing could be added, no refresh rebuilds the items.
             Slide(gapAt: null);
             _resize?.Stop();
             Items.MinHeight = 0; // the refresh that follows sizes the window for the new item
-            _tookDrop = true;
-            ItemsDropped?.Invoke(this, new ItemsDroppedEventArgs(folder.Name, items.Paths, index));
+            if (items.Paths.Count > 0)
+            {
+                _tookDrop = true;
+                ItemsDropped?.Invoke(this, new ItemsDroppedEventArgs(Folder.Name, items.Paths, index));
+            }
+
             FitToContent();
 
             // We moved or copied the files ourselves; never report Move, or the source would delete them again.
-            e.Effects = DragDropEffects.Copy;
+            e.Effects = items.Paths.Count > 0 ? DragDropEffects.Copy : DragDropEffects.None;
         }
 
         e.Handled = true;

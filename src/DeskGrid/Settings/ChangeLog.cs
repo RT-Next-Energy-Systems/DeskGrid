@@ -60,12 +60,20 @@ internal static class ChangeLog
             else if (line.StartsWith("  ", StringComparison.Ordinal) && line.Trim().Length > 0 && lines is [.., { Kind: ChangeLogKind.Item }])
             {
                 // The rest of an item that was wrapped over several lines.
-                lines[^1] = lines[^1] with { Text = $"{lines[^1].Text} {Plain(line)}" };
+                lines[^1] = lines[^1] with { Text = JoinWrapped(lines[^1].Text, Plain(line)) };
             }
         }
 
         return lines;
     }
+
+    // A line break is a space between English words, but nothing between two Chinese characters, which have no spaces
+    // between them; next to an English word, Chinese text has a space, as the Chinese change log writes it.
+    private static string JoinWrapped(string first, string rest) =>
+        first.Length > 0 && rest.Length > 0 && IsWide(first[^1]) && IsWide(rest[0]) ? first + rest : $"{first} {rest}";
+
+    // CJK characters and punctuation, and the full-width forms (，（）).
+    private static bool IsWide(char c) => c is >= '\u2E80' and <= '\u9FFF' or >= '\uFF00' and <= '\uFFEF';
 
     // The window shows plain text: no code or bold marks.
     private static string Plain(string text) => text.Replace("`", "").Replace("**", "").Trim();

@@ -54,6 +54,18 @@ public sealed class ChangeLogTests
         Assert.Equal("Next.", lines[3].Text);
     }
 
+    [Theory]
+    [InlineData("（Ctrl+A 仍只選取\n  檔案總管的圖示。）", "（Ctrl+A 仍只選取檔案總管的圖示。）")]
+    [InlineData("取得它的 logo。\n  部分套件", "取得它的 logo。部分套件")]
+    [InlineData("現在\n  widget 會停在", "現在 widget 會停在")]
+    [InlineData("改用\n  `config.json`", "改用 config.json")]
+    public void Parse_JoinsWrappedChineseWithoutASpace_ButKeepsTheOneBesideEnglish(string item, string expected)
+    {
+        var lines = ChangeLog.Parse("## 1.0.0\n- " + item + "\n");
+
+        Assert.Equal(expected, lines[1].Text);
+    }
+
     [Fact]
     public void Parse_IgnoresTheTitleAndTextOutsideItems()
     {

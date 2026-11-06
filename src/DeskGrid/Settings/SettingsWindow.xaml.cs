@@ -170,7 +170,9 @@ internal partial class SettingsWindow : Window
 
     private void OnBrowse(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFolderDialog { InitialDirectory = RootBox.Text };
+        // A half-typed path in the box (bad characters) makes the dialog throw; it then just starts where Windows likes.
+        var typed = RootBox.Text.Trim();
+        var dialog = new OpenFolderDialog { InitialDirectory = Directory.Exists(typed) ? typed : "" };
         if (dialog.ShowDialog(this) == true)
         {
             RootBox.Text = dialog.FolderName;

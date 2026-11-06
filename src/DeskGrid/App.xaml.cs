@@ -270,6 +270,8 @@ public partial class App : Application
     {
         if (_catalog is not { } catalog)
         {
+            // The widgets aren't up yet (a start at sign-in waits for the desktop): opened once the folders are read.
+            _pendingOpen = request;
             return;
         }
 
@@ -543,7 +545,11 @@ public partial class App : Application
     private void ApplySettings(SettingsChoice choice)
     {
         var config = _configStore!.Config;
-        var rootChanged = !string.Equals(Path.GetFullPath(choice.RootPath), Path.GetFullPath(config.RootPath), StringComparison.OrdinalIgnoreCase);
+
+        // Widgets that aren't up yet (a start at sign-in still waits for the desktop) start from the new root anyway;
+        // starting them here as well would put up a second set.
+        var rootChanged = _catalog is not null
+            && !string.Equals(Path.GetFullPath(choice.RootPath), Path.GetFullPath(config.RootPath), StringComparison.OrdinalIgnoreCase);
         if (rootChanged)
         {
             StopWidgets();

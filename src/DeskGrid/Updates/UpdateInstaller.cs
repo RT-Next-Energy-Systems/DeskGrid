@@ -62,14 +62,11 @@ internal static class UpdateInstaller
             }
 
             progress.Report(new UpdateProgress(UpdateStage.Verifying));
-            await using (var downloaded = File.OpenRead(file))
+            if (!await HasHashAsync(file, release.Sha256, cancellation))
             {
-                var actual = Convert.ToHexStringLower(await SHA256.HashDataAsync(downloaded, cancellation));
-                if (actual != release.Sha256)
-                {
-                    File.Delete(file);
-                    return (null, Strings.UpdateChecksumMismatch);
-                }
+                // Closed by now: an open file can't be deleted.
+                File.Delete(file);
+                return (null, Strings.UpdateChecksumMismatch);
             }
 
             return (file, null);
@@ -118,6 +115,13 @@ internal static class UpdateInstaller
             }
             Start-Process -FilePath {{Quote(targetExe)}}
             """, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+
+    /// <summary>Whether the SHA-256 of <paramref name="file"/> is <paramref name="sha256"/> (lower case hex). The file is closed again when this returns.</summary>
+    internal static async Task<bool> HasHashAsync(string file, string sha256, CancellationToken cancellation = default)
+    {
+        await using var stream = File.OpenRead(file);
+        return Convert.ToHexStringLower(await SHA256.HashDataAsync(stream, cancellation)) == sha256;
+    }
 
     private static void DeleteQuietly(string file)
     {

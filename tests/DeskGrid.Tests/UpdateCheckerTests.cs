@@ -121,4 +121,18 @@ public sealed class UpdateInstallerTests : IDisposable
         Assert.Contains(@"-Destination 'C:\Users\王小明\O''Neil\DeskGrid.exe'", text);
         Assert.Contains(@"Start-Process -FilePath 'C:\Users\王小明\O''Neil\DeskGrid.exe'", text);
     }
+
+    [Fact]
+    public async Task HasHash_ComparesTheSha256_AndLetsTheFileBeDeletedAfterwards()
+    {
+        var file = _temp.CreateFile("DeskGrid-9.9.9.exe");
+        File.WriteAllText(file, "abc");
+        const string Abc = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+
+        Assert.True(await UpdateInstaller.HasHashAsync(file, Abc, TestContext.Current.CancellationToken));
+        Assert.False(await UpdateInstaller.HasHashAsync(file, new string('0', 64), TestContext.Current.CancellationToken));
+
+        File.Delete(file); // A mismatch deletes the download: nothing may still hold it open.
+        Assert.False(File.Exists(file));
+    }
 }
