@@ -98,7 +98,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 
 - **外觀**（使用者選定）：48 DIP 淺色半透明圓角方塊（白 30%、圓角 22.37%）內放預覽，下方名稱用系統圖示字型、白字陰影、最多 2 行；滑鼠移上時整格淡白高亮（像原生圖示）。
 - **格子**：一格 = 桌面原生圖示格（`DesktopIconGrid` 對 Explorer 的 `SysListView32` 送 `LVM_GETITEMSPACING` / `LVM_GETITEMPOSITION`，位置要跨行程讀取，所以用 `VirtualAllocEx` + `ReadProcessMemory`）；widget 一格就是一個原生圖示格大小（不取整數倍，否則高 DPI 下 76×96 DIP 會比 150×182 px 的圖示格大一點而變兩倍大）。格線以第一個原生圖示的格為錨點，所以與桌面圖示對齊；每欄由上往下填、從右往左。讀不到時退回舊行為（工作區右上角起算、76×96 DIP）。每個 widget 都在格子上，且一格一個。
-- **避開原生圖示**：與原生圖示格重疊超過 1/4 的格不使用（`WidgetGrid` 的 obstacles / `Covers`），除非已無其他格。擺放 / 放開拖曳 widget 時由 widget 避開。
+- **避開原生圖示**：與原生圖示格重疊超過 1/4 的格不使用（`WidgetGrid` 的 obstacles / `Covers`），除非已無其他格。擺放 / 放開拖曳 widget 時由 widget 避開。挑選順序（`WidgetGrid.Candidates`，2026-11-06 修正）：沒有 widget 也沒有圖示的格 → 沒有 widget 的格（圖示底下）→ 任何格；只要還有沒有 widget 的格，就不會和別的 widget 共用一格。
 - **圖示讓開**（使用者選定，2026-10-28）：之後若有原生圖示落到 widget 格上（Explorer 把新捷徑放進它以為的空格、使用者把圖示拖過去），`WidgetBoard.ClearIconsOffWidgets` 把該圖示移到最近的空格（`LVM_SETITEMPOSITION`，座標放在 lParam，不必寫入 Explorer 記憶體）。桌面開了「自動排列圖示」（list view 有 `LVS_AUTOARRANGE`）時圖示移不動，改由 widget 讓開。
 - **偵測圖示變動**（`DesktopIconWatcher`）：`SetWinEventHook` 只掛桌面那條 Explorer 執行緒（與工作列不同），out-of-context、不輪詢。list view 的 `EVENT_OBJECT_CREATE/DESTROY/REORDER` = 新增 / 刪除；**移動圖示時 list view 不發任何事件**（實測，含 `LVM_SETITEMPOSITION`），改用該執行緒的 `EVENT_SYSTEM_CAPTUREEND`（每次桌面拖曳結束都有）。300 ms debounce 後重讀格子。游標停在 widget 上放開 = widget 的拖放（加進資料夾），不會變成重疊。
 - **擺放**：有存位置 → 吸到最近的空格；沒存過 → 主螢幕第一個空格（先處理有存位置的，新 widget 才不會佔掉它們的格）。結果寫回 config（沒變就不寫）。
@@ -144,7 +144,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 ## 拖放 / Tray / 設定 實作要點（階段 6）
 
 - **拖放規則**（`ItemImporter.Plan`，使用者選定）：`.exe` → 建 `.lnk`（絕不移動或複製 exe 本體）；**直接放在**使用者或公用桌面上的 `.lnk`/`.url` → 依 `DropMode`（預設移動）；其他地方的 `.lnk`/`.url` → 一律複製；一般檔案與資料夾 → 建 `.lnk`；已在該資料夾內、或拖的是該資料夾本身/上層 → 忽略。同名自動加「 (2)」。公用桌面捷徑沒權限移動 → 改複製。
-- **捷徑命名**：exe 用檔名（`notepad.exe` → `notepad.lnk`）、其他保留完整檔名（`report.pdf.lnk`）、資料夾用資料夾名；工作目錄 = 目標所在資料夾。
+- **捷徑命名**：exe 用檔名（`notepad.exe` → `notepad.lnk`）、其他保留完整檔名（`report.pdf.lnk`）、資料夾用資料夾名、磁碟機根目錄用路徑去掉檔名不能有的字元後剩下的部分（`D:\` → `D.lnk`；以前會變成 `D:\.lnk` 這個路徑，捷徑落在磁碟機根目錄，2026-11-06 修正）；工作目錄 = 目標所在資料夾。
 - **拖放接線**：`FolderWidget` 只負責 `AllowDrop` 與拖曳中的高亮；`WidgetBoard` 處理 `DragOver`（游標顯示第一個可處理項目的效果：移動 / 複製 / 連結）與 `Drop`。檔案操作自己做完後對來源回報 **Copy，絕不回報 Move**，否則來源會以為要刪掉原檔。OLE 拖放可送達 Explorer 底下的跨行程子視窗（已用 OLE 拖曳實測）。
 - **原生選單深色模式**（2026-11-03，issue #18）：`Shell/MenuTheme` 以 ordinal 135 / 136 呼叫 uxtheme 的 `SetPreferredAppMode(AllowDark)` / `FlushMenuThemes`（未公開 API，經 CsWin32 的 `LoadLibrary` + `GetProcAddress` 取得，Windows 10 1903 以前不做），系統匣選單與面板項目右鍵選單每次顯示前呼叫；缺函式就維持淺色。測試 `MenuThemeTests` 在這台 Win11 確認 ordinal 存在；**沒有目視確認選單真的變深色**。設定視窗本來就跟隨系統深色（Fluent）。
 - **系統匣**（`TrayIcon`）：`Shell_NotifyIcon` + `NOTIFYICON_VERSION_4`，左右鍵都開原生 Win32 選單（每次重建，勾選狀態即時）；選單動作在選單關閉後才執行（可能開模態視窗）；`TaskbarCreated` 時重新加入圖示。圖示用 `LoadIconMetric` 從 exe 的 `#32512`（`<ApplicationIcon>`）載入 → **manifest 必須宣告 Common Controls v6**。
@@ -160,7 +160,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 ## 介面語言（2026-11-03）
 
 - **兩種語言、由使用者選**：英文與繁體中文。設定「語言」：*跟隨 Windows*（預設；Windows 介面語言為 zh-TW / zh-HK / zh-MO / zh-Hant 時用繁體中文，否則英文——簡體中文與其他語言都是英文）、*English*、*繁體中文*；config `language`。
-- **切換方式**：`UiLanguage.Apply(AppLanguage)` 設定 `CultureInfo.DefaultThreadCurrentUICulture`、目前執行緒的 `CurrentUICulture`（WPF 自己的文字，例如文字框的剪下 / 複製 / 貼上來自 `zh-Hant` 衛星組件，也跟著變）與 `Strings.Culture`；啟動時載入 config 後立刻執行，並在 `App.ApplySettings` 再執行。文字在建立視窗、選單或對話框時才取，所以之後開啟的東西都用新語言；widget 只顯示資料夾名稱；已開的面板在按「確定」時關閉。`UiLanguage` 記住 Windows 自己的介面語言（在第一次 `Apply` 之前讀取），之後才能再選回「跟隨 Windows」。
+- **切換方式**：`UiLanguage.Apply(AppLanguage)` 設定 `CultureInfo.DefaultThreadCurrentUICulture`、目前執行緒的 `CurrentUICulture`（WPF 自己的文字，例如文字框的剪下 / 複製 / 貼上來自 `zh-Hant` 衛星組件，也跟著變）與 `Strings.Culture`；啟動時載入 config 後立刻執行，並在 `App.ApplySettings` 再執行。文字在建立視窗、選單或對話框時才取，所以之後開啟的東西都用新語言；widget 只顯示資料夾名稱，而 widget 的右鍵選單和 widget 一樣長命，每次開啟時重新設定文字（`FolderWidget.LocalizeMenu`，2026-11-06；以前會停在建立時的語言）；已開的面板在按「確定」時關閉。`UiLanguage` 記住 Windows 自己的介面語言（在第一次 `Apply` 之前讀取），之後才能再選回「跟隨 Windows」。
 - **政策**（細節見 `AGENTS.md`「語言政策」）：所有介面文字放 `Strings.resx` + `Strings.zh-TW.resx`（`UiLanguageTests` 檢查 key 與佔位符一致）；不可把 `Strings.X` 快取在 `static`；更新紀錄（`ChangeLogResource`）與隱私連結（`SettingsPrivacyUrl`）跟著語言；**所有進版控的 Markdown 都有 `NAME.md`（英文）+ `NAME.zh-TW.md`（繁體中文）兩個版本，結構相同**（`MarkdownPairsTests`）。
 - 由 UI 執行緒顯示的 Windows 內建對話框（色彩選擇器、資料夾選擇器、`MessageBox` 的按鈕）的語言取自執行緒：`UiLanguage.Apply` 對 UI 執行緒呼叫 `SetThreadPreferredUILanguages`（「跟隨 Windows」時清除；測試 `WindowsDialogLanguageTests` 檢查 `GetThreadUILanguage`）。其他程式加進檔案總管右鍵選單的項目仍是 Windows 的語言。沒有在螢幕上看過另一種語言的色彩選擇器。
 - 沒有實機驗證：執行中切換語言（單元測試驗證語言的選擇、key 一致與文件成對）。
@@ -174,7 +174,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 
 ## 刪除資料夾與疊圖示建資料夾（階段 8）
 
-- **刪除**（`App.DeleteFolder`）：widget 右鍵「刪除資料夾…」→ 確認對話框 → `FolderDeleter.Delete`。資料夾本身一律進資源回收筒（`Shell/RecycleBin`，`SHFileOperation` + `FOF_ALLOWUNDO`；放不進資源回收筒時 shell 會先問，`FOF_WANTNUKEWARNING`）。config `deleteMode`（設定視窗）：`moveToDesktop`（預設，先把可見的檔案與子資料夾移到使用者桌面、同名加「 (2)」）/ `deleteItems`（連同資料夾進資源回收筒）。有任何項目移不過去 → **不刪資料夾**並顯示原因。桌面 widget 由 scanner 的 Deleted 事件移除，config 殘留由 `Reconcile` 清掉，不必另外處理。
+- **刪除**（`App.DeleteFolder`）：widget 右鍵「刪除資料夾…」→ 確認對話框 → `FolderDeleter.Delete`。資料夾本身一律進資源回收筒（`Shell/RecycleBin`，`SHFileOperation` + `FOF_ALLOWUNDO`；放不進資源回收筒時 shell 會先問，`FOF_WANTNUKEWARNING`）。config `deleteMode`（設定視窗）：`moveToDesktop`（預設，先把可見的檔案與子資料夾移到使用者桌面、同名加「 (2)」）/ `deleteItems`（連同資料夾進資源回收筒）。要移到另一個磁碟機的子資料夾（根目錄在 D:、桌面在 C:；`Directory.Move` 做不到）先整個複製再刪除（`FolderDeleter.CopyThenDelete`；複製失敗時刪掉複製到一半的，原資料夾保留，2026-11-06）。有任何項目移不過去 → **不刪資料夾**並顯示原因。桌面 widget 由 scanner 的 Deleted 事件移除，config 殘留由 `Reconcile` 清掉，不必另外處理。
 - **疊圖示**（`Widgets/IconMerger`，使用者選定 2026-10-29）：把桌面圖示拖到另一個桌面圖示上 → 新資料夾（名稱 `WidgetFolderName.Suggest`）取代被放上的圖示位置，內含兩者（`WidgetBoard.MergeIcons` → `ItemImporter.Import`，規則同拖到 widget）。Explorer 自己把「放到另一個捷徑上」當「用它開啟」，所以拖曳期間要自己接：
   - **偵測**：`DesktopIconWatcher` 的 WinEvent 範圍加上 `EVENT_SYSTEM_CAPTURESTART`（0x8，實測點一下桌面圖示會依序來 0x8 / 0x9）→ `DesktopHost.DesktopPressed`。`IconMerger` 在按下當下讀圖示格（游標在某個圖示格內才繼續），之後每 20 ms 看左鍵（`GetAsyncKeyState`，左右鍵互換時看右鍵）與位移是否超過 `SM_CXDRAG`，超過才算開始拖曳；放開後 500 ms 收掉接收區。
   - **接收區**：**只用一個**透明 `DesktopSurface`（`AllowDrop` 的 `Border`，背景 alpha=1）跟著游標所在圖示的範圍（圖示格頂端到圖示圖片底部，下面的名稱留給 Explorer）移動，游標不在任何圖示上時停到螢幕外（-30000）。每個圖示一個視窗行不通：實測一個 `HwndSource` 掛到桌面要約 26 ms，40 個圖示會凍結約 1 秒。實測（真實 Explorer）：alpha=1 的接收區**看不見但會被 `WindowFromPoint` 命中**，alpha=0 則穿透，所以不能用 0。
@@ -222,7 +222,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 7 | GitHub Actions CI、self-contained 打包、README（含 SmartScreen 未簽章說明）、LICENSE (MIT) | ✅ 完成 2026-10-25，已推上 GitHub、CI 通過、v0.1.0 已發布，待使用者驗證 |
 | 8 | 刪除資料夾（右鍵 + 設定）、桌面圖示疊圖示建資料夾、修 bug | 完成 2026-10-29（建置 / 146 測試通過）；右鍵刪除與疊圖示拖曳因工具限制未能實機操作，待使用者驗證 |
 | 9 | 面板項目的 Windows 原生右鍵選單、面板 / widget 右鍵「新增 / 刪除資料夾」、開機自啟流程（`--autostart`、等桌面排好、第一次詢問）、README 的應用程式控制封鎖說明、修 bug | 完成 2026-10-30（建置 / 168 測試通過，v0.3.1 已發布；含拖資料夾到資源回收筒刪除，使用者實測成功）；原生選單以真實 `IContextMenu` 做了整合測試（顯示、阻塞、關閉），但沒有實際點選指令（電腦使用權限不含 DeskGrid 視窗），待使用者驗證。2026-10-31 修拖曳與「拖曳時自動開 / 關資料夾」（181 測試），拖曳情境待使用者實測；v0.3.3 發布（2026-10-31，含拖曳修正、啟動檢查更新開關、隱私連結）；v0.3.4 發布（2026-11-01，多螢幕修正）；v0.3.5 發布（2026-11-02，穩健性修正：捷徑掃描、config 鎖定、未處理例外、更新對話框） |
-| 10 | 介面語言選擇（英文 / 繁體中文）、雙語文件政策、面板展開位置（附近 / 置中） | 完成 2026-11-03（建置 / 測試通過）；沒有實機驗證：執行中切換語言、置中展開面板在真實桌面上的樣子 |
+| 10 | 介面語言選擇（英文 / 繁體中文）、雙語文件政策、面板展開位置（附近 / 置中） | 完成 2026-11-03（建置 / 測試通過）；沒有實機驗證：執行中切換語言、置中展開面板在真實桌面上的樣子。2026-11-06：全程式碼找 bug，修正 10 項（見 `context/decisions.md` 2026-11-06），307 測試通過；Fluent 視窗以兩種語言、兩種主題繪製成圖檢查無誤，修正本身沒有在真實桌面上試過 |
 
 # 工作方式
 

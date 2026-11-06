@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Dropping a whole drive (such as `D:\`) on a folder put a shortcut called `.lnk` at the root of that drive; it now
+  goes into the folder, named after the drive.
+- Deleting a folder that has subfolders, with its items set to move to the desktop, failed when the root folder is on
+  another drive than the desktop.
+- The right-click menu of the folders on the desktop stayed in the old language after the language was changed in
+  Settings.
+- On a desktop so full that only cells under icons were left, a folder could be put on top of another folder.
+- When something dropped on an open folder had nothing that could be added, the gap opened for it stayed.
+- An update whose download did not match its checksum showed a "file in use" error instead of saying so.
+- Wrapped lines of the Chinese change log were joined with a stray space.
+- Changing the root folder in Settings while DeskGrid was still waiting for the desktop at sign-in put the folders up
+  twice.
+- A taskbar button clicked while DeskGrid was still starting at sign-in opens its folder once the folders are read,
+  instead of not at all.
+- "Browse…" in Settings no longer fails when the root folder box holds a path with invalid characters.
+
 ## 0.4.1
 
 ### Fixed
