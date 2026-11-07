@@ -606,3 +606,12 @@
 **Alternatives**: 保留舊位址、依賴轉址（不必改，但之後每個新版本的檢查更新都會掛在別人帳號的名稱上）。
 **Consequences**: 0.4.1 以前的版本仍查詢舊位址、依賴轉址；下一版起查詢新位址。SignPath 申請（#8）應填新的 repo。
 **Author**: 使用者決定；Claude 修改
+
+---
+
+### 2026-11-07 — 發行版本維持三段；設定中的連結只顯示 owner/name
+**Decision**: 設定視窗連結重疊的修正以 0.4.3 發佈，而不是使用者原先提的 0.4.2.1。設定中的 GitHub 連結現在顯示 `RT-Next-Energy-Systems/DeskGrid`（完整位址在滑鼠提示中），連結那一列改為 `WrapPanel`，與「更新紀錄…」按鈕之間留 12 DIP。`SettingsWindowTests.GitHubRow_FitsBesideTheChangeLogButton` 在兩種語言下檢查連結維持一行且不碰到按鈕（在 0.4.2 的英文版面會失敗）。README 的設定截圖已重畫（0.4.3、新位址）。
+**Reason**: 檢查更新只比 major.minor.build（`UpdateChecker.Normalize`），0.4.2.1 會被當成等於 0.4.2，使用 0.4.2 的人不會收到更新。連結重疊是因為 repo 新位址比舊的長 11 個字元，而水平 `StackPanel` 不會在欄寬處停下。
+**Alternatives**: 讓檢查更新認得第四段（為了用不到的編號方式改程式）；保留完整位址、把「隱私」移到自己一列（卡片變高）。
+**Consequences**: 每次發行都要遞增前三段之一。若連結仍放不下（較長的翻譯），會換行排列，而不是跑到按鈕底下。
+**Author**: 使用者要求修正並發行；版本號 0.4.3 與版面由 Claude 決定

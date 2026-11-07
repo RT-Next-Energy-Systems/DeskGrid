@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.3
+
+### Fixed
+
+- In Settings, the "Privacy" link ran under the "Change log…" button since the project's address got longer. The
+  GitHub link now shows only `RT-Next-Energy-Systems/DeskGrid` (the full address is in its tooltip), and the links wrap
+  instead of overlapping when they don't fit.
+
 ## 0.4.2
 
 ### Changed

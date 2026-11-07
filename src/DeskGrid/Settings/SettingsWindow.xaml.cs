@@ -142,8 +142,9 @@ internal partial class SettingsWindow : Window
         PinAllButton.Content = Strings.SettingsPinAll;
         GitHubLabel.Text = Strings.SettingsGitHub;
 
-        // Without the scheme: shorter, and it is still plainly the web address.
-        GitHubLink.Inlines.Add(UpdateChecker.RepositoryUrl["https://".Length..]);
+        // Only owner/name: the label already says GitHub, and the whole address would not fit beside the button.
+        GitHubLink.Inlines.Add(new Uri(UpdateChecker.RepositoryUrl).AbsolutePath.Trim('/'));
+        GitHubLink.ToolTip = UpdateChecker.RepositoryUrl;
         PrivacyLink.Inlines.Add(Strings.SettingsPrivacy);
         ChangeLogButton.Content = Strings.SettingsChangeLog;
         ColumnsLabel.Text = Strings.SettingsColumns;

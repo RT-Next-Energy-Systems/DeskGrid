@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.IO;
+using System.Windows;
+using System.Windows.Media;
 using DeskGrid.Folders;
 using DeskGrid.Resources;
 using DeskGrid.Tray;
@@ -183,14 +185,7 @@ public sealed class SettingsWindowTests : IDisposable
         var picked = Enum.Parse<PanelBackgroundStyle>(pickedName);
         var choice = await _ui.InvokeAsync(() =>
         {
-            if (System.Windows.Application.Current is null)
-            {
-                // The windows take their card styles from App.xaml.
-                var app = new System.Windows.Application { ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown };
-                app.Resources["Card"] = new System.Windows.Style(typeof(System.Windows.Controls.Border));
-                app.Resources["CardTitle"] = new System.Windows.Style(typeof(System.Windows.Controls.TextBlock));
-            }
-
+            EnsureApplication();
             var config = new AppConfig { RootPath = _root.Path, PanelBackground = new PanelBackground { Style = initial } };
             var window = new SettingsWindow(config);
             SettingsChoice? applied = null;
@@ -202,5 +197,62 @@ public sealed class SettingsWindowTests : IDisposable
         });
 
         Assert.Equal(picked, choice?.PanelBackground.Style);
+    }
+
+    [Theory]
+    [InlineData("en")]
+    [InlineData("zh-TW")]
+    public async Task GitHubRow_FitsBesideTheChangeLogButton(string culture)
+    {
+        var before = Strings.Culture;
+        try
+        {
+            var (overlaps, oneLine) = await _ui.InvokeAsync(() =>
+            {
+                EnsureApplication();
+                Strings.Culture = new CultureInfo(culture);
+                var window = new SettingsWindow(new AppConfig { RootPath = _root.Path });
+                try
+                {
+                    window.Show();
+                    window.UpdateLayout();
+                    var button = Bounds(window.ChangeLogButton, window);
+                    UIElement[] parts = [window.GitHubLabel, (UIElement)window.GitHubLink.Parent, (UIElement)window.PrivacyLink.Parent];
+                    var boxes = parts.Select(part => Bounds(part, window)).ToList();
+                    return (boxes.Any(box => box.IntersectsWith(button)), boxes.All(box => Math.Abs(box.Top - boxes[0].Top) < 1));
+                }
+                finally
+                {
+                    window.Close();
+                }
+            });
+
+            Assert.False(overlaps);
+            Assert.True(oneLine);
+        }
+        finally
+        {
+            Strings.Culture = before;
+        }
+    }
+
+    private static Rect Bounds(UIElement element, Visual root) =>
+        element.TransformToAncestor(root).TransformBounds(new Rect(element.RenderSize));
+
+    private static void EnsureApplication()
+    {
+        if (Application.Current is not null)
+        {
+            return;
+        }
+
+        // The windows take their card styles from App.xaml; the card's padding matters for what fits in a row.
+        var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
+        var card = new Style(typeof(System.Windows.Controls.Border));
+        card.Setters.Add(new Setter(System.Windows.Controls.Border.PaddingProperty, new Thickness(16, 14, 16, 14)));
+        card.Setters.Add(new Setter(System.Windows.Controls.Border.BorderThicknessProperty, new Thickness(1)));
+        card.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(0, 0, 0, 8)));
+        app.Resources["Card"] = card;
+        app.Resources["CardTitle"] = new Style(typeof(System.Windows.Controls.TextBlock));
     }
 }

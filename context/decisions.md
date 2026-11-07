@@ -604,3 +604,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Keep the old address and rely on the redirect (nothing to change, but the update check of every new version would hang on another account's name).
 **Consequences**: 0.4.1 and older keep asking the old address and depend on the redirect; versions from the next release on ask the new one. The SignPath application (#8) should name the new repository.
 **Author**: The user decided; Claude made the change
+
+---
+
+### 2026-11-07 — Release numbers keep three parts; the settings links show only owner/name
+**Decision**: The fix for the settings window's overlapping links ships as 0.4.3, not the 0.4.2.1 the user first suggested. In Settings, the GitHub link now reads `RT-Next-Energy-Systems/DeskGrid` (the full address is its tooltip), and the row of links is a `WrapPanel` with a 12 DIP gap before the "Change log…" button. `SettingsWindowTests.GitHubRow_FitsBesideTheChangeLogButton` checks, in both languages, that the links stay on one line and clear of the button (it fails on the 0.4.2 layout in English). The README's settings pictures were drawn again (0.4.3, new address).
+**Reason**: The update check compares versions by major.minor.build only (`UpdateChecker.Normalize`), so 0.4.2.1 would count as equal to 0.4.2 and nobody on 0.4.2 would be offered it. The links overlapped because the repository's new address is 11 characters longer than the old one, and a horizontal `StackPanel` doesn't stop at its column.
+**Alternatives**: Teach the update check a fourth part (a code change for a numbering style nothing needs); keep the full address and move "Privacy" to its own row (a taller card).
+**Consequences**: Every release bumps one of the first three parts. If the links still don't fit (a longer translation), they wrap under each other instead of running under the button.
+**Author**: The user asked for the fix and the release; Claude chose 0.4.3 and the layout
