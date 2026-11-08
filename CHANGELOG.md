@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Scripts and AI agents can drive DeskGrid with `DeskGrid.exe --ctl <command>`: list, create, rename and fill folders,
+  reorder items, open and close panels. Off until **Allow control from scripts and AI agents** is ticked in Settings;
+  only programs of your own Windows account can use it, and nothing can be deleted this way.
+
 ## 0.4.3
 
 ### Fixed

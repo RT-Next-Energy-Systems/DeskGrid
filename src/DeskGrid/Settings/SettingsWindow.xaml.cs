@@ -20,7 +20,8 @@ internal sealed record SettingsChoice(
     PanelBackground PanelBackground,
     PanelOpenMode PanelOpenMode,
     AppLanguage Language,
-    bool CheckForUpdatesAtStartup);
+    bool CheckForUpdatesAtStartup,
+    bool AllowControl);
 
 /// <summary>One line of the language list: the language and the name it is shown under.</summary>
 internal sealed record LanguageOption(AppLanguage Language, string Label);
@@ -56,6 +57,7 @@ internal partial class SettingsWindow : Window
         ColorSwatch.Background = new SolidColorBrush(_customColor);
         OpacitySlider.Value = Math.Clamp(background.CustomOpacity, OpacitySlider.Minimum, OpacitySlider.Maximum);
         CheckAtStartupBox.IsChecked = config.CheckForUpdatesAtStartup;
+        AllowControlBox.IsChecked = config.AllowControl;
     }
 
     public event EventHandler<SettingsChoice>? Applied;
@@ -140,6 +142,8 @@ internal partial class SettingsWindow : Window
         OpenRootButton.Content = Strings.SettingsOpen;
         TaskbarLabel.Text = Strings.SettingsTaskbar;
         PinAllButton.Content = Strings.SettingsPinAll;
+        AllowControlBox.Content = Strings.SettingsAllowControl;
+        AllowControlHint.Text = Strings.SettingsAllowControlHint;
         GitHubLabel.Text = Strings.SettingsGitHub;
 
         // Only owner/name: the label already says GitHub, and the whole address would not fit beside the button.
@@ -215,7 +219,8 @@ internal partial class SettingsWindow : Window
             background,
             OpenCentered.IsChecked == true ? PanelOpenMode.Centered : PanelOpenMode.Nearby,
             (AppLanguage)LanguageBox.SelectedValue,
-            CheckAtStartupBox.IsChecked == true));
+            CheckAtStartupBox.IsChecked == true,
+            AllowControlBox.IsChecked == true));
         Close();
     }
 }

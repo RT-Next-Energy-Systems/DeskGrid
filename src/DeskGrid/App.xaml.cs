@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 using DeskGrid.Config;
+using DeskGrid.Control;
 using DeskGrid.Desktop;
 using DeskGrid.Diagnostics;
 using DeskGrid.Folders;
@@ -40,6 +41,7 @@ public partial class App : Application
     private WidgetCatalog? _catalog;
     private SettingsWindow? _settings;
     private InstanceChannel? _instanceChannel;
+    private ControlChannel? _controlChannel;
     private OpenMessage? _pendingOpen;
     private bool _checkingUpdates;
     private bool _started;
@@ -47,6 +49,14 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (ControlCli.IsRequest(e.Args))
+        {
+            // A command for the running DeskGrid (from a script or an AI agent): send it, print the answer, exit.
+            using var output = ControlCli.OpenOutput();
+            Shutdown(ControlCli.Run(e.Args, output));
+            return;
+        }
+
         var openRequest = OpenRequest.Parse(e.Args) is { } requested ? OpenMessageAtCursor(requested) : (OpenMessage?)null;
         _singleInstance = new Mutex(initiallyOwned: true, SingleInstanceName, out var isFirstInstance);
         if (!isFirstInstance)
@@ -100,6 +110,8 @@ public partial class App : Application
         _tray = new TrayIcon(Strings.AppName, TrayMenu);
         _pendingOpen = openRequest;
         _instanceChannel = new InstanceChannel(message => Dispatcher.BeginInvoke(() => OpenPanel(message)));
+        var commands = new ControlCommands(new ControlHost(this), FolderPaths.Desktops);
+        _controlChannel = new ControlChannel(request => Dispatcher.InvokeAsync(() => commands.Execute(request)).Task);
         _ = StartWidgetsAsync(startedByWindows: AutoStart.WasStartedByWindows(e.Args));
         _ = CheckForUpdatesAtStartupAsync();
         _started = true;
@@ -110,6 +122,7 @@ public partial class App : Application
         _exiting.Cancel();
         _settings?.Close();
         _instanceChannel?.Dispose();
+        _controlChannel?.Dispose();
         StopWidgets();
         _tray?.Dispose();
         _icons?.Dispose();
@@ -564,6 +577,7 @@ public partial class App : Application
         config.Language = choice.Language;
         UiLanguage.Apply(config.Language);
         config.CheckForUpdatesAtStartup = choice.CheckForUpdatesAtStartup;
+        config.AllowControl = choice.AllowControl;
         _configStore.Save();
 
         if (rootChanged)
@@ -574,6 +588,46 @@ public partial class App : Application
         {
             // Panels read their look when they open.
             _panels!.Close();
+        }
+    }
+
+    /// <summary>What the control pipe's commands act on: this app's folders, widgets and panel.</summary>
+    private sealed class ControlHost(App app) : IControlHost
+    {
+        public AppConfig Config => app._configStore!.Config;
+
+        public IReadOnlyList<WidgetFolder>? Widgets => app._catalog?.Widgets;
+
+        public string? OpenPanel => app._panels?.OpenPanelName;
+
+        public void Rescan() => app._catalog?.Rescan();
+
+        public string? RenameFolder(string oldName, string newName) => app.RenameFolder(oldName, newName);
+
+        public void MoveItem(string folderName, string itemName, int index) => app._catalog?.MoveItem(folderName, itemName, index);
+
+        public void OpenFolder(WidgetFolder folder)
+        {
+            if (!string.Equals(OpenPanel, folder.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                app._panels!.Toggle(folder, app._board?.BoundsOf(folder.Name) ?? AtCursor());
+            }
+        }
+
+        public void OpenList()
+        {
+            if (OpenPanel != ControlCommands.AllFolders && app._catalog is { } catalog)
+            {
+                app._panels!.ToggleList(catalog.Widgets, AtCursor());
+            }
+        }
+
+        public void ClosePanel() => app._panels?.Close();
+
+        private static ScreenRect AtCursor()
+        {
+            PInvoke.GetCursorPos(out var cursor);
+            return new ScreenRect(cursor.X, cursor.Y, cursor.X + 1, cursor.Y + 1);
         }
     }
 }

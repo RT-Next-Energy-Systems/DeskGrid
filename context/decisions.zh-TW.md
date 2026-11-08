@@ -615,3 +615,12 @@
 **Alternatives**: 讓檢查更新認得第四段（為了用不到的編號方式改程式）；保留完整位址、把「隱私」移到自己一列（卡片變高）。
 **Consequences**: 每次發行都要遞增前三段之一。若連結仍放不下（較長的翻譯），會換行排列，而不是跑到按鈕底下。
 **Author**: 使用者要求修正並發行；版本號 0.4.3 與版面由 Claude 決定
+
+---
+
+### 2026-11-08 — 腳本與 AI agent 透過 `--ctl` 與 JSON pipe 控制 DeskGrid，需開啟，不能刪除
+**Decision**: 新增 `Control/` 模組。`DeskGrid.exe --ctl <指令> [參數]` 送一行 JSON 到每位使用者的 named pipe `DeskGrid.Control.<使用者>`，印出一行 JSON 回覆（結束代碼 0 / 1 / 2 / 3）。指令：`status`、`list`、`new`、`rename`、`add`、`move`、`open`、`close`。要勾選設定的「允許腳本與 AI agent 控制」（config `allowControl`）才會生效。沒有刪除指令。協定訊息與 `--ctl help` 只有英文；JSON 把非 ASCII 寫成 `\uXXXX`。
+**Reason**: 使用者問 DeskGrid 能否讓 AI agent 用指令控制，在 MCP server 與只改資料夾的 skill 之間選了方案 A（CLI + pipe）。資料夾本來就是一般資料夾，agent 已經能改，但不能開面板、讀順序，也無法套用同一套匯入規則。任何 agent 都能從 shell 執行 CLI，除了 DeskGrid 不需安裝別的。需要開啟是因為這是新的進入方式；不能刪除是因為使用者還沒回答要不要破壞性指令，而從介面刪除會先確認。
+**Alternatives**: MCP server（方案 B；之後可疊在同一條 pipe 上）；只做 skill（方案 C；不能開面板、沒有順序）；協定訊息在地化（它是給程式用的 API，要穩定的文字）。
+**Consequences**: 執行 `--ctl` 的是一個短暫的 DeskGrid 行程，在單一執行個體 mutex 之前就結束。視窗程式的輸出只有透過管線讀取的呼叫端（Bash、`| Out-String`）才拿得到，否則寫到附加的父主控台。之後若要刪除指令，需要另外決定（資源回收筒、確認）。
+**Author**: 使用者選方案 A；協定、指令與開關由 Claude 設計

@@ -438,6 +438,9 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
         e.Effects = added > 0 ? DragDropEffects.Copy : DragDropEffects.None;
     }
 
+    /// <summary>The cell of the widget for folder <paramref name="name"/> on screen, or <see langword="null"/> if it has none.</summary>
+    public ScreenRect? BoundsOf(string name) => _entries.TryGetValue(name, out var entry) ? BoundsOf(entry.Surface) : null;
+
     private ScreenRect BoundsOf(DesktopSurface surface)
     {
         var position = surface.Position;

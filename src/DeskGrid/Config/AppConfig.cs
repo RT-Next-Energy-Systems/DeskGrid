@@ -32,6 +32,12 @@ internal sealed class AppConfig
     /// <summary>Whether DeskGrid asks GitHub for a newer release a few seconds after it starts. The only network use that isn't the user's own request.</summary>
     public bool CheckForUpdatesAtStartup { get; set; } = true;
 
+    /// <summary>
+    /// Whether other programs of this user (scripts, AI agents) may control DeskGrid through <c>DeskGrid.exe --ctl</c>
+    /// and the control pipe. Off until the user turns it on.
+    /// </summary>
+    public bool AllowControl { get; set; }
+
     /// <summary>The release the user chose to keep the current version over ("Keep"); not asked about again unless a newer one appears.</summary>
     public string? SkippedUpdateVersion { get; set; }
 

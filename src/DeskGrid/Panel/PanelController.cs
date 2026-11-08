@@ -142,6 +142,15 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
 
     public void Close() => _panel?.Dismiss();
 
+    /// <summary>The folder whose panel is open, <c>*</c> for the list of all folders, or <see langword="null"/>.</summary>
+    public string? OpenPanelName => _panel switch
+    {
+        null => null,
+        { IsFolderList: true } => ListKey,
+        { Folder: { } folder } => folder.Name,
+        _ => null,
+    };
+
     private void Open(ScreenRect anchor, bool activate, Action<PopupPanel> fill)
     {
         var config = configStore.Config;

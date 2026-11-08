@@ -186,6 +186,12 @@ Using the default root folder instead:
   <data name="SettingsCheckAtStartup" xml:space="preserve">
     <value>Check for updates when DeskGrid starts</value>
   </data>
+  <data name="SettingsAllowControl" xml:space="preserve">
+    <value>Allow control from scripts and AI agents</value>
+  </data>
+  <data name="SettingsAllowControlHint" xml:space="preserve">
+    <value>Programs you run can then list, create, rename and fill folders and open panels with "DeskGrid.exe --ctl". Nothing can be deleted this way. Only on this computer, for your own account.</value>
+  </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>Privacy</value>
   </data>

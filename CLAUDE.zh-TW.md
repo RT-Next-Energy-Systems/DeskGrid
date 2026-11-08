@@ -43,7 +43,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 模組 | 資料夾 | 職責 |
 |---|---|---|
 | DesktopHost | `Desktop/` | 把 widget 視窗掛在桌面圖示層（所有一般視窗後方）；相容舊版與 Win11 24H2+ 桌面階層；Explorer 重啟後自動重新掛載 |
-| ConfigStore | `Config/` | `%APPDATA%\DeskGrid\config.json`，只存 widget 位置、面板欄數、項目排序、根目錄路徑、拖入模式，以及面板背景（2026-10-24 使用者同意新增）、刪除資料夾時項目的處理方式（`deleteMode`）、是否問過開機自啟（`autoStartAsked`，2026-10-30）、啟動時是否檢查更新（`checkForUpdatesAtStartup`，預設開，2026-10-30）、面板展開位置（`panelOpenMode`：`nearby` / `centered`，2026-11-03）、介面語言（`language`：`system` / `english` / `traditionalChinese`，2026-11-03） |
+| ConfigStore | `Config/` | `%APPDATA%\DeskGrid\config.json`，只存 widget 位置、面板欄數、項目排序、根目錄路徑、拖入模式，以及面板背景（2026-10-24 使用者同意新增）、刪除資料夾時項目的處理方式（`deleteMode`）、是否問過開機自啟（`autoStartAsked`，2026-10-30）、啟動時是否檢查更新（`checkForUpdatesAtStartup`，預設開，2026-10-30）、面板展開位置（`panelOpenMode`：`nearby` / `centered`，2026-11-03）、介面語言（`language`：`system` / `english` / `traditionalChinese`，2026-11-03）、是否允許腳本與 AI agent 控制（`allowControl`，預設關，2026-11-08） |
 | FolderScanner | `Folders/` | 根目錄預設 `%USERPROFILE%\DeskGrid\`，每個子資料夾 = 一個 widget；FileSystemWatcher 監聽 Created/Deleted/Renamed/Changed，300ms debounce；Renamed 要轉移 config 中的位置與排序；根目錄位於使用者桌面時拒絕並提示 |
 | IconService | `Icons/` | IShellItemImageFactory 取 256px 圖示；依排序取前 4 個合成 2×2 預覽；快取，資料夾變動才重建 |
 | FolderWidget | `Widgets/` | 桌面上的資料夾圖示 + 名稱，可拖動並存位置（`FolderWidget` 視圖、`WidgetBoard` 同步與擺放、`WidgetGrid` 格線） |
@@ -53,6 +53,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 刪除資料夾 | `Folders/FolderDeleter`、`Shell/RecycleBin` | widget 右鍵刪除：資料夾進資源回收筒，內容依設定先移到桌面或一併刪除 |
 | 疊圖示建資料夾 | `Widgets/IconMerger`、`Folders/DesktopFiles` | 桌面圖示拖到另一個圖示上 → 新資料夾（拖曳期間以一個透明接收區接手 Explorer 的放開） |
 | 工作列釘選 | `Taskbar/` | widget 右鍵「釘選到工作列」：建 `--open "資料夾"` 捷徑讓使用者自己釘；設定視窗「工作列」卡片的「把所有資料夾釘選到工作列…」建 `--all` 捷徑（面板列出所有資料夾）；點下去由命名管線（`InstanceChannel`）通知執行中的 DeskGrid 在游標處開面板；捷徑各帶 AppUserModelID，工作列才不會合併 |
+| 控制管道 | `Control/` | 腳本 / AI agent 操作執行中的程式：`DeskGrid.exe --ctl <指令>`（`ControlCli`）經 named pipe `DeskGrid.Control.<使用者>`（`ControlChannel`）送出一行 JSON，印出 JSON 回覆；`ControlCommands` 透過 `IControlHost`（App 的 `ControlHost`）在 UI 執行緒執行。需使用者開啟：config `allowControl`，預設關（2026-11-08） |
 | 版本檢查 | `Updates/` | 啟動後 8 秒與設定視窗的「檢查更新」按鈕：查 GitHub 最新 release，有新版本彈出「更新 / 維持 / 取消」；更新 = 下載 exe、驗 SHA256、由 PowerShell 小腳本在程式結束後換檔並重啟 |
 | （輔助）Shell | `Shell/` | Shell 互通：`ShellImage`（圖示）、`ShellItem`（ShellExecute 開啟、顯示名稱）、`ShortcutFile`（建 .lnk）、`ShellContextMenu`（Explorer 對檔案的右鍵選單）、`RecycleBin` |
 | （輔助）Log | `Diagnostics/` | 簡易 append-only log |
@@ -188,6 +189,16 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **測試平行**：顯示視窗 / 選單 / 取 Shell 圖示的測試類別放在 `ShellCollection`（不平行）：同時只能有一個選單（第二個會關掉第一個）、別的測試視窗會搶走啟用讓面板收合。
 - **測試注意**：從 Claude 桌面 App（MSIX）啟動的行程（含 `dotnet test`）**不能把視窗掛到 Explorer 的桌面底下**（`HwndWrapper` 建立失敗，錯誤碼 0），所以 `DesktopSurface` / `IconMerger` 無法寫成單元測試；要驗證桌面行為，只能在真正的 DeskGrid 行程（用 `explorer.exe <exe>` 啟動）裡加暫時的探測碼並讀 log。
 
+## 讓腳本與 AI agent 控制（2026-11-08）
+
+- **原因 / 內容**（使用者問 DeskGrid 能否讓 AI agent 操作，選了「CLI + pipe」方案）：`DeskGrid.exe --ctl <指令> [參數]` → 連一次 `\\.\pipe\DeskGrid.Control.<使用者>`（`InOut`、`CurrentUserOnly`），請求 `{"command":"…","args":[…]}`，回覆 `{"ok":true,"result":…}` / `{"ok":false,"error":"…"}`，各一行。工作列按鈕用的舊單向 pipe `DeskGrid.Open.<使用者>` 不變。
+- **指令**（唯一清單是 `ControlCommands.Usage`；CLI 說明、README 表格與錯誤訊息都由它而來）：`status`、`list [資料夾]`、`new`、`rename`、`add <資料夾> <路徑>...`（`ItemImporter`，與拖放規則相同，一次一個路徑，好逐一回報加入 / 略過）、`move <資料夾> <項目> <位置>`、`open [資料夾]`（開在 widget 旁，`WidgetBoard.BoundsOf`；已開啟則不動作）、`close`。**沒有刪除指令**（使用者還沒決定要不要破壞性操作；刪除資料夾或項目仍只能從介面操作並經確認）。會改變內容的指令會呼叫 `WidgetCatalog.Rescan()`，讓回覆和下一次 `list` 已看得到變更。
+- **需使用者開啟**：config `allowControl`（預設 false），設定的勾選框「允許腳本與 AI agent 控制」。pipe 一直在監聽；關閉時每個指令都回錯誤，說明怎麼開啟。這不是網路行為，但 README「隱私」有提到。
+- **機器介面用英文**：協定本身的訊息和 `--ctl help` 只有英文（是 API，不是 UI；對 agent 要穩定）。來自共用程式碼的錯誤（`WidgetFolderName.Validate`）跟隨介面語言。JSON 用預設 encoder 輸出 → 非 ASCII 寫成 `\uXXXX`，任何主控台字碼頁都不會亂碼。
+- **視窗程式的輸出**：`ControlCli.OpenOutput` 有繼承到 stdout（pipe / 檔案，例如 Bash 或 `| Out-String`）就寫進去；否則 `AttachConsole(ATTACH_PARENT_PROCESS)`。互動式命令提示字元不會等 GUI exe 結束，所以文件說要接管線。client 在單一執行個體 mutex 之前就結束，不會變成一個 DeskGrid。
+- **client 讓出前景權**（`AllowSetForegroundWindow(ASFW_ANY)`），`open` 才能讓面板取得焦點；否則面板第一次失去焦點就會關閉。
+- **真機驗證**（以 explorer.exe 啟動 dev build，config 用 explorer 執行的腳本開啟）：從 Bash 與 PowerShell 執行 `status`、`list`、`new`（中文名稱）、`add`（notepad.exe → `notepad.lnk`、文字檔 → `.txt.lnk`、不存在的路徑回報為略過）、`move`、`rename`、`open`（面板顯示、在前景、項目依 move 後的順序，截圖確認）、`close`，以及錯誤情況 / 結束代碼。設定視窗的勾選框以真正的 `SettingsWindow` 用兩種語言（深色主題）繪製成圖檢查無誤；`SettingsWindowTests.AllowControl_ShowsTheSetting_AndOkReportsItFlipped` 檢查它帶入帶出正確。
+
 ## 發布與 CI（階段 7）
 
 - **GitHub**：公開 repo `RT-Next-Energy-Systems/DeskGrid`（2026 年 11 月由 `Ryan970714/DeskGrid` 搬過來；GitHub 會把舊位址轉址，0.4.1 以前的版本檢查更新仍用舊位址），預設分支 `main`，MIT（著作權人 Ryan Kuo）。README 英文（`README.md`）+ 繁中（`README.zh-TW.md`），內容需保持一致。其中的截圖在 `docs/images/`（`NAME.png` + `NAME.zh-TW.png`），由真正的 UI 類別配上 Windows 內建 App 繪製，不是從桌面截取（做法見 `context/decisions.md` 2026-11-06（二））；視窗改了就要重畫。
@@ -223,6 +234,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 8 | 刪除資料夾（右鍵 + 設定）、桌面圖示疊圖示建資料夾、修 bug | 完成 2026-10-29（建置 / 146 測試通過）；右鍵刪除與疊圖示拖曳因工具限制未能實機操作，待使用者驗證 |
 | 9 | 面板項目的 Windows 原生右鍵選單、面板 / widget 右鍵「新增 / 刪除資料夾」、開機自啟流程（`--autostart`、等桌面排好、第一次詢問）、README 的應用程式控制封鎖說明、修 bug | 完成 2026-10-30（建置 / 168 測試通過，v0.3.1 已發布；含拖資料夾到資源回收筒刪除，使用者實測成功）；原生選單以真實 `IContextMenu` 做了整合測試（顯示、阻塞、關閉），但沒有實際點選指令（電腦使用權限不含 DeskGrid 視窗），待使用者驗證。2026-10-31 修拖曳與「拖曳時自動開 / 關資料夾」（181 測試），拖曳情境待使用者實測；v0.3.3 發布（2026-10-31，含拖曳修正、啟動檢查更新開關、隱私連結）；v0.3.4 發布（2026-11-01，多螢幕修正）；v0.3.5 發布（2026-11-02，穩健性修正：捷徑掃描、config 鎖定、未處理例外、更新對話框） |
 | 10 | 介面語言選擇（英文 / 繁體中文）、雙語文件政策、面板展開位置（附近 / 置中） | 完成 2026-11-03（建置 / 測試通過）；沒有實機驗證：執行中切換語言、置中展開面板在真實桌面上的樣子。2026-11-06：全程式碼找 bug，修正 10 項（見 `context/decisions.md` 2026-11-06），307 測試通過；Fluent 視窗以兩種語言、兩種主題繪製成圖檢查無誤，修正本身沒有在真實桌面上試過 |
+| 11 | 讓腳本與 AI agent 控制（`--ctl` CLI + 控制 pipe，需在設定開啟） | 完成 2026-11-08（建置 / 345 測試通過）；每個指令都從 Bash 與 PowerShell 對真機 dev build 執行過，面板開啟有在畫面上確認；等待使用者驗證 |
 
 # 工作方式
 

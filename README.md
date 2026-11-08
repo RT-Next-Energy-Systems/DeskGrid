@@ -141,8 +141,38 @@ Tray menu → **Settings…**:
   (asked again next start).
 - **Check for updates when DeskGrid starts**: on by default; untick it and DeskGrid never contacts GitHub on its own
   (see [Privacy](#privacy)).
+- **Allow control from scripts and AI agents**: off by default. See [Scripts and AI agents](#scripts-and-ai-agents).
 - **GitHub**: the address of the project. **Privacy** opens the [Privacy](#privacy) section of this README online.
   **Change log…** lists what changed in each version.
+
+### Scripts and AI agents
+
+With **Allow control from scripts and AI agents** ticked in Settings, a script or an AI agent (Claude Code, for
+example) can drive the running DeskGrid from a command line:
+
+```
+DeskGrid.exe --ctl <command> [arguments]
+```
+
+| Command | What it does |
+|---|---|
+| `status` | Version, root folder, number of folders and the open panel. |
+| `list [folder]` | All folders with their items in display order, or one folder. |
+| `new <name>` | Creates a folder (a new folder on the desktop). |
+| `rename <folder> <new name>` | Renames a folder. |
+| `add <folder> <path>...` | Adds files, programs or folders, as dropping them on the folder would (programs get a shortcut). |
+| `move <folder> <item> <index>` | Puts an item at a position (0 = first) in its folder. |
+| `open [folder]` | Opens a folder's panel next to it, or the list of all folders. |
+| `close` | Closes the open panel. |
+
+Each command prints one line of JSON, `{"ok":true,"result":…}` or `{"ok":false,"error":"…"}`, with characters outside
+ASCII written as `\uXXXX`, and exits with 0 (done), 1 (the command failed), 2 (DeskGrid is not running) or 3 (wrong
+usage). Items are named by file name, as `list` shows them (`Notepad.lnk`). `DeskGrid.exe --ctl help` lists the
+commands. Nothing can be deleted this way.
+
+DeskGrid is a windowed program, so a command prompt doesn't wait for it: read its output through a pipe, e.g.
+`DeskGrid.exe --ctl list | Out-String` in PowerShell. Under the hood it is a named pipe, `\\.\pipe\DeskGrid.Control.<user name>`,
+taking one line of JSON per connection (`{"command":"list","args":["Work"]}`), which other programs can use directly.
 
 ### Files
 
@@ -175,6 +205,9 @@ It uses the network for one thing, looking for a newer version on GitHub:
 **Start with Windows** is only set up if you say yes (on first run, or from the tray menu). It adds a single entry
 under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, and turning it off removes it. See [Uninstall](#uninstall)
 for removing everything else.
+
+**Allow control from scripts and AI agents** (off by default) only listens on a named pipe on this PC, which only
+programs running under your own Windows account can open; it uses no network.
 
 ## Code signing policy
 

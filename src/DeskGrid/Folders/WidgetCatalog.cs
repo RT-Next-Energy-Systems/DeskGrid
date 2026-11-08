@@ -36,6 +36,9 @@ internal sealed class WidgetCatalog : IDisposable
 
     public void Dispose() => _scanner.Dispose();
 
+    /// <summary>Reads the folders now rather than after the watcher's quiet period (e.g. right after adding to one).</summary>
+    public void Rescan() => Refresh();
+
     /// <summary>
     /// Orders <paramref name="scanned"/> by the saved item order and updates <paramref name="settings"/>
     /// to match it: new folders get settings, new items go last, vanished folders and items are dropped.

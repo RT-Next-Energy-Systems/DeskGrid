@@ -106,6 +106,13 @@
           </DockPanel>
         </Border>
 
+        <Border Style="{StaticResource Card}">
+          <StackPanel>
+            <CheckBox x:Name="AllowControlBox" MinWidth="0" />
+            <TextBlock x:Name="AllowControlHint" Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.7" />
+          </StackPanel>
+        </Border>
+
         <!-- Version and update check on the first row, the startup check on the second, GitHub and the change log on the third; the buttons share a column. -->
         <Border Style="{StaticResource Card}">
           <Grid>

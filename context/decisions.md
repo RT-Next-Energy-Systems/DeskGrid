@@ -613,3 +613,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Teach the update check a fourth part (a code change for a numbering style nothing needs); keep the full address and move "Privacy" to its own row (a taller card).
 **Consequences**: Every release bumps one of the first three parts. If the links still don't fit (a longer translation), they wrap under each other instead of running under the button.
 **Author**: The user asked for the fix and the release; Claude chose 0.4.3 and the layout
+
+---
+
+### 2026-11-08 — Scripts and AI agents control DeskGrid through `--ctl` and a JSON pipe, opt-in, no deleting
+**Decision**: A new `Control/` module. `DeskGrid.exe --ctl <command> [args]` sends one line of JSON to the per-user named pipe `DeskGrid.Control.<user>` and prints the one-line JSON answer (exit 0 / 1 / 2 / 3). Commands: `status`, `list`, `new`, `rename`, `add`, `move`, `open`, `close`. Off until the Settings checkbox "Allow control from scripts and AI agents" (config `allowControl`) is ticked. No delete commands. The protocol's messages and `--ctl help` are English only; JSON escapes non-ASCII as `\uXXXX`.
+**Reason**: The user asked whether DeskGrid could be driven by AI agents with commands and chose option A (CLI + pipe) over an MCP server or a skill that only edits folders. The folders are plain folders, so an agent could already edit them, but not open panels, read the order, or have the same import rules applied. A CLI any agent can run from a shell needs nothing installed beside DeskGrid. Opt-in because it is a new way in; no deleting because the user had not answered whether destructive commands were wanted and deleting from the UI asks for confirmation.
+**Alternatives**: An MCP server (option B; can be added on top of the same pipe later); a skill only (option C; no panels, no order); localized protocol messages (they are an API for programs, which want stable text).
+**Consequences**: The process that runs `--ctl` is a short-lived DeskGrid that exits before the single-instance mutex. A windowed exe's output only reaches a caller that reads it through a pipe (Bash, `| Out-String`) or, failing that, the attached parent console. Delete commands, if wanted later, need their own decision (Recycle Bin, confirmation).
+**Author**: The user chose option A; Claude designed the protocol, commands and opt-in

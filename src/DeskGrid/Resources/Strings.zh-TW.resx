@@ -180,6 +180,12 @@
   <data name="SettingsCheckAtStartup" xml:space="preserve">
     <value>DeskGrid 啟動時檢查更新</value>
   </data>
+  <data name="SettingsAllowControl" xml:space="preserve">
+    <value>允許腳本與 AI agent 控制</value>
+  </data>
+  <data name="SettingsAllowControlHint" xml:space="preserve">
+    <value>開啟後，你執行的程式可以用「DeskGrid.exe --ctl」列出、建立、重新命名資料夾、加入項目及開啟面板。這個方式無法刪除任何東西。只限這台電腦上你自己的帳戶。</value>
+  </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>隱私</value>
   </data>

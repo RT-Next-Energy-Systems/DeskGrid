@@ -200,6 +200,28 @@ public sealed class SettingsWindowTests : IDisposable
     }
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task AllowControl_ShowsTheSetting_AndOkReportsItFlipped(bool initial)
+    {
+        var (shown, applied) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path, AllowControl = initial });
+            SettingsChoice? choice = null;
+            window.Applied += (_, c) => choice = c;
+            window.Show();
+            var shown = window.AllowControlBox.IsChecked == true;
+            window.AllowControlBox.IsChecked = !initial;
+            window.OkButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            return (shown, choice?.AllowControl);
+        });
+
+        Assert.Equal(initial, shown);
+        Assert.Equal(!initial, applied);
+    }
+
+    [Theory]
     [InlineData("en")]
     [InlineData("zh-TW")]
     public async Task GitHubRow_FitsBesideTheChangeLogButton(string culture)
