@@ -81,6 +81,32 @@ public sealed class WidgetCatalogTests : IDisposable
     }
 
     [Fact]
+    public async Task RescanRightAfterRenamingAFolder_KeepsItsSettings()
+    {
+        _temp.CreateFile(@"root\Games\a.lnk");
+        _temp.CreateFile(@"root\Games\b.lnk");
+        var catalog = await StartCatalogAsync(config =>
+            config.Widgets["Games"] = new WidgetConfig { Position = new ScreenPoint(5, 6), ItemOrder = ["b.lnk", "a.lnk"], Hotkey = "Ctrl+Alt+1" });
+
+        // What renaming through the app does: move the folder, move its settings, and (as the control pipe does) rescan at once,
+        // before the file watcher has said a word.
+        var widgets = await _ui.InvokeAsync(() =>
+        {
+            Directory.Move(Path.Combine(RootPath, "Games"), Path.Combine(RootPath, "Play"));
+            catalog.MoveSettings("Games", "Play");
+            catalog.Rescan();
+            return catalog.Widgets;
+        });
+
+        var saved = ConfigStore.Open(ConfigPath).Config;
+        Assert.Equal(["Play"], widgets.Select(w => w.Name));
+        Assert.Equal(["Play"], saved.Widgets.Keys);
+        Assert.Equal(new ScreenPoint(5, 6), saved.Widgets["Play"].Position);
+        Assert.Equal(["b.lnk", "a.lnk"], saved.Widgets["Play"].ItemOrder);
+        Assert.Equal("Ctrl+Alt+1", saved.Widgets["Play"].Hotkey);
+        Assert.Equal(["b.lnk", "a.lnk"], widgets[0].Items.Select(i => i.Name));
+    }
+    [Fact]
     public void Reconcile_NewFolder_GetsSettingsWithItemsInScanOrder()
     {
         var settings = Settings();

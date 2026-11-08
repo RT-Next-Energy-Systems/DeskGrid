@@ -72,6 +72,7 @@ internal sealed class WidgetConfig
     public List<string> ItemOrder { get; set; } = [];
 
     /// <summary>Keyboard shortcut that opens this folder's panel, written like <c>Ctrl+Alt+1</c>; <see langword="null"/> for none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] // Most folders have none: keep config.json free of "hotkey": null.
     public string? Hotkey { get; set; }
 }
 

@@ -100,6 +100,8 @@ public sealed class ConfigStoreTests : IDisposable
     }
 }
 
+// Swaps the static log path: no other test may log meanwhile, so it runs alone (see ShellCollection).
+[Collection(nameof(ShellCollection))]
 public sealed class LogTests : IDisposable
 {
     private readonly TempDirectory _temp = new();

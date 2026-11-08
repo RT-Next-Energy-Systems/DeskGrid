@@ -355,6 +355,9 @@ public partial class App : Application
                 Directory.Move(from, to);
             }
 
+            // At once, not when the file watcher reports it: a rescan in between (the control pipe does one) would otherwise
+            // find the new name without the old settings and start it afresh.
+            _catalog?.MoveSettings(oldName, newName);
             return null;
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
@@ -566,6 +569,7 @@ public partial class App : Application
         }
 
         _runningHotkey = true;
+        Log.Info($"Shortcut pressed: {id}");
         try
         {
             switch (id)

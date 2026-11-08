@@ -640,3 +640,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Keep Ctrl+Alt+M (safe for other programs, but not what the user wants).
 **Consequences**: Anyone who runs DeskGrid loses Ctrl+M elsewhere until they change it. Configs that never saved a shortcut get the new default at once; one that saved a choice keeps it.
 **Author**: The user chose; Claude made the change
+
+---
+
+### 2026-11-08 (4) — Renaming a folder moves its settings at once; version 0.5.0
+**Decision**: `App.RenameFolder` calls the new `WidgetCatalog.MoveSettings(old, new)` right after the folder is moved, so position, item order, shortcut and place in the folder order follow the rename before anything rescans. The file watcher's rename event still arrives and finds nothing left to move. A folder's `hotkey` is left out of `config.json` when it has none. The shortcuts window names its boxes and × buttons for screen readers, and each shortcut press is logged (`Shortcut pressed: <action>`). The version is 0.5.0 (new features: shortcuts and the control pipe).
+**Reason**: Testing `--ctl rename` on the real desktop showed the folder coming back with its items in alphabetical order, no position and no shortcut: the command rescans straight after the move, the watcher's rename event had not been processed, and `Reconcile` dropped the old name's settings as those of a vanished folder. Renaming from a panel was safe only because it does not rescan itself. 0.5.0 and not 0.4.4 because the changes since 0.4.3 add features.
+**Alternatives**: Make `--ctl rename` wait for the watcher (a timing guess); drop the rescan in the command (the answer to the next `list` would be stale); teach `Reconcile` to guess renames (it cannot tell a rename from a delete plus a create).
+**Consequences**: Any future code that renames a folder must call `MoveSettings` too. `WidgetCatalogTests.RescanRightAfterRenamingAFolder_KeepsItsSettings` fails without it. `LogTests` (which swaps the static log path) now runs in `ShellCollection`, alone: with the new log lines, other tests logging at the same moment made it fail now and then.
+**Author**: The user asked for real-machine testing, bug fixing and 0.5.0; Claude found and fixed the bug

@@ -177,25 +177,32 @@ internal sealed class WidgetCatalog : IDisposable
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    private void OnWidgetRenamed(object? sender, WidgetRenamedEventArgs e)
+    private void OnWidgetRenamed(object? sender, WidgetRenamedEventArgs e) => MoveSettings(e.OldName, e.NewName);
+
+    /// <summary>
+    /// Makes the settings of folder <paramref name="oldName"/> (position, item order, shortcut, place in the folder order) those of
+    /// <paramref name="newName"/>. Done by whoever renames a folder, <b>before</b> anything rescans: a rescan that finds the new
+    /// name and not the old one drops the old settings as those of a vanished folder. The file watcher reports the rename later
+    /// as well; by then there is nothing left to move.
+    /// </summary>
+    public void MoveSettings(string oldName, string newName)
     {
         var widgets = _store.Config.Widgets;
-        if (!widgets.Remove(e.OldName, out var widgetConfig))
+        if (!widgets.Remove(oldName, out var widgetConfig))
         {
             return;
         }
 
-        widgets[e.NewName] = widgetConfig;
+        widgets[newName] = widgetConfig;
         var order = _store.Config.FolderOrder;
-        if (order.FindIndex(n => string.Equals(n, e.OldName, StringComparison.OrdinalIgnoreCase)) is >= 0 and var at)
+        if (order.FindIndex(n => string.Equals(n, oldName, StringComparison.OrdinalIgnoreCase)) is >= 0 and var at)
         {
-            order[at] = e.NewName;
+            order[at] = newName;
         }
 
         _store.Save();
-        Log.Info($"Widget folder renamed \"{e.OldName}\" -> \"{e.NewName}\"; settings moved.");
+        Log.Info($"Widget folder renamed \"{oldName}\" -> \"{newName}\"; settings moved.");
     }
-
     private void OnItemRenamed(object? sender, ItemRenamedEventArgs e)
     {
         if (!_store.Config.Widgets.TryGetValue(e.WidgetName, out var widgetConfig))

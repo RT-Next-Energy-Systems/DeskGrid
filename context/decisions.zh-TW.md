@@ -642,3 +642,12 @@
 **Alternatives**: 維持 Ctrl+Alt+M（對其他程式安全，但不是使用者要的）。
 **Consequences**: 執行 DeskGrid 的人在其他程式裡就失去 Ctrl+M，除非自己改掉。從沒存過快速鍵的 config 會立刻拿到新預設；存過選擇的則保留原選擇。
 **Author**: 使用者選擇；改動由 Claude 完成
+
+---
+
+### 2026-11-08 (4) — 改名時立刻搬設定；版本 0.5.0
+**Decision**: `App.RenameFolder` 在資料夾搬完後立刻呼叫新的 `WidgetCatalog.MoveSettings(舊, 新)`，讓位置、項目順序、快速鍵與在資料夾順序中的位置，在任何重新掃描之前就跟著改名。檔案監看器的改名事件稍後仍會到，但已經沒有東西可搬。資料夾沒有快速鍵時，`config.json` 不再寫 `hotkey`。快速鍵視窗的欄位與 × 按鈕有給螢幕閱讀器用的名稱，每次按下快速鍵都會寫 log（`Shortcut pressed: <動作>`）。版本定為 0.5.0（新功能：快速鍵與控制管道）。
+**Reason**: 在真實桌面測 `--ctl rename` 時發現，改名後的資料夾項目變成依字母排序、沒有位置、沒有快速鍵：指令在搬完後立刻重新掃描，監看器的改名事件還沒被處理，`Reconcile` 就把舊名稱的設定當成消失的資料夾丟掉。從面板改名之所以安全，只是因為它自己不重新掃描。版本是 0.5.0 而不是 0.4.4，因為自 0.4.3 以來的改動是新增功能。
+**Alternatives**: 讓 `--ctl rename` 等監看器（憑時間猜測）；拿掉指令裡的重新掃描（下一次 `list` 的答案會是舊的）；讓 `Reconcile` 去猜改名（它分不出改名與刪除再新增）。
+**Consequences**: 之後任何會改資料夾名稱的程式都必須一併呼叫 `MoveSettings`。沒有它時 `WidgetCatalogTests.RescanRightAfterRenamingAFolder_KeepsItsSettings` 會失敗。`LogTests`（會換掉靜態的 log 路徑）改放進 `ShellCollection` 單獨執行：新增的 log 讓別的測試同時寫 log 時，它偶爾會失敗。
+**Author**: 使用者要求真機測試、修 bug 並定為 0.5.0；bug 由 Claude 找到並修正

@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using DeskGrid.Config;
@@ -72,6 +73,7 @@ internal partial class HotkeysWindow : Window
         box.Check = candidate => _rows.FirstOrDefault(row => row.Box != box && row.Box.Value == candidate) is { Label: { } other }
             ? string.Format(Strings.HotkeysInUse, candidate, other)
             : null;
+        AutomationProperties.SetName(box, label); // What a screen reader says for the box: the action it sets.
         box.Rejected += (_, problem) => ShowError(problem);
         box.ValueChanged += (_, _) => Error.Visibility = Visibility.Collapsed;
 
@@ -87,6 +89,7 @@ internal partial class HotkeysWindow : Window
             IsTabStop = false, // Backspace clears the focused box.
             ToolTip = Strings.HotkeysClear,
         };
+        AutomationProperties.SetName(clear, $"{Strings.HotkeysClear}: {label}");
         clear.Click += (_, _) =>
         {
             box.Value = null;
