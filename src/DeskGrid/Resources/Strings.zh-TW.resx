@@ -300,4 +300,67 @@
     <comment>Not translated: the product name.</comment>
     <value>DeskGrid</value>
   </data>
+  <data name="SettingsHotkeys" xml:space="preserve">
+    <value>鍵盤快速鍵</value>
+  </data>
+  <data name="SettingsHotkeysEdit" xml:space="preserve">
+    <value>自訂…</value>
+  </data>
+  <data name="SettingsHotkeysHint" xml:space="preserve">
+    <value>在任何程式中按 {0} 即可開啟所有資料夾。</value>
+  </data>
+  <data name="SettingsHotkeysHintNone" xml:space="preserve">
+    <value>尚未設定「開啟所有資料夾」的快速鍵。</value>
+  </data>
+  <data name="HotkeysTitle" xml:space="preserve">
+    <value>鍵盤快速鍵</value>
+  </data>
+  <data name="HotkeysIntro" xml:space="preserve">
+    <value>點一下欄位，再按下想要的組合鍵；按 Backspace 可清除。快速鍵在任何程式中都有效。</value>
+  </data>
+  <data name="HotkeysGroupGeneral" xml:space="preserve">
+    <value>DeskGrid</value>
+  </data>
+  <data name="HotkeysGroupFolders" xml:space="preserve">
+    <value>開啟資料夾</value>
+  </data>
+  <data name="HotkeysNoFolders" xml:space="preserve">
+    <value>目前沒有任何資料夾。</value>
+  </data>
+  <data name="HotkeyAllFolders" xml:space="preserve">
+    <value>開啟所有資料夾</value>
+  </data>
+  <data name="HotkeyNewFolder" xml:space="preserve">
+    <value>新增資料夾…</value>
+  </data>
+  <data name="HotkeySettings" xml:space="preserve">
+    <value>開啟設定</value>
+  </data>
+  <data name="HotkeysNone" xml:space="preserve">
+    <value>未設定</value>
+  </data>
+  <data name="HotkeysPress" xml:space="preserve">
+    <value>請按下組合鍵…</value>
+  </data>
+  <data name="HotkeysClear" xml:space="preserve">
+    <value>清除</value>
+  </data>
+  <data name="HotkeysReset" xml:space="preserve">
+    <value>還原預設值</value>
+  </data>
+  <data name="HotkeysNeedModifier" xml:space="preserve">
+    <value>請加上 Ctrl、Alt 或 Windows 鍵，否則會干擾一般打字。</value>
+  </data>
+  <data name="HotkeysInUse" xml:space="preserve">
+    <comment>{0} is a shortcut such as Ctrl+Alt+M, {1} the action that already has it.</comment>
+    <value>{0} 已經用在「{1}」。</value>
+  </data>
+  <data name="HotkeysTaken" xml:space="preserve">
+    <comment>{0} is a list, one line each: the shortcut, then the action.</comment>
+    <value>下列快速鍵已被其他程式使用，DeskGrid 無法使用：
+
+{0}
+
+請到「設定」的「鍵盤快速鍵」換一組按鍵。</value>
+  </data>
 </root>

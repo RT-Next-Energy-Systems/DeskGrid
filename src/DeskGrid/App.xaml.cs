@@ -6,6 +6,7 @@ using DeskGrid.Control;
 using DeskGrid.Desktop;
 using DeskGrid.Diagnostics;
 using DeskGrid.Folders;
+using DeskGrid.Hotkeys;
 using DeskGrid.Icons;
 using DeskGrid.Panel;
 using DeskGrid.Resources;
@@ -42,8 +43,10 @@ public partial class App : Application
     private SettingsWindow? _settings;
     private InstanceChannel? _instanceChannel;
     private ControlChannel? _controlChannel;
+    private HotkeyService? _hotkeys;
     private OpenMessage? _pendingOpen;
     private bool _checkingUpdates;
+    private bool _runningHotkey;
     private bool _started;
 
     protected override void OnStartup(StartupEventArgs e)
@@ -108,6 +111,9 @@ public partial class App : Application
         _panels.DeleteRequested += (_, folder) => DeleteFolder(folder);
         _panels.FolderRenamer = RenameFolder;
         _tray = new TrayIcon(Strings.AppName, TrayMenu);
+        _hotkeys = new HotkeyService();
+        _hotkeys.Pressed += (_, id) => RunHotkey(id);
+        ApplyHotkeys(report: false);
         _pendingOpen = openRequest;
         _instanceChannel = new InstanceChannel(message => Dispatcher.BeginInvoke(() => OpenPanel(message)));
         var commands = new ControlCommands(new ControlHost(this), FolderPaths.Desktops);
@@ -123,6 +129,7 @@ public partial class App : Application
         _settings?.Close();
         _instanceChannel?.Dispose();
         _controlChannel?.Dispose();
+        _hotkeys?.Dispose();
         StopWidgets();
         _tray?.Dispose();
         _icons?.Dispose();
@@ -251,6 +258,7 @@ public partial class App : Application
             _icons!.Retain(catalog.Widgets);
             board.Show(catalog.Widgets);
             _panels!.Refresh(catalog.Widgets);
+            ApplyHotkeys(report: false); // A renamed folder keeps its shortcut under the new name; a deleted one loses it.
 
             if (_pendingOpen is { } request)
             {
@@ -537,6 +545,91 @@ public partial class App : Application
         }
     }
 
+    // Keeps the shortcuts Windows knows in step with the config. Quiet at start-up and after a rescan: a shortcut another
+    // program owns is only logged there, and reported when the user changes shortcuts.
+    private void ApplyHotkeys(bool report)
+    {
+        var failed = _hotkeys!.Apply(HotkeyBindings.All(_configStore!.Config));
+        if (report && failed.Count > 0)
+        {
+            var list = string.Join("\n", failed.Select(binding => $"{binding.Key}  –  {HotkeysWindow.LabelOf(binding.Id)}"));
+            MessageBox.Show(string.Format(Strings.HotkeysTaken, list), Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void RunHotkey(string id)
+    {
+        // A second press while a dialog from the first is still open would stack another dialog on it.
+        if (_runningHotkey)
+        {
+            return;
+        }
+
+        _runningHotkey = true;
+        try
+        {
+            switch (id)
+            {
+                case HotkeyBindings.NewFolder:
+                    CreateFolder();
+                    break;
+
+                case HotkeyBindings.Settings:
+                    ShowSettings();
+                    break;
+
+                case HotkeyBindings.AllFolders:
+                    OpenPanel(OpenMessageAtCursor(OpenRequest.AllFolders));
+                    break;
+
+                default:
+                    if (HotkeyBindings.FolderNameOf(id) is { } folder)
+                    {
+                        OpenPanel(OpenMessageAtCursor(folder));
+                    }
+
+                    break;
+            }
+        }
+        finally
+        {
+            _runningHotkey = false;
+        }
+    }
+
+    private void EditHotkeys(Window? owner)
+    {
+        var config = _configStore!.Config;
+        var window = new HotkeysWindow(config, _catalog?.Widgets.Select(widget => widget.Name).ToList() ?? []);
+        if (owner is { IsVisible: true })
+        {
+            window.Owner = owner;
+        }
+
+        var changed = false;
+        window.Applied += (_, choices) =>
+        {
+            foreach (var choice in choices)
+            {
+                HotkeyBindings.Set(config, choice.Id, choice.Key);
+            }
+
+            _configStore.Save();
+            changed = true;
+        };
+
+        // The shortcuts in force would swallow the very keys being recorded.
+        _hotkeys!.Suspend();
+        try
+        {
+            window.ShowDialog();
+        }
+        finally
+        {
+            ApplyHotkeys(report: changed);
+        }
+    }
+
     private void ShowSettings()
     {
         if (_settings is { } open)
@@ -549,6 +642,7 @@ public partial class App : Application
         settings.Applied += (_, choice) => ApplySettings(choice);
         settings.CheckForUpdates = () => CheckForUpdatesAsync(manual: true, settings);
         settings.PinAllFolders = PinAllFoldersToTaskbar;
+        settings.EditHotkeys = () => EditHotkeys(settings);
         settings.Closed += (_, _) => _settings = null;
         _settings = settings;
         settings.Show();

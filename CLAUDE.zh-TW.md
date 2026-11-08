@@ -43,7 +43,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 模組 | 資料夾 | 職責 |
 |---|---|---|
 | DesktopHost | `Desktop/` | 把 widget 視窗掛在桌面圖示層（所有一般視窗後方）；相容舊版與 Win11 24H2+ 桌面階層；Explorer 重啟後自動重新掛載 |
-| ConfigStore | `Config/` | `%APPDATA%\DeskGrid\config.json`，只存 widget 位置、面板欄數、項目排序、根目錄路徑、拖入模式，以及面板背景（2026-10-24 使用者同意新增）、刪除資料夾時項目的處理方式（`deleteMode`）、是否問過開機自啟（`autoStartAsked`，2026-10-30）、啟動時是否檢查更新（`checkForUpdatesAtStartup`，預設開，2026-10-30）、面板展開位置（`panelOpenMode`：`nearby` / `centered`，2026-11-03）、介面語言（`language`：`system` / `english` / `traditionalChinese`，2026-11-03）、是否允許腳本與 AI agent 控制（`allowControl`，預設關，2026-11-08） |
+| ConfigStore | `Config/` | `%APPDATA%\DeskGrid\config.json`，只存 widget 位置、面板欄數、項目排序、根目錄路徑、拖入模式，以及面板背景（2026-10-24 使用者同意新增）、刪除資料夾時項目的處理方式（`deleteMode`）、是否問過開機自啟（`autoStartAsked`，2026-10-30）、啟動時是否檢查更新（`checkForUpdatesAtStartup`，預設開，2026-10-30）、面板展開位置（`panelOpenMode`：`nearby` / `centered`，2026-11-03）、介面語言（`language`：`system` / `english` / `traditionalChinese`，2026-11-03）、是否允許腳本與 AI agent 控制（`allowControl`，預設關，2026-11-08）、鍵盤快速鍵（一般動作存在 `hotkeys`，資料夾自己的存在它的 widget 項目裡的 `hotkey`，2026-11-08） |
 | FolderScanner | `Folders/` | 根目錄預設 `%USERPROFILE%\DeskGrid\`，每個子資料夾 = 一個 widget；FileSystemWatcher 監聽 Created/Deleted/Renamed/Changed，300ms debounce；Renamed 要轉移 config 中的位置與排序；根目錄位於使用者桌面時拒絕並提示 |
 | IconService | `Icons/` | IShellItemImageFactory 取 256px 圖示；依排序取前 4 個合成 2×2 預覽；快取，資料夾變動才重建 |
 | FolderWidget | `Widgets/` | 桌面上的資料夾圖示 + 名稱，可拖動並存位置（`FolderWidget` 視圖、`WidgetBoard` 同步與擺放、`WidgetGrid` 格線） |
@@ -54,6 +54,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 疊圖示建資料夾 | `Widgets/IconMerger`、`Folders/DesktopFiles` | 桌面圖示拖到另一個圖示上 → 新資料夾（拖曳期間以一個透明接收區接手 Explorer 的放開） |
 | 工作列釘選 | `Taskbar/` | widget 右鍵「釘選到工作列」：建 `--open "資料夾"` 捷徑讓使用者自己釘；設定視窗「工作列」卡片的「把所有資料夾釘選到工作列…」建 `--all` 捷徑（面板列出所有資料夾）；點下去由命名管線（`InstanceChannel`）通知執行中的 DeskGrid 在游標處開面板；捷徑各帶 AppUserModelID，工作列才不會合併 |
 | 控制管道 | `Control/` | 腳本 / AI agent 操作執行中的程式：`DeskGrid.exe --ctl <指令>`（`ControlCli`）經 named pipe `DeskGrid.Control.<使用者>`（`ControlChannel`）送出一行 JSON，印出 JSON 回覆；`ControlCommands` 透過 `IControlHost`（App 的 `ControlHost`）在 UI 執行緒執行。需使用者開啟：config `allowControl`，預設關（2026-11-08） |
+| 鍵盤快速鍵 | `Hotkeys/`、`Settings/` | 系統層級快速鍵：`Hotkey`（解析 / 寫出 `Ctrl+M`）、`HotkeyBindings`（哪個動作用哪組快速鍵，從 config 讀寫）、`HotkeyService`（在隱藏視窗上 `RegisterHotKey`，回報 Windows 拒絕的組合）；`Settings/` 的 `HotkeysWindow` + `HotkeyBox` 負責錄製（2026-11-08） |
 | 版本檢查 | `Updates/` | 啟動後 8 秒與設定視窗的「檢查更新」按鈕：查 GitHub 最新 release，有新版本彈出「更新 / 維持 / 取消」；更新 = 下載 exe、驗 SHA256、由 PowerShell 小腳本在程式結束後換檔並重啟 |
 | （輔助）Shell | `Shell/` | Shell 互通：`ShellImage`（圖示）、`ShellItem`（ShellExecute 開啟、顯示名稱）、`ShortcutFile`（建 .lnk）、`ShellContextMenu`（Explorer 對檔案的右鍵選單）、`RecycleBin` |
 | （輔助）Log | `Diagnostics/` | 簡易 append-only log |
@@ -199,6 +200,16 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **client 讓出前景權**（`AllowSetForegroundWindow(ASFW_ANY)`），`open` 才能讓面板取得焦點；否則面板第一次失去焦點就會關閉。
 - **真機驗證**（以 explorer.exe 啟動 dev build，config 用 explorer 執行的腳本開啟）：從 Bash 與 PowerShell 執行 `status`、`list`、`new`（中文名稱）、`add`（notepad.exe → `notepad.lnk`、文字檔 → `.txt.lnk`、不存在的路徑回報為略過）、`move`、`rename`、`open`（面板顯示、在前景、項目依 move 後的順序，截圖確認）、`close`，以及錯誤情況 / 結束代碼。設定視窗的勾選框以真正的 `SettingsWindow` 用兩種語言（深色主題）繪製成圖檢查無誤；`SettingsWindowTests.AllowControl_ShowsTheSetting_AndOkReportsItFlipped` 檢查它帶入帶出正確。
 
+## 鍵盤快速鍵（2026-11-08）
+
+- **內容**（使用者要「簡單、易用、直觀、可自訂的快速鍵系統」，例如 Ctrl+M 開啟所有資料夾，像釘在工作列的那顆按鈕）：用 `RegisterHotKey` 做系統層級快速鍵（`HotkeyService`；不管哪個程式在前景都有效；加 `MOD_NOREPEAT`，按住不放不會連發）。動作：`allFolders`（預設 Ctrl+M；切換所有資料夾的列表）、`newFolder`、`settings`（無預設），以及每個資料夾一個（`folder:<名稱>`，開啟該資料夾的面板）。按下 → `App.RunHotkey` → 面板走和工作列按鈕同一條 `OpenPanel(OpenMessage)`，以游標為錨點，所以「再按一次收合」「資料夾已刪除 → 改開列表」「widget 還沒好 → 先等」都直接沿用。
+- **預設是單純的 Ctrl+M**（使用者在我提議 Ctrl+Alt+M 時選了 Ctrl+M）：DeskGrid 執行期間，全域的 Ctrl+M 會從所有其他程式手中被搶走（終端機裡是 Enter，編輯器裡是縮排）。README 有說明，並建議可改用 Ctrl+Alt+M。
+- **儲存**：一般動作在 `AppConfig.Hotkeys`（動作 id → `"Ctrl+M"`；一開始就有預設值，檔案裡的項目取代預設，`""` = 使用者清除，沒有該項 = 用預設，所以要用 `JsonObjectCreationHandling.Populate`）；資料夾的快速鍵存在 `WidgetConfig.Hotkey`，因此資料夾改名時會跟著走（掃描器本來就會搬 widget 設定），資料夾刪除時一併消失。不是可用快速鍵的文字視為沒有。
+- **規則**（`Hotkey.IsValid`）：必須包含 Ctrl、Alt 或 Win（單用 Shift 會擋掉大寫字母）；主鍵是字母、數字、F1–F24、空白鍵、Enter、方向鍵、Home / End / PageUp / PageDown / Insert / Delete（刻意不含 Tab 與 Esc：錄製時它們是切換焦點 / 關閉視窗）。兩個動作不能共用一組（視窗裡的 `HotkeyBox.Check`）；別的程式已經用了則表現為註冊被拒絕。
+- **套用**：`App.ApplyHotkeys` 在啟動時、每次目錄更新後（改名 / 刪除會改變資料夾的 id）、快速鍵視窗按「確定」後執行。清單和已套用的相同時 `HotkeyService.Apply` 什麼都不做。被拒絕的會寫 log；只有在視窗按「確定」之後才跳訊息列出它們（`HotkeysTaken`），免得別的程式佔用的組合每次啟動都來吵。上一次按下開出的對話框還沒關時，再按一次會被忽略（`_runningHotkey`）。
+- **錄製**：`HotkeysWindow`（強制回應視窗，從「設定 → 鍵盤快速鍵 → 自訂…」開啟）每個動作一個 `HotkeyBox`（點一下、按下組合鍵；Backspace / Delete 或 × 清除；Tab 與 Esc 照常）和「還原預設值」。視窗開著時生效中的快速鍵會被**暫停**（`HotkeyService.Suspend`），否則 Windows 會把正要錄製的按鍵搶走。列是用程式碼建的，因為 XAML 不能參照 `HotkeyBox`。
+- **未在真機驗證**：實際按下快速鍵（只看到執行中的程式擁有第一版預設的 Ctrl+Alt+M：第二次 `RegisterHotKey` 失敗，錯誤 1409；沒有模擬按鍵）、按下後面板是否拿到前景、用鍵盤在視窗裡錄製、Win 鍵組合（Windows 保留很多）、視窗的外觀。
+
 ## 發布與 CI（階段 7）
 
 - **GitHub**：公開 repo `RT-Next-Energy-Systems/DeskGrid`（2026 年 11 月由 `Ryan970714/DeskGrid` 搬過來；GitHub 會把舊位址轉址，0.4.1 以前的版本檢查更新仍用舊位址），預設分支 `main`，MIT（著作權人 Ryan Kuo）。README 英文（`README.md`）+ 繁中（`README.zh-TW.md`），內容需保持一致。其中的截圖在 `docs/images/`（`NAME.png` + `NAME.zh-TW.png`），由真正的 UI 類別配上 Windows 內建 App 繪製，不是從桌面截取（做法見 `context/decisions.md` 2026-11-06（二））；視窗改了就要重畫。
@@ -235,6 +246,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 9 | 面板項目的 Windows 原生右鍵選單、面板 / widget 右鍵「新增 / 刪除資料夾」、開機自啟流程（`--autostart`、等桌面排好、第一次詢問）、README 的應用程式控制封鎖說明、修 bug | 完成 2026-10-30（建置 / 168 測試通過，v0.3.1 已發布；含拖資料夾到資源回收筒刪除，使用者實測成功）；原生選單以真實 `IContextMenu` 做了整合測試（顯示、阻塞、關閉），但沒有實際點選指令（電腦使用權限不含 DeskGrid 視窗），待使用者驗證。2026-10-31 修拖曳與「拖曳時自動開 / 關資料夾」（181 測試），拖曳情境待使用者實測；v0.3.3 發布（2026-10-31，含拖曳修正、啟動檢查更新開關、隱私連結）；v0.3.4 發布（2026-11-01，多螢幕修正）；v0.3.5 發布（2026-11-02，穩健性修正：捷徑掃描、config 鎖定、未處理例外、更新對話框） |
 | 10 | 介面語言選擇（英文 / 繁體中文）、雙語文件政策、面板展開位置（附近 / 置中） | 完成 2026-11-03（建置 / 測試通過）；沒有實機驗證：執行中切換語言、置中展開面板在真實桌面上的樣子。2026-11-06：全程式碼找 bug，修正 10 項（見 `context/decisions.md` 2026-11-06），307 測試通過；Fluent 視窗以兩種語言、兩種主題繪製成圖檢查無誤，修正本身沒有在真實桌面上試過 |
 | 11 | 讓腳本與 AI agent 控制（`--ctl` CLI + 控制 pipe，需在設定開啟） | 完成 2026-11-08（建置 / 345 測試通過）；每個指令都從 Bash 與 PowerShell 對真機 dev build 執行過，面板開啟有在畫面上確認；等待使用者驗證 |
+| 12 | 鍵盤快速鍵（系統層級，每個動作與每個資料夾都能自訂） | 完成 2026-11-08（建置 / 373 測試通過）；dev build 擁有預設快速鍵（第二次註冊會失敗）；實際按下按鍵與快速鍵視窗沒有在真實桌面試過，等待使用者驗證 |
 
 # 工作方式
 

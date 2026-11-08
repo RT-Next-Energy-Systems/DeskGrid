@@ -622,3 +622,21 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: An MCP server (option B; can be added on top of the same pipe later); a skill only (option C; no panels, no order); localized protocol messages (they are an API for programs, which want stable text).
 **Consequences**: The process that runs `--ctl` is a short-lived DeskGrid that exits before the single-instance mutex. A windowed exe's output only reaches a caller that reads it through a pipe (Bash, `| Out-String`) or, failing that, the attached parent console. Delete commands, if wanted later, need their own decision (Recycle Bin, confirmation).
 **Author**: The user chose option A; Claude designed the protocol, commands and opt-in
+
+---
+
+### 2026-11-08 (2) — System-wide keyboard shortcuts: Ctrl+Alt+M by default, one per action and per folder
+**Decision**: A new `Hotkeys/` module registers shortcuts with `RegisterHotKey`, so they work in any program. Actions: open all folders (default **Ctrl+Alt+M**, toggles the list like the taskbar button), new folder, settings (no default), and one per folder. A shortcut must include Ctrl, Alt or Win; the key is a letter, digit, F1–F24, Space, Enter, an arrow or a navigation key. Settings → Keyboard shortcuts → Customize… opens a window with a box per action: click, press the keys, Backspace clears; two actions can't share a combination; "Reset to defaults". General shortcuts are in `config.json` under `hotkeys`, a folder's in its widget entry (`hotkey`). Panels open at the mouse pointer through the same path as a taskbar button.
+**Reason**: The user asked for a simple, easy and intuitive shortcut system that can be customized, with "Ctrl+M opens all folders, like the button pinned to the taskbar" as the example. Per-action boxes with "press the keys" recording is what people know from other programs. A folder's shortcut lives with the folder so a rename or delete needs no extra code. The default is Ctrl+Alt+M and not the example's Ctrl+M because a registered Ctrl+M disappears from every other program (Enter in terminals, indent in editors); it can still be chosen.
+**Alternatives**: Plain Ctrl+M by default (matches the example, hurts every other program); shortcuts only while the desktop or a panel is focused (not like the taskbar button, which works from anywhere); a settings-window card with all rows inline (the window is already long; folders can be many); per-folder shortcuts kept in `hotkeys` by name (a rename would lose them).
+**Consequences**: Another program may already own a combination: Windows refuses the registration; it is logged, and the window lists the refused ones after OK. All shortcuts are suspended while the window is open (or Windows would take the keys being recorded). Whether the panel gets the foreground after a shortcut, and the window's look, are unverified on a real desktop. Whether the user wants Ctrl+M as the default instead is to be confirmed.
+**Author**: The user asked for the feature; Claude chose the actions, the default, the storage and the window
+
+---
+
+### 2026-11-08 (3) — The default shortcut for "open all folders" is Ctrl+M
+**Decision**: `HotkeyBindings.DefaultAllFolders` is now plain **Ctrl+M**, replacing the Ctrl+Alt+M of record (2). Nothing else changes: it can be cleared or replaced in Settings → Keyboard shortcuts. The README warns that while DeskGrid runs other programs no longer get Ctrl+M and suggests Ctrl+Alt+M as an alternative.
+**Reason**: Record (2) left the question open; the user was offered both and chose Ctrl+M, the shortcut they first asked for.
+**Alternatives**: Keep Ctrl+Alt+M (safe for other programs, but not what the user wants).
+**Consequences**: Anyone who runs DeskGrid loses Ctrl+M elsewhere until they change it. Configs that never saved a shortcut get the new default at once; one that saved a choice keeps it.
+**Author**: The user chose; Claude made the change

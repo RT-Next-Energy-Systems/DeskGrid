@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using DeskGrid.Config;
 using DeskGrid.Folders;
+using DeskGrid.Hotkeys;
 using DeskGrid.Panel;
 using DeskGrid.Resources;
 using DeskGrid.Shell;
@@ -31,10 +32,12 @@ internal partial class SettingsWindow : Window
 {
     private const int MaxColumns = 8;
 
+    private readonly AppConfig _config;
     private Color _customColor;
 
     public SettingsWindow(AppConfig config)
     {
+        _config = config;
         InitializeComponent();
         LocalizeTexts();
         FluentWindow.UseOpaqueBackground(this);
@@ -68,7 +71,21 @@ internal partial class SettingsWindow : Window
     /// <summary>Creates the taskbar shortcut that lists all folders and shows it to the user, who pins it.</summary>
     public Action? PinAllFolders { get; set; }
 
+    /// <summary>Lets the user change the keyboard shortcuts (and applies them); the window then shows the new one.</summary>
+    public Action? EditHotkeys { get; set; }
+
     private void OnPinAll(object sender, RoutedEventArgs e) => PinAllFolders?.Invoke();
+
+    private void OnHotkeys(object sender, RoutedEventArgs e)
+    {
+        EditHotkeys?.Invoke();
+        ShowHotkeysHint();
+    }
+
+    // The shortcut people most want to know about: the one that opens all folders.
+    private void ShowHotkeysHint() => HotkeysHint.Text = HotkeyBindings.Get(_config, HotkeyBindings.AllFolders) is { } key
+        ? string.Format(Strings.SettingsHotkeysHint, key)
+        : Strings.SettingsHotkeysHintNone;
 
     private void OnOpenRoot(object sender, RoutedEventArgs e)
     {
@@ -142,6 +159,9 @@ internal partial class SettingsWindow : Window
         OpenRootButton.Content = Strings.SettingsOpen;
         TaskbarLabel.Text = Strings.SettingsTaskbar;
         PinAllButton.Content = Strings.SettingsPinAll;
+        HotkeysLabel.Text = Strings.SettingsHotkeys;
+        HotkeysButton.Content = Strings.SettingsHotkeysEdit;
+        ShowHotkeysHint();
         AllowControlBox.Content = Strings.SettingsAllowControl;
         AllowControlHint.Text = Strings.SettingsAllowControlHint;
         GitHubLabel.Text = Strings.SettingsGitHub;

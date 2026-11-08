@@ -117,3 +117,7 @@ MUI_LANGUAGE_NAME
 GetStdHandle
 AttachConsole
 ATTACH_PARENT_PROCESS
+RegisterHotKey
+UnregisterHotKey
+WM_HOTKEY
+HOT_KEY_MODIFIERS

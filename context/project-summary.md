@@ -49,7 +49,7 @@ context/                  session context docs (decisions and this summary are v
 ```
 
 ## Core Modules
-DesktopHost (`Desktop/`), ConfigStore (`Config/`), FolderScanner + WidgetCatalog (`Folders/`), IconService (`Icons/`), FolderWidget + WidgetBoard (`Widgets/`), PopupPanel + PanelController (`Panel/`), TrayIcon + AutoStart (`Tray/`), settings (`Settings/`), drag and drop (`Folders/ItemImporter`). The other modules are in "Architecture" in `CLAUDE.md`.
+DesktopHost (`Desktop/`), ConfigStore (`Config/`), FolderScanner + WidgetCatalog (`Folders/`), IconService (`Icons/`), FolderWidget + WidgetBoard (`Widgets/`), PopupPanel + PanelController (`Panel/`), TrayIcon + AutoStart (`Tray/`), settings (`Settings/`), drag and drop (`Folders/ItemImporter`), keyboard shortcuts (`Hotkeys/`). The other modules are in "Architecture" in `CLAUDE.md`.
 
 ## Coding Rules
 See `AGENTS.md`.

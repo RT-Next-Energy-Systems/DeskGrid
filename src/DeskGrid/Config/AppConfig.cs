@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json.Serialization;
 using DeskGrid.Desktop;
+using DeskGrid.Hotkeys;
 
 namespace DeskGrid.Config;
 
@@ -38,6 +39,16 @@ internal sealed class AppConfig
     /// </summary>
     public bool AllowControl { get; set; }
 
+    /// <summary>
+    /// Keyboard shortcuts of the general actions (see <see cref="HotkeyBindings"/>), written like <c>Ctrl+M</c>. Starts with the
+    /// defaults; an entry in the file replaces its default, and an empty text means the user cleared it.
+    /// </summary>
+    [JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
+    public Dictionary<string, string> Hotkeys { get; } = new()
+    {
+        [HotkeyBindings.AllFolders] = HotkeyBindings.DefaultAllFolders.ToString(),
+    };
+
     /// <summary>The release the user chose to keep the current version over ("Keep"); not asked about again unless a newer one appears.</summary>
     public string? SkippedUpdateVersion { get; set; }
 
@@ -59,6 +70,9 @@ internal sealed class WidgetConfig
 
     /// <summary>Item file names in display order.</summary>
     public List<string> ItemOrder { get; set; } = [];
+
+    /// <summary>Keyboard shortcut that opens this folder's panel, written like <c>Ctrl+Alt+1</c>; <see langword="null"/> for none.</summary>
+    public string? Hotkey { get; set; }
 }
 
 /// <summary>The popup panel's background.</summary>

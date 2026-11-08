@@ -4,6 +4,9 @@
 
 ### Added
 
+- Keyboard shortcuts that work from any program. **Ctrl+M** opens the list of all folders (press it again to close
+  it), and any folder, **New folder…** and **Settings** can have a shortcut of your own under Settings → **Keyboard
+  shortcuts** → **Customize…**. Click a box and press the keys; Backspace clears it.
 - Scripts and AI agents can drive DeskGrid with `DeskGrid.exe --ctl <command>`: list, create, rename and fill folders,
   reorder items, open and close panels. Off until **Allow control from scripts and AI agents** is ticked in Settings;
   only programs of your own Windows account can use it, and nothing can be deleted this way.

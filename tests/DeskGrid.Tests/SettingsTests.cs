@@ -261,20 +261,5 @@ public sealed class SettingsWindowTests : IDisposable
     private static Rect Bounds(UIElement element, Visual root) =>
         element.TransformToAncestor(root).TransformBounds(new Rect(element.RenderSize));
 
-    private static void EnsureApplication()
-    {
-        if (Application.Current is not null)
-        {
-            return;
-        }
-
-        // The windows take their card styles from App.xaml; the card's padding matters for what fits in a row.
-        var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-        var card = new Style(typeof(System.Windows.Controls.Border));
-        card.Setters.Add(new Setter(System.Windows.Controls.Border.PaddingProperty, new Thickness(16, 14, 16, 14)));
-        card.Setters.Add(new Setter(System.Windows.Controls.Border.BorderThicknessProperty, new Thickness(1)));
-        card.Setters.Add(new Setter(FrameworkElement.MarginProperty, new Thickness(0, 0, 0, 8)));
-        app.Resources["Card"] = card;
-        app.Resources["CardTitle"] = new Style(typeof(System.Windows.Controls.TextBlock));
-    }
+    private static void EnsureApplication() => TestApplication.Ensure();
 }

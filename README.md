@@ -88,6 +88,7 @@ desktop folder**; the files inside are its items.
 |---|---|
 | Create a folder | Drag a desktop icon onto another one (see below), tray menu → **New folder…**, right-click a folder (or the name bar of an open folder) → **New folder…**, or create a subfolder in the root folder |
 | Open a folder | Click it. Click an item to launch it. Esc, clicking elsewhere or clicking the folder again closes it |
+| Open from the keyboard | **Ctrl+M** opens the list of all folders, whichever program you are in (press it again to close). A folder can have a shortcut of its own: see [Keyboard shortcuts](#keyboard-shortcuts) |
 | Move a folder | Drag it; it snaps to the nearest free cell |
 | Rename | Click the folder's name in its panel, or rename the subfolder in Explorer |
 | Delete | Drag the folder onto the Recycle Bin icon on the desktop, or right-click the folder on the desktop, or the name bar of its open panel (or its entry in the all-folders list) → **Delete folder…**. The folder goes to the Recycle Bin; what happens to the items inside is up to Settings. There is no need to open the root folder |
@@ -141,9 +142,33 @@ Tray menu → **Settings…**:
   (asked again next start).
 - **Check for updates when DeskGrid starts**: on by default; untick it and DeskGrid never contacts GitHub on its own
   (see [Privacy](#privacy)).
+- **Keyboard shortcuts**: **Customize…** opens the list of shortcuts. See [Keyboard shortcuts](#keyboard-shortcuts).
 - **Allow control from scripts and AI agents**: off by default. See [Scripts and AI agents](#scripts-and-ai-agents).
 - **GitHub**: the address of the project. **Privacy** opens the [Privacy](#privacy) section of this README online.
   **Change log…** lists what changed in each version.
+
+### Keyboard shortcuts
+
+Shortcuts work from any program, not only when DeskGrid is in front. Settings → **Keyboard shortcuts** →
+**Customize…** lists what can have one:
+
+| Action | Default |
+|---|---|
+| Open all folders (the list a taskbar button would show; press again to close) | Ctrl+M |
+| New folder… | none |
+| Open settings | none |
+| Open a folder (one line per folder) | none |
+
+To set one, click its box and press the keys you want; Backspace (or the × button) clears it, and **Reset to defaults**
+brings back the table above. A panel opens where the mouse pointer is, or in the middle of the screen if you chose
+that under **Where a folder opens**. A folder keeps its shortcut when you rename it.
+
+- A shortcut must include Ctrl, Alt or the Windows key, so it can't get in the way of typing. The key can be a letter,
+  a digit, F1–F24, Space, Enter, an arrow or Home, End, PageUp, PageDown, Insert, Delete.
+- Two actions can't share one shortcut, and Windows doesn't let two programs share one either. If another program
+  already has the combination, DeskGrid tells you after you press OK; choose other keys.
+- While DeskGrid runs, a shortcut belongs to it alone: other programs no longer get Ctrl+M (it is Enter in terminals and
+  indent in many editors, for example). If that gets in the way, pick another combination here, such as Ctrl+Alt+M.
 
 ### Scripts and AI agents
 

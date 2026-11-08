@@ -308,4 +308,67 @@ Using the default root folder instead:
     <comment>Not translated: a language is always listed under its own name.</comment>
     <value>繁體中文</value>
   </data>
+  <data name="SettingsHotkeys" xml:space="preserve">
+    <value>Keyboard shortcuts</value>
+  </data>
+  <data name="SettingsHotkeysEdit" xml:space="preserve">
+    <value>Customize…</value>
+  </data>
+  <data name="SettingsHotkeysHint" xml:space="preserve">
+    <value>{0} opens all folders, from any program.</value>
+  </data>
+  <data name="SettingsHotkeysHintNone" xml:space="preserve">
+    <value>No shortcut is set for opening all folders.</value>
+  </data>
+  <data name="HotkeysTitle" xml:space="preserve">
+    <value>Keyboard shortcuts</value>
+  </data>
+  <data name="HotkeysIntro" xml:space="preserve">
+    <value>Click a box, then press the keys you want. Backspace clears it. Shortcuts work from any program.</value>
+  </data>
+  <data name="HotkeysGroupGeneral" xml:space="preserve">
+    <value>DeskGrid</value>
+  </data>
+  <data name="HotkeysGroupFolders" xml:space="preserve">
+    <value>Open a folder</value>
+  </data>
+  <data name="HotkeysNoFolders" xml:space="preserve">
+    <value>There are no folders yet.</value>
+  </data>
+  <data name="HotkeyAllFolders" xml:space="preserve">
+    <value>Open all folders</value>
+  </data>
+  <data name="HotkeyNewFolder" xml:space="preserve">
+    <value>New folder…</value>
+  </data>
+  <data name="HotkeySettings" xml:space="preserve">
+    <value>Open settings</value>
+  </data>
+  <data name="HotkeysNone" xml:space="preserve">
+    <value>Not set</value>
+  </data>
+  <data name="HotkeysPress" xml:space="preserve">
+    <value>Press the keys…</value>
+  </data>
+  <data name="HotkeysClear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="HotkeysReset" xml:space="preserve">
+    <value>Reset to defaults</value>
+  </data>
+  <data name="HotkeysNeedModifier" xml:space="preserve">
+    <value>Include Ctrl, Alt or the Windows key, or the shortcut would get in the way of typing.</value>
+  </data>
+  <data name="HotkeysInUse" xml:space="preserve">
+    <comment>{0} is a shortcut such as Ctrl+Alt+M, {1} the action that already has it.</comment>
+    <value>{0} is already used for "{1}".</value>
+  </data>
+  <data name="HotkeysTaken" xml:space="preserve">
+    <comment>{0} is a list, one line each: the shortcut, then the action.</comment>
+    <value>Another program already uses these shortcuts, so they can't be used by DeskGrid:
+
+{0}
+
+Choose different keys in Settings, under Keyboard shortcuts.</value>
+  </data>
 </root>

@@ -108,6 +108,16 @@
 
         <Border Style="{StaticResource Card}">
           <StackPanel>
+            <DockPanel>
+              <Button Padding="12,5" x:Name="HotkeysButton" DockPanel.Dock="Right" Click="OnHotkeys" />
+              <TextBlock x:Name="HotkeysLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </DockPanel>
+            <TextBlock x:Name="HotkeysHint" Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.7" />
+          </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}">
+          <StackPanel>
             <CheckBox x:Name="AllowControlBox" MinWidth="0" />
             <TextBlock x:Name="AllowControlHint" Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.7" />
           </StackPanel>
