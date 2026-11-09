@@ -78,6 +78,24 @@
   <data name="SettingsOpacityHintGlass" xml:space="preserve">
     <value>液態玻璃的這個數值是霧面程度：越低越通透，越高在雜亂的背景上越容易閱讀。</value>
   </data>
+  <data name="SettingsGlassShade" xml:space="preserve">
+    <value>邊緣暗度</value>
+  </data>
+  <data name="SettingsGlassShadeHint" xml:space="preserve">
+    <value>玻璃邊緣在背光那一側有多暗。0% 只留下亮的邊緣。</value>
+  </data>
+  <data name="SettingsPageGeneral" xml:space="preserve">
+    <value>一般</value>
+  </data>
+  <data name="SettingsPagePanel" xml:space="preserve">
+    <value>面板</value>
+  </data>
+  <data name="SettingsPageShortcuts" xml:space="preserve">
+    <value>快速鍵與控制</value>
+  </data>
+  <data name="SettingsPageAbout" xml:space="preserve">
+    <value>關於</value>
+  </data>
   <data name="SettingsOpacityHint" xml:space="preserve">
     <value>跟隨系統的背景是毛玻璃，本身無法調整透明度；改成其他數值，就會改用一般的半透明純色。</value>
   </data>

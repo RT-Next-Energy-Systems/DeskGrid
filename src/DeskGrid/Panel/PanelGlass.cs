@@ -88,7 +88,7 @@ internal sealed class PanelGlass(PanelTheme theme, Action<Brush> apply, Action<b
         }
 
         var surface = (theme.Background.R, theme.Background.G, theme.Background.B);
-        var pixels = LiquidGlass.Render(_screen, window, new GlassStyle(scale, CornerRadius, theme.Background.A / 255.0, surface));
+        var pixels = LiquidGlass.Render(_screen, window, new GlassStyle(scale, CornerRadius, theme.Background.A / 255.0, surface, theme.GlassShade));
         var bitmap = BitmapSource.Create(window.Width, window.Height, 96, 96, PixelFormats.Pbgra32, null, pixels, window.Width * 4);
         bitmap.Freeze();
         var brush = new ImageBrush(bitmap) { Stretch = Stretch.Fill };

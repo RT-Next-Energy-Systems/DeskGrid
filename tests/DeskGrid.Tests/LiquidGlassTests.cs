@@ -105,6 +105,35 @@ public sealed class LiquidGlassTests
         Assert.InRange(At(glass, Window.Width / 2, y).R, Behind(Window.Width / 2) - 8, Behind(Window.Width / 2) + 8);
     }
 
+    // The rim is lit from the bottom left: the top right is the dark side, and the setting says how dark.
+    [Fact]
+    public void Render_DarkSide_FollowsTheShadeSetting_WhileTheBrightSideStays()
+    {
+        var screen = Flat(180);
+        byte Corner(double dark, bool topRight)
+        {
+            var glass = LiquidGlass.Render(screen, Window, Clear with { DarkSide = dark });
+            var (x, y) = topRight ? (Window.Width - 14, 6) : (6, Window.Height - 14);
+            return At(glass, x, y).R;
+        }
+
+        Assert.True(Corner(0, topRight: true) > Corner(0.5, topRight: true));
+        Assert.True(Corner(0.5, topRight: true) > Corner(1, topRight: true));
+        Assert.Equal(Corner(0, topRight: false), Corner(1, topRight: false)); // The bright side is not the setting's business.
+    }
+
+    [Fact]
+    public void TheLiquidGlassTheme_CarriesTheShadeSetting_DefaultingAndClamping()
+    {
+        PanelTheme Theme(double? shade) => PanelTheme.Resolve(
+            new PanelBackground { Style = PanelBackgroundStyle.LiquidGlass, GlassShade = shade }, false, true);
+
+        Assert.Equal(PanelBackground.DefaultGlassShade, Theme(null).GlassShade);
+        Assert.Equal(0.2, Theme(0.2).GlassShade);
+        Assert.Equal(1, Theme(7).GlassShade);
+        Assert.Equal(0, Theme(-1).GlassShade);
+    }
+
     [Fact]
     public void Render_ABigPanelAndASmallOne_BothDraw()
     {

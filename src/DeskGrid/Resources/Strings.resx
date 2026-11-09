@@ -81,6 +81,24 @@
   <data name="SettingsOpacityHintGlass" xml:space="preserve">
     <value>For liquid glass this is how frosted it is: lower is clearer, higher is easier to read over a busy background.</value>
   </data>
+  <data name="SettingsGlassShade" xml:space="preserve">
+    <value>Edge shading</value>
+  </data>
+  <data name="SettingsGlassShadeHint" xml:space="preserve">
+    <value>How dark the glass edge gets on the side away from the light. 0% leaves only the bright edge.</value>
+  </data>
+  <data name="SettingsPageGeneral" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="SettingsPagePanel" xml:space="preserve">
+    <value>Panel</value>
+  </data>
+  <data name="SettingsPageShortcuts" xml:space="preserve">
+    <value>Shortcuts and control</value>
+  </data>
+  <data name="SettingsPageAbout" xml:space="preserve">
+    <value>About</value>
+  </data>
   <data name="SettingsOpacityHint" xml:space="preserve">
     <value>The system style is blurred glass, which can't be made more or less transparent. Any other value here paints a plain translucent color instead.</value>
   </data>

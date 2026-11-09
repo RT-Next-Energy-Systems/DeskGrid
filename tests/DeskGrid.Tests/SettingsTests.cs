@@ -243,6 +243,73 @@ public sealed class SettingsWindowTests : IDisposable
         Assert.Equal(new PanelBackground().CustomOpacity, choice?.PanelBackground.CustomOpacity); // The custom one is untouched.
     }
 
+    // The edge-shading slider is the liquid glass's: a value is reported, the default is left unset.
+    [Theory]
+    [InlineData(0.0, 0.0)]
+    [InlineData(0.8, 0.8)]
+    [InlineData(0.5, null)]
+    public async Task Ok_ReportsTheEdgeShading_AndLeavesTheDefaultUnset(double slider, double? expected)
+    {
+        var choice = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path, PanelBackground = new PanelBackground { Style = PanelBackgroundStyle.LiquidGlass } });
+            SettingsChoice? applied = null;
+            window.Applied += (_, c) => applied = c;
+            window.Show();
+            window.ShadeSlider.Value = slider;
+            window.OkButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            return applied;
+        });
+
+        Assert.Equal(expected, choice?.PanelBackground.GlassShade);
+    }
+
+    [Fact]
+    public async Task EdgeShading_StartsAtTheSavedValue_AndIsOnlyEnabledForLiquidGlass()
+    {
+        var (shown, onGlass, onDark) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path, PanelBackground = new PanelBackground { GlassShade = 0.2 } });
+            window.Show();
+            var shown = window.ShadeSlider.Value;
+            window.BackgroundRadioFor(PanelBackgroundStyle.LiquidGlass).IsChecked = true;
+            var onGlass = window.ShadeSlider.IsEnabled;
+            window.BackgroundRadioFor(PanelBackgroundStyle.Dark).IsChecked = true;
+            return (shown, onGlass, window.ShadeSlider.IsEnabled);
+        });
+
+        Assert.Equal(0.2, shown, 2);
+        Assert.True(onGlass);
+        Assert.False(onDark);
+    }
+
+    // One page at a time on the right, chosen by the list on the left; every setting lives on some page.
+    [Fact]
+    public async Task Pages_ShowOneAtATime_StartingWithGeneral()
+    {
+        var states = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path });
+            window.Show();
+            var all = new[] { window.PageGeneral, window.PagePanel, window.PageShortcuts, window.PageAbout };
+            var result = new List<(SettingsWindow.Page Page, int Visible, bool Right)>();
+            foreach (var page in Enum.GetValues<SettingsWindow.Page>())
+            {
+                window.ShowPage(page);
+                result.Add((window.CurrentPage, all.Count(p => p.Visibility == Visibility.Visible), all[(int)page].Visibility == Visibility.Visible));
+            }
+
+            return (Start: new SettingsWindow(new AppConfig { RootPath = _root.Path }).CurrentPage, result);
+        });
+
+        Assert.Equal(SettingsWindow.Page.General, states.Start);
+        Assert.All(states.result, state => Assert.True(state.Visible == 1 && state.Right));
+        Assert.Equal(Enum.GetValues<SettingsWindow.Page>(), states.result.Select(state => state.Page));
+    }
+
     [Fact]
     public async Task Slider_FollowsTheStyleUnlessTheUserMovedIt()
     {
@@ -300,6 +367,7 @@ public sealed class SettingsWindowTests : IDisposable
                 try
                 {
                     window.Show();
+                    window.ShowPage(SettingsWindow.Page.About); // The links are on that page; a hidden one is not laid out.
                     window.UpdateLayout();
                     var button = Bounds(window.ChangeLogButton, window);
                     UIElement[] parts = [window.GitHubLabel, (UIElement)window.GitHubLink.Parent, (UIElement)window.PrivacyLink.Parent];

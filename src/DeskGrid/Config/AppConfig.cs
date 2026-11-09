@@ -96,6 +96,16 @@ internal sealed class PanelBackground
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public double? Opacity { get; set; }
+
+    /// <summary>
+    /// 0 to 1, used with <see cref="PanelBackgroundStyle.LiquidGlass"/>: how dark the glass rim is on the side away from
+    /// the light, relative to its bright side (0 = no dark side, 1 = as strong as the bright one); <see langword="null"/>
+    /// keeps <see cref="DefaultGlassShade"/>.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public double? GlassShade { get; set; }
+
+    public const double DefaultGlassShade = 0.5;
 }
 
 internal enum PanelBackgroundStyle

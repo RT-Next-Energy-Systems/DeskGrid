@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using DeskGrid.Config;
 using DeskGrid.Folders;
@@ -61,6 +62,7 @@ internal partial class SettingsWindow : Window
         _customColor = PanelTheme.ParseColor(background.CustomColor) ?? PanelTheme.ParseColor(new PanelBackground().CustomColor)!.Value;
         ColorSwatch.Background = new SolidColorBrush(_customColor);
         OpacitySlider.Value = Math.Clamp(OpacityOf(background, background.Style), OpacitySlider.Minimum, OpacitySlider.Maximum);
+        ShadeSlider.Value = Math.Clamp(background.GlassShade ?? PanelBackground.DefaultGlassShade, ShadeSlider.Minimum, ShadeSlider.Maximum);
         UpdateOpacityHint();
         foreach (var style in Enum.GetValues<PanelBackgroundStyle>())
         {
@@ -69,6 +71,38 @@ internal partial class SettingsWindow : Window
 
         CheckAtStartupBox.IsChecked = config.CheckForUpdatesAtStartup;
         AllowControlBox.IsChecked = config.AllowControl;
+        Pages.SelectedItem = PageGeneralItem;
+    }
+
+    /// <summary>The page shown on the right, in the order of the list on the left.</summary>
+    internal enum Page
+    {
+        General,
+        Panel,
+        Shortcuts,
+        About,
+    }
+
+    /// <summary>The page the list on the left has chosen.</summary>
+    internal Page CurrentPage => PageItems.FindIndex(pair => pair.Item == Pages.SelectedItem) is var i and >= 0 ? (Page)i : Page.General;
+
+    internal void ShowPage(Page page) => Pages.SelectedItem = PageItems[(int)page].Item;
+
+    // Each entry of the list and the page it stands for, in <see cref="Page"/> order.
+    private List<(ListBoxItem Item, FrameworkElement Content)> PageItems =>
+    [
+        (PageGeneralItem, PageGeneral),
+        (PagePanelItem, PagePanel),
+        (PageShortcutsItem, PageShortcuts),
+        (PageAboutItem, PageAbout),
+    ];
+
+    private void OnPageChanged(object sender, SelectionChangedEventArgs e)
+    {
+        foreach (var (item, content) in PageItems)
+        {
+            content.Visibility = item.IsSelected ? Visibility.Visible : Visibility.Collapsed;
+        }
     }
 
     public event EventHandler<SettingsChoice>? Applied;
@@ -229,6 +263,12 @@ internal partial class SettingsWindow : Window
         BackgroundCustom.Content = Strings.SettingsBackgroundCustom;
         ColorButton.Content = Strings.SettingsColor;
         OpacityLabel.Text = Strings.SettingsOpacity;
+        ShadeLabel.Text = Strings.SettingsGlassShade;
+        ShadeHint.Text = Strings.SettingsGlassShadeHint;
+        PageGeneralText.Text = Strings.SettingsPageGeneral;
+        PagePanelText.Text = Strings.SettingsPagePanel;
+        PageShortcutsText.Text = Strings.SettingsPageShortcuts;
+        PageAboutText.Text = Strings.SettingsPageAbout;
         VersionLabel.Text = Strings.SettingsVersion;
         VersionText.Text = UpdateChecker.CurrentVersion.ToString(3);
         CheckUpdatesButton.Content = Strings.SettingsCheckUpdates;
@@ -271,6 +311,7 @@ internal partial class SettingsWindow : Window
 
         var style = SelectedBackground;
         var opacity = Math.Round(OpacitySlider.Value, 2);
+        var shade = Math.Round(ShadeSlider.Value, 2);
         var background = new PanelBackground
         {
             Style = style,
@@ -278,6 +319,7 @@ internal partial class SettingsWindow : Window
             CustomOpacity = style == PanelBackgroundStyle.Custom ? opacity : _config.PanelBackground.CustomOpacity,
             // Left unset at the style's own default, so the system style stays the acrylic.
             Opacity = style == PanelBackgroundStyle.Custom || SameOpacity(opacity, PanelTheme.DefaultOpacity(style)) ? null : opacity,
+            GlassShade = SameOpacity(shade, PanelBackground.DefaultGlassShade) ? null : shade,
         };
         Applied?.Invoke(this, new SettingsChoice(
             rootPath,

@@ -676,3 +676,10 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: A pixel shader (needs a compiled `.ps` file in the repo or an HLSL compiler in the build); live capture with Windows.Graphics.Capture (the panel would be in it, and it is a heavier dependency); using DWM acrylic (it cannot bend anything).
 **Consequences**: The glass is a snapshot: what moves behind an open panel is not shown. The picture (about 20 MB on a 2880x1800 monitor) is held only while the panel is open. Anything that distributes the program must keep the notices. Not seen on other DPIs, a second monitor, or over a bright window.
 **Author**: The user asked; Claude researched, chose and built it
+
+### 2026-11-09 (4) — Edge shading setting for liquid glass; settings window with a page list
+**Decision**: The dark side of the liquid glass rim is a setting (`panelBackground.glassShade`, 0 to 1, unset = 50 %) instead of a fixed value. The settings window is rebuilt as a list of four pages on the left (General, Panel, Shortcuts and control, About) with the chosen page on the right.
+**Reason**: The user saw the dark top right edge of the glass and wanted to choose its darkness themselves (first fix was to halve it), and asked for a left tool bar where each entry is one kind of settings, because the single long list of cards had grown too long.
+**Alternatives**: A fixed lower value (some people like the depth); tabs across the top (less room for more pages); a tree. The four groups were chosen by Claude from what was already there, without asking.
+**Consequences**: Every control keeps its name; pages other than the shown one are collapsed, so a test that measures layout must show its page first. The window is a fixed 780 x 620. The README screenshots of the settings window are out of date.
+**Author**: The user asked; Claude chose the grouping

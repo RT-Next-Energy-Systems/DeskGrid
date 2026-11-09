@@ -5,12 +5,13 @@
         ThemeMode="System"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
-        SizeToContent="Height"
-        Width="580"
+        Width="780"
+        Height="620"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen">
-  <!-- The cards scroll if the window would be taller than the screen (MaxHeight is set in code); OK and Cancel stay. -->
-  <DockPanel Margin="20,16,20,20">
+  <!-- A list of pages on the left, the chosen page on the right (each page scrolls if it is too tall, MaxHeight is set in
+       code for a short screen); OK and Cancel stay at the bottom whatever the page. -->
+  <DockPanel Margin="16,16,20,20">
     <StackPanel DockPanel.Dock="Bottom">
       <TextBlock x:Name="Error" Margin="2,4,0,0" Foreground="#C42B1C" TextWrapping="Wrap" Visibility="Collapsed" />
       <StackPanel Margin="0,12,0,0" HorizontalAlignment="Right" Orientation="Horizontal">
@@ -20,147 +21,202 @@
       </StackPanel>
     </StackPanel>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-      <StackPanel Margin="0,0,4,0">
-        <Border Style="{StaticResource Card}">
-          <DockPanel>
-            <ComboBox x:Name="LanguageBox" DockPanel.Dock="Right" Width="150" DisplayMemberPath="Label" SelectedValuePath="Language" />
-            <TextBlock x:Name="LanguageLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
-          </DockPanel>
-        </Border>
+    <ListBox x:Name="Pages" DockPanel.Dock="Left" Width="190" Margin="0,0,16,0" BorderThickness="0" Background="Transparent"
+             SelectionChanged="OnPageChanged">
+      <ListBoxItem x:Name="PageGeneralItem" Padding="10,9">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Width="26" FontFamily="Segoe MDL2 Assets" Text="&#xE713;" VerticalAlignment="Center" />
+          <TextBlock x:Name="PageGeneralText" VerticalAlignment="Center" />
+        </StackPanel>
+      </ListBoxItem>
+      <ListBoxItem x:Name="PagePanelItem" Padding="10,9">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Width="26" FontFamily="Segoe MDL2 Assets" Text="&#xE771;" VerticalAlignment="Center" />
+          <TextBlock x:Name="PagePanelText" VerticalAlignment="Center" />
+        </StackPanel>
+      </ListBoxItem>
+      <ListBoxItem x:Name="PageShortcutsItem" Padding="10,9">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Width="26" FontFamily="Segoe MDL2 Assets" Text="&#xE765;" VerticalAlignment="Center" />
+          <TextBlock x:Name="PageShortcutsText" VerticalAlignment="Center" />
+        </StackPanel>
+      </ListBoxItem>
+      <ListBoxItem x:Name="PageAboutItem" Padding="10,9">
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Width="26" FontFamily="Segoe MDL2 Assets" Text="&#xE946;" VerticalAlignment="Center" />
+          <TextBlock x:Name="PageAboutText" VerticalAlignment="Center" />
+        </StackPanel>
+      </ListBoxItem>
+    </ListBox>
 
-        <Border Style="{StaticResource Card}">
-          <StackPanel>
-            <TextBlock x:Name="RootLabel" Style="{StaticResource CardTitle}" />
+    <Grid>
+      <!-- General: where things are kept and what happens to them. -->
+      <ScrollViewer x:Name="PageGeneral" VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="0,0,4,0">
+          <Border Style="{StaticResource Card}">
             <DockPanel>
-              <Button MinWidth="84" Padding="12,5" x:Name="BrowseButton" DockPanel.Dock="Right" Margin="8,0,0,0" Click="OnBrowse" />
-              <Button MinWidth="84" Padding="12,5" x:Name="OpenRootButton" DockPanel.Dock="Right" Margin="8,0,0,0" Click="OnOpenRoot" />
-              <TextBox x:Name="RootBox" VerticalContentAlignment="Center" Padding="6,5" />
+              <ComboBox x:Name="LanguageBox" DockPanel.Dock="Right" Width="150" DisplayMemberPath="Label" SelectedValuePath="Language" />
+              <TextBlock x:Name="LanguageLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
             </DockPanel>
-          </StackPanel>
-        </Border>
+          </Border>
 
-        <Border Style="{StaticResource Card}">
-          <DockPanel>
-            <ComboBox x:Name="ColumnsBox" DockPanel.Dock="Right" Width="80" />
-            <TextBlock x:Name="ColumnsLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
-          </DockPanel>
-        </Border>
-
-        <Border Style="{StaticResource Card}">
-          <StackPanel>
-            <TextBlock x:Name="OpenModeLabel" Style="{StaticResource CardTitle}" TextWrapping="Wrap" />
-            <StackPanel Orientation="Horizontal">
-              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="OpenNearby" GroupName="OpenMode" />
-              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="OpenCentered" GroupName="OpenMode" />
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock x:Name="RootLabel" Style="{StaticResource CardTitle}" />
+              <DockPanel>
+                <Button MinWidth="84" Padding="12,5" x:Name="BrowseButton" DockPanel.Dock="Right" Margin="8,0,0,0" Click="OnBrowse" />
+                <Button MinWidth="84" Padding="12,5" x:Name="OpenRootButton" DockPanel.Dock="Right" Margin="8,0,0,0" Click="OnOpenRoot" />
+                <TextBox x:Name="RootBox" VerticalContentAlignment="Center" Padding="6,5" />
+              </DockPanel>
             </StackPanel>
-            <TextBlock x:Name="OpenModeHint" Margin="0,8,0,0" Opacity="0.75" TextWrapping="Wrap" />
-          </StackPanel>
-        </Border>
+          </Border>
 
-        <Border Style="{StaticResource Card}">
-          <StackPanel>
-            <TextBlock x:Name="DropModeLabel" Style="{StaticResource CardTitle}" TextWrapping="Wrap" />
-            <StackPanel Orientation="Horizontal">
-              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="DropMove" GroupName="DropMode" />
-              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="DropCopy" GroupName="DropMode" />
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock x:Name="DropModeLabel" Style="{StaticResource CardTitle}" TextWrapping="Wrap" />
+              <StackPanel Orientation="Horizontal">
+                <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="DropMove" GroupName="DropMode" />
+                <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="DropCopy" GroupName="DropMode" />
+              </StackPanel>
             </StackPanel>
-          </StackPanel>
-        </Border>
+          </Border>
 
-        <Border Style="{StaticResource Card}">
-          <StackPanel>
-            <TextBlock x:Name="DeleteModeLabel" Style="{StaticResource CardTitle}" TextWrapping="Wrap" />
-            <StackPanel Orientation="Horizontal">
-              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="DeleteMove" GroupName="DeleteMode" />
-              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="DeleteItems" GroupName="DeleteMode" />
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock x:Name="DeleteModeLabel" Style="{StaticResource CardTitle}" TextWrapping="Wrap" />
+              <StackPanel Orientation="Horizontal">
+                <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="DeleteMove" GroupName="DeleteMode" />
+                <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="DeleteItems" GroupName="DeleteMode" />
+              </StackPanel>
             </StackPanel>
-          </StackPanel>
-        </Border>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
 
-        <Border Style="{StaticResource Card}">
-          <StackPanel>
-            <TextBlock x:Name="BackgroundLabel" Style="{StaticResource CardTitle}" />
-            <WrapPanel>
-              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundSystem" GroupName="Background" />
-              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundDark" GroupName="Background" />
-              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundLight" GroupName="Background" />
-              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundGlass" GroupName="Background" />
-              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundCustom" GroupName="Background" />
-            </WrapPanel>
-            <StackPanel Margin="0,12,0,0" Orientation="Horizontal" IsEnabled="{Binding IsChecked, ElementName=BackgroundCustom}">
-              <Border x:Name="ColorSwatch" Width="28" Height="28" BorderBrush="#80808080" BorderThickness="1" CornerRadius="6" />
-              <Button MinWidth="84" Padding="12,5" x:Name="ColorButton" Margin="8,0,0,0" Click="OnPickColor" />
-            </StackPanel>
-            <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
-              <TextBlock x:Name="OpacityLabel" Margin="0,0,8,0" VerticalAlignment="Center" />
-              <Slider x:Name="OpacitySlider" Width="120" VerticalAlignment="Center" Minimum="0.1" Maximum="1"
-                      SmallChange="0.05" LargeChange="0.1" TickFrequency="0.05" IsSnapToTickEnabled="True" />
-              <TextBlock Width="40" Margin="8,0,0,0" VerticalAlignment="Center"
-                         Text="{Binding Value, ElementName=OpacitySlider, StringFormat={}{0:P0}}" />
-            </StackPanel>
-            <TextBlock x:Name="OpacityHint" Margin="0,6,0,0" Opacity="0.75" TextWrapping="Wrap" Visibility="Collapsed" />
-          </StackPanel>
-        </Border>
-
-        <Border Style="{StaticResource Card}">
-          <DockPanel>
-            <Button Padding="12,5" x:Name="PinAllButton" DockPanel.Dock="Right" Click="OnPinAll" />
-            <TextBlock x:Name="TaskbarLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
-          </DockPanel>
-        </Border>
-
-        <Border Style="{StaticResource Card}">
-          <StackPanel>
+      <!-- Panel: how a folder's panel opens and looks. -->
+      <ScrollViewer x:Name="PagePanel" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+        <StackPanel Margin="0,0,4,0">
+          <Border Style="{StaticResource Card}">
             <DockPanel>
-              <Button Padding="12,5" x:Name="HotkeysButton" DockPanel.Dock="Right" Click="OnHotkeys" />
-              <TextBlock x:Name="HotkeysLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
+              <ComboBox x:Name="ColumnsBox" DockPanel.Dock="Right" Width="80" />
+              <TextBlock x:Name="ColumnsLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
             </DockPanel>
-            <TextBlock x:Name="HotkeysHint" Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.7" />
-          </StackPanel>
-        </Border>
+          </Border>
 
-        <Border Style="{StaticResource Card}">
-          <StackPanel>
-            <CheckBox x:Name="AllowControlBox" MinWidth="0" />
-            <TextBlock x:Name="AllowControlHint" Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.7" />
-          </StackPanel>
-        </Border>
-
-        <!-- Version and update check on the first row, the startup check on the second, GitHub and the change log on the third; the buttons share a column. -->
-        <Border Style="{StaticResource Card}">
-          <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*" />
-              <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-              <RowDefinition Height="Auto" />
-              <RowDefinition Height="Auto" />
-              <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
-            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-              <TextBlock x:Name="VersionLabel" FontWeight="SemiBold" />
-              <TextBlock x:Name="VersionText" Margin="8,0,0,0" Opacity="0.75" />
-              <TextBlock x:Name="UpdateStatus" Margin="12,0,12,0" Opacity="0.75" TextTrimming="CharacterEllipsis" MaxWidth="170" />
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock x:Name="OpenModeLabel" Style="{StaticResource CardTitle}" TextWrapping="Wrap" />
+              <StackPanel Orientation="Horizontal">
+                <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="OpenNearby" GroupName="OpenMode" />
+                <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="OpenCentered" GroupName="OpenMode" />
+              </StackPanel>
+              <TextBlock x:Name="OpenModeHint" Margin="0,8,0,0" Opacity="0.75" TextWrapping="Wrap" />
             </StackPanel>
-            <!-- Stretched: the Fluent style puts a button at the left of its cell, and the narrower one would not line up. -->
-            <Button Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" MinWidth="84" Padding="12,5" x:Name="CheckUpdatesButton" Click="OnCheckUpdates" />
+          </Border>
 
-            <CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,10,0,0" MinWidth="0" x:Name="CheckAtStartupBox" />
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <TextBlock x:Name="BackgroundLabel" Style="{StaticResource CardTitle}" />
+              <WrapPanel>
+                <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundSystem" GroupName="Background" />
+                <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundDark" GroupName="Background" />
+                <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundLight" GroupName="Background" />
+                <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundGlass" GroupName="Background" />
+                <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundCustom" GroupName="Background" />
+              </WrapPanel>
+              <StackPanel Margin="0,12,0,0" Orientation="Horizontal" IsEnabled="{Binding IsChecked, ElementName=BackgroundCustom}">
+                <Border x:Name="ColorSwatch" Width="28" Height="28" BorderBrush="#80808080" BorderThickness="1" CornerRadius="6" />
+                <Button MinWidth="84" Padding="12,5" x:Name="ColorButton" Margin="8,0,0,0" Click="OnPickColor" />
+              </StackPanel>
+              <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
+                <TextBlock x:Name="OpacityLabel" Width="90" Margin="0,0,8,0" VerticalAlignment="Center" />
+                <Slider x:Name="OpacitySlider" Width="160" VerticalAlignment="Center" Minimum="0.1" Maximum="1"
+                        SmallChange="0.05" LargeChange="0.1" TickFrequency="0.05" IsSnapToTickEnabled="True" />
+                <TextBlock Width="40" Margin="8,0,0,0" VerticalAlignment="Center"
+                           Text="{Binding Value, ElementName=OpacitySlider, StringFormat={}{0:P0}}" />
+              </StackPanel>
+              <TextBlock x:Name="OpacityHint" Margin="0,6,0,0" Opacity="0.75" TextWrapping="Wrap" Visibility="Collapsed" />
+              <!-- Only liquid glass has an edge to shade. -->
+              <StackPanel Margin="0,12,0,0" Orientation="Horizontal" IsEnabled="{Binding IsChecked, ElementName=BackgroundGlass}">
+                <TextBlock x:Name="ShadeLabel" Width="90" Margin="0,0,8,0" VerticalAlignment="Center" />
+                <Slider x:Name="ShadeSlider" Width="160" VerticalAlignment="Center" Minimum="0" Maximum="1"
+                        SmallChange="0.05" LargeChange="0.1" TickFrequency="0.05" IsSnapToTickEnabled="True" />
+                <TextBlock Width="40" Margin="8,0,0,0" VerticalAlignment="Center"
+                           Text="{Binding Value, ElementName=ShadeSlider, StringFormat={}{0:P0}}" />
+              </StackPanel>
+              <TextBlock x:Name="ShadeHint" Margin="0,6,0,0" Opacity="0.75" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
 
-            <!-- Wraps rather than running under the button when the links are too long for the column. -->
-            <WrapPanel Grid.Row="2" Grid.Column="0" Margin="0,10,12,0" VerticalAlignment="Center" x:Name="LinksRow">
-              <TextBlock x:Name="GitHubLabel" FontWeight="SemiBold" Margin="0,0,8,0" />
-              <TextBlock Margin="0,0,16,0"><Hyperlink x:Name="GitHubLink" Click="OnGitHub" /></TextBlock>
-              <TextBlock Margin="0,0,16,0"><Hyperlink x:Name="PrivacyLink" Click="OnPrivacy" /></TextBlock>
-              <TextBlock><Hyperlink x:Name="NoticesLink" Click="OnNotices" /></TextBlock>
-            </WrapPanel>
-            <Button Grid.Row="2" Grid.Column="1" Margin="0,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Stretch" MinWidth="84" Padding="12,5" x:Name="ChangeLogButton" Click="OnChangeLog" />
-          </Grid>
-        </Border>
-      </StackPanel>
-    </ScrollViewer>
+      <!-- Shortcuts and control: ways to reach DeskGrid without the mouse. -->
+      <ScrollViewer x:Name="PageShortcuts" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+        <StackPanel Margin="0,0,4,0">
+          <Border Style="{StaticResource Card}">
+            <DockPanel>
+              <Button Padding="12,5" x:Name="PinAllButton" DockPanel.Dock="Right" Click="OnPinAll" />
+              <TextBlock x:Name="TaskbarLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </DockPanel>
+          </Border>
+
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <DockPanel>
+                <Button Padding="12,5" x:Name="HotkeysButton" DockPanel.Dock="Right" Click="OnHotkeys" />
+                <TextBlock x:Name="HotkeysLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
+              </DockPanel>
+              <TextBlock x:Name="HotkeysHint" Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.7" />
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
+              <CheckBox x:Name="AllowControlBox" MinWidth="0" />
+              <TextBlock x:Name="AllowControlHint" Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.7" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- About: version, updates and links. Version and update check on the first row, the startup check on the second,
+           GitHub and the change log on the third; the buttons share a column. -->
+      <ScrollViewer x:Name="PageAbout" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+        <StackPanel Margin="0,0,4,0">
+          <Border Style="{StaticResource Card}">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+
+              <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock x:Name="VersionLabel" FontWeight="SemiBold" />
+                <TextBlock x:Name="VersionText" Margin="8,0,0,0" Opacity="0.75" />
+                <TextBlock x:Name="UpdateStatus" Margin="12,0,12,0" Opacity="0.75" TextTrimming="CharacterEllipsis" MaxWidth="220" />
+              </StackPanel>
+              <!-- Stretched: the Fluent style puts a button at the left of its cell, and the narrower one would not line up. -->
+              <Button Grid.Row="0" Grid.Column="1" HorizontalAlignment="Stretch" MinWidth="84" Padding="12,5" x:Name="CheckUpdatesButton" Click="OnCheckUpdates" />
+
+              <CheckBox Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,10,0,0" MinWidth="0" x:Name="CheckAtStartupBox" />
+
+              <!-- Wraps rather than running under the button when the links are too long for the column. -->
+              <WrapPanel Grid.Row="2" Grid.Column="0" Margin="0,10,12,0" VerticalAlignment="Center" x:Name="LinksRow">
+                <TextBlock x:Name="GitHubLabel" FontWeight="SemiBold" Margin="0,0,8,0" />
+                <TextBlock Margin="0,0,16,0"><Hyperlink x:Name="GitHubLink" Click="OnGitHub" /></TextBlock>
+                <TextBlock Margin="0,0,16,0"><Hyperlink x:Name="PrivacyLink" Click="OnPrivacy" /></TextBlock>
+                <TextBlock><Hyperlink x:Name="NoticesLink" Click="OnNotices" /></TextBlock>
+              </WrapPanel>
+              <Button Grid.Row="2" Grid.Column="1" Margin="0,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Stretch" MinWidth="84" Padding="12,5" x:Name="ChangeLogButton" Click="OnChangeLog" />
+            </Grid>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
   </DockPanel>
 </Window>

@@ -10,10 +10,19 @@
   blurred and bent at the rim like curved glass, with a bright edge. The text turns dark or white to suit what the
   glass shows. Its code is adapted from two MIT-licensed projects, credited under "Third-party notices" in the README
   and linked from Settings.
+- Liquid glass has an **Edge shading** slider: how dark the glass edge gets on the side away from the light. Set it to
+  0% for a clean bright edge only.
+- The Settings window now has a list of pages on the left (**General**, **Panel**, **Shortcuts and control**,
+  **About**); click one to see its settings on the right.
 
 ### How to use
 
 - Settings → **Panel background**, pick a style, then move the **Opacity** slider. Lower is more see-through.
+- **Edge shading:** Settings → **Panel** → choose **Liquid glass**, then move **Edge shading**. 0% removes the dark
+  edge, 100% is the strongest.
+- **Finding a setting:** pick a page in the list on the left of Settings. Folder, drop and delete rules and the language
+  are under **General**, the panel's columns, position and look under **Panel**, taskbar button, keyboard shortcuts and
+  script control under **Shortcuts and control**, updates and links under **About**.
 - **Liquid glass:** Settings → **Panel background** → **Liquid glass**, then **OK**. The **Opacity** slider is how
   frosted it is: lower is clearer, higher is easier to read over a busy wallpaper.
 

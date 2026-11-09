@@ -8,7 +8,9 @@ namespace DeskGrid.Panel;
 /// <summary>How a panel looks, resolved from the user's <see cref="PanelBackground"/> and the system theme.</summary>
 /// <param name="UseAcrylic">Let DWM paint the system acrylic; <paramref name="Background"/> is then only the fallback.</param>
 /// <param name="Glass">Draw liquid glass; <paramref name="Background"/> is then the color the glass is frosted with, its alpha how much.</param>
-internal sealed record PanelTheme(bool UseAcrylic, Color Background, Color Foreground, bool Glass = false)
+/// <param name="GlassShade">How dark the glass rim's far side is (see <see cref="PanelBackground.GlassShade"/>).</param>
+internal sealed record PanelTheme(bool UseAcrylic, Color Background, Color Foreground, bool Glass = false,
+    double GlassShade = PanelBackground.DefaultGlassShade)
 {
     private static readonly Color DarkSurface = Color.FromRgb(0x20, 0x20, 0x20);
     private static readonly Color LightSurface = Color.FromRgb(0xF3, 0xF3, 0xF3);
@@ -50,7 +52,8 @@ internal sealed record PanelTheme(bool UseAcrylic, Color Background, Color Foreg
         PanelBackgroundStyle.Custom => Custom(setting),
         PanelBackgroundStyle.LiquidGlass => new(
             false, WithOpacity(systemDark ? DarkSurface : LightSurface, setting.Opacity ?? DefaultOpacity(setting.Style)),
-            systemDark ? Colors.White : DarkText, Glass: true),
+            systemDark ? Colors.White : DarkText, Glass: true,
+            GlassShade: Math.Clamp(setting.GlassShade ?? PanelBackground.DefaultGlassShade, 0, 1)),
         _ => SystemStyle(setting, systemDark, acrylicSupported),
     };
 

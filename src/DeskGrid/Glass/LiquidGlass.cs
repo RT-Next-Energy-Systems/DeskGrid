@@ -21,7 +21,8 @@ internal sealed record ScreenImage(ScreenRect Area, byte[] Bgra);
 /// <param name="CornerRadius">In device-independent units.</param>
 /// <param name="Tint">0 to 1: how much of <paramref name="Surface"/> is mixed over the glass. Lower is clearer.</param>
 /// <param name="Surface">The color the glass is frosted with (red, green, blue).</param>
-internal readonly record struct GlassStyle(double Scale, double CornerRadius, double Tint, (byte R, byte G, byte B) Surface);
+internal readonly record struct GlassStyle(
+    double Scale, double CornerRadius, double Tint, (byte R, byte G, byte B) Surface, double DarkSide = 0.5);
 
 /// <summary>
 /// "Liquid glass": a rounded sheet that shows the screen behind it, lightly blurred, bent near its edge as through a
@@ -37,7 +38,6 @@ internal static class LiquidGlass
     private const double Contrast = 1.0;
     private const double Brightness = 0.03;
     private const double GlowWeight = 0.28;
-    private const double DarkSideShare = 0.5;
 
     // OverShifted's falloff: 1 - b * (c * e)^(-d * x - a), 1 deep inside the glass and ~0.64 at its edge.
     private const double A = 0.7, B = 2.3, C = 5.2, D = 6.9;
@@ -71,6 +71,7 @@ internal static class LiquidGlass
         var line = 1.5 * scale;
         var surface = (R: style.Surface.R / 255.0, G: style.Surface.G / 255.0, B: style.Surface.B / 255.0);
         var tint = Math.Clamp(style.Tint, 0, 1);
+        var darkSide = Math.Clamp(style.DarkSide, 0, 1);
 
         for (var y = 0; y < height; y++)
         {
@@ -105,11 +106,11 @@ internal static class LiquidGlass
 
                 if (depthIn < glowWidth)
                 {
-                    // The bright side of the rim faces one corner, the dark side the other (only half as strong,
-                    // so the far corner reads as depth rather than as a dirty shadow).
+                    // The bright side of the rim faces one corner, the dark side the other; the style says how strong
+                    // the dark side is (the user's choice: some like depth, some read it as a dirty shadow).
                     var glow = Math.Sin(Math.Atan2(py, px) - 0.5);
                     var near = 1 - Smooth(0, glowWidth, depthIn);
-                    var factor = 1 + (glow > 0 ? glow : glow * DarkSideShare) * GlowWeight * near;
+                    var factor = 1 + (glow > 0 ? glow : glow * darkSide) * GlowWeight * near;
                     var edge = (1 - Smooth(0, line, depthIn)) * (0.16 + 0.2 * Math.Max(glow, 0));
                     red = red * factor + edge;
                     green = green * factor + edge;
