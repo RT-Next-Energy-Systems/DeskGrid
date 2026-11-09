@@ -16,6 +16,9 @@ internal static class UpdateInstaller
 {
     private const int BufferSize = 81920;
 
+    // How long a download may go without a single byte arriving before it is given up (the dialog can't be closed meanwhile).
+    internal static TimeSpan StallTimeout { get; set; } = TimeSpan.FromSeconds(60);
+
     /// <summary>Whether the running program is the published single-file exe, which an update can replace.</summary>
     public static bool CanReplaceSelf =>
         Environment.ProcessPath is not null && !File.Exists(Path.Combine(AppContext.BaseDirectory, "DeskGrid.dll"));
@@ -44,6 +47,9 @@ internal static class UpdateInstaller
         {
             using var client = UpdateChecker.CreateClient(Timeout.InfiniteTimeSpan);
             Directory.CreateDirectory(WorkFolder);
+            using var stall = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+            stall.CancelAfter(StallTimeout);
+            cancellation = stall.Token;
             using (var response = await client.GetAsync(release.ExeUrl, HttpCompletionOption.ResponseHeadersRead, cancellation))
             {
                 response.EnsureSuccessStatusCode();
@@ -57,6 +63,7 @@ internal static class UpdateInstaller
                 {
                     await target.WriteAsync(buffer.AsMemory(0, read), cancellation);
                     done += read;
+                    stall.CancelAfter(StallTimeout);
                     progress.Report(new UpdateProgress(UpdateStage.Downloading, done, total));
                 }
             }
@@ -71,7 +78,7 @@ internal static class UpdateInstaller
 
             return (file, null);
         }
-        catch (Exception exception) when (exception is HttpRequestException or IOException or UnauthorizedAccessException or TaskCanceledException)
+        catch (Exception exception) when (exception is HttpRequestException or IOException or UnauthorizedAccessException or OperationCanceledException)
         {
             Log.Error("Downloading the update failed", exception);
             DeleteQuietly(file); // Half a download is of no use.

@@ -17,17 +17,17 @@ internal static class RootFolder
             return Strings.RootFolderNotAbsolute;
         }
 
-        if (IsOnDesktop(path))
-        {
-            return Strings.RootFolderOnDesktop;
-        }
-
         try
         {
+            if (IsOnDesktop(path))
+            {
+                return Strings.RootFolderOnDesktop;
+            }
+
             Directory.CreateDirectory(path);
             return null;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or NotSupportedException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or NotSupportedException or ArgumentException)
         {
             return exception.Message;
         }
