@@ -64,6 +64,35 @@ internal sealed class AppConfig
     /// <summary>Keyed by folder name under <see cref="RootPath"/>; case-insensitive like the file system.</summary>
     [JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
     public Dictionary<string, WidgetConfig> Widgets { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Takes over every setting of <paramref name="other"/> in place (others hold this object), except what describes this
+    /// computer's own history: whether it asked about starting with Windows, the version last shown, the update kept.
+    /// </summary>
+    public void ReplaceWith(AppConfig other)
+    {
+        RootPath = other.RootPath;
+        PanelColumns = other.PanelColumns;
+        DropMode = other.DropMode;
+        DeleteMode = other.DeleteMode;
+        PanelBackground = other.PanelBackground;
+        PanelOpenMode = other.PanelOpenMode;
+        Language = other.Language;
+        CheckForUpdatesAtStartup = other.CheckForUpdatesAtStartup;
+        AllowControl = other.AllowControl;
+        FolderOrder = other.FolderOrder;
+        Hotkeys.Clear();
+        foreach (var (action, key) in other.Hotkeys)
+        {
+            Hotkeys[action] = key;
+        }
+
+        Widgets.Clear();
+        foreach (var (name, widget) in other.Widgets)
+        {
+            Widgets[name] = widget;
+        }
+    }
 }
 
 internal sealed class WidgetConfig

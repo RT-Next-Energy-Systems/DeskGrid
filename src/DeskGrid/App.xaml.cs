@@ -676,10 +676,76 @@ public partial class App : Application
         settings.CheckForUpdates = () => CheckForUpdatesAsync(manual: true, settings);
         settings.PinAllFolders = PinAllFoldersToTaskbar;
         settings.EditHotkeys = () => EditHotkeys(settings);
+        settings.ExportSettings = () => ExportSettings(settings);
+        settings.ImportSettings = () => ImportSettings(settings);
         settings.Closed += (_, _) => _settings = null;
         _settings = settings;
         settings.Show();
         settings.Activate();
+    }
+
+    private void ExportSettings(Window owner)
+    {
+        var dialog = new Microsoft.Win32.SaveFileDialog
+        {
+            FileName = ConfigPorter.SuggestedFileName(DateTime.Now),
+            DefaultExt = ConfigPorter.Extension,
+            Filter = Strings.PortFileFilter,
+        };
+        if (dialog.ShowDialog(owner) != true)
+        {
+            return;
+        }
+
+        try
+        {
+            ConfigPorter.Export(_configStore!.Config, dialog.FileName);
+            MessageBox.Show(owner, string.Format(Strings.ExportDone, dialog.FileName), Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            Log.Error($"Exporting the settings to {dialog.FileName} failed", exception);
+            MessageBox.Show(owner, string.Format(Strings.ExportFailed, exception.Message), Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    // Takes over a settings file: everything is replaced, so the widgets are rebuilt from the new folder order and positions.
+    private void ImportSettings(Window owner)
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog { DefaultExt = ConfigPorter.Extension, Filter = Strings.PortFileFilter };
+        if (dialog.ShowDialog(owner) != true)
+        {
+            return;
+        }
+
+        if (ConfigPorter.TryImport(dialog.FileName, out var problem) is not { } imported)
+        {
+            MessageBox.Show(owner, string.Format(Strings.ImportFailed, problem), Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        if (MessageBox.Show(owner, string.Format(Strings.ImportConfirm, dialog.FileName), Strings.AppName,
+                MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        var config = _configStore!.Config;
+        var note = "";
+        if (RootFolder.Prepare(imported.RootPath) is { } rootProblem)
+        {
+            note = "\n\n" + string.Format(Strings.ImportRootKept, imported.RootPath, rootProblem);
+            imported.RootPath = config.RootPath;
+        }
+
+        StopWidgets();
+        config.ReplaceWith(imported);
+        UiLanguage.Apply(config.Language);
+        _configStore.Save();
+        StartWidgets();
+        ApplyHotkeys(report: true);
+        owner.Close(); // It shows the settings that were just replaced.
+        MessageBox.Show(Strings.ImportDone + note, Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void ApplySettings(SettingsChoice choice)

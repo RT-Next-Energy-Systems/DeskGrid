@@ -402,4 +402,37 @@
 
 請到「設定」的「鍵盤快速鍵」換一組按鍵。</value>
   </data>
+  <data name="SettingsBackup" xml:space="preserve">
+    <value>設定備份</value>
+  </data>
+  <data name="SettingsExport" xml:space="preserve">
+    <value>匯出…</value>
+  </data>
+  <data name="SettingsImport" xml:space="preserve">
+    <value>匯入…</value>
+  </data>
+  <data name="PortFileFilter" xml:space="preserve">
+    <value>DeskGrid 設定檔 (*.json)|*.json</value>
+  </data>
+  <data name="ExportDone" xml:space="preserve">
+    <value>設定已匯出到：
+{0}</value>
+  </data>
+  <data name="ExportFailed" xml:space="preserve">
+    <value>無法匯出設定：{0}</value>
+  </data>
+  <data name="ImportConfirm" xml:space="preserve">
+    <value>要用這個檔案的內容取代目前的設定（資料夾位置、項目順序、快速鍵、面板外觀…）嗎？
+
+{0}</value>
+  </data>
+  <data name="ImportFailed" xml:space="preserve">
+    <value>無法匯入這個檔案：{0}</value>
+  </data>
+  <data name="ImportRootKept" xml:space="preserve">
+    <value>檔案裡的根資料夾（{0}）在這台電腦上無法使用（{1}），所以保留目前的根資料夾。</value>
+  </data>
+  <data name="ImportDone" xml:space="preserve">
+    <value>設定已匯入。</value>
+  </data>
 </root>

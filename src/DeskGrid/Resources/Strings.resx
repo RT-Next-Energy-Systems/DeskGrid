@@ -410,4 +410,42 @@ Using the default root folder instead:
 
 Choose different keys in Settings, under Keyboard shortcuts.</value>
   </data>
+  <data name="SettingsBackup" xml:space="preserve">
+    <value>Settings backup</value>
+  </data>
+  <data name="SettingsExport" xml:space="preserve">
+    <value>Export…</value>
+  </data>
+  <data name="SettingsImport" xml:space="preserve">
+    <value>Import…</value>
+  </data>
+  <data name="PortFileFilter" xml:space="preserve">
+    <value>DeskGrid settings (*.json)|*.json</value>
+  </data>
+  <data name="ExportDone" xml:space="preserve">
+    <comment>{0} is the path of the file.</comment>
+    <value>Settings exported to:
+{0}</value>
+  </data>
+  <data name="ExportFailed" xml:space="preserve">
+    <comment>{0} is the reason.</comment>
+    <value>The settings could not be exported: {0}</value>
+  </data>
+  <data name="ImportConfirm" xml:space="preserve">
+    <comment>{0} is the path of the file.</comment>
+    <value>Replace the current settings (folder positions, item order, shortcuts, panel look…) with those in this file?
+
+{0}</value>
+  </data>
+  <data name="ImportFailed" xml:space="preserve">
+    <comment>{0} is the reason.</comment>
+    <value>This file could not be imported: {0}</value>
+  </data>
+  <data name="ImportRootKept" xml:space="preserve">
+    <comment>{0} is the root folder in the file, {1} why it can't be used.</comment>
+    <value>The root folder in the file ({0}) cannot be used here ({1}), so the current one was kept.</value>
+  </data>
+  <data name="ImportDone" xml:space="preserve">
+    <value>Settings imported.</value>
+  </data>
 </root>

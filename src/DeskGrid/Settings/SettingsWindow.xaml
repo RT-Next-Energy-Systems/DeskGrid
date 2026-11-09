@@ -90,6 +90,14 @@
               </StackPanel>
             </StackPanel>
           </Border>
+
+          <Border Style="{StaticResource Card}">
+            <DockPanel>
+              <Button MinWidth="84" Padding="12,5" x:Name="ImportButton" DockPanel.Dock="Right" Margin="8,0,0,0" Click="OnImport" />
+              <Button MinWidth="84" Padding="12,5" x:Name="ExportButton" DockPanel.Dock="Right" Margin="8,0,0,0" Click="OnExport" />
+              <TextBlock x:Name="BackupLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
+            </DockPanel>
+          </Border>
         </StackPanel>
       </ScrollViewer>
 

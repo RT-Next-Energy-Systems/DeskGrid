@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Settings can be exported to a file and imported back (Settings → General → **Settings backup**), e.g. to move them
+  to another computer. The file is named `DeskGrid_yyyy_mm_dd_hh_mm.json` (the time of the export). It holds the
+  folder positions, item order, shortcuts, panel look and every other setting, not the folders' contents.
+
+### How to use
+
+- Settings → General → **Settings backup** → **Export…** to save the file, **Import…** to load one. An import asks
+  first, then replaces the current settings and rebuilds the widgets.
+
 ## 0.5.3
 
 ### Fixed

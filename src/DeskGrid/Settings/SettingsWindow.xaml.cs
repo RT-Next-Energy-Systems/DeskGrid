@@ -116,6 +116,16 @@ internal partial class SettingsWindow : Window
     /// <summary>Lets the user change the keyboard shortcuts (and applies them); the window then shows the new one.</summary>
     public Action? EditHotkeys { get; set; }
 
+    /// <summary>Asks the user where to save the settings and writes them there.</summary>
+    public Action? ExportSettings { get; set; }
+
+    /// <summary>Asks the user for a settings file and takes it over (the caller closes this window when it did).</summary>
+    public Action? ImportSettings { get; set; }
+
+    private void OnExport(object sender, RoutedEventArgs e) => ExportSettings?.Invoke();
+
+    private void OnImport(object sender, RoutedEventArgs e) => ImportSettings?.Invoke();
+
     private void OnPinAll(object sender, RoutedEventArgs e) => PinAllFolders?.Invoke();
 
     private void OnHotkeys(object sender, RoutedEventArgs e)
@@ -233,6 +243,9 @@ internal partial class SettingsWindow : Window
         RootLabel.Text = Strings.SettingsRootFolder;
         BrowseButton.Content = Strings.SettingsBrowse;
         OpenRootButton.Content = Strings.SettingsOpen;
+        BackupLabel.Text = Strings.SettingsBackup;
+        ExportButton.Content = Strings.SettingsExport;
+        ImportButton.Content = Strings.SettingsImport;
         TaskbarLabel.Text = Strings.SettingsTaskbar;
         PinAllButton.Content = Strings.SettingsPinAll;
         HotkeysLabel.Text = Strings.SettingsHotkeys;

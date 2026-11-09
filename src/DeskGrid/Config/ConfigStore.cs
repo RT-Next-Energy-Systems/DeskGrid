@@ -33,6 +33,12 @@ internal sealed class ConfigStore
 
     public AppConfig Config { get; }
 
+    /// <summary>The text of a config file, as <see cref="Save"/> writes it.</summary>
+    internal static string Serialize(AppConfig config) => JsonSerializer.Serialize(config, JsonOptions);
+
+    /// <summary>Reads a config from the text of a file; throws <see cref="JsonException"/> when it isn't one.</summary>
+    internal static AppConfig Deserialize(string json) => JsonSerializer.Deserialize<AppConfig>(json, JsonOptions) ?? new AppConfig();
+
     /// <summary>
     /// Loads the config, or defaults if the file doesn't exist. An unreadable file is moved aside rather
     /// than overwritten, so hand edits are never silently lost.
@@ -92,7 +98,7 @@ internal sealed class ConfigStore
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
 
             // Write-then-rename: a crash mid-write never leaves a truncated config behind.
-            File.WriteAllText(tempPath, JsonSerializer.Serialize(Config, JsonOptions));
+            File.WriteAllText(tempPath, Serialize(Config));
             File.Move(tempPath, FilePath, overwrite: true);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
