@@ -28,14 +28,20 @@ internal sealed record SettingsChoice(
 /// <summary>One line of the language list: the language and the name it is shown under.</summary>
 internal sealed record LanguageOption(AppLanguage Language, string Label);
 
-/// <summary>Edits a copy of the settings; <see cref="Applied"/> fires on OK with a validated choice.</summary>
+/// <summary>
+/// Edits a copy of the settings; <see cref="Applied"/> fires on Apply (and on Done, when the user wants the changes
+/// kept) with a validated choice. The window stays open after Apply, so a change can be looked at on a real panel.
+/// </summary>
 internal partial class SettingsWindow : Window
 {
     private const int MaxColumns = 8;
 
     private readonly AppConfig _config;
+    private readonly PanelPreview _preview = new();
     private Color _customColor;
     private PanelBackgroundStyle _shownStyle; // The style whose opacity the slider is showing.
+    private string _appliedKey = ""; // What was last applied (or shown at the start): the window is "changed" when it differs.
+    private bool _closeWithoutAsking;
 
     public SettingsWindow(AppConfig config)
     {
@@ -43,6 +49,7 @@ internal partial class SettingsWindow : Window
         InitializeComponent();
         LocalizeTexts();
         FluentWindow.UseOpaqueBackground(this);
+        PreviewHost.Child = _preview;
 
         // On a small screen the cards scroll instead of the window running off it.
         MaxHeight = SystemParameters.WorkArea.Height;
@@ -72,7 +79,27 @@ internal partial class SettingsWindow : Window
         CheckAtStartupBox.IsChecked = config.CheckForUpdatesAtStartup;
         AllowControlBox.IsChecked = config.AllowControl;
         Pages.SelectedItem = PageGeneralItem;
+
+        // Wired after the values are set, so filling the controls does not draw the preview again and again.
+        ColumnsBox.SelectionChanged += (_, _) => RefreshPreview();
+        OpacitySlider.ValueChanged += (_, _) => RefreshPreview();
+        ShadeSlider.ValueChanged += (_, _) => RefreshPreview();
+        Loaded += (_, _) => RefreshPreview(); // The preview needs the window's DPI.
+        _appliedKey = Key(ReadChoice());
     }
+
+    // The sample panel for what the controls show now.
+    private void RefreshPreview() => _preview.Update(BuildBackground(), ColumnsBox.SelectedItem as int? ?? _config.PanelColumns);
+
+    /// <summary>Whether the controls differ from what was last applied.</summary>
+    internal bool HasUnsavedChanges => Key(ReadChoice()) != _appliedKey;
+
+    // PanelBackground has no value equality, so what the window holds is compared as text.
+    private static string Key(SettingsChoice choice) => string.Join('|',
+        choice.RootPath, choice.PanelColumns, choice.DropMode, choice.DeleteMode, choice.PanelOpenMode, choice.Language,
+        choice.CheckForUpdatesAtStartup, choice.AllowControl,
+        choice.PanelBackground.Style, choice.PanelBackground.CustomColor, choice.PanelBackground.CustomOpacity,
+        choice.PanelBackground.Opacity, choice.PanelBackground.GlassShade);
 
     /// <summary>The page shown on the right, in the order of the list on the left.</summary>
     internal enum Page
@@ -201,6 +228,7 @@ internal partial class SettingsWindow : Window
 
         _shownStyle = style;
         UpdateOpacityHint();
+        RefreshPreview();
     }
 
     // Two styles need a word about what the slider does: the system one loses its blur, liquid glass is frosted by it.
@@ -256,9 +284,13 @@ internal partial class SettingsWindow : Window
         GitHubLabel.Text = Strings.SettingsGitHub;
 
         // Only owner/name: the label already says GitHub, and the whole address would not fit beside the button.
+        // Cleared first: this runs again when the language is changed with the window open.
+        GitHubLink.Inlines.Clear();
         GitHubLink.Inlines.Add(new Uri(UpdateChecker.RepositoryUrl).AbsolutePath.Trim('/'));
         GitHubLink.ToolTip = UpdateChecker.RepositoryUrl;
+        PrivacyLink.Inlines.Clear();
         PrivacyLink.Inlines.Add(Strings.SettingsPrivacy);
+        NoticesLink.Inlines.Clear();
         NoticesLink.Inlines.Add(Strings.SettingsNotices);
         ChangeLogButton.Content = Strings.SettingsChangeLog;
         ColumnsLabel.Text = Strings.SettingsColumns;
@@ -286,8 +318,9 @@ internal partial class SettingsWindow : Window
         VersionText.Text = UpdateChecker.CurrentVersion.ToString(3);
         CheckUpdatesButton.Content = Strings.SettingsCheckUpdates;
         CheckAtStartupBox.Content = Strings.SettingsCheckAtStartup;
-        OkButton.Content = Strings.ButtonOk;
-        CancelButton.Content = Strings.ButtonCancel;
+        ApplyButton.Content = Strings.ButtonApply;
+        DoneButton.Content = Strings.ButtonDone;
+        _preview.Localize();
     }
 
     private void OnBrowse(object sender, RoutedEventArgs e)
@@ -307,25 +340,44 @@ internal partial class SettingsWindow : Window
         {
             _customColor = color;
             ColorSwatch.Background = new SolidColorBrush(color);
+            RefreshPreview();
         }
     }
 
-    private void OnCancel(object sender, RoutedEventArgs e) => Close();
-
-    private void OnOk(object sender, RoutedEventArgs e)
+    /// <summary>Closes without the "save?" question, for when the settings it holds have just been replaced (an import).</summary>
+    internal void CloseDiscarding()
     {
-        var rootPath = RootBox.Text.Trim();
-        if (RootFolder.Prepare(rootPath) is { } problem)
+        _closeWithoutAsking = true;
+        Close();
+    }
+
+    private void OnDone(object sender, RoutedEventArgs e) => Close();
+
+    // Done, the close button and Esc all end here: changes not applied yet are asked about first.
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        base.OnClosing(e);
+        if (_closeWithoutAsking || !HasUnsavedChanges)
         {
-            Error.Text = string.Format(Strings.SettingsRootInvalid, problem);
-            Error.Visibility = Visibility.Visible;
             return;
         }
 
+        var answer = MessageBox.Show(this, Strings.SettingsSavePrompt, Strings.AppName, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes);
+        if (answer == MessageBoxResult.Yes && !Apply())
+        {
+            e.Cancel = true; // Something is wrong (the message is shown): stay, so the user can fix it.
+        }
+    }
+
+    private void OnApply(object sender, RoutedEventArgs e) => Apply();
+
+    // The panel's background for the controls as they are now.
+    private PanelBackground BuildBackground()
+    {
         var style = SelectedBackground;
         var opacity = Math.Round(OpacitySlider.Value, 2);
         var shade = Math.Round(ShadeSlider.Value, 2);
-        var background = new PanelBackground
+        return new PanelBackground
         {
             Style = style,
             CustomColor = $"#{_customColor.R:X2}{_customColor.G:X2}{_customColor.B:X2}",
@@ -334,16 +386,43 @@ internal partial class SettingsWindow : Window
             Opacity = style == PanelBackgroundStyle.Custom || SameOpacity(opacity, PanelTheme.DefaultOpacity(style)) ? null : opacity,
             GlassShade = SameOpacity(shade, PanelBackground.DefaultGlassShade) ? null : shade,
         };
-        Applied?.Invoke(this, new SettingsChoice(
-            rootPath,
-            (int)ColumnsBox.SelectedItem,
-            DropCopy.IsChecked == true ? DropMode.Copy : DropMode.Move,
-            DeleteItems.IsChecked == true ? DeleteMode.DeleteItems : DeleteMode.MoveToDesktop,
-            background,
-            OpenCentered.IsChecked == true ? PanelOpenMode.Centered : PanelOpenMode.Nearby,
-            (AppLanguage)LanguageBox.SelectedValue,
-            CheckAtStartupBox.IsChecked == true,
-            AllowControlBox.IsChecked == true));
-        Close();
+    }
+
+    // What the controls hold now, not yet checked.
+    private SettingsChoice ReadChoice() => new(
+        RootBox.Text.Trim(),
+        ColumnsBox.SelectedItem as int? ?? _config.PanelColumns,
+        DropCopy.IsChecked == true ? DropMode.Copy : DropMode.Move,
+        DeleteItems.IsChecked == true ? DeleteMode.DeleteItems : DeleteMode.MoveToDesktop,
+        BuildBackground(),
+        OpenCentered.IsChecked == true ? PanelOpenMode.Centered : PanelOpenMode.Nearby,
+        LanguageBox.SelectedValue as AppLanguage? ?? _config.Language,
+        CheckAtStartupBox.IsChecked == true,
+        AllowControlBox.IsChecked == true);
+
+    /// <summary>Checks what the controls hold and hands it to <see cref="Applied"/>; false (with the reason shown) if it is not valid.</summary>
+    private bool Apply()
+    {
+        var choice = ReadChoice();
+        if (RootFolder.Prepare(choice.RootPath) is { } problem)
+        {
+            Error.Text = string.Format(Strings.SettingsRootInvalid, problem);
+            Error.Visibility = Visibility.Visible;
+            return false;
+        }
+
+        Error.Visibility = Visibility.Collapsed;
+        var languageChanged = choice.Language != _config.Language;
+        Applied?.Invoke(this, choice);
+        _appliedKey = Key(choice);
+        if (languageChanged)
+        {
+            // The window stays open, so it speaks the new language from now on too.
+            LocalizeTexts();
+            LanguageBox.ItemsSource = LanguageOptions();
+            LanguageBox.SelectedValue = choice.Language;
+        }
+
+        return true;
     }
 }

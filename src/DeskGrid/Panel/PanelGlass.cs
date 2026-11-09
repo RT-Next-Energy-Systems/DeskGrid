@@ -15,7 +15,7 @@ namespace DeskGrid.Panel;
 internal sealed class PanelGlass(PanelTheme theme, Action<Brush> apply, Action<bool> brightnessKnown) : IDisposable
 {
     // Above this average brightness of the finished glass, dark text reads better than white.
-    private const double BrightGlass = 0.5;
+    internal const double BrightGlass = 0.5;
 
     /// <summary>The panel's corner radius in device-independent units, which the glass is shaped to.</summary>
     public const double CornerRadius = 20;

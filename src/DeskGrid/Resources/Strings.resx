@@ -15,6 +15,18 @@
   <data name="AppName" xml:space="preserve">
     <value>DeskGrid</value>
   </data>
+  <data name="ButtonApply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="ButtonDone" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="SettingsSavePrompt" xml:space="preserve">
+    <value>Save the current settings?</value>
+  </data>
+  <data name="SettingsPreviewHeading" xml:space="preserve">
+    <value>Sample folder</value>
+  </data>
   <data name="ButtonCancel" xml:space="preserve">
     <value>Cancel</value>
   </data>

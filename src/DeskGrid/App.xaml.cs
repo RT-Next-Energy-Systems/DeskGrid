@@ -126,7 +126,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _exiting.Cancel();
-        _settings?.Close();
+        _settings?.CloseDiscarding(); // Exiting: no question to ask.
         _instanceChannel?.Dispose();
         _controlChannel?.Dispose();
         _hotkeys?.Dispose();
@@ -710,7 +710,7 @@ public partial class App : Application
     }
 
     // Takes over a settings file: everything is replaced, so the widgets are rebuilt from the new folder order and positions.
-    private void ImportSettings(Window owner)
+    private void ImportSettings(SettingsWindow owner)
     {
         var dialog = new Microsoft.Win32.OpenFileDialog { DefaultExt = ConfigPorter.Extension, Filter = Strings.PortFileFilter };
         if (dialog.ShowDialog(owner) != true)
@@ -744,7 +744,7 @@ public partial class App : Application
         _configStore.Save();
         StartWidgets();
         ApplyHotkeys(report: true);
-        owner.Close(); // It shows the settings that were just replaced.
+        owner.CloseDiscarding(); // It shows the settings that were just replaced.
         MessageBox.Show(Strings.ImportDone + note, Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Information);
     }
 

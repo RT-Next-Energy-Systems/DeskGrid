@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Settings → Panel shows a small preview of a folder's panel that follows every change (columns, background, opacity,
+  edge shading, color), so a look can be judged before it is used.
+- Settings has **Apply** and **Done** instead of OK and Cancel. Apply keeps the changes and leaves the window open, so
+  a folder can be opened to see the result. If something was changed and not applied, Done asks **Save the current
+  settings?**.
+
+### How to use
+
+- Settings → **Panel**: change the background, then look at the preview above the options.
+- Press **Apply** to use the settings and keep the window open; press **Done** when finished (it asks first if
+  anything is not applied).
+
 ## 0.6.0
 
 ### Added

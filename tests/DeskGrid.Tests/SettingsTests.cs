@@ -197,7 +197,7 @@ public sealed class SettingsWindowTests : IDisposable
     [InlineData("Custom", "System")]
     [InlineData("Light", "LiquidGlass")]
     [InlineData("LiquidGlass", "Dark")]
-    public async Task Ok_ReportsTheBackgroundThatIsChecked(string initialName, string pickedName)
+    public async Task Apply_ReportsTheBackgroundThatIsChecked(string initialName, string pickedName)
     {
         var initial = Enum.Parse<PanelBackgroundStyle>(initialName);
         var picked = Enum.Parse<PanelBackgroundStyle>(pickedName);
@@ -210,7 +210,7 @@ public sealed class SettingsWindowTests : IDisposable
             window.Applied += (_, c) => applied = c;
             window.Show();
             window.BackgroundRadioFor(picked).IsChecked = true;
-            window.OkButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            window.ApplyButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             return applied;
         });
 
@@ -224,7 +224,7 @@ public sealed class SettingsWindowTests : IDisposable
     [InlineData("System", 0.6, 0.6)]
     [InlineData("Dark", 0.82, null)] // The default, shown as the nearest 5 % step, is not a choice.
     [InlineData("System", 0.85, null)] // Stays the system acrylic.
-    public async Task Ok_ReportsTheOpacityOfAPreset_AndLeavesTheDefaultUnset(string styleName, double slider, double? expected)
+    public async Task Apply_ReportsTheOpacityOfAPreset_AndLeavesTheDefaultUnset(string styleName, double slider, double? expected)
     {
         var style = Enum.Parse<PanelBackgroundStyle>(styleName);
         var choice = await _ui.InvokeAsync(() =>
@@ -235,7 +235,7 @@ public sealed class SettingsWindowTests : IDisposable
             window.Applied += (_, c) => applied = c;
             window.Show();
             window.OpacitySlider.Value = slider;
-            window.OkButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            window.ApplyButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             return applied;
         });
 
@@ -248,7 +248,7 @@ public sealed class SettingsWindowTests : IDisposable
     [InlineData(0.0, 0.0)]
     [InlineData(0.8, 0.8)]
     [InlineData(0.5, null)]
-    public async Task Ok_ReportsTheEdgeShading_AndLeavesTheDefaultUnset(double slider, double? expected)
+    public async Task Apply_ReportsTheEdgeShading_AndLeavesTheDefaultUnset(double slider, double? expected)
     {
         var choice = await _ui.InvokeAsync(() =>
         {
@@ -258,7 +258,7 @@ public sealed class SettingsWindowTests : IDisposable
             window.Applied += (_, c) => applied = c;
             window.Show();
             window.ShadeSlider.Value = slider;
-            window.OkButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            window.ApplyButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             return applied;
         });
 
@@ -294,7 +294,7 @@ public sealed class SettingsWindowTests : IDisposable
             EnsureApplication();
             var window = new SettingsWindow(new AppConfig { RootPath = _root.Path });
             window.Show();
-            var all = new[] { window.PageGeneral, window.PagePanel, window.PageShortcuts, window.PageAbout };
+            var all = new FrameworkElement[] { window.PageGeneral, window.PagePanel, window.PageShortcuts, window.PageAbout };
             var result = new List<(SettingsWindow.Page Page, int Visible, bool Right)>();
             foreach (var page in Enum.GetValues<SettingsWindow.Page>())
             {
@@ -332,7 +332,7 @@ public sealed class SettingsWindowTests : IDisposable
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task AllowControl_ShowsTheSetting_AndOkReportsItFlipped(bool initial)
+    public async Task AllowControl_ShowsTheSetting_AndApplyReportsItFlipped(bool initial)
     {
         var (shown, applied) = await _ui.InvokeAsync(() =>
         {
@@ -343,12 +343,77 @@ public sealed class SettingsWindowTests : IDisposable
             window.Show();
             var shown = window.AllowControlBox.IsChecked == true;
             window.AllowControlBox.IsChecked = !initial;
-            window.OkButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            window.ApplyButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             return (shown, choice?.AllowControl);
         });
 
         Assert.Equal(initial, shown);
         Assert.Equal(!initial, applied);
+    }
+
+    // Apply keeps the window open and counts as saved; changing a control again makes it "changed" again.
+    [Fact]
+    public async Task Apply_KeepsTheWindowOpen_AndClearsTheUnsavedState()
+    {
+        var (before, afterEdit, afterApply, stillOpen, again) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path });
+            window.Show();
+            var before = window.HasUnsavedChanges;
+            window.AllowControlBox.IsChecked = true;
+            var afterEdit = window.HasUnsavedChanges;
+            window.ApplyButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            var afterApply = window.HasUnsavedChanges;
+            var stillOpen = window.IsVisible;
+            window.AllowControlBox.IsChecked = false;
+            var again = window.HasUnsavedChanges;
+            window.CloseDiscarding();
+            return (before, afterEdit, afterApply, stillOpen, again);
+        });
+
+        Assert.False(before);
+        Assert.True(afterEdit);
+        Assert.False(afterApply);
+        Assert.True(stillOpen);
+        Assert.True(again);
+    }
+
+    // Done with nothing changed closes at once, with no question.
+    [Fact]
+    public async Task Done_ClosesWithoutAsking_WhenNothingChanged()
+    {
+        var closed = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path });
+            window.Show();
+            window.DoneButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            return !window.IsVisible;
+        });
+
+        Assert.True(closed);
+    }
+
+    // The sample panel is drawn for every style, and for as many columns as asked, without throwing.
+    [Theory]
+    [InlineData("System", 3)]
+    [InlineData("Dark", 1)]
+    [InlineData("Light", 8)]
+    [InlineData("Custom", 4)]
+    [InlineData("LiquidGlass", 3)]
+    public async Task PanelPreview_DrawsEveryStyle(string styleName, int columns)
+    {
+        var drawn = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var preview = new PanelPreview();
+            preview.Update(new PanelBackground { Style = Enum.Parse<PanelBackgroundStyle>(styleName) }, columns);
+            preview.Measure(new System.Windows.Size(1000, 1000));
+            return preview.DesiredSize.Height > 0 && preview.Background is not null;
+        });
+
+        Assert.True(drawn);
     }
 
     [Theory]

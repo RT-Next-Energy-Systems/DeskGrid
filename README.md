@@ -125,7 +125,7 @@ Items keep the order they were added in; new items go last, or where you drop th
 
 Tray menu → **Settings…**:
 
-- **Language**: English, Traditional Chinese (繁體中文), or follow Windows (the default). It applies as soon as you press OK;
+- **Language**: English, Traditional Chinese (繁體中文), or follow Windows (the default). It applies as soon as you press Apply;
   the change log and the privacy link follow it.
 - **Root folder**: where the folders live. It can't be on the desktop (its folders would show up twice). **Open** shows it in Explorer.
 - **Panel columns** (1–8).

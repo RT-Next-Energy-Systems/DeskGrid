@@ -6,18 +6,18 @@
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
         Width="780"
-        Height="620"
+        Height="680"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen">
   <!-- A list of pages on the left, the chosen page on the right (each page scrolls if it is too tall, MaxHeight is set in
-       code for a short screen); OK and Cancel stay at the bottom whatever the page. -->
+       code for a short screen); Apply and Done stay at the bottom whatever the page. -->
   <DockPanel Margin="16,16,20,20">
     <StackPanel DockPanel.Dock="Bottom">
       <TextBlock x:Name="Error" Margin="2,4,0,0" Foreground="#C42B1C" TextWrapping="Wrap" Visibility="Collapsed" />
       <StackPanel Margin="0,12,0,0" HorizontalAlignment="Right" Orientation="Horizontal">
-        <Button MinWidth="84" Padding="12,5" x:Name="OkButton" IsDefault="True" Click="OnOk" />
+        <Button MinWidth="84" Padding="12,5" x:Name="ApplyButton" IsDefault="True" Click="OnApply" />
         <!-- IsCancel only maps Esc to this button; a modeless window still has to close itself. -->
-        <Button MinWidth="84" Padding="12,5" x:Name="CancelButton" Margin="8,0,0,0" IsCancel="True" Click="OnCancel" />
+        <Button MinWidth="84" Padding="12,5" x:Name="DoneButton" Margin="8,0,0,0" IsCancel="True" Click="OnDone" />
       </StackPanel>
     </StackPanel>
 
@@ -102,7 +102,14 @@
       </ScrollViewer>
 
       <!-- Panel: how a folder's panel opens and looks. -->
-      <ScrollViewer x:Name="PagePanel" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+      <!-- The preview stays above the scrolling cards, so it is in view while a setting is changed. -->
+      <Grid x:Name="PagePanel" Visibility="Collapsed">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Border x:Name="PreviewHost" Grid.Row="0" Margin="0,0,4,8" HorizontalAlignment="Left" />
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="0,0,4,0">
           <Border Style="{StaticResource Card}">
             <DockPanel>
@@ -156,7 +163,8 @@
             </StackPanel>
           </Border>
         </StackPanel>
-      </ScrollViewer>
+        </ScrollViewer>
+      </Grid>
 
       <!-- Shortcuts and control: ways to reach DeskGrid without the mouse. -->
       <ScrollViewer x:Name="PageShortcuts" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
