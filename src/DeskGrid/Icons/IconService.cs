@@ -23,7 +23,8 @@ internal sealed class IconService : IDisposable
         var key = IconKey.Of(item);
         if (!_icons.TryGetValue(key, out var icon))
         {
-            _icons[key] = icon = _shellThread.InvokeAsync(() => ShellImage.GetIcon(item.FullPath, IconSize));
+            var started = _shellThread.InvokeAsync(() => ShellImage.GetIcon(item.FullPath, IconSize));
+            _icons[key] = icon = EvictIfFailed(started, () => _icons.Remove(key));
         }
 
         return icon;
@@ -39,8 +40,16 @@ internal sealed class IconService : IDisposable
             return cached.Image;
         }
 
-        var preview = ComposeAsync(shown);
-        _previews[widget.FullPath] = (key, preview);
+        var path = widget.FullPath;
+        var preview = EvictIfFailed(ComposeAsync(shown), () =>
+        {
+            // Only this attempt: a newer one for the same folder may already be cached.
+            if (_previews.TryGetValue(path, out var current) && current.Key == key)
+            {
+                _previews.Remove(path);
+            }
+        });
+        _previews[path] = (key, preview);
         return preview;
     }
 
@@ -61,6 +70,21 @@ internal sealed class IconService : IDisposable
     }
 
     public void Dispose() => _shellThread.Dispose();
+
+    // A task that failed must not be handed out again for as long as the file stays as it is: the next request tries anew.
+    // The continuation runs on the caller's context (the UI thread), where the caches live.
+    private static async Task<T> EvictIfFailed<T>(Task<T> task, Action evict)
+    {
+        try
+        {
+            return await task;
+        }
+        catch
+        {
+            evict();
+            throw;
+        }
+    }
 
     private async Task<BitmapSource> ComposeAsync(List<FolderItem> items)
     {
