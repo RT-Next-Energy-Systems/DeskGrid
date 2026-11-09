@@ -40,7 +40,10 @@ internal sealed class PanelPreview : Border
     };
 
     private readonly Grid _items = new();
-    private (double Scale, BitmapSource Picture, byte[] Bgra)? _wallpaper;
+    private (double Scale, BitmapSource Picture, ImageBrush Brush, byte[] Bgra)? _wallpaper;
+    private GlassJob? _glass; // The newest glass asked for; null while another look is shown.
+
+    private sealed record GlassJob(ScreenImage Stage, ScreenRect Window, GlassStyle Style, PanelTheme Theme, int Columns);
 
     public PanelPreview()
     {
@@ -60,6 +63,9 @@ internal sealed class PanelPreview : Border
         Localize();
     }
 
+    /// <summary>The drawing of the glass that is under way (finished when there is none), for tests to wait on.</summary>
+    internal Task Drawing { get; private set; } = Task.CompletedTask;
+
     /// <summary>Sets the heading again, in the interface language now in force.</summary>
     public void Localize() => _heading.Text = Strings.SettingsPreviewHeading;
 
@@ -69,36 +75,74 @@ internal sealed class PanelPreview : Border
         var theme = PanelTheme.Resolve(background, PanelTheme.SystemUsesDarkTheme, acrylicSupported: true);
         var scale = VisualTreeHelper.GetDpi(this).DpiScaleX;
         var wallpaper = Wallpaper(scale);
-        Background = new ImageBrush(wallpaper.Picture) { Stretch = Stretch.Fill };
+        Background = wallpaper.Brush;
 
         var pixelWidth = (int)Math.Round(PanelWidth * scale);
         var pixelHeight = (int)Math.Round(PanelHeight * scale);
         _panel.Width = pixelWidth / scale;
         _panel.Height = pixelHeight / scale;
 
-        if (theme.Glass)
+        if (!theme.Glass)
         {
-            var stage = new ScreenRect(0, 0, wallpaper.Picture.PixelWidth, wallpaper.Picture.PixelHeight);
-            var left = (stage.Width - pixelWidth) / 2;
-            var top = (stage.Height - pixelHeight) / 2;
-            var window = new ScreenRect(left, top, left + pixelWidth, top + pixelHeight);
-            var surface = (theme.Background.R, theme.Background.G, theme.Background.B);
-            var pixels = LiquidGlass.Render(new ScreenImage(stage, wallpaper.Bgra), window,
-                new GlassStyle(scale, PanelGlass.CornerRadius, theme.Background.A / 255.0, surface, theme.GlassShade));
-            var bitmap = BitmapSource.Create(pixelWidth, pixelHeight, 96, 96, PixelFormats.Pbgra32, null, pixels, pixelWidth * 4);
+            _glass = null; // A glass still being drawn is for a look that is no longer wanted.
+
+            // The system acrylic can't be drawn here; its surface color a little translucent stands for it.
+            _panel.Background = new SolidColorBrush(theme.UseAcrylic ? Translucent(theme.Background) : theme.Background);
+            _panel.CornerRadius = new CornerRadius(8);
+            ShowContent(columns, theme);
+            return;
+        }
+
+        if (_glass is null)
+        {
+            // Until the glass is drawn: its surface color, so the sample is never empty.
+            _panel.Background = new SolidColorBrush(Translucent(theme.Background));
+            _panel.CornerRadius = new CornerRadius(PanelGlass.CornerRadius);
+            ShowContent(columns, theme);
+        }
+
+        var stage = new ScreenRect(0, 0, wallpaper.Picture.PixelWidth, wallpaper.Picture.PixelHeight);
+        var left = (stage.Width - pixelWidth) / 2;
+        var top = (stage.Height - pixelHeight) / 2;
+        _glass = new GlassJob(
+            new ScreenImage(stage, wallpaper.Bgra),
+            new ScreenRect(left, top, left + pixelWidth, top + pixelHeight),
+            new GlassStyle(scale, PanelGlass.CornerRadius, theme.Background.A / 255.0, (theme.Background.R, theme.Background.G, theme.Background.B), theme.GlassShade),
+            theme,
+            columns);
+        if (Drawing.IsCompleted)
+        {
+            Drawing = DrawGlassAsync();
+        }
+    }
+
+    // Drawing the glass takes tens of milliseconds, and a dragged slider asks for it at every step. Drawn on the UI
+    // thread, every step held the window up and the steps piled up behind the mouse (reported as the computer hanging).
+    // So it is drawn on another thread, one at a time, and of the requests that come meanwhile only the newest is drawn.
+    private async Task DrawGlassAsync()
+    {
+        GlassJob? drawn = null;
+        while (_glass is { } job && !ReferenceEquals(job, drawn))
+        {
+            var pixels = await Task.Run(() => LiquidGlass.Render(job.Stage, job.Window, job.Style));
+            drawn = job;
+            if (_glass is null)
+            {
+                return; // Another look was chosen while this was drawn.
+            }
+
+            var bitmap = BitmapSource.Create(job.Window.Width, job.Window.Height, 96, 96, PixelFormats.Pbgra32, null, pixels, job.Window.Width * 4);
             bitmap.Freeze();
             _panel.Background = new ImageBrush(bitmap) { Stretch = Stretch.Fill };
             _panel.CornerRadius = new CornerRadius(PanelGlass.CornerRadius);
-            theme = theme.WithTextFor(PanelGlass.Brightness(pixels) > PanelGlass.BrightGlass);
+            ShowContent(job.Columns, job.Theme.WithTextFor(PanelGlass.Brightness(pixels) > PanelGlass.BrightGlass));
         }
-        else
-        {
-            // The system acrylic can't be drawn here; its surface color a little translucent stands for it.
-            var color = theme.UseAcrylic ? Color.FromArgb(0xD9, theme.Background.R, theme.Background.G, theme.Background.B) : theme.Background;
-            _panel.Background = new SolidColorBrush(color);
-            _panel.CornerRadius = new CornerRadius(8);
-        }
+    }
 
+    private static Color Translucent(Color color) => Color.FromArgb(0xD9, color.R, color.G, color.B);
+
+    private void ShowContent(int columns, PanelTheme theme)
+    {
         _heading.Foreground = new SolidColorBrush(theme.Foreground);
         FillItems(columns, theme);
     }
@@ -139,7 +183,7 @@ internal sealed class PanelPreview : Border
     }
 
     // A colorful picture with a bright and a dark patch, so frosting, bending and the text color all have something to show.
-    private (double Scale, BitmapSource Picture, byte[] Bgra) Wallpaper(double scale)
+    private (double Scale, BitmapSource Picture, ImageBrush Brush, byte[] Bgra) Wallpaper(double scale)
     {
         if (_wallpaper is { } cached && cached.Scale == scale)
         {
@@ -170,7 +214,9 @@ internal sealed class PanelPreview : Border
 
         var picture = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32, null, bgra, width * 4);
         picture.Freeze();
-        _wallpaper = (scale, picture, bgra);
+        var brush = new ImageBrush(picture) { Stretch = Stretch.Fill };
+        brush.Freeze();
+        _wallpaper = (scale, picture, brush, bgra);
         return _wallpaper.Value;
     }
 

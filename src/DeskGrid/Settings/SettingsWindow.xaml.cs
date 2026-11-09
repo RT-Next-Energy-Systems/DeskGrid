@@ -267,7 +267,6 @@ internal partial class SettingsWindow : Window
         OpenModeLabel.Text = Strings.SettingsOpenMode;
         OpenNearby.Content = Strings.SettingsOpenNearby;
         OpenCentered.Content = Strings.SettingsOpenCentered;
-        OpenModeHint.Text = Strings.SettingsOpenModeHint;
         RootLabel.Text = Strings.SettingsRootFolder;
         BrowseButton.Content = Strings.SettingsBrowse;
         OpenRootButton.Content = Strings.SettingsOpen;
@@ -309,7 +308,6 @@ internal partial class SettingsWindow : Window
         ColorButton.Content = Strings.SettingsColor;
         OpacityLabel.Text = Strings.SettingsOpacity;
         ShadeLabel.Text = Strings.SettingsGlassShade;
-        ShadeHint.Text = Strings.SettingsGlassShadeHint;
         PageGeneralText.Text = Strings.SettingsPageGeneral;
         PagePanelText.Text = Strings.SettingsPagePanel;
         PageShortcutsText.Text = Strings.SettingsPageShortcuts;

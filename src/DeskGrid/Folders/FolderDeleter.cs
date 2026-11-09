@@ -93,7 +93,7 @@ internal static class FolderDeleter
 
     // Directory.Move can't go to another drive (the root folder on D:, the desktop on C:), where File.Move just copies:
     // there the folder is copied, then the original deleted.
-    private static void MoveDirectory(string source, string target)
+    internal static void MoveDirectory(string source, string target)
     {
         try
         {

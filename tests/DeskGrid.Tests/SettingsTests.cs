@@ -275,9 +275,9 @@ public sealed class SettingsWindowTests : IDisposable
             window.Show();
             var shown = window.ShadeSlider.Value;
             window.BackgroundRadioFor(PanelBackgroundStyle.LiquidGlass).IsChecked = true;
-            var onGlass = window.ShadeSlider.IsEnabled;
+            var onGlass = window.ShadeSlider.IsEnabled && window.ShadeRow.Opacity == 1;
             window.BackgroundRadioFor(PanelBackgroundStyle.Dark).IsChecked = true;
-            return (shown, onGlass, window.ShadeSlider.IsEnabled);
+            return (shown, onGlass, window.ShadeSlider.IsEnabled || window.ShadeRow.Opacity == 1);
         });
 
         Assert.Equal(0.2, shown, 2);
@@ -414,6 +414,54 @@ public sealed class SettingsWindowTests : IDisposable
         });
 
         Assert.True(drawn);
+    }
+
+    // A dragged slider asks for the glass at every step. Drawn on the UI thread each time, that held the window up
+    // (about 80 ms a step) with the steps piling up behind the mouse; a user reported the computer hanging.
+    [Fact]
+    public async Task PanelPreview_ManyChangesInARow_DoNotHoldTheUiThread_AndTheLastOneIsShown()
+    {
+        const int Steps = 300;
+        var (preview, held, drawing) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var preview = new PanelPreview();
+            preview.Update(new PanelBackground { Style = PanelBackgroundStyle.LiquidGlass }, 3); // The wallpaper is made once, here.
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            for (var step = 0; step < Steps; step++)
+            {
+                preview.Update(new PanelBackground { Style = PanelBackgroundStyle.LiquidGlass, Opacity = 0.1 + 0.9 * step / Steps }, 3);
+            }
+
+            return (preview, watch.Elapsed, preview.Drawing);
+        });
+
+        await drawing;
+        var (shown, columns) = await _ui.InvokeAsync(() =>
+            (((System.Windows.Controls.Border)preview.Child).Background, ((System.Windows.Controls.Grid)((System.Windows.Controls.Panel)((System.Windows.Controls.Border)preview.Child).Child).Children[1]).ColumnDefinitions.Count));
+
+        Assert.True(held < TimeSpan.FromMilliseconds(Steps * 10), $"{Steps} changes held the UI thread for {held.TotalMilliseconds:F0} ms.");
+        Assert.IsType<ImageBrush>(shown); // The glass itself, not the plain color shown while it is drawn.
+        Assert.Equal(3, columns);
+    }
+
+    // Another look chosen while the glass is still being drawn: the glass must not land on top of it afterwards.
+    [Fact]
+    public async Task PanelPreview_GlassStillBeingDrawn_DoesNotReplaceALookChosenSince()
+    {
+        var (preview, drawing) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var preview = new PanelPreview();
+            preview.Update(new PanelBackground { Style = PanelBackgroundStyle.LiquidGlass }, 3);
+            preview.Update(new PanelBackground { Style = PanelBackgroundStyle.Dark }, 3);
+            return (preview, preview.Drawing);
+        });
+
+        await drawing;
+        var shown = await _ui.InvokeAsync(() => ((System.Windows.Controls.Border)preview.Child).Background);
+
+        Assert.IsType<SolidColorBrush>(shown);
     }
 
     [Theory]

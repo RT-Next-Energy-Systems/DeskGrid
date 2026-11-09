@@ -15,10 +15,11 @@ internal enum ImportAction
 }
 
 /// <summary>
-/// Adds files and folders dropped on a widget to its folder. Programs, ordinary files and folders get a
-/// new shortcut (a program itself is never moved or copied); shortcuts lying on the desktop are moved or
-/// copied per <see cref="DropMode"/>; shortcuts from anywhere else are copied; items taken out of another
-/// widget's panel are moved.
+/// Adds files and folders dropped on a widget to its folder. Whatever lies directly on the desktop (shortcut,
+/// file, program or folder) is moved in, so it is not seen in both places; with <see cref="DropMode.Copy"/> the
+/// desktop keeps it instead (a shortcut is copied, anything else gets a shortcut). From anywhere else, programs,
+/// files and folders get a new shortcut (they are never moved or copied from there) and shortcuts are copied.
+/// Items taken out of another widget's panel are moved.
 /// </summary>
 internal static class ItemImporter
 {
@@ -31,29 +32,30 @@ internal static class ItemImporter
             return ImportAction.None;
         }
 
-        if (Directory.Exists(path))
-        {
-            return ImportAction.CreateShortcut;
-        }
-
-        if (!File.Exists(path))
+        var isFolder = Directory.Exists(path);
+        if (!isFolder && !File.Exists(path))
         {
             return ImportAction.None;
         }
 
         if (FolderPaths.IsSameOrInside(path, rootFolder))
         {
-            // Dragged out of another widget (see PopupPanel): it moves, whatever it is.
-            return ImportAction.Move;
+            // Dragged out of another widget (see PopupPanel): it moves, whatever it is. Another widget's own folder
+            // is only linked: moved, that widget would vanish into this one.
+            return isFolder && FolderPaths.IsDirectlyIn(path, rootFolder) ? ImportAction.CreateShortcut : ImportAction.Move;
         }
 
-        if (!IsShortcut(path))
+        var isShortcut = !isFolder && IsShortcut(path);
+        if (desktops.Any(desktop => FolderPaths.IsDirectlyIn(path, desktop)))
         {
-            return ImportAction.CreateShortcut;
+            // What lies on the desktop moves in, whatever it is, so it is not seen in both places; unless the user
+            // chose to keep the desktop as it is.
+            return mode == DropMode.Move ? ImportAction.Move
+                : isShortcut ? ImportAction.Copy
+                : ImportAction.CreateShortcut;
         }
 
-        var onDesktop = desktops.Any(desktop => FolderPaths.IsDirectlyIn(path, desktop));
-        return onDesktop && mode == DropMode.Move ? ImportAction.Move : ImportAction.Copy;
+        return isShortcut ? ImportAction.Copy : ImportAction.CreateShortcut;
     }
 
     /// <summary>Carries out <see cref="Plan"/> for each path. Returns how many items were added.</summary>
@@ -115,15 +117,29 @@ internal static class ItemImporter
             return destination;
         }
 
+        var isFolder = Directory.Exists(path);
         try
         {
-            File.Move(path, destination);
+            if (isFolder)
+            {
+                FolderDeleter.MoveDirectory(path, destination);
+            }
+            else
+            {
+                File.Move(path, destination);
+            }
         }
-        catch (UnauthorizedAccessException)
+        catch (UnauthorizedAccessException) when (!isFolder)
         {
             // The public desktop is writable only by administrators: leave the original there.
             Log.Info($"No permission to move {path}; copied it instead.");
             File.Copy(path, destination);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // A folder is not copied whole behind the user's back: it stays, with a shortcut to it here.
+            Log.Info($"No permission to move {path}; linked it instead.");
+            return Apply(ImportAction.CreateShortcut, path, widgetFolder);
         }
 
         return destination;

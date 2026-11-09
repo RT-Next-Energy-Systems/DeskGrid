@@ -19,7 +19,7 @@
     <value>完成</value>
   </data>
   <data name="SettingsSavePrompt" xml:space="preserve">
-    <value>儲存目前的設定？</value>
+    <value>儲存變更？</value>
   </data>
   <data name="SettingsPreviewHeading" xml:space="preserve">
     <value>範例資料夾</value>
@@ -37,19 +37,19 @@
     <value>新資料夾</value>
   </data>
   <data name="NewFolderExists" xml:space="preserve">
-    <value>已有同名的資料夾。</value>
+    <value>名稱已存在。</value>
   </data>
   <data name="NewFolderInvalidName" xml:space="preserve">
-    <value>請輸入名稱，且不可包含 \ / : * ? " &lt; &gt; |</value>
+    <value>名稱不可空白或包含 \ / : * ? " &lt; &gt; |</value>
   </data>
   <data name="NewFolderPrompt" xml:space="preserve">
-    <value>資料夾名稱：</value>
+    <value>名稱</value>
   </data>
   <data name="NewFolderTitle" xml:space="preserve">
     <value>新增資料夾</value>
   </data>
   <data name="SettingsBackground" xml:space="preserve">
-    <value>面板背景</value>
+    <value>背景</value>
   </data>
   <data name="SettingsBackgroundCustom" xml:space="preserve">
     <value>自訂</value>
@@ -61,7 +61,7 @@
     <value>淺色</value>
   </data>
   <data name="SettingsBackgroundSystem" xml:space="preserve">
-    <value>跟隨系統（毛玻璃）</value>
+    <value>系統（毛玻璃）</value>
   </data>
   <data name="SettingsBrowse" xml:space="preserve">
     <value>瀏覽…</value>
@@ -70,16 +70,16 @@
     <value>顏色…</value>
   </data>
   <data name="SettingsColumns" xml:space="preserve">
-    <value>面板欄數</value>
+    <value>欄數</value>
   </data>
   <data name="SettingsDropCopy" xml:space="preserve">
-    <value>桌面同時保留（複製）</value>
+    <value>桌面保留</value>
   </data>
   <data name="SettingsDropMode" xml:space="preserve">
-    <value>桌面捷徑拖入 widget 後</value>
+    <value>從桌面拖入的項目</value>
   </data>
   <data name="SettingsDropMove" xml:space="preserve">
-    <value>只留在 DeskGrid（移動）</value>
+    <value>移入資料夾</value>
   </data>
   <data name="SettingsOpacity" xml:space="preserve">
     <value>不透明度</value>
@@ -88,13 +88,10 @@
     <value>液態玻璃</value>
   </data>
   <data name="SettingsOpacityHintGlass" xml:space="preserve">
-    <value>液態玻璃的這個數值是霧面程度：越低越通透，越高在雜亂的背景上越容易閱讀。</value>
+    <value>越低越通透。</value>
   </data>
   <data name="SettingsGlassShade" xml:space="preserve">
     <value>邊緣暗度</value>
-  </data>
-  <data name="SettingsGlassShadeHint" xml:space="preserve">
-    <value>玻璃邊緣在背光那一側有多暗。0% 只留下亮的邊緣。</value>
   </data>
   <data name="SettingsPageGeneral" xml:space="preserve">
     <value>一般</value>
@@ -103,19 +100,19 @@
     <value>面板</value>
   </data>
   <data name="SettingsPageShortcuts" xml:space="preserve">
-    <value>快速鍵與控制</value>
+    <value>快速鍵</value>
   </data>
   <data name="SettingsPageAbout" xml:space="preserve">
     <value>關於</value>
   </data>
   <data name="SettingsOpacityHint" xml:space="preserve">
-    <value>跟隨系統的背景是毛玻璃，本身無法調整透明度；改成其他數值，就會改用一般的半透明純色。</value>
+    <value>調整後不再有模糊效果。</value>
   </data>
   <data name="SettingsRootFolder" xml:space="preserve">
     <value>根目錄</value>
   </data>
   <data name="SettingsRootInvalid" xml:space="preserve">
-    <value>無法使用這個根目錄：{0}</value>
+    <value>無法使用這個資料夾：{0}</value>
   </data>
   <data name="SettingsTitle" xml:space="preserve">
     <value>DeskGrid 設定</value>
@@ -130,16 +127,16 @@
     <value>設定…</value>
   </data>
   <data name="PanelEmpty" xml:space="preserve">
-    <value>這個資料夾是空的。</value>
+    <value>空的</value>
   </data>
   <data name="RootFolderRejected" xml:space="preserve">
     <value>無法使用根目錄「{0}」：{1}
 
-已改用預設根目錄：
+改用預設：
 {2}</value>
   </data>
   <data name="RootFolderOnDesktop" xml:space="preserve">
-    <value>它位於桌面上，其中的資料夾會與桌面原生圖示重複出現。</value>
+    <value>它在桌面上，資料夾會重複顯示。</value>
   </data>
   <data name="RootFolderNotAbsolute" xml:space="preserve">
     <value>不是完整路徑。</value>
@@ -148,22 +145,24 @@
     <value>釘選到工作列…</value>
   </data>
   <data name="PinCreated" xml:space="preserve">
-    <value>已建立「{0}」的捷徑，並在檔案總管中選取。&#10;&#10;請把它拖到工作列上，或按右鍵 → 顯示更多選項 → 釘選到工作列。</value>
+    <value>已建立「{0}」的捷徑。
+
+把它拖到工作列，或按右鍵 → 顯示更多選項 → 釘選到工作列。</value>
   </data>
   <data name="PinFailed" xml:space="preserve">
     <value>無法建立捷徑：{0}</value>
   </data>
   <data name="PanelRename" xml:space="preserve">
-    <value>重新命名資料夾</value>
+    <value>重新命名</value>
   </data>
   <data name="PanelNoFolders" xml:space="preserve">
-    <value>還沒有任何資料夾。</value>
+    <value>還沒有資料夾</value>
   </data>
   <data name="PanelBack" xml:space="preserve">
     <value>所有資料夾</value>
   </data>
   <data name="SettingsPinAll" xml:space="preserve">
-    <value>把所有資料夾釘選到工作列…</value>
+    <value>釘選所有資料夾…</value>
   </data>
   <data name="RenameFailed" xml:space="preserve">
     <value>無法重新命名：{0}</value>
@@ -172,10 +171,11 @@
     <value>DeskGrid 更新</value>
   </data>
   <data name="UpdateAvailable" xml:space="preserve">
-    <value>有新版本 DeskGrid {0}，目前版本為 {1}。</value>
+    <value>DeskGrid {0} 已推出，目前是 {1}。</value>
   </data>
   <data name="UpdateHint" xml:space="preserve">
-    <value>更新：下載新版本並以新版本重新啟動 DeskGrid。&#10;維持：不做任何變更，且不再提醒這個版本。&#10;取消：這次先不處理，下次開機或重新啟動 DeskGrid 時再提醒。</value>
+    <value>維持：略過這個版本。
+取消：下次啟動再問。</value>
   </data>
   <data name="UpdateButtonUpdate" xml:space="preserve">
     <value>更新</value>
@@ -193,22 +193,22 @@
     <value>下載中… {0:P0}（{1:F1} / {2:F1} MB）</value>
   </data>
   <data name="UpdateVerifying" xml:space="preserve">
-    <value>正在驗證下載的檔案…</value>
+    <value>驗證中…</value>
   </data>
   <data name="UpdateInstalling" xml:space="preserve">
-    <value>正在安裝新版本並重新啟動 DeskGrid…</value>
+    <value>安裝中…</value>
   </data>
   <data name="UpdateFailed" xml:space="preserve">
     <value>更新失敗：{0}</value>
   </data>
   <data name="UpdateNoFile" xml:space="preserve">
-    <value>這個版本沒有可安裝的檔案或校驗碼。</value>
+    <value>這個版本沒有可安裝的檔案。</value>
   </data>
   <data name="UpdateChecksumMismatch" xml:space="preserve">
-    <value>下載的檔案與校驗碼不符。</value>
+    <value>校驗碼不符。</value>
   </data>
   <data name="UpdateFolderNotWritable" xml:space="preserve">
-    <value>DeskGrid 所在的資料夾無法寫入，請改從發布頁下載新版本。</value>
+    <value>DeskGrid 的資料夾無法寫入，請從發布頁下載。</value>
   </data>
   <data name="SettingsVersion" xml:space="preserve">
     <value>版本</value>
@@ -217,13 +217,13 @@
     <value>檢查更新</value>
   </data>
   <data name="SettingsCheckAtStartup" xml:space="preserve">
-    <value>DeskGrid 啟動時檢查更新</value>
+    <value>啟動時檢查</value>
   </data>
   <data name="SettingsAllowControl" xml:space="preserve">
     <value>允許腳本與 AI agent 控制</value>
   </data>
   <data name="SettingsAllowControlHint" xml:space="preserve">
-    <value>開啟後，你執行的程式可以用「DeskGrid.exe --ctl」列出、建立、重新命名資料夾、加入項目及開啟面板。這個方式無法刪除任何東西。只限這台電腦上你自己的帳戶。</value>
+    <value>透過「DeskGrid.exe --ctl」，僅限本帳戶。無法刪除任何東西。</value>
   </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>隱私</value>
@@ -244,7 +244,7 @@
     <value>已是最新版本。</value>
   </data>
   <data name="SettingsCheckFailed" xml:space="preserve">
-    <value>無法檢查更新。</value>
+    <value>檢查失敗。</value>
   </data>
   <data name="SettingsUpdateAvailable" xml:space="preserve">
     <value>有新版本 {0}。</value>
@@ -253,46 +253,54 @@
     <value>刪除資料夾…</value>
   </data>
   <data name="DeleteConfirmEmpty" xml:space="preserve">
-    <value>要刪除資料夾「{0}」嗎？&#10;&#10;資料夾會移到資源回收筒。</value>
+    <value>刪除「{0}」？
+
+會移到資源回收筒。</value>
   </data>
   <data name="DeleteConfirmMove" xml:space="preserve">
-    <value>要刪除資料夾「{0}」嗎？&#10;&#10;其中的 {1} 個項目會先移到桌面，資料夾則移到資源回收筒。</value>
+    <value>刪除「{0}」？
+
+裡面的 {1} 個項目會移到桌面。</value>
   </data>
   <data name="DeleteConfirmItems" xml:space="preserve">
-    <value>要刪除資料夾「{0}」和其中的 {1} 個項目嗎？&#10;&#10;它們會移到資源回收筒。</value>
+    <value>刪除「{0}」和裡面的 {1} 個項目？
+
+會移到資源回收筒。</value>
   </data>
   <data name="DeleteMoveFailed" xml:space="preserve">
-    <value>因為無法把全部項目移到桌面，所以沒有刪除資料夾：{0}</value>
+    <value>未刪除，無法移到桌面：{0}</value>
   </data>
   <data name="DeleteNoDesktop" xml:space="preserve">
-    <value>找不到要放項目的桌面資料夾，所以沒有刪除資料夾。</value>
+    <value>未刪除，找不到桌面資料夾。</value>
   </data>
   <data name="DeleteStopped" xml:space="preserve">
-    <value>資料夾沒有被刪除。</value>
+    <value>未刪除。</value>
   </data>
   <data name="DeleteFailed" xml:space="preserve">
-    <value>無法刪除資料夾：{0}</value>
+    <value>無法刪除：{0}</value>
   </data>
   <data name="SettingsDeleteMode" xml:space="preserve">
     <value>刪除資料夾時，裡面的項目</value>
   </data>
   <data name="SettingsDeleteMove" xml:space="preserve">
-    <value>移至桌面</value>
+    <value>移到桌面</value>
   </data>
   <data name="SettingsDeleteItems" xml:space="preserve">
     <value>一併刪除</value>
   </data>
   <data name="AutoStartOffer" xml:space="preserve">
-    <value>要在登入 Windows 時自動啟動 DeskGrid 嗎？&#10;&#10;之後可以在系統匣選單的「開機時啟動」更改。</value>
+    <value>開機時啟動 DeskGrid？
+
+之後可在系統匣選單更改。</value>
   </data>
   <data name="AutoStartFailed" xml:space="preserve">
-    <value>Windows 不允許變更開機啟動項目，這台電腦的原則可能擋住了它。</value>
+    <value>Windows 擋下了變更，可能是這台電腦的原則限制。</value>
   </data>
   <data name="SettingsOpen" xml:space="preserve">
     <value>開啟</value>
   </data>
   <data name="SettingsRootMissing" xml:space="preserve">
-    <value>這個資料夾還不存在，按「確定」會建立它。</value>
+    <value>資料夾還不存在，套用後會建立。</value>
   </data>
   <data name="SettingsTaskbar" xml:space="preserve">
     <value>工作列</value>
@@ -310,13 +318,13 @@
     <value>CHANGELOG.zh-TW.md</value>
   </data>
   <data name="ChangeLogMissing" xml:space="preserve">
-    <value>這個版本沒有附更新紀錄。</value>
+    <value>這個版本沒有更新紀錄。</value>
   </data>
   <data name="WhatsNewTitle" xml:space="preserve">
     <value>DeskGrid {0} 的新功能</value>
   </data>
   <data name="WhatsNewHint" xml:space="preserve">
-    <value>DeskGrid 已更新。之後隨時可以在「設定」→「更新紀錄…」重新查看。</value>
+    <value>之後可在「設定」→「更新紀錄…」再看。</value>
   </data>
   <data name="ButtonClose" xml:space="preserve">
     <value>關閉</value>
@@ -328,16 +336,13 @@
     <value>跟隨 Windows</value>
   </data>
   <data name="SettingsOpenMode" xml:space="preserve">
-    <value>資料夾展開方式</value>
+    <value>資料夾展開位置</value>
   </data>
   <data name="SettingsOpenNearby" xml:space="preserve">
-    <value>附近展開（貼著資料夾）</value>
+    <value>資料夾旁</value>
   </data>
   <data name="SettingsOpenCentered" xml:space="preserve">
-    <value>置中展開（螢幕中央）</value>
-  </data>
-  <data name="SettingsOpenModeHint" xml:space="preserve">
-    <value>置中展開：所有資料夾都在同一個位置、以同樣大小展開，大小由面板欄數決定。</value>
+    <value>螢幕中央，大小固定</value>
   </data>
   <data name="LanguageNameEnglish" xml:space="preserve">
     <comment>Not translated: a language is always listed under its own name.</comment>
@@ -358,16 +363,16 @@
     <value>自訂…</value>
   </data>
   <data name="SettingsHotkeysHint" xml:space="preserve">
-    <value>在任何程式中按 {0} 即可開啟所有資料夾。</value>
+    <value>{0}：開啟所有資料夾</value>
   </data>
   <data name="SettingsHotkeysHintNone" xml:space="preserve">
-    <value>尚未設定「開啟所有資料夾」的快速鍵。</value>
+    <value>尚未設定開啟所有資料夾的快速鍵。</value>
   </data>
   <data name="HotkeysTitle" xml:space="preserve">
     <value>鍵盤快速鍵</value>
   </data>
   <data name="HotkeysIntro" xml:space="preserve">
-    <value>點一下欄位，再按下想要的組合鍵；按 Backspace 可清除。快速鍵在任何程式中都有效。</value>
+    <value>點欄位後按組合鍵，Backspace 清除。</value>
   </data>
   <data name="HotkeysGroupGeneral" xml:space="preserve">
     <value>DeskGrid</value>
@@ -376,7 +381,7 @@
     <value>開啟資料夾</value>
   </data>
   <data name="HotkeysNoFolders" xml:space="preserve">
-    <value>目前沒有任何資料夾。</value>
+    <value>還沒有資料夾</value>
   </data>
   <data name="HotkeyAllFolders" xml:space="preserve">
     <value>開啟所有資料夾</value>
@@ -400,19 +405,19 @@
     <value>還原預設值</value>
   </data>
   <data name="HotkeysNeedModifier" xml:space="preserve">
-    <value>請加上 Ctrl、Alt 或 Windows 鍵，否則會干擾一般打字。</value>
+    <value>需包含 Ctrl、Alt 或 Win。</value>
   </data>
   <data name="HotkeysInUse" xml:space="preserve">
     <comment>{0} is a shortcut such as Ctrl+Alt+M, {1} the action that already has it.</comment>
-    <value>{0} 已經用在「{1}」。</value>
+    <value>{0} 已用於「{1}」。</value>
   </data>
   <data name="HotkeysTaken" xml:space="preserve">
     <comment>{0} is a list, one line each: the shortcut, then the action.</comment>
-    <value>下列快速鍵已被其他程式使用，DeskGrid 無法使用：
+    <value>已被其他程式佔用：
 
 {0}
 
-請到「設定」的「鍵盤快速鍵」換一組按鍵。</value>
+請到設定換一組。</value>
   </data>
   <data name="SettingsBackup" xml:space="preserve">
     <value>設定備份</value>
@@ -427,24 +432,24 @@
     <value>DeskGrid 設定檔 (*.json)|*.json</value>
   </data>
   <data name="ExportDone" xml:space="preserve">
-    <value>設定已匯出到：
+    <value>已匯出到：
 {0}</value>
   </data>
   <data name="ExportFailed" xml:space="preserve">
-    <value>無法匯出設定：{0}</value>
+    <value>匯出失敗：{0}</value>
   </data>
   <data name="ImportConfirm" xml:space="preserve">
-    <value>要用這個檔案的內容取代目前的設定（資料夾位置、項目順序、快速鍵、面板外觀…）嗎？
+    <value>用這個檔案取代目前的設定？
 
 {0}</value>
   </data>
   <data name="ImportFailed" xml:space="preserve">
-    <value>無法匯入這個檔案：{0}</value>
+    <value>匯入失敗：{0}</value>
   </data>
   <data name="ImportRootKept" xml:space="preserve">
-    <value>檔案裡的根資料夾（{0}）在這台電腦上無法使用（{1}），所以保留目前的根資料夾。</value>
+    <value>根目錄 {0} 在這台電腦無法使用（{1}），保留原本的。</value>
   </data>
   <data name="ImportDone" xml:space="preserve">
-    <value>設定已匯入。</value>
+    <value>已匯入。</value>
   </data>
 </root>

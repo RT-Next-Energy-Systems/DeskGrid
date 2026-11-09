@@ -17,7 +17,7 @@ public sealed class FolderScannerTests : IDisposable
     }
 
     [Fact]
-    public async Task Scan_ListsVisibleFilesOfEachSubfolderInNaturalOrder()
+    public async Task Scan_ListsVisibleEntriesOfEachSubfolderInNaturalOrder()
     {
         _root.CreateFile(@"Work\notes.txt");
         _root.CreateFile(@"Games\item10.lnk");
@@ -34,7 +34,7 @@ public sealed class FolderScannerTests : IDisposable
 
         Assert.NotNull(widgets);
         Assert.Equal(["Games", "Work"], widgets.Select(w => w.Name));
-        Assert.Equal(["item2.url", "item10.lnk"], widgets[0].Items.Select(i => i.Name));
+        Assert.Equal(["item2.url", "item10.lnk", "Nested"], widgets[0].Items.Select(i => i.Name)); // A subfolder is an item; what is in it is not.
         Assert.Equal(["notes.txt"], widgets[1].Items.Select(i => i.Name));
     }
 

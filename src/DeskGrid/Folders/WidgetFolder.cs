@@ -4,7 +4,7 @@ namespace DeskGrid.Folders;
 internal sealed record WidgetFolder(string Name, string FullPath, IReadOnlyList<FolderItem> Items);
 
 /// <summary>
-/// A visible file inside a widget folder (.lnk, .url, .exe or any other file). <paramref name="TargetWriteTimeUtc"/>
+/// A visible file or folder inside a widget folder (.lnk, .url, .exe, any other file, a subfolder). <paramref name="TargetWriteTimeUtc"/>
 /// is the last-write time of the file a shortcut points to (its icon changes when the program is updated), or
 /// <see langword="default"/> for anything else.
 /// </summary>

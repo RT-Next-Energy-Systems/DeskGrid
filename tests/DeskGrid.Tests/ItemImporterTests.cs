@@ -32,7 +32,12 @@ public sealed class ItemImporterTests : IDisposable
     [InlineData(@"desktop\Site.url", "move", "Move")]
     [InlineData(@"elsewhere\Chrome.lnk", "move", "Copy")]
     [InlineData(@"desktop\sub\Chrome.lnk", "move", "Copy")]
-    [InlineData(@"desktop\tool.exe", "move", "CreateShortcut")]
+    [InlineData(@"desktop\tool.exe", "move", "Move")]
+    [InlineData(@"desktop\tool.exe", "copy", "CreateShortcut")]
+    [InlineData(@"desktop\report.pdf", "move", "Move")]
+    [InlineData(@"desktop\report.pdf", "copy", "CreateShortcut")]
+    [InlineData(@"desktop\sub\tool.exe", "move", "CreateShortcut")]
+    [InlineData(@"elsewhere\tool.exe", "move", "CreateShortcut")]
     [InlineData(@"elsewhere\report.pdf", "move", "CreateShortcut")]
     [InlineData(@"root\Dev\Chrome.lnk", "move", "None")]
     [InlineData(@"root\Other\Chrome.lnk", "copy", "Move")]
@@ -47,14 +52,69 @@ public sealed class ItemImporterTests : IDisposable
     }
 
     [Fact]
-    public void Plan_Folders_GetAShortcut_ButNotTheWidgetFolderOrItsParents()
+    public void Plan_Folders_MoveFromTheDesktop_AndGetAShortcutFromElsewhere()
     {
         var other = Directory.CreateDirectory(_temp.Combine("Photos")).FullName;
+        var onDesktop = Directory.CreateDirectory(_temp.Combine(@"desktop\Trip")).FullName;
+        var otherWidget = Directory.CreateDirectory(_temp.Combine(@"root\Other")).FullName;
+        var inOtherWidget = Directory.CreateDirectory(_temp.Combine(@"root\Other\Sub")).FullName;
 
         Assert.Equal(ImportAction.CreateShortcut, ItemImporter.Plan(other, Widget, DropMode.Move, Desktops, Root));
+        Assert.Equal(ImportAction.Move, ItemImporter.Plan(onDesktop, Widget, DropMode.Move, Desktops, Root));
+        Assert.Equal(ImportAction.CreateShortcut, ItemImporter.Plan(onDesktop, Widget, DropMode.Copy, Desktops, Root));
+        Assert.Equal(ImportAction.CreateShortcut, ItemImporter.Plan(otherWidget, Widget, DropMode.Move, Desktops, Root));
+        Assert.Equal(ImportAction.Move, ItemImporter.Plan(inOtherWidget, Widget, DropMode.Move, Desktops, Root));
         Assert.Equal(ImportAction.None, ItemImporter.Plan(Widget, Widget, DropMode.Move, Desktops, Root));
         Assert.Equal(ImportAction.None, ItemImporter.Plan(_temp.Combine("root"), Widget, DropMode.Move, Desktops, Root));
         Assert.Equal(ImportAction.None, ItemImporter.Plan(_temp.Combine("missing.txt"), Widget, DropMode.Move, Desktops, Root));
+    }
+
+    // The report that started this: a folder dragged in from the desktop was linked, so it showed in both places.
+    [Fact]
+    public async Task Import_FromTheDesktop_LeavesNothingOnTheDesktop()
+    {
+        var folder = Directory.CreateDirectory(_temp.Combine(@"desktop\Trip")).FullName;
+        _temp.CreateFile(@"desktop\Trip\photo.jpg");
+        var empty = Directory.CreateDirectory(_temp.Combine(@"desktop\Empty")).FullName;
+        var document = _temp.CreateFile(@"desktop\report.pdf");
+        var program = _temp.CreateFile(@"desktop\tool.exe");
+        var shortcut = _temp.CreateFile(@"desktop\Chrome.lnk");
+
+        var added = await _sta.InvokeAsync(() =>
+            ItemImporter.ImportTo([folder, empty, document, program, shortcut], Widget, DropMode.Move, Desktops, Root));
+
+        Assert.Empty(Directory.GetFileSystemEntries(Desktop));
+        Assert.Equal(
+            new[] { "Trip", "Empty", "report.pdf", "tool.exe", "Chrome.lnk" }.Select(name => Path.Combine(Widget, name)), added);
+        Assert.True(File.Exists(Path.Combine(Widget, @"Trip\photo.jpg")));
+        Assert.True(Directory.Exists(Path.Combine(Widget, "Empty")));
+        Assert.Equal(5, Directory.GetFileSystemEntries(Widget).Length); // The things themselves, no shortcuts to them.
+    }
+
+    [Fact]
+    public async Task Import_FromTheDesktop_InCopyMode_KeepsTheDesktopAsItIs()
+    {
+        var folder = Directory.CreateDirectory(_temp.Combine(@"desktop\Trip")).FullName;
+        var program = _temp.CreateFile(@"desktop\tool.exe");
+
+        await _sta.InvokeAsync(() => ItemImporter.Import([folder, program], Widget, DropMode.Copy, Desktops, Root));
+
+        Assert.True(Directory.Exists(folder));
+        Assert.True(File.Exists(program));
+        Assert.Equal(folder, ShortcutTarget(Path.Combine(Widget, "Trip.lnk")), ignoreCase: true);
+        Assert.Equal(program, ShortcutTarget(Path.Combine(Widget, "tool.lnk")), ignoreCase: true);
+    }
+
+    [Fact]
+    public async Task Import_AFolderWhoseNameIsTaken_IsNumbered()
+    {
+        Directory.CreateDirectory(Path.Combine(Widget, "Trip"));
+        var folder = Directory.CreateDirectory(_temp.Combine(@"desktop\Trip")).FullName;
+
+        var added = await _sta.InvokeAsync(() => ItemImporter.ImportTo([folder], Widget, DropMode.Move, Desktops, Root));
+
+        Assert.Equal([Path.Combine(Widget, "Trip (2)")], added);
+        Assert.False(Directory.Exists(folder));
     }
 
     [Fact]

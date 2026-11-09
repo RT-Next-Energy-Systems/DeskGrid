@@ -7,6 +7,7 @@
 //   https://github.com/shuding/liquid-glass
 // Both are re-written here for the CPU in C#. The licenses are in THIRD-PARTY-NOTICES.md.
 
+using System.Buffers;
 using DeskGrid.Desktop;
 
 namespace DeskGrid.Glass;
@@ -73,7 +74,7 @@ internal static class LiquidGlass
         var tint = Math.Clamp(style.Tint, 0, 1);
         var darkSide = Math.Clamp(style.DarkSide, 0, 1);
 
-        for (var y = 0; y < height; y++)
+        void DrawRow(int y)
         {
             for (var x = 0; x < width; x++)
             {
@@ -123,6 +124,16 @@ internal static class LiquidGlass
                 output[i + 2] = Byte(red * coverage);
                 output[i + 3] = Byte(coverage);
             }
+        }
+
+        try
+        {
+            // Rows are independent of each other, so they are shared out over the processors.
+            Parallel.For(0, height, DrawRow);
+        }
+        finally
+        {
+            ArrayPool<float>.Shared.Return(backdrop.Data);
         }
 
         return output;
@@ -200,7 +211,9 @@ internal static class LiquidGlass
     private static Pixels Blurred(ScreenImage screen, ScreenRect window, int pad, double sigma)
     {
         int width = window.Width + 2 * pad, height = window.Height + 2 * pad;
-        var data = new float[width * height * 3];
+        // Megabytes each time, and drawn again at every step of a dragged slider: rented, so the garbage collector
+        // is not kept busy with them. A rented array may be longer than asked for; only the part in use is touched.
+        var data = ArrayPool<float>.Shared.Rent(width * height * 3);
         var area = screen.Area;
         for (var y = 0; y < height; y++)
         {
@@ -220,12 +233,14 @@ internal static class LiquidGlass
         var box = (int)Math.Round((Math.Sqrt(12 * sigma * sigma / 3 + 1) - 1) / 2);
         if (box > 0)
         {
-            var scratch = new float[data.Length];
+            var scratch = ArrayPool<float>.Shared.Rent(width * height * 3);
             for (var pass = 0; pass < 3; pass++)
             {
                 BoxBlur(data, scratch, width, height, box, horizontal: true);
                 BoxBlur(scratch, data, width, height, box, horizontal: false);
             }
+
+            ArrayPool<float>.Shared.Return(scratch);
         }
 
         return new Pixels(data, width, height);
@@ -237,7 +252,7 @@ internal static class LiquidGlass
         int lines = horizontal ? height : width, length = horizontal ? width : height;
         int step = horizontal ? 3 : width * 3, lineStep = horizontal ? width * 3 : 3;
         var window = 2 * radius + 1f;
-        for (var line = 0; line < lines; line++)
+        Parallel.For(0, lines, line =>
         {
             var origin = line * lineStep;
             for (var channel = 0; channel < 3; channel++)
@@ -255,7 +270,7 @@ internal static class LiquidGlass
                         - source[origin + Math.Max(i - radius, 0) * step + channel];
                 }
             }
-        }
+        });
     }
 
     private sealed record Pixels(float[] Data, int Width, int Height)

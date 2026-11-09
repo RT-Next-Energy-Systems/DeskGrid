@@ -5,7 +5,7 @@ using DeskGrid.Shell;
 namespace DeskGrid.Folders;
 
 /// <summary>
-/// Reads the root folder (each subfolder is a widget, each visible file in one is an item) and watches
+/// Reads the root folder (each subfolder is a widget, each visible file or folder in one is an item) and watches
 /// it. Renames are reported right away; everything else is folded into one change after a quiet
 /// period. Events are raised on the <see cref="SynchronizationContext"/> the scanner was created on,
 /// in the order they happened, so a rename is always seen before the change that follows it.
@@ -77,9 +77,11 @@ internal sealed class FolderScanner : IDisposable
         {
             try
             {
-                var items = folder.GetFiles("*", VisibleEntries)
-                    .OrderBy(f => f.Name, NaturalStringComparer.Instance)
-                    .Select(f => new FolderItem(f.Name, f.FullName, f.LastWriteTimeUtc, TargetWriteTime(f, seen)))
+                // Subfolders are items too (a folder moved in from the desktop); what is inside them is not looked at.
+                var items = folder.GetFileSystemInfos("*", VisibleEntries)
+                    .OrderBy(entry => entry.Name, NaturalStringComparer.Instance)
+                    .Select(entry => new FolderItem(
+                        entry.Name, entry.FullName, entry.LastWriteTimeUtc, entry is FileInfo file ? TargetWriteTime(file, seen) : default))
                     .ToList();
                 widgets.Add(new WidgetFolder(folder.Name, folder.FullName, items));
             }

@@ -107,16 +107,15 @@ first to bring them all along.
 - It works on icons that are files on your desktop. "This PC", the Recycle Bin and other system icons can't be
   dropped on, and dropping onto a real folder on the desktop still moves the file into it, as usual.
 - Dropping a file on a program's shortcut no longer opens the file with that program: it makes a folder instead.
-- Shortcuts are moved or copied, and other files get a shortcut, by the same rules as dropping on a folder (below).
+- The icons are moved into the new folder, by the same rules as dropping on a folder (below).
 
 ### Dropping onto a folder
 
 | Dropped item | Result |
 |---|---|
-| Program (`.exe`) | A new shortcut to it. The program itself is never moved or copied |
-| Shortcut (`.lnk`, `.url`) lying on the desktop | Moved into the folder (Settings can switch this to copy) |
-| Shortcut from anywhere else (e.g. the Start menu folder) | Copied |
-| Any other file, or a folder | A new shortcut to it; the original stays where it is |
+| Anything lying on the desktop: a shortcut, file, program or folder | Moved into the folder, so it is no longer on the desktop. With **Keep on desktop** in Settings the desktop keeps it: a shortcut is copied, anything else gets a shortcut |
+| Shortcut (`.lnk`, `.url`) from anywhere else (e.g. the Start menu folder) | Copied |
+| File, program (`.exe`) or folder from anywhere else | A new shortcut to it; the original stays where it is and is never moved or copied |
 | Item taken from another folder's panel | Moved |
 
 Items keep the order they were added in; new items go last, or where you drop them in an open panel.
@@ -128,19 +127,20 @@ Tray menu → **Settings…**:
 - **Language**: English, Traditional Chinese (繁體中文), or follow Windows (the default). It applies as soon as you press Apply;
   the change log and the privacy link follow it.
 - **Root folder**: where the folders live. It can't be on the desktop (its folders would show up twice). **Open** shows it in Explorer.
-- **Panel columns** (1–8).
-- **Where a folder opens**: next to its icon (the default), or in the middle of the screen. A centered folder always
+- **Columns** of a panel (1–8).
+- **Folders open**: next to the folder (the default), or in the middle of the screen. A centered folder always
   opens in the same place at the same size, whatever it holds: as wide as the column count, and as tall.
-- **Desktop shortcuts dropped on a folder**: moved off the desktop, or copied.
-- **When a folder is deleted, the items inside it**: moved to the desktop (the default), or deleted along with it.
+- **Items dragged in from the desktop**: **Move in** (the default; they leave the desktop) or **Keep on desktop**
+  (shortcuts are copied, anything else gets a shortcut).
+- **Items in a deleted folder**: moved to the desktop (the default), or deleted along with it.
   If an item can't be moved, the folder is kept.
-- **Panel background**.
-- **Taskbar**: **Pin all folders to taskbar…** makes the shortcut for one taskbar button that lists every folder; drag it
+- **Background** of a panel.
+- **Taskbar**: **Pin all folders…** makes the shortcut for one taskbar button that lists every folder; drag it
   onto the taskbar yourself (Windows only lets you do the pinning).
 - **Check for updates**: looks for a newer release. If there is one you can update (downloads it, checks its SHA-256,
   and restarts into the new version), keep the current version (not asked about this release again), or cancel
   (asked again next start).
-- **Check for updates when DeskGrid starts**: on by default; untick it and DeskGrid never contacts GitHub on its own
+- **Check at startup**: on by default; untick it and DeskGrid never contacts GitHub on its own
   (see [Privacy](#privacy)).
 - **Keyboard shortcuts**: **Customize…** opens the list of shortcuts. See [Keyboard shortcuts](#keyboard-shortcuts).
 - **Allow control from scripts and AI agents**: off by default. See [Scripts and AI agents](#scripts-and-ai-agents).
@@ -161,7 +161,7 @@ Shortcuts work from any program, not only when DeskGrid is in front. Settings �
 
 To set one, click its box and press the keys you want; Backspace (or the × button) clears it, and **Reset to defaults**
 brings back the table above. A panel opens where the mouse pointer is, or in the middle of the screen if you chose
-that under **Where a folder opens**. A folder keeps its shortcut when you rename it.
+that under **Folders open**. A folder keeps its shortcut when you rename it.
 
 - A shortcut must include Ctrl, Alt or the Windows key, so it can't get in the way of typing. The key can be a letter,
   a digit, F1–F24, Space, Enter, an arrow or Home, End, PageUp, PageDown, Insert, Delete.
@@ -224,7 +224,7 @@ It uses the network for one thing, looking for a newer version on GitHub:
   for the latest release of this project. GitHub sees what any web request shows (your IP address and a
   `DeskGrid/<version>` user agent); DeskGrid sends nothing else.
 - If you choose **Update**, it downloads the new exe from GitHub and checks its SHA-256 before replacing the old one.
-- Untick **Check for updates when DeskGrid starts** in Settings and DeskGrid makes no network connection unless you
+- Untick **Check at startup** in Settings and DeskGrid makes no network connection unless you
   press **Check for updates**.
 
 **Start with Windows** is only set up if you say yes (on first run, or from the tray menu). It adds a single entry

@@ -22,7 +22,7 @@
     <value>Done</value>
   </data>
   <data name="SettingsSavePrompt" xml:space="preserve">
-    <value>Save the current settings?</value>
+    <value>Save changes?</value>
   </data>
   <data name="SettingsPreviewHeading" xml:space="preserve">
     <value>Sample folder</value>
@@ -40,19 +40,19 @@
     <value>New folder</value>
   </data>
   <data name="NewFolderExists" xml:space="preserve">
-    <value>A folder with this name already exists.</value>
+    <value>That name is taken.</value>
   </data>
   <data name="NewFolderInvalidName" xml:space="preserve">
-    <value>Enter a name without \ / : * ? " &lt; &gt; |</value>
+    <value>A name can't be empty or contain \ / : * ? " &lt; &gt; |</value>
   </data>
   <data name="NewFolderPrompt" xml:space="preserve">
-    <value>Folder name:</value>
+    <value>Name</value>
   </data>
   <data name="NewFolderTitle" xml:space="preserve">
     <value>New folder</value>
   </data>
   <data name="SettingsBackground" xml:space="preserve">
-    <value>Panel background</value>
+    <value>Background</value>
   </data>
   <data name="SettingsBackgroundCustom" xml:space="preserve">
     <value>Custom</value>
@@ -64,7 +64,7 @@
     <value>Light</value>
   </data>
   <data name="SettingsBackgroundSystem" xml:space="preserve">
-    <value>Follow system (acrylic)</value>
+    <value>System (acrylic)</value>
   </data>
   <data name="SettingsBrowse" xml:space="preserve">
     <value>Browse…</value>
@@ -73,16 +73,16 @@
     <value>Color…</value>
   </data>
   <data name="SettingsColumns" xml:space="preserve">
-    <value>Panel columns</value>
+    <value>Columns</value>
   </data>
   <data name="SettingsDropCopy" xml:space="preserve">
-    <value>Keep original on desktop (copy)</value>
+    <value>Keep on desktop</value>
   </data>
   <data name="SettingsDropMode" xml:space="preserve">
-    <value>Desktop shortcuts dropped on a widget</value>
+    <value>Items dragged in from the desktop</value>
   </data>
   <data name="SettingsDropMove" xml:space="preserve">
-    <value>Remove from desktop (move)</value>
+    <value>Move in</value>
   </data>
   <data name="SettingsOpacity" xml:space="preserve">
     <value>Opacity</value>
@@ -91,13 +91,10 @@
     <value>Liquid glass</value>
   </data>
   <data name="SettingsOpacityHintGlass" xml:space="preserve">
-    <value>For liquid glass this is how frosted it is: lower is clearer, higher is easier to read over a busy background.</value>
+    <value>Lower is clearer.</value>
   </data>
   <data name="SettingsGlassShade" xml:space="preserve">
     <value>Edge shading</value>
-  </data>
-  <data name="SettingsGlassShadeHint" xml:space="preserve">
-    <value>How dark the glass edge gets on the side away from the light. 0% leaves only the bright edge.</value>
   </data>
   <data name="SettingsPageGeneral" xml:space="preserve">
     <value>General</value>
@@ -106,19 +103,19 @@
     <value>Panel</value>
   </data>
   <data name="SettingsPageShortcuts" xml:space="preserve">
-    <value>Shortcuts and control</value>
+    <value>Shortcuts</value>
   </data>
   <data name="SettingsPageAbout" xml:space="preserve">
     <value>About</value>
   </data>
   <data name="SettingsOpacityHint" xml:space="preserve">
-    <value>The system style is blurred glass, which can't be made more or less transparent. Any other value here paints a plain translucent color instead.</value>
+    <value>Any other value turns the blur off.</value>
   </data>
   <data name="SettingsRootFolder" xml:space="preserve">
     <value>Root folder</value>
   </data>
   <data name="SettingsRootInvalid" xml:space="preserve">
-    <value>This root folder can't be used: {0}</value>
+    <value>Can't use this folder: {0}</value>
     <comment>{0} = reason</comment>
   </data>
   <data name="SettingsTitle" xml:space="preserve">
@@ -134,54 +131,57 @@
     <value>Settings…</value>
   </data>
   <data name="PanelEmpty" xml:space="preserve">
-    <value>This folder is empty.</value>
+    <value>Empty</value>
   </data>
   <data name="RootFolderRejected" xml:space="preserve">
-    <value>The root folder "{0}" can't be used: {1}
+    <value>Can't use root folder "{0}": {1}
 
-Using the default root folder instead:
+Using the default:
 {2}</value>
     <comment>{0} = configured root folder, {1} = reason, {2} = default root folder</comment>
   </data>
   <data name="RootFolderOnDesktop" xml:space="preserve">
-    <value>it is on the desktop, so its folders would show up twice next to the desktop's own icons.</value>
+    <value>it is on the desktop, so its folders would show twice.</value>
   </data>
   <data name="RootFolderNotAbsolute" xml:space="preserve">
-    <value>it is not a full path.</value>
+    <value>not a full path.</value>
   </data>
   <data name="WidgetPinToTaskbar" xml:space="preserve">
     <value>Pin to taskbar…</value>
   </data>
   <data name="PinCreated" xml:space="preserve">
-    <value>A shortcut for "{0}" was created and is selected in Explorer.&#10;&#10;Drag it onto the taskbar, or right-click it, choose Show more options, then Pin to taskbar.</value>
+    <value>Shortcut for "{0}" created.
+
+Drag it onto the taskbar, or right-click → Show more options → Pin to taskbar.</value>
   </data>
   <data name="PinFailed" xml:space="preserve">
-    <value>Could not create the shortcut: {0}</value>
+    <value>Couldn't create the shortcut: {0}</value>
   </data>
   <data name="PanelRename" xml:space="preserve">
-    <value>Rename folder</value>
+    <value>Rename</value>
   </data>
   <data name="PanelNoFolders" xml:space="preserve">
-    <value>There are no folders yet.</value>
+    <value>No folders yet</value>
   </data>
   <data name="PanelBack" xml:space="preserve">
     <value>All folders</value>
   </data>
   <data name="SettingsPinAll" xml:space="preserve">
-    <value>Pin all folders to taskbar…</value>
+    <value>Pin all folders…</value>
   </data>
   <data name="RenameFailed" xml:space="preserve">
-    <value>Could not rename the folder: {0}</value>
+    <value>Couldn't rename: {0}</value>
   </data>
   <data name="UpdateTitle" xml:space="preserve">
     <value>DeskGrid update</value>
   </data>
   <data name="UpdateAvailable" xml:space="preserve">
-    <value>DeskGrid {0} is available. You are using {1}.</value>
+    <value>DeskGrid {0} is out. You have {1}.</value>
     <comment>{0} = new version, {1} = current version</comment>
   </data>
   <data name="UpdateHint" xml:space="preserve">
-    <value>Update: download the new version and restart DeskGrid with it.&#10;Keep this version: change nothing and stop asking about this release.&#10;Cancel: not now; ask again the next time DeskGrid starts.</value>
+    <value>Keep: skip this version.
+Cancel: ask again next time.</value>
   </data>
   <data name="UpdateButtonUpdate" xml:space="preserve">
     <value>Update</value>
@@ -199,22 +199,22 @@ Using the default root folder instead:
     <value>Downloading… {0:P0} ({1:F1} of {2:F1} MB)</value>
   </data>
   <data name="UpdateVerifying" xml:space="preserve">
-    <value>Verifying the download…</value>
+    <value>Verifying…</value>
   </data>
   <data name="UpdateInstalling" xml:space="preserve">
-    <value>Installing the new version and restarting DeskGrid…</value>
+    <value>Installing…</value>
   </data>
   <data name="UpdateFailed" xml:space="preserve">
-    <value>The update failed: {0}</value>
+    <value>Update failed: {0}</value>
   </data>
   <data name="UpdateNoFile" xml:space="preserve">
-    <value>the release has no installable file or checksum.</value>
+    <value>this release has no installable file.</value>
   </data>
   <data name="UpdateChecksumMismatch" xml:space="preserve">
-    <value>the downloaded file does not match its checksum.</value>
+    <value>checksum mismatch.</value>
   </data>
   <data name="UpdateFolderNotWritable" xml:space="preserve">
-    <value>the folder DeskGrid is installed in cannot be written to. Download the new version from the release page instead.</value>
+    <value>DeskGrid's folder can't be written to. Download it from the release page.</value>
   </data>
   <data name="SettingsVersion" xml:space="preserve">
     <value>Version</value>
@@ -223,13 +223,13 @@ Using the default root folder instead:
     <value>Check for updates</value>
   </data>
   <data name="SettingsCheckAtStartup" xml:space="preserve">
-    <value>Check for updates when DeskGrid starts</value>
+    <value>Check at startup</value>
   </data>
   <data name="SettingsAllowControl" xml:space="preserve">
     <value>Allow control from scripts and AI agents</value>
   </data>
   <data name="SettingsAllowControlHint" xml:space="preserve">
-    <value>Programs you run can then list, create, rename and fill folders and open panels with "DeskGrid.exe --ctl". Nothing can be deleted this way. Only on this computer, for your own account.</value>
+    <value>Through "DeskGrid.exe --ctl", this account only. Nothing can be deleted.</value>
   </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>Privacy</value>
@@ -247,63 +247,71 @@ Using the default root folder instead:
     <value>Checking…</value>
   </data>
   <data name="SettingsUpToDate" xml:space="preserve">
-    <value>You are on the latest version.</value>
+    <value>Up to date.</value>
   </data>
   <data name="SettingsCheckFailed" xml:space="preserve">
-    <value>Could not check for updates.</value>
+    <value>Check failed.</value>
   </data>
   <data name="SettingsUpdateAvailable" xml:space="preserve">
-    <value>Version {0} is available.</value>
+    <value>{0} is available.</value>
   </data>
   <data name="WidgetDelete" xml:space="preserve">
     <value>Delete folder…</value>
   </data>
   <data name="DeleteConfirmEmpty" xml:space="preserve">
-    <value>Delete the folder "{0}"?&#10;&#10;The folder goes to the Recycle Bin.</value>
+    <value>Delete "{0}"?
+
+It goes to the Recycle Bin.</value>
     <comment>{0} = folder name</comment>
   </data>
   <data name="DeleteConfirmMove" xml:space="preserve">
-    <value>Delete the folder "{0}"?&#10;&#10;Its {1} item(s) are moved to the desktop first. The folder goes to the Recycle Bin.</value>
+    <value>Delete "{0}"?
+
+Its {1} item(s) move to the desktop.</value>
     <comment>{0} = folder name, {1} = number of items</comment>
   </data>
   <data name="DeleteConfirmItems" xml:space="preserve">
-    <value>Delete the folder "{0}" and its {1} item(s)?&#10;&#10;They go to the Recycle Bin.</value>
+    <value>Delete "{0}" and its {1} item(s)?
+
+They go to the Recycle Bin.</value>
     <comment>{0} = folder name, {1} = number of items</comment>
   </data>
   <data name="DeleteMoveFailed" xml:space="preserve">
-    <value>The folder was not deleted because not everything could be moved to the desktop: {0}</value>
+    <value>Not deleted. Couldn't move to the desktop: {0}</value>
     <comment>{0} = names of the items that could not be moved</comment>
   </data>
   <data name="DeleteNoDesktop" xml:space="preserve">
-    <value>The folder was not deleted because the desktop folder to move its items to was not found.</value>
+    <value>Not deleted. The desktop folder wasn't found.</value>
   </data>
   <data name="DeleteStopped" xml:space="preserve">
-    <value>The folder was not deleted.</value>
+    <value>Not deleted.</value>
   </data>
   <data name="DeleteFailed" xml:space="preserve">
-    <value>Could not delete the folder: {0}</value>
+    <value>Couldn't delete: {0}</value>
     <comment>{0} = reason</comment>
   </data>
   <data name="SettingsDeleteMode" xml:space="preserve">
-    <value>When a folder is deleted, the items inside it</value>
+    <value>Items in a deleted folder</value>
   </data>
   <data name="SettingsDeleteMove" xml:space="preserve">
-    <value>Move to the desktop</value>
+    <value>Move to desktop</value>
   </data>
   <data name="SettingsDeleteItems" xml:space="preserve">
-    <value>Are deleted along with it</value>
+    <value>Delete too</value>
   </data>
   <data name="AutoStartOffer" xml:space="preserve">
-    <value>Start DeskGrid automatically when you sign in to Windows?&#10;&#10;You can change this later in the tray menu ("Start with Windows").</value>
+    <value>Start DeskGrid with Windows?
+
+You can change this in the tray menu.</value>
   </data>
   <data name="AutoStartFailed" xml:space="preserve">
-    <value>Windows did not allow changing the start-up entry. A policy on this PC may be blocking it.</value>
+    <value>Windows blocked the change. A policy on this PC may be why.</value>
   </data>
   <data name="SettingsOpen" xml:space="preserve">
     <value>Open</value>
   </data>
   <data name="SettingsRootMissing" xml:space="preserve">
-    <value>That folder doesn't exist yet. OK creates it.</value>
+    <value>That folder doesn't exist yet. Apply creates it.</value>
   </data>
   <data name="SettingsTaskbar" xml:space="preserve">
     <value>Taskbar</value>
@@ -322,13 +330,13 @@ Using the default root folder instead:
     <value>CHANGELOG.md</value>
   </data>
   <data name="ChangeLogMissing" xml:space="preserve">
-    <value>This build has no change log.</value>
+    <value>No change log in this build.</value>
   </data>
   <data name="WhatsNewTitle" xml:space="preserve">
     <value>What's new in DeskGrid {0}</value>
   </data>
   <data name="WhatsNewHint" xml:space="preserve">
-    <value>DeskGrid was updated. You can read this again any time in Settings → Change log…</value>
+    <value>Also in Settings → Change log…</value>
   </data>
   <data name="ButtonClose" xml:space="preserve">
     <value>Close</value>
@@ -340,16 +348,13 @@ Using the default root folder instead:
     <value>Follow Windows</value>
   </data>
   <data name="SettingsOpenMode" xml:space="preserve">
-    <value>Where a folder opens</value>
+    <value>Folders open</value>
   </data>
   <data name="SettingsOpenNearby" xml:space="preserve">
     <value>Next to the folder</value>
   </data>
   <data name="SettingsOpenCentered" xml:space="preserve">
-    <value>In the center of the screen</value>
-  </data>
-  <data name="SettingsOpenModeHint" xml:space="preserve">
-    <value>Centered: every folder opens in the same place at the same size, set by the column count.</value>
+    <value>Screen center, same size</value>
   </data>
   <data name="LanguageNameEnglish" xml:space="preserve">
     <comment>Not translated: a language is always listed under its own name.</comment>
@@ -366,16 +371,16 @@ Using the default root folder instead:
     <value>Customize…</value>
   </data>
   <data name="SettingsHotkeysHint" xml:space="preserve">
-    <value>{0} opens all folders, from any program.</value>
+    <value>{0} opens all folders.</value>
   </data>
   <data name="SettingsHotkeysHintNone" xml:space="preserve">
-    <value>No shortcut is set for opening all folders.</value>
+    <value>No shortcut for all folders.</value>
   </data>
   <data name="HotkeysTitle" xml:space="preserve">
     <value>Keyboard shortcuts</value>
   </data>
   <data name="HotkeysIntro" xml:space="preserve">
-    <value>Click a box, then press the keys you want. Backspace clears it. Shortcuts work from any program.</value>
+    <value>Click a box, press the keys. Backspace clears.</value>
   </data>
   <data name="HotkeysGroupGeneral" xml:space="preserve">
     <value>DeskGrid</value>
@@ -384,7 +389,7 @@ Using the default root folder instead:
     <value>Open a folder</value>
   </data>
   <data name="HotkeysNoFolders" xml:space="preserve">
-    <value>There are no folders yet.</value>
+    <value>No folders yet</value>
   </data>
   <data name="HotkeyAllFolders" xml:space="preserve">
     <value>Open all folders</value>
@@ -408,19 +413,19 @@ Using the default root folder instead:
     <value>Reset to defaults</value>
   </data>
   <data name="HotkeysNeedModifier" xml:space="preserve">
-    <value>Include Ctrl, Alt or the Windows key, or the shortcut would get in the way of typing.</value>
+    <value>Add Ctrl, Alt or Win.</value>
   </data>
   <data name="HotkeysInUse" xml:space="preserve">
     <comment>{0} is a shortcut such as Ctrl+Alt+M, {1} the action that already has it.</comment>
-    <value>{0} is already used for "{1}".</value>
+    <value>{0} is used by "{1}".</value>
   </data>
   <data name="HotkeysTaken" xml:space="preserve">
     <comment>{0} is a list, one line each: the shortcut, then the action.</comment>
-    <value>Another program already uses these shortcuts, so they can't be used by DeskGrid:
+    <value>Used by another program:
 
 {0}
 
-Choose different keys in Settings, under Keyboard shortcuts.</value>
+Pick other keys in Settings.</value>
   </data>
   <data name="SettingsBackup" xml:space="preserve">
     <value>Settings backup</value>
@@ -436,28 +441,28 @@ Choose different keys in Settings, under Keyboard shortcuts.</value>
   </data>
   <data name="ExportDone" xml:space="preserve">
     <comment>{0} is the path of the file.</comment>
-    <value>Settings exported to:
+    <value>Exported to:
 {0}</value>
   </data>
   <data name="ExportFailed" xml:space="preserve">
     <comment>{0} is the reason.</comment>
-    <value>The settings could not be exported: {0}</value>
+    <value>Export failed: {0}</value>
   </data>
   <data name="ImportConfirm" xml:space="preserve">
     <comment>{0} is the path of the file.</comment>
-    <value>Replace the current settings (folder positions, item order, shortcuts, panel look…) with those in this file?
+    <value>Replace the current settings with this file?
 
 {0}</value>
   </data>
   <data name="ImportFailed" xml:space="preserve">
     <comment>{0} is the reason.</comment>
-    <value>This file could not be imported: {0}</value>
+    <value>Import failed: {0}</value>
   </data>
   <data name="ImportRootKept" xml:space="preserve">
     <comment>{0} is the root folder in the file, {1} why it can't be used.</comment>
-    <value>The root folder in the file ({0}) cannot be used here ({1}), so the current one was kept.</value>
+    <value>Root folder {0} can't be used here ({1}). The current one was kept.</value>
   </data>
   <data name="ImportDone" xml:space="preserve">
-    <value>Settings imported.</value>
+    <value>Imported.</value>
   </data>
 </root>

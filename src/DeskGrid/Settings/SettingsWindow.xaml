@@ -125,7 +125,6 @@
                 <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="OpenNearby" GroupName="OpenMode" />
                 <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="OpenCentered" GroupName="OpenMode" />
               </StackPanel>
-              <TextBlock x:Name="OpenModeHint" Margin="0,8,0,0" Opacity="0.75" TextWrapping="Wrap" />
             </StackPanel>
           </Border>
 
@@ -151,15 +150,23 @@
                            Text="{Binding Value, ElementName=OpacitySlider, StringFormat={}{0:P0}}" />
               </StackPanel>
               <TextBlock x:Name="OpacityHint" Margin="0,6,0,0" Opacity="0.75" TextWrapping="Wrap" Visibility="Collapsed" />
-              <!-- Only liquid glass has an edge to shade. -->
-              <StackPanel Margin="0,12,0,0" Orientation="Horizontal" IsEnabled="{Binding IsChecked, ElementName=BackgroundGlass}">
+              <!-- Only liquid glass has an edge to shade: under the other styles the row is dimmed, so it reads as "not adjustable". -->
+              <StackPanel x:Name="ShadeRow" Margin="0,12,0,0" Orientation="Horizontal" IsEnabled="{Binding IsChecked, ElementName=BackgroundGlass}">
+                <StackPanel.Style>
+                  <Style TargetType="StackPanel">
+                    <Style.Triggers>
+                      <Trigger Property="IsEnabled" Value="False">
+                        <Setter Property="Opacity" Value="0.35" />
+                      </Trigger>
+                    </Style.Triggers>
+                  </Style>
+                </StackPanel.Style>
                 <TextBlock x:Name="ShadeLabel" Width="90" Margin="0,0,8,0" VerticalAlignment="Center" />
                 <Slider x:Name="ShadeSlider" Width="160" VerticalAlignment="Center" Minimum="0" Maximum="1"
                         SmallChange="0.05" LargeChange="0.1" TickFrequency="0.05" IsSnapToTickEnabled="True" />
                 <TextBlock Width="40" Margin="8,0,0,0" VerticalAlignment="Center"
                            Text="{Binding Value, ElementName=ShadeSlider, StringFormat={}{0:P0}}" />
               </StackPanel>
-              <TextBlock x:Name="ShadeHint" Margin="0,6,0,0" Opacity="0.75" TextWrapping="Wrap" />
             </StackPanel>
           </Border>
         </StackPanel>

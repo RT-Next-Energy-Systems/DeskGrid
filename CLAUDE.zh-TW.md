@@ -79,7 +79,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 ## Config / Folders 實作要點（階段 2）
 
 - **資料來源**：資料夾內容只來自磁碟；config 只補檔案系統存不了的東西。`WidgetConfig` 以資料夾名稱為 key（不分大小寫）：`Position`（實體螢幕像素，未擺放前為 null）、`ItemOrder`（檔名清單）。`PanelColumns`（全域，預設 3）、`DropMode`（move/copy）、`RootPath` 為全域。
-- **項目**：widget 資料夾內的可見檔案（略過隱藏/系統檔，如 desktop.ini）；子資料夾不算項目；根目錄下的散檔忽略。首次依 Explorer 自然排序（`StrCmpLogicalW`），新項目接在最後，消失的項目從排序移除。
+- **項目**：widget 資料夾內的可見檔案（略過隱藏/系統檔，如 desktop.ini）；子資料夾也是項目（2026-11-10：從桌面移進來的資料夾；不看它裡面的內容，點一下在檔案總管開啟）；根目錄下的散檔忽略。首次依 Explorer 自然排序（`StrCmpLogicalW`），新項目接在最後，消失的項目從排序移除。
 - **執行緒**：`FolderScanner` 必須在有 `SynchronizationContext` 的執行緒（UI）建立；所有事件依發生順序 post 回該 context，因此 rename 一定先於隨後的 refresh 被處理。整個 config 只在 UI 執行緒存取，不需鎖。
 - **Rename**：`WidgetRenamed` / `ItemRenamed` 立即轉移設定並存檔；其他變動 300ms debounce 後整個重掃（資料量小，重掃比追蹤差異簡單）。watcher 溢位 → 重掃。
 - **根目錄被刪又重建**（2026-11-03，issue #24）：`FileSystemWatcher` 會隨被監看的資料夾一起死。`FolderScanner` 在 watcher 發 `Error`、或安靜期後發現根目錄不存在時，每秒檢查一次根目錄（`_recoveryTimer`），回來後在 UI context 重建 watcher 並發 `Changed`；根目錄不存在期間重掃回 `null`，所以設定不會被清掉。
@@ -147,7 +147,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 
 ## 拖放 / Tray / 設定 實作要點（階段 6）
 
-- **拖放規則**（`ItemImporter.Plan`，使用者選定）：`.exe` → 建 `.lnk`（絕不移動或複製 exe 本體）；**直接放在**使用者或公用桌面上的 `.lnk`/`.url` → 依 `DropMode`（預設移動）；其他地方的 `.lnk`/`.url` → 一律複製；一般檔案與資料夾 → 建 `.lnk`；已在該資料夾內、或拖的是該資料夾本身/上層 → 忽略。同名自動加「 (2)」。公用桌面捷徑沒權限移動 → 改複製。
+- **拖放規則**（`ItemImporter.Plan`；2026-11-10 依使用者要求修改：「拖進來的東西只能出現在 DeskGrid，不能兩邊同時存在」）：**直接放在**使用者或公用桌面上的任何東西（`.lnk`/`.url`、檔案、`.exe`、資料夾）→ `DropMode` 為移動（預設）時**搬**進去；`DropMode` 為複製時桌面保留（捷徑用複製，其他建 `.lnk`）。其他地方來的：`.lnk`/`.url` → 一律複製；`.exe`、一般檔案、資料夾 → 建 `.lnk`（絕不從那裡移動或複製：Program Files、別的磁碟機、大型資料夾）。根目錄內的（從別的面板拖出）→ 移動，但別的 widget 自己的資料夾只建 `.lnk`。已在該資料夾內、或拖的是該資料夾本身 / 上層 → 忽略。同名自動加「 (2)」。公用桌面的檔案因權限不足無法移動 → 改為複製；資料夾則改建 `.lnk`。要跨磁碟機的資料夾整個複製後刪除（`FolderDeleter.MoveDirectory`）。**已在真實桌面驗證**（2026-11-10，explorer.exe 啟動 dev build，用 `DesktopIconGrid` 讀出圖示位置後由 PowerShell 注入滑鼠輸入）：把含一個檔案的資料夾、空資料夾、文字檔從桌面拖到 widget 上，三者都離開桌面、本體進到資料夾，沒有捷徑。
 - **捷徑命名**：exe 用檔名（`notepad.exe` → `notepad.lnk`）、其他保留完整檔名（`report.pdf.lnk`）、資料夾用資料夾名、磁碟機根目錄用路徑去掉檔名不能有的字元後剩下的部分（`D:\` → `D.lnk`；以前會變成 `D:\.lnk` 這個路徑，捷徑落在磁碟機根目錄，2026-11-06 修正）；工作目錄 = 目標所在資料夾。
 - **拖放接線**：`FolderWidget` 只負責 `AllowDrop` 與拖曳中的高亮；`WidgetBoard` 處理 `DragOver`（游標顯示第一個可處理項目的效果：移動 / 複製 / 連結）與 `Drop`。檔案操作自己做完後對來源回報 **Copy，絕不回報 Move**，否則來源會以為要刪掉原檔。OLE 拖放可送達 Explorer 底下的跨行程子視窗（已用 OLE 拖曳實測）。
 - **原生選單深色模式**（2026-11-03，issue #18）：`Shell/MenuTheme` 以 ordinal 135 / 136 呼叫 uxtheme 的 `SetPreferredAppMode(AllowDark)` / `FlushMenuThemes`（未公開 API，經 CsWin32 的 `LoadLibrary` + `GetProcAddress` 取得，Windows 10 1903 以前不做），系統匣選單與面板項目右鍵選單每次顯示前呼叫；缺函式就維持淺色。測試 `MenuThemeTests` 在這台 Win11 確認 ordinal 存在；**沒有目視確認選單真的變深色**。設定視窗本來就跟隨系統深色（Fluent）。
@@ -157,7 +157,8 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
   - **第一次執行**：config `autoStartAsked` 為 false 時，widget 出現後問一次「要不要開機啟動」（已啟用的使用者靜默標記）；之後只能從系統匣選單切換。登錄寫入被拒（群組原則）時 `ReportAutoStart` 會跳警告。
 - **單一執行個體**：`Local\DeskGrid.SingleInstance` mutex，第二個直接結束。
 - **設定視窗**：語言（*跟隨 Windows* / *English* / *繁體中文*，config `language`；按「套用」後整個程序立即套用，`UiLanguage.Apply`，之後開啟的視窗與選單都用新語言）、根目錄（`OpenFolderDialog`；旁邊「開啟」用框裡的路徑在 Explorer 開，資料夾不存在就提示）、欄數 1–8、資料夾展開位置（附近 / 置中，config `panelOpenMode`）、桌面捷徑拖入模式、刪除模式、面板背景（自訂色用 comdlg32 `ChooseColor`）、「工作列」卡片（`PinAllFolders` 回呼 → `App.PinAllFoldersToTaskbar`）、版本 / 檢查更新（含「啟動時檢查更新」勾選）、GitHub 網址（`UpdateChecker.RepositoryUrl`）、「隱私」連結（資源字串 `SettingsPrivacyUrl`，依語言指到 README 的隱私段落；README 改標題要同步改）與「更新紀錄…」（`ChangeLogWindow`，內容是編進 exe 的 `CHANGELOG.md`（英文）或 `CHANGELOG.zh-TW.md`（繁中介面，由資源字串 `ChangeLogResource` 選；csproj `<EmbeddedResource LogicalName=… WithCulture="false">`，沒有 `WithCulture="false"` 的話 MSBuild 會把 `.zh-TW.md` 當成衛星組件資源），`ChangeLog.Parse` 只認 `##` / `###` / `- `；**兩份要一起維護**，`ChangeLogTests` 檢查版本與項目數一致）。卡片放在 `ScrollViewer`，視窗 `MaxHeight` = 工作區高度，螢幕太矮時捲動、套用 / 完成固定在下方。非模態。**套用 / 完成**（2026-11-09，使用者要求，好在不重開設定的情況下試外觀）：套用會驗證並觸發 `Applied`（視窗不關）；完成、視窗的關閉鈕與 Esc 都走 `OnClosing`，只有 `HasUnsavedChanges`（控制項的 `Key` 文字與開啟時 / 上次套用時不同；`PanelBackground` 沒有值相等）才詢問「儲存目前的設定？」（是 → 套用，失敗就留在視窗；否 → 捨棄）。`CloseDiscarding()` 不詢問直接關（匯入與結束時用）。視窗開著時套用語言變更會重新執行 `LocalizeTexts`。**非模態視窗的 `IsCancel` 不會自動關窗**，要自己 `Close()`。根目錄變更 → 重建 catalog 與 widget；其他設定 → 存檔、關閉已開面板。
-- **設定分頁**（2026-11-09，使用者要求左邊一列工具欄、每一項對應一類設定）：設定視窗是固定大小，左邊是有四個分頁的 `ListBox`（`General` 一般：語言、根資料夾、拖放與刪除規則；`Panel` 面板：欄數、資料夾開在哪、背景含不透明度與邊緣暗度；`Shortcuts` 快速鍵與控制：工作列按鈕、鍵盤快速鍵、腳本控制；`About` 關於：版本、更新、連結），右邊每個分頁一個 `ScrollViewer`，由 `OnPageChanged` 切換（其他的 `Collapsed`，所以隱藏的分頁不會排版：要量尺寸的測試得先 `ShowPage`）。所有控制項的 `x:Name` 不變；套用／完成固定在所有分頁下方。**面板預覽**（`PanelPreview`，2026-11-09）：面板分頁在卡片上方（`ScrollViewer` 之外）有一個範例面板，欄數、背景、不透明度、邊緣暗度、顏色一變就重畫：把解析後的 `PanelTheme` 畫在產生出來的範例桌布上；液態玻璃用同一個 `LiquidGlass.Render` 從該桌布畫。視窗內畫不出系統壓克力，所以用它的表面色 85% 代替。沒有在真桌面上看過（測試只檢查每種樣式都畫得出來）。**邊緣暗度**（設定檔 `panelBackground.glassShade`，`null` = 50%）：液態玻璃邊緣暗側相對亮側的強度（`GlassStyle.DarkSide`，0 = 只留亮邊）；只有選液態玻璃時滑桿才能用。分頁與滑桿沒有在真桌面上看過，只在一次性測試中用真正的視窗畫出（zh-TW）。
+- **設定分頁**（2026-11-09，使用者要求左邊一列工具欄、每一項對應一類設定）：設定視窗是固定大小，左邊是有四個分頁的 `ListBox`（`General` 一般：語言、根資料夾、拖放與刪除規則；`Panel` 面板：欄數、資料夾開在哪、背景含不透明度與邊緣暗度；`Shortcuts` 快速鍵與控制：工作列按鈕、鍵盤快速鍵、腳本控制；`About` 關於：版本、更新、連結），右邊每個分頁一個 `ScrollViewer`，由 `OnPageChanged` 切換（其他的 `Collapsed`，所以隱藏的分頁不會排版：要量尺寸的測試得先 `ShowPage`）。所有控制項的 `x:Name` 不變；套用／完成固定在所有分頁下方。**面板預覽**（`PanelPreview`，2026-11-09）：面板分頁在卡片上方（`ScrollViewer` 之外）有一個範例面板，欄數、背景、不透明度、邊緣暗度、顏色一變就重畫：把解析後的 `PanelTheme` 畫在產生出來的範例桌布上；液態玻璃用同一個 `LiquidGlass.Render` 從該桌布畫。視窗內畫不出系統壓克力，所以用它的表面色 85% 代替。沒有在真桌面上看過（測試只檢查每種樣式都畫得出來）。**邊緣暗度**（設定檔 `panelBackground.glassShade`，`null` = 50%）：液態玻璃邊緣暗側相對亮側的強度（`GlassStyle.DarkSide`，0 = 只留亮邊）；只有選液態玻璃時滑桿才能用，其他樣式下整列調暗成 35%（2026-11-10：停用的滑桿只是淡灰，看不出不能調）。分頁與滑桿沒有在真桌面上看過，只在一次性測試中用真正的視窗畫出（zh-TW）。
+- **預覽不在 UI 執行緒繪製**（2026-11-10，有使用者回報修改預覽時電腦當掉）：`PanelPreview.Update` 以前在滑桿拖動的每一次 `ValueChanged` 都在 UI 執行緒呼叫 `LiquidGlass.Render`；本機實測（Debug、200 % 縮放）每一步約 80 ms 加一次 gen-2 回收，600 步共 48 秒，期間視窗沒有回應。現在 `DrawGlassAsync` 在執行緒集區繪製，一次一張，期間進來的要求只畫最新的一個（`_glass`；選了別的樣式時為 null，晚到的玻璃丟棄）；第一張玻璃出來前先用表面色代替。`LiquidGlass.Render` 的 float 緩衝區改向 `ArrayPool` 租用，逐列運算與方框模糊用 `Parallel.For`，所以開啟真正的液態玻璃面板也變快。原因是量測找到的；回報者的電腦無法取得，所以沒有在那台電腦上確認。測試：`PanelPreview_ManyChangesInARow_…`、`PanelPreview_GlassStillBeingDrawn_…`。
 - **匯出／匯入設定**（2026-11-09，使用者要求；匯出檔名 `DeskGrid_yyyy_mm_dd_hh_mm.json`）：設定 → 一般 →「設定備份」（`ExportButton` / `ImportButton`；`SettingsWindow.ExportSettings` / `ImportSettings` 回呼，由 `App.ExportSettings` / `ImportSettings` 用 `SaveFileDialog` / `OpenFileDialog` 執行）。`Config/ConfigPorter` 用與 `config.json` 相同的序列化器（`ConfigStore.Serialize` / `Deserialize`）寫檔與讀檔：合法 JSON 但沒有任何 `AppConfig` 屬性的，視為不是設定檔。匯入會先詢問（是／否），再由 `AppConfig.ReplaceWith` **就地**取代全部設定（其他物件都持有這個實例），但保留這台電腦自己的歷史（`autoStartAsked`、`lastSeenVersion`、`skippedUpdateVersion`）；根資料夾若通不過這台的 `RootFolder.Prepare`，就保留目前的並告知；接著 `StopWidgets` → 存檔 → `UiLanguage.Apply` → `StartWidgets` → `ApplyHotkeys(report: true)`，並關閉設定視窗（它顯示的是被取代前的值）。實機驗證（dev build 用 explorer.exe 啟動，UI Automation 操作）：匯出的預設檔名與檔案、匯入（欄數、開啟方式、改過的快速鍵，再匯出一次讀回確認）、非設定檔被拒絕並說明原因、原設定已還原。未驗證：匯入端無法使用檔案裡的根資料夾的情況。注意：Claude 桌面 app 的 shell 的 `%APPDATA%` 是虛擬化的，要讀真正的設定請用匯出，不要直接讀檔。
 - **Fluent 視窗**（設定、新增資料夾、更新）：`ThemeMode="System"`；卡片樣式 `Card` / `CardTitle` 在 `App.xaml`；`FluentWindow.UseOpaqueBackground` 關掉 Mica 改不透明底色，文字才能用 ClearType。
 - **XAML 不可引用本組件型別**（例如 `x:Static` 到 `Strings`）：`Strings` 在 build 時才產生在 `obj/`，WPF 的暫時標記組件編譯不到。介面文字在 code-behind 設定。
@@ -228,9 +229,9 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 
 # 行為規則（必須遵守）
 
-- 拖 `.exe` 進資料夾 → 建立 `.lnk`，**禁止移動或複製 exe 本體**
-- 拖桌面捷徑進資料夾 → 預設「移動」，設定可改「複製」
-- 支援項目：`.lnk` / `.url` / `.exe` / 一般檔案
+- 拖**桌面上**的任何東西（捷徑、檔案、`.exe`、資料夾）進資料夾 → **搬**進去，絕不兩邊同時出現；設定可改「桌面保留」（捷徑複製，其他建捷徑）
+- 從**其他地方**拖 `.exe`、檔案或資料夾 → 建立 `.lnk`，**禁止移動或複製本體**
+- 支援項目：`.lnk` / `.url` / `.exe` / 一般檔案 / 資料夾
 - 啟動一律用 ShellExecute
 - Per-Monitor V2 DPI aware（MVP 先確保單螢幕正確，多螢幕列為後續）
 - 介面文字放資源檔，支援英文與繁體中文（zh-TW），使用者可在設定選擇語言；**所有進版控的 Markdown 都有兩種語言版**（`NAME.md` + `NAME.zh-TW.md`）——見 `AGENTS.md`「語言政策」
@@ -253,6 +254,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 10 | 介面語言選擇（英文 / 繁體中文）、雙語文件政策、面板展開位置（附近 / 置中） | 完成 2026-11-03（建置 / 測試通過）；沒有實機驗證：執行中切換語言、置中展開面板在真實桌面上的樣子。2026-11-06：全程式碼找 bug，修正 10 項（見 `context/decisions.md` 2026-11-06），307 測試通過；Fluent 視窗以兩種語言、兩種主題繪製成圖檢查無誤，修正本身沒有在真實桌面上試過 |
 | 11 | 讓腳本與 AI agent 控制（`--ctl` CLI + 控制 pipe，需在設定開啟） | 完成 2026-11-08（建置 / 345 測試通過）；每個指令都從 Bash 與 PowerShell 對真機 dev build 執行過，面板開啟有在畫面上確認；等待使用者驗證 |
 | 12 | 鍵盤快速鍵（系統層級，每個動作與每個資料夾都能自訂） | 完成 2026-11-08（建置 / 374 測試通過）；已在真實桌面按下快速鍵並使用快速鍵視窗（見「鍵盤快速鍵」）；與階段 11 一起定為 0.5.0（tag 由專案擁有者推） |
+| 13 | 桌面的東西改為搬進資料夾而不是建捷徑（資料夾可當項目）、設定預覽改在背景繪製、介面文字縮短 | 完成 2026-11-10（建置 / 446 測試通過）；從桌面拖入已在真實桌面以注入的滑鼠輸入實際操作；預覽修正與新文字尚未在真實桌面上看過 |
 
 # 工作方式
 

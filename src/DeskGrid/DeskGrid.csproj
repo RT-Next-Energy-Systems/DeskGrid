@@ -17,7 +17,7 @@
     <SatelliteResourceLanguages>en;zh-Hant;zh-TW</SatelliteResourceLanguages>
 
     <!-- Release builds override Version from the git tag (see .github/workflows/release.yml). -->
-    <Version>0.6.1</Version>
+    <Version>0.6.2</Version>
     <!-- The SDK would append "+<commit>" to the product version, so it differed between builds of one release.
          Code-signing services (SignPath Foundation) require the product name and version to be fixed. -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>

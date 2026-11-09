@@ -683,3 +683,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: A fixed lower value (some people like the depth); tabs across the top (less room for more pages); a tree. The four groups were chosen by Claude from what was already there, without asking.
 **Consequences**: Every control keeps its name; pages other than the shown one are collapsed, so a test that measures layout must show its page first. The window is a fixed 780 x 620. The README screenshots of the settings window are out of date.
 **Author**: The user asked; Claude chose the grouping
+
+---
+
+### 2026-11-10 — Desktop items are moved in; folders are items; preview drawn in the background; shorter texts
+**Decision**: (1) Anything lying directly on the desktop that is dropped on a folder is moved in, whatever it is (shortcut, file, `.exe`, folder); `dropMode` copy now means "keep on desktop" for all of them (shortcut copied, the rest linked). From anywhere else nothing changes: originals are never moved. A subfolder of a widget folder is an item. (2) The settings preview draws liquid glass on a pool thread, newest request only; `LiquidGlass.Render` uses pooled buffers and `Parallel.For`. (3) Interface texts were shortened in both languages; the hints under "Folders open" and "Edge shading" were removed.
+**Reason**: The user reported that a desktop folder dragged in showed both on the desktop and in DeskGrid, and asked that nothing dragged in ever exists in both places; they chose "desktop only", "a desktop .exe moves too" and "keep the setting, for everything". Another user reported the computer hanging while changing the preview; measured: about 80 ms on the UI thread and a gen-2 collection per slider step. The user asked for shorter, less machine-sounding texts.
+**Alternatives**: Moving originals from anywhere (breaks installed programs, copies big folders across drives); keeping a shortcut and hiding the desktop original (two things to keep in step); debouncing the preview on the UI thread (still blocks for each drawing).
+**Consequences**: This replaces the earlier rule "never move an .exe" for programs that lie on the desktop. Subfolders that were already inside widget folders now show as items. The hang is fixed for the cause found by measurement; it was not reproduced on the reporter's computer.
+**Author**: The user asked and chose the rules; Claude designed and built it

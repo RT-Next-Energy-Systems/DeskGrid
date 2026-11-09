@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.6.2
+
+### Changed
+
+- Anything dragged from the desktop onto a folder is now moved in: files, programs and folders as well as shortcuts.
+  It used to get a shortcut, so it showed on the desktop and in the folder. The setting (now **Items dragged in from
+  the desktop**: **Move in** / **Keep on desktop**) covers all of them. Things dragged from anywhere else still get a
+  shortcut and stay where they are.
+- A folder inside a DeskGrid folder is shown as an item; clicking it opens it in Explorer.
+- Shorter texts throughout: settings, dialogs and messages. The edge shading slider is dimmed when it does not apply (only Liquid glass has an edge).
+
+### How to use
+
+- Drag anything from the desktop onto a folder: it moves in and leaves the desktop. To keep the desktop as it is, choose **Keep on desktop** in Settings → General → **Items dragged in from the desktop**.
+
+### Fixed
+
+- Settings → Panel: dragging the opacity or edge shading slider with Liquid glass could freeze DeskGrid, and on a
+  slower computer the whole desktop with it. The preview is now drawn in the background, and Liquid glass is
+  drawn several times faster.
+
 ## 0.6.1
 
 ### Added
