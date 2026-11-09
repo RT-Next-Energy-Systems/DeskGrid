@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.1
+
+### Added
+
+- After DeskGrid has been updated, a window shows what is new since the version you used last, with a short "How to
+  use" for each new feature. It follows the interface language.
+
+### How to use
+
+- **After an update** the window opens by itself; close it with **Close** or Esc.
+- **See it again later:** Settings → **Change log…**.
+
 ## 0.5.0
 
 ### Added
@@ -10,8 +22,6 @@
 - Scripts and AI agents can drive DeskGrid with `DeskGrid.exe --ctl <command>`: list, create, rename and fill folders,
   reorder items, open and close panels. Off until **Allow control from scripts and AI agents** is ticked in Settings;
   only programs of your own Windows account can use it, and nothing can be deleted this way.
-- After DeskGrid has been updated, a window shows what is new since the version you used last, with a short "How to
-  use" for each new feature. It follows the interface language; Settings → **Change log…** shows it again.
 
 ### How to use
 
