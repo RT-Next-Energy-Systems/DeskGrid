@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.5.3
+
+### Fixed
+
+- An update download that stalled (the connection stayed open but no data came) left the update window stuck for good.
+  It now gives up after a minute without data and shows the error, so the buttons come back.
+- A corrupt `config.json` that could not be moved aside (locked or read-only) stopped DeskGrid from starting. It now
+  starts with the default settings.
+- A root folder path Windows cannot read no longer raises an error when chosen; DeskGrid says it cannot use it.
+- An icon or folder preview that failed to load once stayed blank until the file changed. It is tried again now.
+- The 0.5.2 release was never published (its build failed); everything listed under 0.5.2 below is in this release.
+
+### How to use
+
+- Nothing to set up: these are fixes. The new 0.5.2 features (Liquid glass, edge shading, the paged Settings window)
+  are explained under 0.5.2 below, and Settings → **Change log…** shows this list again later.
+
 ## 0.5.2
 
 ### Added
