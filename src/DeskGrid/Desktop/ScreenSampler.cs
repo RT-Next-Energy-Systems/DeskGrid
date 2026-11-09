@@ -13,9 +13,16 @@ internal static class ScreenSampler
     /// of the pixels exceed, so the white text and dark halo drawn on top don't sway it. <see langword="null"/>
     /// if the desktop isn't what's showing there (a window or the taskbar covers it) or the screen can't be read.
     /// </summary>
-    public static unsafe double? DesktopBrightness(ScreenRect area)
+    public static double? DesktopBrightness(ScreenRect area) =>
+        area.Width <= 0 || area.Height <= 0 || !IsDesktopVisible(area) || Capture(area) is not { } bgra ? null : UpperQuartile(bgra);
+
+    /// <summary>
+    /// What is on screen in <paramref name="area"/> as top-down 32-bit BGRA pixels (windows on top included), or
+    /// <see langword="null"/> if it can't be read.
+    /// </summary>
+    public static unsafe byte[]? Capture(ScreenRect area)
     {
-        if (area.Width <= 0 || area.Height <= 0 || !IsDesktopVisible(area))
+        if (area.Width <= 0 || area.Height <= 0)
         {
             return null;
         }
@@ -47,7 +54,7 @@ internal static class ScreenSampler
             var previous = PInvoke.SelectObject(memory, bitmap);
             var copied = PInvoke.BitBlt(memory, 0, 0, area.Width, area.Height, screen, area.Left, area.Top, ROP_CODE.SRCCOPY);
             PInvoke.SelectObject(memory, previous);
-            return copied ? UpperQuartile(new ReadOnlySpan<byte>(bits, area.Width * area.Height * 4)) : null;
+            return copied ? new ReadOnlySpan<byte>(bits, area.Width * area.Height * 4).ToArray() : null;
         }
         finally
         {
@@ -58,7 +65,7 @@ internal static class ScreenSampler
     }
 
     // Bgra pixels in, Rec. 709 luma at the 75th percentile out.
-    private static double UpperQuartile(ReadOnlySpan<byte> bgra)
+    private static double UpperQuartile(byte[] bgra)
     {
         Span<int> histogram = stackalloc int[256];
         for (var i = 0; i + 3 < bgra.Length; i += 4)

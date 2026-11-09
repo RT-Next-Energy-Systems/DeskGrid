@@ -7,13 +7,17 @@ namespace DeskGrid.Panel;
 
 /// <summary>How a panel looks, resolved from the user's <see cref="PanelBackground"/> and the system theme.</summary>
 /// <param name="UseAcrylic">Let DWM paint the system acrylic; <paramref name="Background"/> is then only the fallback.</param>
-internal sealed record PanelTheme(bool UseAcrylic, Color Background, Color Foreground)
+/// <param name="Glass">Draw liquid glass; <paramref name="Background"/> is then the color the glass is frosted with, its alpha how much.</param>
+internal sealed record PanelTheme(bool UseAcrylic, Color Background, Color Foreground, bool Glass = false)
 {
     private static readonly Color DarkSurface = Color.FromRgb(0x20, 0x20, 0x20);
     private static readonly Color LightSurface = Color.FromRgb(0xF3, 0xF3, 0xF3);
     private static readonly Color DarkText = Color.FromRgb(0x1A, 0x1A, 0x1A);
 
     public bool IsDark => Luminance(Foreground) > 0.5;
+
+    /// <summary>The same look with dark text (on a bright background) or white text (on a dark one).</summary>
+    public PanelTheme WithTextFor(bool brightBackground) => this with { Foreground = brightBackground ? DarkText : Colors.White };
 
     public Color Hover => IsDark ? Color.FromArgb(0x26, 0xFF, 0xFF, 0xFF) : Color.FromArgb(0x14, 0x00, 0x00, 0x00);
 
@@ -35,6 +39,7 @@ internal sealed record PanelTheme(bool UseAcrylic, Color Background, Color Foreg
         PanelBackgroundStyle.Dark => 0.82,
         PanelBackgroundStyle.Light => 0.8,
         PanelBackgroundStyle.Custom => new PanelBackground().CustomOpacity,
+        PanelBackgroundStyle.LiquidGlass => 0.25,
         _ => 0.85,
     };
 
@@ -43,6 +48,9 @@ internal sealed record PanelTheme(bool UseAcrylic, Color Background, Color Foreg
         PanelBackgroundStyle.Dark => new(false, WithOpacity(DarkSurface, setting.Opacity ?? DefaultOpacity(setting.Style)), Colors.White),
         PanelBackgroundStyle.Light => new(false, WithOpacity(Colors.White, setting.Opacity ?? DefaultOpacity(setting.Style)), DarkText),
         PanelBackgroundStyle.Custom => Custom(setting),
+        PanelBackgroundStyle.LiquidGlass => new(
+            false, WithOpacity(systemDark ? DarkSurface : LightSurface, setting.Opacity ?? DefaultOpacity(setting.Style)),
+            systemDark ? Colors.White : DarkText, Glass: true),
         _ => SystemStyle(setting, systemDark, acrylicSupported),
     };
 

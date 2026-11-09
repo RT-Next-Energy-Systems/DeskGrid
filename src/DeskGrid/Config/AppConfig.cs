@@ -105,6 +105,9 @@ internal enum PanelBackgroundStyle
     Dark,
     Light,
     Custom,
+
+    /// <summary>The screen behind the panel, blurred and bent at the rim like curved glass.</summary>
+    LiquidGlass,
 }
 
 /// <summary>Where a folder's panel opens.</summary>

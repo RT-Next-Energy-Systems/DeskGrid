@@ -72,6 +72,12 @@
   <data name="SettingsOpacity" xml:space="preserve">
     <value>不透明度</value>
   </data>
+  <data name="SettingsBackgroundGlass" xml:space="preserve">
+    <value>液態玻璃</value>
+  </data>
+  <data name="SettingsOpacityHintGlass" xml:space="preserve">
+    <value>液態玻璃的這個數值是霧面程度：越低越通透，越高在雜亂的背景上越容易閱讀。</value>
+  </data>
   <data name="SettingsOpacityHint" xml:space="preserve">
     <value>跟隨系統的背景是毛玻璃，本身無法調整透明度；改成其他數值，就會改用一般的半透明純色。</value>
   </data>
@@ -194,6 +200,12 @@
   </data>
   <data name="SettingsPrivacyUrl" xml:space="preserve">
     <value>https://github.com/RT-Next-Energy-Systems/DeskGrid/blob/main/README.zh-TW.md#%E9%9A%B1%E7%A7%81</value>
+  </data>
+  <data name="SettingsNotices" xml:space="preserve">
+    <value>第三方聲明</value>
+  </data>
+  <data name="SettingsNoticesUrl" xml:space="preserve">
+    <value>https://github.com/RT-Next-Energy-Systems/DeskGrid/blob/main/README.zh-TW.md#%E7%AC%AC%E4%B8%89%E6%96%B9%E8%81%B2%E6%98%8E</value>
   </data>
   <data name="SettingsChecking" xml:space="preserve">
     <value>檢查中…</value>

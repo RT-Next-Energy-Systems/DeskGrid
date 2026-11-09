@@ -6,10 +6,16 @@
 
 - The panel background's opacity can now be set for the system, dark and light styles too, not only a custom color.
   (The system style is blurred glass, which has no opacity: choosing a value turns it into a plain translucent color.)
+- A new panel background, **Liquid glass**, in the spirit of iOS: the screen behind the panel shows through, lightly
+  blurred and bent at the rim like curved glass, with a bright edge. The text turns dark or white to suit what the
+  glass shows. Its code is adapted from two MIT-licensed projects, credited under "Third-party notices" in the README
+  and linked from Settings.
 
 ### How to use
 
 - Settings → **Panel background**, pick a style, then move the **Opacity** slider. Lower is more see-through.
+- **Liquid glass:** Settings → **Panel background** → **Liquid glass**, then **OK**. The **Opacity** slider is how
+  frosted it is: lower is clearer, higher is easier to read over a busy wallpaper.
 
 ## 0.5.1
 

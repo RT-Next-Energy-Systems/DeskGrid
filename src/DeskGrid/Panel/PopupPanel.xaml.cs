@@ -55,7 +55,7 @@ internal partial class PopupPanel : Window
     private static readonly TimeSpan DropDelay = TimeSpan.FromMilliseconds(250);
 
     private readonly ScreenRect _anchor;
-    private readonly PanelTheme _theme;
+    private PanelTheme _theme; // Liquid glass changes the text color once it knows what it shows.
     private readonly IconService _icons;
     private readonly int _columns;
     private bool _closing;
@@ -71,6 +71,7 @@ internal partial class PopupPanel : Window
     private bool _menuOpen;
     private DispatcherTimer? _resize;
     private ScreenCapture? _capture;
+    private PanelGlass? _glass; // Only for the liquid glass background.
 
     // Watches the cursor while a drag involves this panel: one of its items being dragged, or (for a panel opened
     // by a drag held over its widget) the drag that opened it. See OnWatch.
@@ -123,6 +124,7 @@ internal partial class PopupPanel : Window
         {
             _watch.Stop();
             _capture?.Dispose();
+            _glass?.Dispose();
         };
         _watch.Tick += OnWatch;
         // While an item is being dragged the drop target (the desktop, another app) takes activation; a command of
@@ -578,11 +580,16 @@ internal partial class PopupPanel : Window
         }
     }
 
-    private void ApplyTheme()
+    private void ApplyColors()
     {
         Foreground = new SolidColorBrush(_theme.Foreground);
         Resources["HoverBrush"] = new SolidColorBrush(_theme.Hover);
         Resources["TileBrush"] = new SolidColorBrush(_theme.Tile);
+    }
+
+    private void ApplyTheme()
+    {
+        ApplyColors();
 
         if (_theme.UseAcrylic)
         {
@@ -595,6 +602,20 @@ internal partial class PopupPanel : Window
                 ResizeBorderThickness = new Thickness(0),
                 GlassFrameThickness = new Thickness(-1),
                 UseAeroCaptionButtons = false,
+            });
+        }
+        else if (_theme.Glass)
+        {
+            // The glass draws its own rim; its picture takes the place of this brush once the panel has a place (PanelGlass).
+            WindowStyle = WindowStyle.None;
+            AllowsTransparency = true;
+            Frame.CornerRadius = new CornerRadius(PanelGlass.CornerRadius);
+            Frame.Background = new SolidColorBrush(_theme.Background);
+            _glass = new PanelGlass(_theme, brush => Frame.Background = brush, bright =>
+            {
+                // Text that reads on what the glass turned out to show, whichever way the system theme is set.
+                _theme = _theme.WithTextFor(bright);
+                ApplyColors();
             });
         }
         else
@@ -781,6 +802,7 @@ internal partial class PopupPanel : Window
 
         PInvoke.SetWindowPos(window, HWND.Null, position.X, position.Y, width, height,
             SET_WINDOW_POS_FLAGS.SWP_NOZORDER | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE | SET_WINDOW_POS_FLAGS.SWP_FRAMECHANGED);
+        _glass?.Update(new ScreenRect(position.X, position.Y, position.X + width, position.Y + height), monitor.WorkArea, monitor.Dpi / 96.0);
     }
 
     // The window was moved to a monitor with another DPI. Windows then proposes a size and place of its own (the old ones

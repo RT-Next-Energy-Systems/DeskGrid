@@ -115,6 +115,8 @@ internal partial class SettingsWindow : Window
 
     private void OnPrivacy(object sender, RoutedEventArgs e) => ShellItem.Open(Strings.SettingsPrivacyUrl);
 
+    private void OnNotices(object sender, RoutedEventArgs e) => ShellItem.Open(Strings.SettingsNoticesUrl);
+
     private void OnChangeLog(object sender, RoutedEventArgs e) => new ChangeLogWindow { Owner = this }.ShowDialog();
 
     private async void OnCheckUpdates(object sender, RoutedEventArgs e)
@@ -157,9 +159,15 @@ internal partial class SettingsWindow : Window
         UpdateOpacityHint();
     }
 
-    // Only the system style needs a word: the opacity replaces its blur.
-    private void UpdateOpacityHint() =>
-        OpacityHint.Visibility = BackgroundSystem.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+    // Two styles need a word about what the slider does: the system one loses its blur, liquid glass is frosted by it.
+    private void UpdateOpacityHint()
+    {
+        var hint = BackgroundSystem.IsChecked == true ? Strings.SettingsOpacityHint
+            : BackgroundGlass.IsChecked == true ? Strings.SettingsOpacityHintGlass
+            : null;
+        OpacityHint.Text = hint;
+        OpacityHint.Visibility = hint is null ? Visibility.Collapsed : Visibility.Visible;
+    }
 
     private PanelBackgroundStyle SelectedBackground =>
         Enum.GetValues<PanelBackgroundStyle>().First(style => BackgroundRadioFor(style).IsChecked == true);
@@ -168,6 +176,7 @@ internal partial class SettingsWindow : Window
     {
         PanelBackgroundStyle.Dark => BackgroundDark,
         PanelBackgroundStyle.Light => BackgroundLight,
+        PanelBackgroundStyle.LiquidGlass => BackgroundGlass,
         PanelBackgroundStyle.Custom => BackgroundCustom,
         _ => BackgroundSystem,
     };
@@ -203,6 +212,7 @@ internal partial class SettingsWindow : Window
         GitHubLink.Inlines.Add(new Uri(UpdateChecker.RepositoryUrl).AbsolutePath.Trim('/'));
         GitHubLink.ToolTip = UpdateChecker.RepositoryUrl;
         PrivacyLink.Inlines.Add(Strings.SettingsPrivacy);
+        NoticesLink.Inlines.Add(Strings.SettingsNotices);
         ChangeLogButton.Content = Strings.SettingsChangeLog;
         ColumnsLabel.Text = Strings.SettingsColumns;
         DropModeLabel.Text = Strings.SettingsDropMode;
@@ -215,10 +225,10 @@ internal partial class SettingsWindow : Window
         BackgroundSystem.Content = Strings.SettingsBackgroundSystem;
         BackgroundDark.Content = Strings.SettingsBackgroundDark;
         BackgroundLight.Content = Strings.SettingsBackgroundLight;
+        BackgroundGlass.Content = Strings.SettingsBackgroundGlass;
         BackgroundCustom.Content = Strings.SettingsBackgroundCustom;
         ColorButton.Content = Strings.SettingsColor;
         OpacityLabel.Text = Strings.SettingsOpacity;
-        OpacityHint.Text = Strings.SettingsOpacityHint;
         VersionLabel.Text = Strings.SettingsVersion;
         VersionText.Text = UpdateChecker.CurrentVersion.ToString(3);
         CheckUpdatesButton.Content = Strings.SettingsCheckUpdates;

@@ -85,6 +85,7 @@
               <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundSystem" GroupName="Background" />
               <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundDark" GroupName="Background" />
               <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundLight" GroupName="Background" />
+              <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundGlass" GroupName="Background" />
               <RadioButton MinWidth="0" Margin="0,0,24,0" x:Name="BackgroundCustom" GroupName="Background" />
             </WrapPanel>
             <StackPanel Margin="0,12,0,0" Orientation="Horizontal" IsEnabled="{Binding IsChecked, ElementName=BackgroundCustom}">
@@ -153,7 +154,8 @@
             <WrapPanel Grid.Row="2" Grid.Column="0" Margin="0,10,12,0" VerticalAlignment="Center" x:Name="LinksRow">
               <TextBlock x:Name="GitHubLabel" FontWeight="SemiBold" Margin="0,0,8,0" />
               <TextBlock Margin="0,0,16,0"><Hyperlink x:Name="GitHubLink" Click="OnGitHub" /></TextBlock>
-              <TextBlock><Hyperlink x:Name="PrivacyLink" Click="OnPrivacy" /></TextBlock>
+              <TextBlock Margin="0,0,16,0"><Hyperlink x:Name="PrivacyLink" Click="OnPrivacy" /></TextBlock>
+              <TextBlock><Hyperlink x:Name="NoticesLink" Click="OnNotices" /></TextBlock>
             </WrapPanel>
             <Button Grid.Row="2" Grid.Column="1" Margin="0,10,0,0" VerticalAlignment="Top" HorizontalAlignment="Stretch" MinWidth="84" Padding="12,5" x:Name="ChangeLogButton" Click="OnChangeLog" />
           </Grid>

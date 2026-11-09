@@ -75,6 +75,12 @@
   <data name="SettingsOpacity" xml:space="preserve">
     <value>Opacity</value>
   </data>
+  <data name="SettingsBackgroundGlass" xml:space="preserve">
+    <value>Liquid glass</value>
+  </data>
+  <data name="SettingsOpacityHintGlass" xml:space="preserve">
+    <value>For liquid glass this is how frosted it is: lower is clearer, higher is easier to read over a busy background.</value>
+  </data>
   <data name="SettingsOpacityHint" xml:space="preserve">
     <value>The system style is blurred glass, which can't be made more or less transparent. Any other value here paints a plain translucent color instead.</value>
   </data>
@@ -200,6 +206,12 @@ Using the default root folder instead:
   </data>
   <data name="SettingsPrivacyUrl" xml:space="preserve">
     <value>https://github.com/RT-Next-Energy-Systems/DeskGrid#privacy</value>
+  </data>
+  <data name="SettingsNotices" xml:space="preserve">
+    <value>Third-party notices</value>
+  </data>
+  <data name="SettingsNoticesUrl" xml:space="preserve">
+    <value>https://github.com/RT-Next-Energy-Systems/DeskGrid#third-party-notices</value>
   </data>
   <data name="SettingsChecking" xml:space="preserve">
     <value>Checking…</value>

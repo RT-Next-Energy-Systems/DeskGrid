@@ -30,6 +30,22 @@ public sealed class PrivacyLinkTests
     }
 }
 
+public sealed class NoticesLinkTests
+{
+    // The MIT licenses of the glass code ask for their notice to travel with it: Settings links to it in the README.
+    [Theory]
+    [InlineData("en", "#third-party-notices")]
+    [InlineData("zh-TW", "README.zh-TW.md#%E7%AC%AC%E4%B8%89%E6%96%B9%E8%81%B2%E6%98%8E")]
+    public void SettingsNoticesUrl_PointsAtTheNoticesSectionOfTheReadme(string culture, string expectedPart)
+    {
+        var url = Strings.ResourceManager.GetString("SettingsNoticesUrl", new CultureInfo(culture));
+
+        Assert.NotNull(url);
+        Assert.StartsWith(UpdateChecker.RepositoryUrl, url);
+        Assert.Contains(expectedPart, url);
+    }
+}
+
 public sealed class WidgetFolderNameTests : IDisposable
 {
     private readonly TempDirectory _root = new();
@@ -179,6 +195,8 @@ public sealed class SettingsWindowTests : IDisposable
     [InlineData("System", "Custom")]
     [InlineData("Dark", "Light")]
     [InlineData("Custom", "System")]
+    [InlineData("Light", "LiquidGlass")]
+    [InlineData("LiquidGlass", "Dark")]
     public async Task Ok_ReportsTheBackgroundThatIsChecked(string initialName, string pickedName)
     {
         var initial = Enum.Parse<PanelBackgroundStyle>(initialName);

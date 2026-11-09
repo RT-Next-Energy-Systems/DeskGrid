@@ -669,3 +669,12 @@
 **Alternatives**: 只給深色 / 淺色用滑桿（把預設樣式排除在外）；在 Acrylic 上疊一層色（只能更不透明，滑桿有一半沒作用）；所有樣式（含自訂）共用同一個不透明度（會改變既有 config 的意思）。
 **Consequences**: 跟隨系統選了不透明度就失去毛玻璃。各樣式的預設（系統顯示 85 %、深色 82 %、淺色 80 %）在 `PanelTheme.DefaultOpacity`。尚未在真實桌面上看過。
 **Author**: 使用者提出；Claude 設計並實作
+
+---
+
+### 2026-11-09 (3) — 液態玻璃面板背景：在 CPU 上以兩個 MIT 專案為基礎繪製
+**Decision**: 新增面板背景樣式 `liquidGlass`。面板在顯示之前讀一次它後面的畫面，由 `LiquidGlass.Render`（純 C#，不用 shader、不加新依賴）依那張畫面畫出背景：模糊、沿邊緣法線依 OverShifted/LiquidGlass 的衰減曲線在邊緣彎折，加上它的方向性邊緣光暈、一圈亮邊與輕微提亮，再依「不透明度」設定混入表面色（預設 25 %）。文字依玻璃實際呈現的畫面變成深色或白色。程式碼改寫自 OverShifted/LiquidGlass（MIT）與 shuding/liquid-glass（MIT）；它們的聲明與授權條文放在 README 的「第三方聲明」，設定與 Release 說明有連結，著作權行也在原始檔開頭。
+**Reason**: 使用者要求做 iOS 風格的玻璃效果，並要依開源專案的授權使用它們。這兩個 MIT 專案是授權乾淨的。`dragosniamtu/WPF-Liquid-Glass-Effect`（WPF、MIT）沒有採用：它的 shader 改編自一篇沒有程式碼授權的 Medium 文章，它自己的聲明就說散布要取得許可，而且需要一個二進位檔不是 MIT 授權的 NuGet 套件。自己是一個視窗，沒辦法即時看到後面的畫面而不拍到自己，所以在顯示之前拍一張。
+**Alternatives**: 像素 shader（repo 裡要放編譯好的 `.ps`，或建置時要有 HLSL 編譯器）；用 Windows.Graphics.Capture 即時擷取（面板會被拍進去，依賴也比較重）；用 DWM 的 acrylic（它不能彎折任何東西）。
+**Consequences**: 玻璃是一張快照：開著的面板後面有東西在動不會顯示。那張畫面（2880x1800 螢幕約 20 MB）只在面板開著時保留。任何散布程式的方式都必須附上這些聲明。尚未在其他 DPI、第二個螢幕或明亮視窗上看過。
+**Author**: 使用者提出；Claude 調查、選擇並實作

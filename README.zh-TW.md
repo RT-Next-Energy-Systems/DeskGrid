@@ -263,6 +263,32 @@ dotnet publish src/DeskGrid/DeskGrid.csproj -p:PublishProfile=win-x64   # -> art
 設計筆記與決策紀錄在 `CLAUDE.md` 與 `context/`。DeskGrid 是雙語專案：每份文件都有英文（`NAME.md`）與繁體中文
 （`NAME.zh-TW.md`）兩個版本，App 裡的每段文字也都有兩種語言；貢獻者要遵守的規則在 `AGENTS.md` 的「語言政策」。
 
+## 第三方聲明
+
+**液態玻璃** 面板背景（`src/DeskGrid/Glass/`）會畫出一片圓角玻璃，把後面的畫面模糊並彎折。折射曲線與邊緣光暈改寫自
+[OverShifted/LiquidGlass](https://github.com/OverShifted/LiquidGlass)（OpenGL shader），用圓角矩形距離場彎折背景、
+再稍微提高對比與飽和度的做法，則來自 [shuding/liquid-glass](https://github.com/shuding/liquid-glass)（SVG 濾鏡）。
+兩者都是 MIT 授權，DeskGrid 以 C# 在 CPU 上重寫。依授權要求，附上它們的著作權聲明與授權條文（法律文字維持英文）：
+
+> Copyright (c) 2026 Sepehr Kalanaki (OverShifted/LiquidGlass)
+> Copyright (c) 2025 Shu Ding (shuding/liquid-glass)
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+> documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+> rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+> permit persons to whom the Software is furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+> Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+> WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+> COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+> OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+「Liquid Glass」是 Apple Inc. 使用的名稱。DeskGrid 的玻璃只是模仿那種外觀，不是 Apple 的程式碼，也與 Apple 無關、
+未獲其認可。
+
 ## 授權
 
 [MIT](LICENSE) © 2026 Ryan Kuo

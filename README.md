@@ -289,6 +289,33 @@ windows yet clickable, and it works with both the classic desktop layout and the
 (`NAME.md`) and Traditional Chinese (`NAME.zh-TW.md`) and every text in the app in both languages; the rules for
 contributors are in "Language policy" in `AGENTS.md`.
 
+## Third-party notices
+
+The **Liquid glass** panel background (`src/DeskGrid/Glass/`) draws a rounded sheet that blurs and bends the screen
+behind it. Its refraction curve and rim glow are adapted from [OverShifted/LiquidGlass](https://github.com/OverShifted/LiquidGlass)
+(an OpenGL shader), and the idea of bending a backdrop with a rounded-rectangle distance field, with a slight contrast
+and saturation lift, comes from [shuding/liquid-glass](https://github.com/shuding/liquid-glass) (an SVG filter). Both
+are MIT-licensed and were re-written for the CPU in C#. Their notice and license follow, as the licenses ask:
+
+> Copyright (c) 2026 Sepehr Kalanaki (OverShifted/LiquidGlass)
+> Copyright (c) 2025 Shu Ding (shuding/liquid-glass)
+>
+> Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+> documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
+> rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+> permit persons to whom the Software is furnished to do so, subject to the following conditions:
+>
+> The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+> Software.
+>
+> THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+> WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+> COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+> OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+"Liquid Glass" is a name used by Apple Inc. DeskGrid's glass is an approximation of the look, not Apple's code, and is
+not affiliated with or endorsed by Apple.
+
 ## License
 
 [MIT](LICENSE) © 2026 Ryan Kuo
