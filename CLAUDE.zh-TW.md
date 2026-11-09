@@ -172,6 +172,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **來源**：`https://api.github.com/repos/RT-Next-Energy-Systems/DeskGrid/releases/latest`（匿名，每小時 60 次上限夠用）；略過 draft / prerelease；tag 去掉 `v` 後與組件版本（csproj `<Version>`）比 major.minor.build（所以發行版本只用三段：第四段如 0.4.2.1 會被忽略，該版永遠不會被提示更新）。exe 資產用字尾 `-win-x64.exe` 找（舊 v0.1.0 資產叫 `DeskFolders-…`），校驗檔是 `<exe 名>.sha256`。
 - **三個選項**：更新（下載 → 驗 SHA256（取自 release 資產的 API `digest` 欄位）→ `apply-update.ps1` 等本程序結束後 `Move-Item` 蓋掉 exe 再啟動；只有發布的單檔 exe 做得到，`UpdateInstaller.CanReplaceSelf`，開發版與無法寫入的資料夾改開 release 頁）、維持（config `skippedUpdateVersion` 記下該 tag，自動檢查不再提醒，手動檢查仍會彈）、取消（什麼都不存，下次啟動再提醒）。
 - **觸發**：啟動後 8 秒自動檢查一次（網路失敗只記 log，不打擾）；設定視窗顯示目前版本與「檢查更新」按鈕，結果文字顯示在按鈕旁。
+- **更新後顯示新功能**（2026-11-09）：config `lastSeenVersion`（上次顯示「新功能」的三段版本號）。widget 都出現後（`App.AfterFirstShow`，在首次執行的開機自啟詢問之後）`ShowWhatsNew` 拿它和 `UpdateChecker.CurrentVersion` 比：相同 → 什麼都不做；不同 → **先**存下目前版本再顯示視窗（當機不會讓它每次啟動都跳出來），而且除非是第一次執行（那時 `AutoStartAsked` 為 false；只記錄），只要 `ChangeLog.Since` 找得到內容就用 `ChangeLogWindow(seen, current)` 強制回應式開啟：內容是 `seen` 之後到執行中版本的各版（沒有 `lastSeenVersion` 時代的設定沒有 `seen`，只顯示執行中版本自己的那一段；降版沒有內容）。它與「設定 → 更新紀錄…」是同一個視窗、同一份內建更新紀錄，所以依介面語言顯示，外加一行提示（`WhatsNewTitle`、`WhatsNewHint`）。它看的是版本而不是更新方式，所以手動換檔更新也會顯示。每個新增功能的版本都有 `### 使用方法` 小節（見 `AGENTS.md`「更新紀錄與使用方法」），`ChangeLogTests` 對最新版本強制檢查。尚未在真實桌面上真的更新一次來看（視窗已在測試中以兩種語言建立並讀出內容）。
 - **可關閉**（2026-10-30，SignPath Foundation 條款要求連網行為要揭露且能關）：設定視窗「DeskGrid 啟動時檢查更新」（config `checkForUpdatesAtStartup`，預設開）。關掉後 DeskGrid 不會自己連網，只有使用者按「檢查更新」或選「更新」才連 GitHub。README 的「隱私 / Privacy」列出所有網路行為，新增網路行為時要同步改。
 
 ## 刪除資料夾與疊圖示建資料夾（階段 8）

@@ -279,6 +279,12 @@ Using the default root folder instead:
   <data name="ChangeLogMissing" xml:space="preserve">
     <value>This build has no change log.</value>
   </data>
+  <data name="WhatsNewTitle" xml:space="preserve">
+    <value>What's new in DeskGrid {0}</value>
+  </data>
+  <data name="WhatsNewHint" xml:space="preserve">
+    <value>DeskGrid was updated. You can read this again any time in Settings → Change log…</value>
+  </data>
   <data name="ButtonClose" xml:space="preserve">
     <value>Close</value>
   </data>

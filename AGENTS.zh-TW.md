@@ -22,6 +22,12 @@ DeskGrid 是雙語專案：**英文與繁體中文（zh-TW）**，兩種語言�
 - 不在範圍內：作者的本機工作筆記（`context/current-task.md`、`progress.md`、`todo.md`、`session-log.md`；已加入 `.gitignore`，繁體中文，格式自由）與 `LICENSE`（法律文字，只有英文）。
 - 翻譯時程式碼、路徑、指令、識別字原樣保留，只翻譯它們周圍的文字。
 
+## 更新紀錄與「使用方法」
+
+- 更新之後（執行中的版本與 `config.json` 的 `lastSeenVersion` 不同），DeskGrid 會跳出「新功能」視窗，依介面語言列出使用者還沒看過的各版本內容（`ChangeLogWindow`，資料來自內建的 `CHANGELOG.md` / `CHANGELOG.zh-TW.md`）。第一次執行只記錄版本，不跳視窗。
+- **新增功能的版本，要在 `CHANGELOG.md` 加 `### How to use` 小節（`CHANGELOG.zh-TW.md` 為 `### 使用方法`）**，放在 `### Added` 之後：每個功能一條，越短越白話越好（要按什麼、點什麼，不講原理）。最新版本有 `Added` 卻沒有這個小節時，`ChangeLogTests` 會失敗。
+- 開發功能時就寫好這段，放在它將發布的版本下（或 `## Unreleased`）；發布時只需要改標題。
+
 ## 程式碼與溝通
 
 - 程式碼（變數、函式、註解）、commit message、分支名稱：英文（conventional commits）。

@@ -651,3 +651,12 @@
 **Alternatives**: 讓 `--ctl rename` 等監看器（憑時間猜測）；拿掉指令裡的重新掃描（下一次 `list` 的答案會是舊的）；讓 `Reconcile` 去猜改名（它分不出改名與刪除再新增）。
 **Consequences**: 之後任何會改資料夾名稱的程式都必須一併呼叫 `MoveSettings`。沒有它時 `WidgetCatalogTests.RescanRightAfterRenamingAFolder_KeepsItsSettings` 會失敗。`LogTests`（會換掉靜態的 log 路徑）改放進 `ShellCollection` 單獨執行：新增的 log 讓別的測試同時寫 log 時，它偶爾會失敗。
 **Author**: 使用者要求真機測試、修 bug 並定為 0.5.0；bug 由 Claude 找到並修正
+
+---
+
+### 2026-11-09 — 更新後顯示新功能視窗，每個版本附「使用方法」
+**Decision**: DeskGrid 記住上次顯示「新功能」的版本（`config.json` 的 `lastSeenVersion`）。執行中的版本與它不同時，在 widget 都出現後，依介面語言用 `ChangeLogWindow` 顯示「記住的版本之後、到執行中版本」之間每一版的內容。第一次執行只記錄版本；沒有這個欄位時代的設定只顯示執行中版本自己的那一段。每個新增功能的版本，更新紀錄都要有 `### How to use` 小節（中文版是 `### 使用方法`），每個功能一條簡短的話；`ChangeLogTests` 檢查最新版本。規則寫在 `AGENTS.md` / `AGENTS.zh-TW.md`。
+**Reason**: 使用者要求每次更新後依所選語言出現更新紀錄，而且新功能要附上越簡單越好的使用說明。以版本為依據（而不是更新安裝程式）連手動換檔也涵蓋，不必多一個機制。
+**Alternatives**: 讓更新腳本傳旗標給新行程（漏掉手動更新、零件更多）；只顯示執行中版本（跳版本的使用者會漏掉中間的）；使用說明只放 README（更新當下沒人會去讀）。
+**Consequences**: 之後的版本要在開發功能時就寫 `### How to use`。視窗顯示前先存版本，所以當機不會讓它重複出現。尚未在真實桌面上真的更新一次來看。
+**Author**: 使用者提出；Claude 設計並實作

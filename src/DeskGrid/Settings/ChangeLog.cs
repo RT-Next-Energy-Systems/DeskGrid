@@ -67,6 +67,32 @@ internal static class ChangeLog
         return lines;
     }
 
+    /// <summary>
+    /// The entries of the versions the user has not seen: those newer than <paramref name="seen"/> up to <paramref name="current"/>.
+    /// With no <paramref name="seen"/> (settings from before the version was recorded) only <paramref name="current"/>'s own entry.
+    /// </summary>
+    public static IReadOnlyList<ChangeLogLine> Since(IReadOnlyList<ChangeLogLine> lines, Version? seen, Version current)
+    {
+        var picked = new List<ChangeLogLine>();
+        var inRange = false;
+        foreach (var line in lines)
+        {
+            if (line.Kind == ChangeLogKind.Release)
+            {
+                inRange = Version.TryParse(line.Text, out var version)
+                    && version <= current
+                    && (seen is null ? version == current : version > seen);
+            }
+
+            if (inRange)
+            {
+                picked.Add(line);
+            }
+        }
+
+        return picked;
+    }
+
     // A line break is a space between English words, but nothing between two Chinese characters, which have no spaces
     // between them; next to an English word, Chinese text has a space, as the Chinese change log writes it.
     private static string JoinWrapped(string first, string rest) =>

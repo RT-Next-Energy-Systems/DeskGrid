@@ -258,6 +258,61 @@ public sealed class SettingsWindowTests : IDisposable
         }
     }
 
+    // After an update: the window of what's new, in the interface language, with the running version's entry and its "how to use".
+    [Theory]
+    [InlineData("en", "How to use")]
+    [InlineData("zh-TW", "使用方法")]
+    public async Task WhatsNewWindow_ShowsTheRunningVersionsEntryIncludingHowToUse(string culture, string howToUse)
+    {
+        var before = Strings.Culture;
+        try
+        {
+            var (title, hint, texts) = await _ui.InvokeAsync(() =>
+            {
+                EnsureApplication();
+                Strings.Culture = new CultureInfo(culture);
+                var current = UpdateChecker.CurrentVersion;
+                var window = new ChangeLogWindow(null, current);
+                try
+                {
+                    window.Show();
+                    window.UpdateLayout();
+                    var all = AllText(window.Entries).ToList();
+                    return (window.Title, window.Hint.Text, all);
+                }
+                finally
+                {
+                    window.Close();
+                }
+            });
+
+            Assert.Contains(UpdateChecker.CurrentVersion.ToString(3), title);
+            Assert.Equal(Strings.ResourceManager.GetString("WhatsNewHint", new CultureInfo(culture)), hint);
+            Assert.Contains(howToUse, texts);
+            Assert.Single(texts, t => t == UpdateChecker.CurrentVersion.ToString(3)); // Only that version, not the older ones.
+        }
+        finally
+        {
+            Strings.Culture = before;
+        }
+    }
+
+    private static IEnumerable<string> AllText(DependencyObject root)
+    {
+        if (root is System.Windows.Controls.TextBlock block)
+        {
+            yield return block.Text;
+        }
+
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            foreach (var text in AllText(VisualTreeHelper.GetChild(root, i)))
+            {
+                yield return text;
+            }
+        }
+    }
+
     private static Rect Bounds(UIElement element, Visual root) =>
         element.TransformToAncestor(root).TransformBounds(new Rect(element.RenderSize));
 

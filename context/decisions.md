@@ -649,3 +649,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Make `--ctl rename` wait for the watcher (a timing guess); drop the rescan in the command (the answer to the next `list` would be stale); teach `Reconcile` to guess renames (it cannot tell a rename from a delete plus a create).
 **Consequences**: Any future code that renames a folder must call `MoveSettings` too. `WidgetCatalogTests.RescanRightAfterRenamingAFolder_KeepsItsSettings` fails without it. `LogTests` (which swaps the static log path) now runs in `ShellCollection`, alone: with the new log lines, other tests logging at the same moment made it fail now and then.
 **Author**: The user asked for real-machine testing, bug fixing and 0.5.0; Claude found and fixed the bug
+
+---
+
+### 2026-11-09 — What's new window after an update, and a "How to use" per version
+**Decision**: DeskGrid remembers the version whose "what's new" it last showed (`lastSeenVersion` in `config.json`). When the running version differs, it shows `ChangeLogWindow` with the entries of every version after the remembered one up to the running one, in the interface language, once the widgets are up. A first run only records the version; settings from before the field existed show just the running version's entry. Every version that adds a feature has a `### How to use` section in the change log (`### 使用方法` in the Chinese one), one short bullet per feature; `ChangeLogTests` checks the newest version. The rule is in `AGENTS.md` / `AGENTS.zh-TW.md`.
+**Reason**: The user asked that the change log appear after every update in the chosen language, and that new features come with usage instructions that are as simple as possible. Keying on the version (not on the update installer) also covers a manual file swap and costs no extra mechanism.
+**Alternatives**: Have the update script pass a flag to the new process (misses manual updates, more moving parts); show only the running version (a user who skips versions would miss the ones in between); put the instructions in the README only (nobody reads it at the moment of the update).
+**Consequences**: The next releases must write `### How to use` while developing the feature. The version is saved before the window is shown, so closing it by crash does not show it again. Not seen on a real desktop after a real update.
+**Author**: The user asked; Claude designed and built it

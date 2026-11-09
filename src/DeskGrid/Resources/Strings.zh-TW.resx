@@ -267,6 +267,12 @@
   <data name="ChangeLogMissing" xml:space="preserve">
     <value>這個版本沒有附更新紀錄。</value>
   </data>
+  <data name="WhatsNewTitle" xml:space="preserve">
+    <value>DeskGrid {0} 的新功能</value>
+  </data>
+  <data name="WhatsNewHint" xml:space="preserve">
+    <value>DeskGrid 已更新。之後隨時可以在「設定」→「更新紀錄…」重新查看。</value>
+  </data>
   <data name="ButtonClose" xml:space="preserve">
     <value>關閉</value>
   </data>

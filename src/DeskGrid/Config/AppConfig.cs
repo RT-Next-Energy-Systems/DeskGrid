@@ -55,6 +55,9 @@ internal sealed class AppConfig
     /// <summary>Whether the user was asked, once, if DeskGrid should start with Windows.</summary>
     public bool AutoStartAsked { get; set; }
 
+    /// <summary>The version whose "what's new" window was last shown (three parts, like <c>0.5.0</c>); <see langword="null"/> before the first one.</summary>
+    public string? LastSeenVersion { get; set; }
+
     /// <summary>Folder names in the order the list of all folders shows them.</summary>
     public List<string> FolderOrder { get; set; } = [];
 

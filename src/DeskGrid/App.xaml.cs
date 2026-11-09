@@ -188,6 +188,35 @@ public partial class App : Application
         }
     }
 
+    // Once the widgets are up: the first-run question, then what's new if the version changed (after an update).
+    private void AfterFirstShow()
+    {
+        var firstRun = !_configStore!.Config.AutoStartAsked;
+        OfferAutoStart();
+        ShowWhatsNew(firstRun);
+    }
+
+    // After an update, shows what changed since the last version the user saw (and how to use it), in the interface
+    // language. A first run has nothing to compare with, so it only records the version. Settings from before the
+    // version was recorded count as updated from an older one.
+    private void ShowWhatsNew(bool firstRun)
+    {
+        var config = _configStore!.Config;
+        var current = UpdateChecker.CurrentVersion;
+        _ = Version.TryParse(config.LastSeenVersion, out var seen);
+        if (seen == current)
+        {
+            return;
+        }
+
+        config.LastSeenVersion = current.ToString(3);
+        _configStore.Save(); // Before the window: a crash must not show it again at every start.
+        if (!firstRun && ChangeLogWindow.HasNews(seen, current))
+        {
+            new ChangeLogWindow(seen, current).ShowDialog();
+        }
+    }
+
     // The first time, once the widgets are up: should DeskGrid start with Windows? Whatever the answer, not asked again.
     private void OfferAutoStart()
     {
@@ -232,7 +261,7 @@ public partial class App : Application
         try
         {
             StartWidgets();
-            _ = Dispatcher.BeginInvoke(OfferAutoStart, DispatcherPriority.ApplicationIdle);
+            _ = Dispatcher.BeginInvoke(AfterFirstShow, DispatcherPriority.ApplicationIdle);
         }
         catch (Exception exception)
         {

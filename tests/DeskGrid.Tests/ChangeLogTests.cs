@@ -89,6 +89,58 @@ public sealed class ChangeLogTests
             $"The newest entry of {resource} is \"{first.Text}\" but this build is {running.ToString(3)}.");
     }
 
+    private const string ThreeVersions = """
+        ## 1.2.0
+        ### Added
+        - New.
+        ## 1.1.0
+        ### Fixed
+        - Fix.
+        ## 1.0.0
+        ### Added
+        - Old.
+        """;
+
+    [Theory]
+    [InlineData("1.0.0", "1.2.0", new[] { "1.2.0", "1.1.0" })]
+    [InlineData("1.1.0", "1.2.0", new[] { "1.2.0" })]
+    [InlineData("1.2.0", "1.2.0", new string[0])]
+    [InlineData("1.0.0", "1.1.0", new[] { "1.1.0" })] // A version the running build doesn't have yet is not shown.
+    [InlineData("2.0.0", "1.2.0", new string[0])] // A downgrade has nothing new.
+    [InlineData(null, "1.1.0", new[] { "1.1.0" })] // Nothing recorded yet: only the running version's own entry.
+    public void Since_PicksTheVersionsAfterTheOneSeenUpToTheRunningOne(string? seen, string current, string[] expected)
+    {
+        var picked = ChangeLog.Since(ChangeLog.Parse(ThreeVersions), seen is null ? null : Version.Parse(seen), Version.Parse(current));
+
+        Assert.Equal(expected, picked.Where(l => l.Kind == ChangeLogKind.Release).Select(l => l.Text));
+        Assert.All(picked, line => Assert.NotEqual("Old.", line.Text)); // Never entries of an excluded version.
+    }
+
+    [Fact]
+    public void Since_KeepsEachVersionsSectionsAndItems()
+    {
+        var picked = ChangeLog.Since(ChangeLog.Parse(ThreeVersions), Version.Parse("1.1.0"), Version.Parse("1.2.0"));
+
+        Assert.Equal(
+            [(ChangeLogKind.Release, "1.2.0"), (ChangeLogKind.Section, "Added"), (ChangeLogKind.Item, "New.")],
+            picked.Select(l => (l.Kind, l.Text)));
+    }
+
+    // Policy (AGENTS.md): a version that adds something says how to use it, in the language of each log.
+    [Theory]
+    [InlineData("CHANGELOG.md", "How to use")]
+    [InlineData("CHANGELOG.zh-TW.md", "使用方法")]
+    public void TheNewestVersionThatAddsSomething_HasAHowToUseSection(string resource, string howToUse)
+    {
+        var lines = ChangeLog.Parse(ChangeLog.ReadEmbedded(resource)!);
+        var newest = lines.Skip(1).TakeWhile(l => l.Kind != ChangeLogKind.Release).Prepend(lines[0]).ToList();
+
+        if (newest.Any(l => l is { Kind: ChangeLogKind.Section } && l.Text is "Added" or "新增"))
+        {
+            Assert.Contains(newest, l => l.Kind == ChangeLogKind.Section && l.Text == howToUse);
+        }
+    }
+
     // The two languages are one log: same versions, same number of entries under each.
     [Fact]
     public void ChineseChangeLog_HasTheSameVersionsAndEntriesAsTheEnglishOne()

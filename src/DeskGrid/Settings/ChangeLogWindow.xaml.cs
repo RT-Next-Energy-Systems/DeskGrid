@@ -4,23 +4,46 @@ using DeskGrid.Resources;
 
 namespace DeskGrid.Settings;
 
-/// <summary>The change log of this version of DeskGrid and the ones before it.</summary>
+/// <summary>The change log of this version of DeskGrid and the ones before it, or only what is new since the last version the user saw.</summary>
 internal partial class ChangeLogWindow : Window
 {
+    /// <summary>The whole change log (opened from Settings).</summary>
     public ChangeLogWindow()
     {
         InitializeComponent();
         FluentWindow.UseOpaqueBackground(this);
         Title = Strings.ChangeLogTitle;
         CloseButton.Content = Strings.ButtonClose;
+        Fill(null, null);
+    }
 
+    /// <summary>"What's new": just the versions after <paramref name="seen"/>, up to <paramref name="current"/>, shown after an update.</summary>
+    public ChangeLogWindow(Version? seen, Version current)
+    {
+        InitializeComponent();
+        FluentWindow.UseOpaqueBackground(this);
+        Title = string.Format(Strings.WhatsNewTitle, current.ToString(3));
+        CloseButton.Content = Strings.ButtonClose;
+        Hint.Text = Strings.WhatsNewHint;
+        Hint.Visibility = Visibility.Visible;
+        WindowStartupLocation = WindowStartupLocation.CenterScreen; // No owner to center on.
+        Fill(seen, current);
+    }
+
+    /// <summary>Whether there is anything to show for <paramref name="current"/> since <paramref name="seen"/> in the built-in change log.</summary>
+    public static bool HasNews(Version? seen, Version current) =>
+        ChangeLog.ReadEmbedded() is { } markdown && ChangeLog.Since(ChangeLog.Parse(markdown), seen, current).Count > 0;
+
+    private void Fill(Version? seen, Version? current)
+    {
         if (ChangeLog.ReadEmbedded() is not { } markdown)
         {
             Entries.Children.Add(new TextBlock { Text = Strings.ChangeLogMissing, Opacity = 0.75, TextWrapping = TextWrapping.Wrap });
             return;
         }
 
-        foreach (var line in ChangeLog.Parse(markdown))
+        var lines = ChangeLog.Parse(markdown);
+        foreach (var line in current is null ? lines : ChangeLog.Since(lines, seen, current))
         {
             Entries.Children.Add(Render(line));
         }

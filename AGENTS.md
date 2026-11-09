@@ -22,6 +22,12 @@ DeskGrid is bilingual: **English and Traditional Chinese (zh-TW)**. Both languag
 - Not covered: the author's local working notes (`context/current-task.md`, `progress.md`, `todo.md`, `session-log.md`; git-ignored, Traditional Chinese, free-form) and `LICENSE` (legal text, English only).
 - Keep code, paths, commands and identifiers untouched in translations; translate the meaning around them.
 
+## Change log and "how to use"
+
+- After an update (the running version differs from `lastSeenVersion` in `config.json`) DeskGrid shows a "What's new" window with the entries of the versions the user has not seen, in the interface language (`ChangeLogWindow`, fed by the embedded `CHANGELOG.md` / `CHANGELOG.zh-TW.md`). A first run only records the version.
+- **A version that adds a feature gets a `### How to use` section in `CHANGELOG.md` (`### 使用方法` in `CHANGELOG.zh-TW.md`)**, right after its `### Added`: one bullet per feature, as short and plain as possible (what to press or click, nothing about how it works). `ChangeLogTests` fails when the newest version has an `Added` section and no such section.
+- Write the entry while developing the feature, under the version it will ship in (or `## Unreleased`); the release only renames the heading.
+
 ## Code and communication
 
 - Code (identifiers, comments), commit messages, branch names: English (conventional commits).

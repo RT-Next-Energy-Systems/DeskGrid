@@ -10,6 +10,16 @@
 - Scripts and AI agents can drive DeskGrid with `DeskGrid.exe --ctl <command>`: list, create, rename and fill folders,
   reorder items, open and close panels. Off until **Allow control from scripts and AI agents** is ticked in Settings;
   only programs of your own Windows account can use it, and nothing can be deleted this way.
+- After DeskGrid has been updated, a window shows what is new since the version you used last, with a short "How to
+  use" for each new feature. It follows the interface language; Settings → **Change log…** shows it again.
+
+### How to use
+
+- **Open all folders from anywhere:** press **Ctrl+M**. Press it again to close.
+- **Your own shortcut:** Settings → **Keyboard shortcuts** → **Customize…**, click a box and press the keys. Backspace
+  clears it. A folder can have its own shortcut too.
+- **Scripts and AI agents:** tick **Allow control from scripts and AI agents** in Settings, then run
+  `DeskGrid.exe --ctl help` to see the commands.
 
 ## 0.4.3
 
