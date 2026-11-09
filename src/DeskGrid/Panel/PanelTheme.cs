@@ -26,13 +26,36 @@ internal sealed record PanelTheme(bool UseAcrylic, Color Background, Color Foreg
     public static bool SystemUsesDarkTheme =>
         Registry.GetValue(@"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", "AppsUseLightTheme", 1) is 0;
 
+    /// <summary>
+    /// The opacity a style has when the user has not set one. For the system style it is what the settings slider shows
+    /// while the panel is the system acrylic (which has no opacity of its own).
+    /// </summary>
+    public static double DefaultOpacity(PanelBackgroundStyle style) => style switch
+    {
+        PanelBackgroundStyle.Dark => 0.82,
+        PanelBackgroundStyle.Light => 0.8,
+        PanelBackgroundStyle.Custom => new PanelBackground().CustomOpacity,
+        _ => 0.85,
+    };
+
     public static PanelTheme Resolve(PanelBackground setting, bool systemDark, bool acrylicSupported) => setting.Style switch
     {
-        PanelBackgroundStyle.Dark => new(false, WithOpacity(DarkSurface, 0.82), Colors.White),
-        PanelBackgroundStyle.Light => new(false, WithOpacity(Colors.White, 0.8), DarkText),
+        PanelBackgroundStyle.Dark => new(false, WithOpacity(DarkSurface, setting.Opacity ?? DefaultOpacity(setting.Style)), Colors.White),
+        PanelBackgroundStyle.Light => new(false, WithOpacity(Colors.White, setting.Opacity ?? DefaultOpacity(setting.Style)), DarkText),
         PanelBackgroundStyle.Custom => Custom(setting),
-        _ => new(acrylicSupported, systemDark ? DarkSurface : LightSurface, systemDark ? Colors.White : DarkText),
+        _ => SystemStyle(setting, systemDark, acrylicSupported),
     };
+
+    // The system acrylic, unless the user chose an opacity: the blur can't be made more or less transparent, so then
+    // the system's own surface color is painted with that opacity instead.
+    private static PanelTheme SystemStyle(PanelBackground setting, bool systemDark, bool acrylicSupported)
+    {
+        var surface = systemDark ? DarkSurface : LightSurface;
+        var text = systemDark ? Colors.White : DarkText;
+        return setting.Opacity is { } opacity
+            ? new(false, WithOpacity(surface, opacity), text)
+            : new(acrylicSupported, surface, text);
+    }
 
     private static PanelTheme Custom(PanelBackground setting)
     {

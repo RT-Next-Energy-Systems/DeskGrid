@@ -34,6 +34,7 @@ internal partial class SettingsWindow : Window
 
     private readonly AppConfig _config;
     private Color _customColor;
+    private PanelBackgroundStyle _shownStyle; // The style whose opacity the slider is showing.
 
     public SettingsWindow(AppConfig config)
     {
@@ -56,9 +57,16 @@ internal partial class SettingsWindow : Window
 
         var background = config.PanelBackground;
         BackgroundRadioFor(background.Style).IsChecked = true;
+        _shownStyle = background.Style;
         _customColor = PanelTheme.ParseColor(background.CustomColor) ?? PanelTheme.ParseColor(new PanelBackground().CustomColor)!.Value;
         ColorSwatch.Background = new SolidColorBrush(_customColor);
-        OpacitySlider.Value = Math.Clamp(background.CustomOpacity, OpacitySlider.Minimum, OpacitySlider.Maximum);
+        OpacitySlider.Value = Math.Clamp(OpacityOf(background, background.Style), OpacitySlider.Minimum, OpacitySlider.Maximum);
+        UpdateOpacityHint();
+        foreach (var style in Enum.GetValues<PanelBackgroundStyle>())
+        {
+            BackgroundRadioFor(style).Checked += OnBackgroundChanged;
+        }
+
         CheckAtStartupBox.IsChecked = config.CheckForUpdatesAtStartup;
         AllowControlBox.IsChecked = config.AllowControl;
     }
@@ -128,6 +136,31 @@ internal partial class SettingsWindow : Window
         }
     }
 
+    // The opacity the settings hold for a style: the user's own, or the style's default.
+    private static double OpacityOf(PanelBackground background, PanelBackgroundStyle style) =>
+        style == PanelBackgroundStyle.Custom ? background.CustomOpacity : background.Opacity ?? PanelTheme.DefaultOpacity(style);
+
+    // The slider snaps to 5 %, so a style's default (82 %) can only be shown as the nearest step.
+    private static bool SameOpacity(double a, double b) => Math.Abs(a - b) <= 0.025;
+
+    private void OnBackgroundChanged(object sender, RoutedEventArgs e)
+    {
+        var style = SelectedBackground;
+
+        // A slider the user has not moved follows to the new style's own opacity; one they have moved keeps their value.
+        if (SameOpacity(OpacitySlider.Value, OpacityOf(_config.PanelBackground, _shownStyle)))
+        {
+            OpacitySlider.Value = OpacityOf(_config.PanelBackground, style);
+        }
+
+        _shownStyle = style;
+        UpdateOpacityHint();
+    }
+
+    // Only the system style needs a word: the opacity replaces its blur.
+    private void UpdateOpacityHint() =>
+        OpacityHint.Visibility = BackgroundSystem.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+
     private PanelBackgroundStyle SelectedBackground =>
         Enum.GetValues<PanelBackgroundStyle>().First(style => BackgroundRadioFor(style).IsChecked == true);
 
@@ -185,6 +218,7 @@ internal partial class SettingsWindow : Window
         BackgroundCustom.Content = Strings.SettingsBackgroundCustom;
         ColorButton.Content = Strings.SettingsColor;
         OpacityLabel.Text = Strings.SettingsOpacity;
+        OpacityHint.Text = Strings.SettingsOpacityHint;
         VersionLabel.Text = Strings.SettingsVersion;
         VersionText.Text = UpdateChecker.CurrentVersion.ToString(3);
         CheckUpdatesButton.Content = Strings.SettingsCheckUpdates;
@@ -225,11 +259,15 @@ internal partial class SettingsWindow : Window
             return;
         }
 
+        var style = SelectedBackground;
+        var opacity = Math.Round(OpacitySlider.Value, 2);
         var background = new PanelBackground
         {
-            Style = SelectedBackground,
+            Style = style,
             CustomColor = $"#{_customColor.R:X2}{_customColor.G:X2}{_customColor.B:X2}",
-            CustomOpacity = Math.Round(OpacitySlider.Value, 2),
+            CustomOpacity = style == PanelBackgroundStyle.Custom ? opacity : _config.PanelBackground.CustomOpacity,
+            // Left unset at the style's own default, so the system style stays the acrylic.
+            Opacity = style == PanelBackgroundStyle.Custom || SameOpacity(opacity, PanelTheme.DefaultOpacity(style)) ? null : opacity,
         };
         Applied?.Invoke(this, new SettingsChoice(
             rootPath,

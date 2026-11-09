@@ -153,6 +153,38 @@ public sealed class PanelThemeTests
         Assert.InRange(theme.Background.A, 1, 254);
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Presets_UseTheOpacityTheUserChose(bool dark)
+    {
+        var style = dark ? PanelBackgroundStyle.Dark : PanelBackgroundStyle.Light;
+        var theme = PanelTheme.Resolve(new PanelBackground { Style = style, Opacity = 0.5 }, systemDark: false, acrylicSupported: true);
+
+        Assert.Equal(128, theme.Background.A);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void System_WithAnOpacity_IsAPlainTranslucentColorInTheSystemTheme(bool dark)
+    {
+        var theme = PanelTheme.Resolve(new PanelBackground { Opacity = 0.4 }, dark, acrylicSupported: true);
+
+        Assert.False(theme.UseAcrylic); // The blur can't be made more or less transparent.
+        Assert.Equal(dark, theme.IsDark);
+        Assert.Equal(102, theme.Background.A);
+    }
+
+    [Fact]
+    public void AnUnsetOpacity_KeepsEachStylesOwnLook()
+    {
+        Assert.True(PanelTheme.Resolve(new PanelBackground(), false, acrylicSupported: true).UseAcrylic);
+        Assert.Equal(
+            (byte)Math.Round(PanelTheme.DefaultOpacity(PanelBackgroundStyle.Dark) * 255),
+            PanelTheme.Resolve(new PanelBackground { Style = PanelBackgroundStyle.Dark }, false, true).Background.A);
+    }
+
     [Fact]
     public void Custom_UsesColorAndOpacity_WithReadableText()
     {

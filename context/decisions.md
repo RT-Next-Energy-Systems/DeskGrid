@@ -658,3 +658,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Have the update script pass a flag to the new process (misses manual updates, more moving parts); show only the running version (a user who skips versions would miss the ones in between); put the instructions in the README only (nobody reads it at the moment of the update).
 **Consequences**: The next releases must write `### How to use` while developing the feature. The version is saved before the window is shown, so closing it by crash does not show it again. Not seen on a real desktop after a real update.
 **Author**: The user asked; Claude designed and built it
+
+---
+
+### 2026-11-09 (2) — Opacity for the system, dark and light panel backgrounds
+**Decision**: `panelBackground.opacity` (nullable, left out of the file when unset) sets the opacity of every style but custom, which keeps `customOpacity`. The settings slider is always enabled; only the color button belongs to custom. Dark and light use the value as the alpha of their color. The system style, which is DWM's acrylic, becomes a plain translucent system surface color as soon as a value is chosen; a hint under the slider says so. A value within half a slider step of the style's default is stored as unset, so the acrylic stays unless the user really moves the slider.
+**Reason**: The user asked for an opacity setting when the background is not custom. Acrylic blur has no opacity control, so the system style cannot be made more transparent in place; a flat translucent color is the only way to give the slider a meaning there.
+**Alternatives**: Slider only for dark / light (leaves the default style out); a tint overlay on the acrylic (can only make it more opaque, so half the slider would do nothing); one shared opacity for all styles including custom (would change what existing configs mean).
+**Consequences**: Choosing an opacity for the system style loses the blur. The default of each style (system 85 % shown, dark 82 %, light 80 %) is `PanelTheme.DefaultOpacity`. Not seen on a real desktop.
+**Author**: The user asked; Claude designed and built it

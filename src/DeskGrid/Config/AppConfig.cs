@@ -89,6 +89,13 @@ internal sealed class PanelBackground
 
     /// <summary>0 to 1, used with <see cref="PanelBackgroundStyle.Custom"/>.</summary>
     public double CustomOpacity { get; set; } = 0.85;
+
+    /// <summary>
+    /// 0 to 1, how opaque the other styles are; <see langword="null"/> keeps the style's own default (the system style then
+    /// stays the system acrylic, while a value turns it into a plain translucent color, since acrylic has no opacity).
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public double? Opacity { get; set; }
 }
 
 internal enum PanelBackgroundStyle

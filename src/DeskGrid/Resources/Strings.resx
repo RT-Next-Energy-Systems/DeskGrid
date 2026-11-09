@@ -75,6 +75,9 @@
   <data name="SettingsOpacity" xml:space="preserve">
     <value>Opacity</value>
   </data>
+  <data name="SettingsOpacityHint" xml:space="preserve">
+    <value>The system style is blurred glass, which can't be made more or less transparent. Any other value here paints a plain translucent color instead.</value>
+  </data>
   <data name="SettingsRootFolder" xml:space="preserve">
     <value>Root folder</value>
   </data>

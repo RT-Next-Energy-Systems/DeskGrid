@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- The panel background's opacity can now be set for the system, dark and light styles too, not only a custom color.
+  (The system style is blurred glass, which has no opacity: choosing a value turns it into a plain translucent color.)
+
+### How to use
+
+- Settings → **Panel background**, pick a style, then move the **Opacity** slider. Lower is more see-through.
+
 ## 0.5.1
 
 ### Added

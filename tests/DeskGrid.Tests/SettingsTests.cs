@@ -199,6 +199,51 @@ public sealed class SettingsWindowTests : IDisposable
         Assert.Equal(picked, choice?.PanelBackground.Style);
     }
 
+    // The opacity slider works for every style: a value is reported for the style chosen, the style's default is left unset.
+    [Theory]
+    [InlineData("Dark", 0.5, 0.5)]
+    [InlineData("Light", 0.3, 0.3)]
+    [InlineData("System", 0.6, 0.6)]
+    [InlineData("Dark", 0.82, null)] // The default, shown as the nearest 5 % step, is not a choice.
+    [InlineData("System", 0.85, null)] // Stays the system acrylic.
+    public async Task Ok_ReportsTheOpacityOfAPreset_AndLeavesTheDefaultUnset(string styleName, double slider, double? expected)
+    {
+        var style = Enum.Parse<PanelBackgroundStyle>(styleName);
+        var choice = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path, PanelBackground = new PanelBackground { Style = style } });
+            SettingsChoice? applied = null;
+            window.Applied += (_, c) => applied = c;
+            window.Show();
+            window.OpacitySlider.Value = slider;
+            window.OkButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            return applied;
+        });
+
+        Assert.Equal(expected is null ? null : Math.Round(expected.Value, 2), choice?.PanelBackground.Opacity);
+        Assert.Equal(new PanelBackground().CustomOpacity, choice?.PanelBackground.CustomOpacity); // The custom one is untouched.
+    }
+
+    [Fact]
+    public async Task Slider_FollowsTheStyleUnlessTheUserMovedIt()
+    {
+        var (followed, kept) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path });
+            window.Show();
+            window.BackgroundRadioFor(PanelBackgroundStyle.Light).IsChecked = true; // Untouched: takes Light's own 80 %.
+            var followed = window.OpacitySlider.Value;
+            window.OpacitySlider.Value = 0.4;
+            window.BackgroundRadioFor(PanelBackgroundStyle.Dark).IsChecked = true; // Moved: stays.
+            return (followed, window.OpacitySlider.Value);
+        });
+
+        Assert.Equal(0.8, followed, 2);
+        Assert.Equal(0.4, kept, 2);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

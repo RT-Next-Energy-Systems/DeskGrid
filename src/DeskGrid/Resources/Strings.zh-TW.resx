@@ -72,6 +72,9 @@
   <data name="SettingsOpacity" xml:space="preserve">
     <value>不透明度</value>
   </data>
+  <data name="SettingsOpacityHint" xml:space="preserve">
+    <value>跟隨系統的背景是毛玻璃，本身無法調整透明度；改成其他數值，就會改用一般的半透明純色。</value>
+  </data>
   <data name="SettingsRootFolder" xml:space="preserve">
     <value>根目錄</value>
   </data>
