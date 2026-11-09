@@ -37,6 +37,7 @@ internal static class LiquidGlass
     private const double Contrast = 1.0;
     private const double Brightness = 0.03;
     private const double GlowWeight = 0.28;
+    private const double DarkSideShare = 0.5;
 
     // OverShifted's falloff: 1 - b * (c * e)^(-d * x - a), 1 deep inside the glass and ~0.64 at its edge.
     private const double A = 0.7, B = 2.3, C = 5.2, D = 6.9;
@@ -104,10 +105,11 @@ internal static class LiquidGlass
 
                 if (depthIn < glowWidth)
                 {
-                    // The bright side of the rim faces one corner, the dark side the other.
+                    // The bright side of the rim faces one corner, the dark side the other (only half as strong,
+                    // so the far corner reads as depth rather than as a dirty shadow).
                     var glow = Math.Sin(Math.Atan2(py, px) - 0.5);
                     var near = 1 - Smooth(0, glowWidth, depthIn);
-                    var factor = 1 + glow * GlowWeight * near;
+                    var factor = 1 + (glow > 0 ? glow : glow * DarkSideShare) * GlowWeight * near;
                     var edge = (1 - Smooth(0, line, depthIn)) * (0.16 + 0.2 * Math.Max(glow, 0));
                     red = red * factor + edge;
                     green = green * factor + edge;
