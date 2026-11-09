@@ -58,8 +58,17 @@ internal sealed class ConfigStore
             catch (JsonException exception)
             {
                 var backupPath = $"{filePath}.{DateTime.Now:yyyyMMdd-HHmmss}.bad";
-                File.Move(filePath, backupPath);
-                Log.Error($"Invalid config moved to {backupPath}; using defaults", exception);
+                try
+                {
+                    File.Move(filePath, backupPath);
+                    Log.Error($"Invalid config moved to {backupPath}; using defaults", exception);
+                }
+                catch (Exception moveFailure) when (moveFailure is IOException or UnauthorizedAccessException)
+                {
+                    // Locked or read-only: the defaults still have to start the app (the next save replaces the file).
+                    Log.Error($"Invalid config could not be moved aside ({moveFailure.Message}); using defaults", exception);
+                }
+
                 return new ConfigStore(filePath, new AppConfig());
             }
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException && attempt < ReadAttempts)
