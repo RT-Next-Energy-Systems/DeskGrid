@@ -111,7 +111,14 @@ internal sealed class IslandHost : IDisposable
             source => _music?.Previous(source),
             source => _music?.PlayPause(source),
             source => _music?.Next(source),
-            (source, pos) => _music?.Seek(source, pos));
+            (source, pos) => _music?.Seek(source, pos),
+            source =>
+            {
+                if (_music?.Tracks.FirstOrDefault(t => t.Source == source) is { } track)
+                {
+                    MediaJumper.Jump(source, track.Title);
+                }
+            });
         _shelf.Changed += (_, _) => _card?.Refresh();
         _escape.Tick += (_, _) => OnEscapeTick();
     }
@@ -438,6 +445,15 @@ internal sealed class IslandHost : IDisposable
         }
 
         Refresh();
+    }
+
+    /// <summary>Brings the player of the song that plays now to the front (what a click on a song in the card does).</summary>
+    public void OpenPlayer()
+    {
+        if ((_tracks.FirstOrDefault(t => t.Playing) ?? _tracks.FirstOrDefault()) is { } track)
+        {
+            _musicActions.Open?.Invoke(track.Source);
+        }
     }
 
     /// <summary>The "card" shortcut (and a click on a song, or files dragged to the island): opens the card, or closes it.</summary>

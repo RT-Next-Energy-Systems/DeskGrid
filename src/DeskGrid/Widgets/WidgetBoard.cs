@@ -26,7 +26,7 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
     // Names get a dark halo over a light wallpaper. Two thresholds so a wallpaper near the middle doesn't flicker.
     private const double HaloOnAbove = 0.55;
     private const double HaloOffBelow = 0.45;
-    private static readonly TimeSpan HaloInterval = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan HaloInterval = TimeSpan.FromSeconds(8); // A screen grab per widget: the wallpaper rarely changes (a slideshow is slow).
 
     private readonly Dictionary<string, Entry> _entries = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<Entry> _selected = [];

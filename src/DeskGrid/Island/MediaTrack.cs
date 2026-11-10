@@ -125,5 +125,5 @@ internal sealed record MediaTimeline(TimeSpan Duration, TimeSpan Position, DateT
 }
 
 /// <summary>What the buttons and progress bar of a music pill or card do; each is told which player (<see cref="MediaTrack.Source"/>) to act on.</summary>
-internal sealed record MusicActions(Action<string> Previous, Action<string> PlayPause, Action<string> Next, Action<string, TimeSpan>? Seek = null);
+internal sealed record MusicActions(Action<string> Previous, Action<string> PlayPause, Action<string> Next, Action<string, TimeSpan>? Seek = null, Action<string>? Open = null);
 

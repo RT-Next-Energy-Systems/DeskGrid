@@ -14,6 +14,13 @@ DeskGrid is bilingual: **English and Traditional Chinese (zh-TW)**. Both languag
 - `UiLanguageTests` fails when a key exists in only one language or a translation drops a placeholder. Do not weaken it.
 - A third language would take: `Strings.<culture>.resx`, a value in `AppLanguage`, a branch in `UiLanguage.Resolve`, an entry in the settings list, a `.<culture>.md` twin for each document below, and `SatelliteResourceLanguages` in the csproj.
 
+## Interface text: say as little as possible
+
+- The layout explains itself. **No explanatory sentences in the UI**: no hint, note or description under a control, no "what this does" paragraph at the top of a page or card, no tooltip that repeats the label. A label is a few words; a state is a word (*Connected*, not "Connected: the numbers are Claude's own").
+- What may stay: the label of a control, a value shown next to it, a button's name, the text of a confirmation or error that tells the user something they cannot see (what will change, why it failed), and an instruction that is only shown during a mode (e.g. while a place is being set).
+- When tempted to add a hint, change the label, the layout or the default instead. Do not add a resource key ending in `Hint` or `Description`, and do not add a `TextBlock` whose only job is to explain.
+- Explanations belong in the documents (README, `CLAUDE.md`, the change log's "How to use"), not in the app.
+
 ## Documents
 
 - **Every version-controlled Markdown file exists in both languages:** `NAME.md` is English, `NAME.zh-TW.md` is Traditional Chinese (as `README` and `CHANGELOG` always were). That covers `README`, `CHANGELOG`, `CLAUDE`, `AGENTS`, `context/decisions` and `context/project-summary`.

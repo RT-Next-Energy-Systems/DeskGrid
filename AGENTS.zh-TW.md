@@ -14,6 +14,13 @@ DeskGrid 是雙語專案：**英文與繁體中文（zh-TW）**，兩種語言�
 - `UiLanguageTests` 會在某個 key 只存在於一種語言、或譯文少了佔位符時失敗，不要放寬它。
 - 要加第三種語言：`Strings.<culture>.resx`、`AppLanguage` 新值、`UiLanguage.Resolve` 的分支、設定視窗的選項、下列每份文件的 `.<culture>.md`，以及 csproj 的 `SatelliteResourceLanguages`。
 
+## 介面文字：能少就少
+
+- 版面自己會說話。**介面不放說明句**：控制項下面不放提示、備註或描述，頁面或卡片頂端不放「這是做什麼的」段落，tooltip 不重複標籤。標籤只有幾個字；狀態只有一個詞（寫「已連接」，不寫「已連接：顯示的是 Claude 自己回報的用量」）。
+- 可以留的：控制項的標籤、旁邊顯示的值、按鈕名稱、告訴使用者看不到的資訊的確認與錯誤訊息（會改什麼、為什麼失敗），以及只在某個模式中才顯示的操作指示（例如設定位置時）。
+- 想加提示時，改標籤、版面或預設值。不要新增以 `Hint` 或 `Description` 結尾的資源 key，也不要新增只負責解釋的 `TextBlock`。
+- 解釋寫在文件裡（README、`CLAUDE.md`、更新紀錄的「使用方法」），不寫在 App 裡。
+
 ## 文件
 
 - **所有進版控的 Markdown 都有兩種語言版：** `NAME.md` 是英文、`NAME.zh-TW.md` 是繁體中文（`README` 與 `CHANGELOG` 本來就是這樣）。涵蓋 `README`、`CHANGELOG`、`CLAUDE`、`AGENTS`、`context/decisions`、`context/project-summary`。

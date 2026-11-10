@@ -24,8 +24,6 @@ internal partial class ChangeLogWindow : Window
         FluentWindow.UseOpaqueBackground(this);
         Title = string.Format(Strings.WhatsNewTitle, current.ToString(3));
         CloseButton.Content = Strings.ButtonClose;
-        Hint.Text = Strings.WhatsNewHint;
-        Hint.Visibility = Visibility.Visible;
         WindowStartupLocation = WindowStartupLocation.CenterScreen; // No owner to center on.
         Fill(seen, current);
     }

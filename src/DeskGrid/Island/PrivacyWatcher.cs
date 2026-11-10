@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows.Threading;
 using Microsoft.Win32;
 
@@ -13,7 +14,7 @@ internal readonly record struct SensorUse(string Kind, string App);
 internal sealed class PrivacyWatcher : IDisposable
 {
     private const string Root = @"Software\Microsoft\Windows\CurrentVersion\CapabilityAccessManager\ConsentStore";
-    private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(2) };
+    private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(3) };
     private HashSet<SensorUse> _inUse;
 
     public PrivacyWatcher()
@@ -89,14 +90,34 @@ internal sealed class PrivacyWatcher : IDisposable
         return last.Split('_')[0].Split('.').Last();
     }
 
-    private void Check()
+    // The registry is read on a pool thread (many keys), and the result is applied here; a read still running is not joined by another.
+    private async void Check()
     {
-        var now = Read().ToHashSet();
-        foreach (var use in now.Where(u => !_inUse.Contains(u)))
+        if (_reading)
         {
-            Started?.Invoke(use);
+            return;
         }
 
-        _inUse = now;
+        _reading = true;
+        try
+        {
+            var now = await Task.Run(() => Read().ToHashSet());
+            foreach (var use in now.Where(u => !_inUse.Contains(u)))
+            {
+                Started?.Invoke(use);
+            }
+
+            _inUse = now;
+        }
+        catch (Exception exception) when (exception is System.Security.SecurityException or IOException or UnauthorizedAccessException)
+        {
+            Diagnostics.Log.Error("Reading who uses the microphone or camera failed", exception);
+        }
+        finally
+        {
+            _reading = false;
+        }
     }
+
+    private bool _reading;
 }

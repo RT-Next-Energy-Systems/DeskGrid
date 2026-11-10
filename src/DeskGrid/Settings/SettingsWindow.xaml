@@ -168,7 +168,6 @@
                 <TextBlock Width="40" Margin="8,0,0,0" VerticalAlignment="Center"
                            Text="{Binding Value, ElementName=OpacitySlider, StringFormat={}{0:P0}}" />
               </StackPanel>
-              <TextBlock x:Name="OpacityHint" Margin="0,6,0,0" Opacity="0.75" TextWrapping="Wrap" Visibility="Collapsed" />
               <!-- Only liquid glass has an edge to shade: under the other styles the row is dimmed, so it reads as "not adjustable". -->
               <StackPanel x:Name="ShadeRow" Margin="0,12,0,0" Orientation="Horizontal" IsEnabled="{Binding IsChecked, ElementName=BackgroundGlass}">
                 <StackPanel.Style>
@@ -215,7 +214,6 @@
           <Border Style="{StaticResource Card}">
             <StackPanel>
               <CheckBox x:Name="AllowControlBox" MinWidth="0" />
-              <TextBlock x:Name="AllowControlHint" Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.7" />
             </StackPanel>
           </Border>
         </StackPanel>
@@ -227,7 +225,6 @@
           <Border Style="{StaticResource Card}">
             <StackPanel>
               <CheckBox x:Name="IslandBox" MinWidth="0" FontWeight="SemiBold" Checked="OnIslandSwitched" Unchecked="OnIslandSwitched" />
-              <TextBlock x:Name="IslandHint" Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.7" />
             </StackPanel>
           </Border>
 
@@ -252,7 +249,6 @@
             <Border Style="{StaticResource Card}">
               <StackPanel>
                 <CheckBox x:Name="IslandUsageBox" MinWidth="0" FontWeight="SemiBold" Checked="OnUsageSwitched" Unchecked="OnUsageSwitched" />
-                <TextBlock x:Name="IslandUsageHint" Margin="0,4,0,8" TextWrapping="Wrap" Opacity="0.7" />
                 <TextBlock x:Name="UsageFoundText" Margin="0,0,0,8" TextWrapping="Wrap" />
                 <DockPanel Margin="0,0,0,8">
                   <Button x:Name="UsageConnectButton" DockPanel.Dock="Left" Padding="12,5" Click="OnUsageConnect" />
@@ -328,7 +324,6 @@
             <Border Style="{StaticResource Card}">
               <StackPanel>
                 <TextBlock x:Name="IslandCardPlaces" Style="{StaticResource CardTitle}" />
-                <TextBlock x:Name="IslandPlacesHint" Margin="0,2,0,8" TextWrapping="Wrap" Opacity="0.7" />
                 <StackPanel x:Name="IslandPlacesPanel" />
                 <Button x:Name="IslandResetButton" Margin="0,8,0,0" Padding="12,5" HorizontalAlignment="Left" Click="OnResetIsland" />
               </StackPanel>

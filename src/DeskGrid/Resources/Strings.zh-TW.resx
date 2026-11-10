@@ -87,9 +87,6 @@
   <data name="SettingsBackgroundGlass" xml:space="preserve">
     <value>液態玻璃</value>
   </data>
-  <data name="SettingsOpacityHintGlass" xml:space="preserve">
-    <value>越低越通透。</value>
-  </data>
   <data name="SettingsGlassShade" xml:space="preserve">
     <value>邊緣暗度</value>
   </data>
@@ -104,9 +101,6 @@
   </data>
   <data name="SettingsPageAbout" xml:space="preserve">
     <value>關於</value>
-  </data>
-  <data name="SettingsOpacityHint" xml:space="preserve">
-    <value>調整後不再有模糊效果。</value>
   </data>
   <data name="SettingsRootFolder" xml:space="preserve">
     <value>根目錄</value>
@@ -222,14 +216,8 @@
   <data name="SettingsAllowControl" xml:space="preserve">
     <value>允許腳本與 AI agent 控制</value>
   </data>
-  <data name="SettingsAllowControlHint" xml:space="preserve">
-    <value>透過「DeskGrid.exe --ctl」，僅限本帳戶。無法刪除任何東西。</value>
-  </data>
   <data name="SettingsIsland" xml:space="preserve">
     <value>顯示 NotiLand</value>
-  </data>
-  <data name="SettingsIslandHint" xml:space="preserve">
-    <value>NotiLand 是顯示簡短訊息的小膠囊，例如腳本透過「DeskGrid.exe --ctl island」送來的訊息，以及正在播放的音樂與影片。按 Esc 關閉展開的內容，拖動可移動位置。全螢幕程式執行時會自動隱藏。</value>
   </data>
   <data name="SettingsIslandMusic" xml:space="preserve">
     <value>音樂與影片</value>
@@ -264,11 +252,8 @@
   <data name="SettingsIslandUsage" xml:space="preserve">
     <value>AI 用量告警（Claude Code）</value>
   </data>
-  <data name="SettingsIslandUsageHint" xml:space="preserve">
-    <value>依 ccusage 的算法加總 Claude Code 在這台電腦上的記錄（使用者資料夾下的 .claude 與 .config\claude，或 CLAUDE_CONFIG_DIR）：每個回應只算一次、所有種類的 token、按 Claude 的工作階段區塊計算。不會傳送到任何地方。</value>
-  </data>
   <data name="SettingsUsageLimit" xml:space="preserve">
-    <value>每個工作階段的上限（百萬 token；0 = 你之前最高的一次）</value>
+    <value>上限（百萬 token，0 = 之前最高）</value>
   </data>
   <data name="SettingsUsageHours" xml:space="preserve">
     <value>工作階段長度（小時；Claude 是 5）</value>
@@ -277,7 +262,7 @@
     <value>達到上限的幾 % 時告警</value>
   </data>
   <data name="SettingsIslandSeconds" xml:space="preserve">
-    <value>「顯示／隱藏」快捷鍵顯示的秒數（0 = 直到再按一次）</value>
+    <value>顯示秒數（0 = 直到再按一次）</value>
   </data>
   <data name="SettingsIslandReset" xml:space="preserve">
     <value>全部重設</value>
@@ -310,7 +295,7 @@
     <value>清空</value>
   </data>
   <data name="CardShelfHint" xml:space="preserve">
-    <value>把檔案拖到這裡暫放，之後再拖進資料夾。</value>
+    <value>把檔案拖到這裡</value>
   </data>
   <data name="IslandCameraInUse" xml:space="preserve">
     <value>相機使用中 · {0}</value>
@@ -469,7 +454,7 @@
     <value>已連接。Claude Code 下一次回應之後就會出現數字。</value>
   </data>
   <data name="SettingsUsageConnected" xml:space="preserve">
-    <value>已連接：顯示的是 Claude 自己回報的用量。</value>
+    <value>已連接</value>
   </data>
   <data name="SettingsUsageDisconnect" xml:space="preserve">
     <value>中斷與 Claude Code 的連接</value>
@@ -478,7 +463,7 @@
     <value>無法修改 Claude Code 的設定：{0}</value>
   </data>
   <data name="SettingsUsageNotConnected" xml:space="preserve">
-    <value>未連接：數字是從 log 估算的，只是參考。</value>
+    <value>未連接</value>
   </data>
   <data name="IslandToolUsage" xml:space="preserve">
     <value>{0} {1}% · {2} 後重置</value>
@@ -500,9 +485,6 @@
   </data>
   <data name="SettingsIslandCardPlaces" xml:space="preserve">
     <value>顯示位置</value>
-  </data>
-  <data name="SettingsIslandPlacesHint" xml:space="preserve">
-    <value>每個情境可以有自己的位置，沒設定的就用預設位置。按「編輯」會切到桌面，拖動 NotiLand 時會吸附到中央、邊緣和工作列。平常拖動則會改動目前情境的位置。</value>
   </data>
   <data name="SettingsIslandSize" xml:space="preserve">
     <value>大小</value>
@@ -623,9 +605,6 @@
   <data name="WhatsNewTitle" xml:space="preserve">
     <value>DeskGrid {0} 的新功能</value>
   </data>
-  <data name="WhatsNewHint" xml:space="preserve">
-    <value>之後可在「設定」→「更新紀錄…」再看。</value>
-  </data>
   <data name="ButtonClose" xml:space="preserve">
     <value>關閉</value>
   </data>
@@ -682,9 +661,6 @@
   </data>
   <data name="HotkeysGroupIsland" xml:space="preserve">
     <value>NotiLand</value>
-  </data>
-  <data name="HotkeysIslandHint" xml:space="preserve">
-    <value>「顯示／隱藏」會讓 NotiLand 顯示設定頁指定的秒數（0 = 直到再按一次）。</value>
   </data>
   <data name="HotkeysGroupCount" xml:space="preserve">
     <value>已設定 {0}/{1}</value>

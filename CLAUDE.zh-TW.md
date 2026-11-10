@@ -264,7 +264,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - Per-Monitor V2 DPI aware（MVP 先確保單螢幕正確，多螢幕列為後續）
 - 介面文字放資源檔，支援英文與繁體中文（zh-TW），使用者可在設定選擇語言；**所有進版控的 Markdown 都有兩種語言版**（`NAME.md` + `NAME.zh-TW.md`）——見 `AGENTS.md`「語言政策」
 - 凡是在 `AppConfig` 新增設定，都必須同步納入備份與還原（`ConfigPorter` 與 `AppConfig.ReplaceWith`），並由 `ConfigPorterTests.ExportImport_AndReplaceWith_CoverEverySettingPropertyOfAppConfig` 驗證
-- Avoid unnecessary secondary labels and descriptions. let the layout do the explanining（避免不必要的次要標籤與說明文字，讓版面配置自己說話）
+- 介面不放說明文字：控制項下面或頁面頂端不放提示、備註、描述；標籤只有幾個字，狀態只有一個詞，解釋寫在文件。完整規則見 `AGENTS.zh-TW.md` 的「介面文字」
 
 # 開發階段與進度
 

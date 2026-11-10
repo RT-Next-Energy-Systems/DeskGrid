@@ -130,3 +130,11 @@ MEMORYSTATUSEX
 FILETIME
 IsZoomed
 IsIconic
+EnumWindows
+AttachThreadInput
+GetCurrentThreadId
+BringWindowToTop
+keybd_event
+GetWindowText
+GetWindowTextLength
+SwitchToThisWindow

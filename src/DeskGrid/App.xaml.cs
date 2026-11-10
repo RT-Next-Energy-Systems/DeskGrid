@@ -1035,6 +1035,7 @@ public partial class App : Application
             {
                 case "timer": app._island?.ToggleTimer(); break;
                 case "card": app._island?.ToggleCard(); break;
+                case "open": app._island?.OpenPlayer(); break;
                 case var place when place.StartsWith("place:", StringComparison.Ordinal): app.EditIslandPlace(place["place:".Length..], null); break;
                 default: app._island?.ShowInfo(); break;
             }

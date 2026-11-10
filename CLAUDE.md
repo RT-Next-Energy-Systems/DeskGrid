@@ -264,7 +264,7 @@ One folder per module, `src/DeskGrid/<Folder>/`, namespace `DeskGrid.<Folder>`.
 - Per-Monitor V2 DPI aware (the MVP first made sure a single monitor is right; multiple monitors were a later item)
 - Interface text goes in resource files, in English and Traditional Chinese (zh-TW), and the user can choose the language in Settings; **every Markdown file that is version-controlled exists in both languages** (`NAME.md` + `NAME.zh-TW.md`) — see "Language policy" in `AGENTS.md`
 - Every new setting added to `AppConfig` must be included in backup and restore (`ConfigPorter` and `AppConfig.ReplaceWith`), verified by `ConfigPorterTests.ExportImport_AndReplaceWith_CoverEverySettingPropertyOfAppConfig`
-- Avoid unnecessary secondary labels and descriptions. let the layout do the explanining
+- No explanatory text in the UI: no hints, notes or descriptions under controls or at the top of pages; labels are a few words and states are one word. Explanations go in the documents. Full rule: "Interface text" in `AGENTS.md`
 
 # Development stages and progress
 

@@ -53,7 +53,7 @@ internal sealed class IslandHotZone : Window
             }
         };
         // A taskbar at the top comes back over the strip whenever it is used; lift the strip again now and then.
-        var lift = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        var lift = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
         lift.Tick += (_, _) =>
         {
             if (IsVisible && !IslandScene.SystemOverlayInFront())

@@ -62,6 +62,14 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
 
         var start = entry.Session.GetTimelineProperties()?.StartTime ?? TimeSpan.Zero;
         var target = (start + (position < TimeSpan.Zero ? TimeSpan.Zero : position)).Ticks;
+        var enabled = entry.Session.GetPlaybackInfo()?.Controls.IsPlaybackPositionEnabled;
+        Log.Info($"Seek '{source}' to {TimeSpan.FromTicks(target)}: playback position control enabled = {enabled}.");
+        if (enabled != true && entry.Track?.Timeline is { } line)
+        {
+            MediaJumper.SeekThroughSlider(source, line.Duration, position);
+            return;
+        }
+
         Control(source, session => session.TryChangePlaybackPositionAsync(target));
     }
 
@@ -96,7 +104,8 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
         {
             try
             {
-                await command(session);
+                var done = await command(session);
+                Log.Info($"A media command for '{source}' was answered with {done}.");
             }
             catch (Exception exception)
             {

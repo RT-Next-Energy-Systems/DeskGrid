@@ -27,6 +27,10 @@ internal sealed class PanelPreview : Border
     private const double ChromeWidth = 16;
     private const double ChromeHeight = 38;
     private const int SampleRows = 2;
+    private const double StageMargin = 14; // Room kept around the sample panel, in DIPs.
+    private const double MaxZoom = 2;
+
+    private double _zoom = 1; // How much larger than the real panel's proportions the sample is drawn.
 
     private static readonly Color[] TileColors =
     [
@@ -89,12 +93,20 @@ internal sealed class PanelPreview : Border
         var wallpaper = Wallpaper(scale);
         Background = wallpaper.Brush;
 
-        var panelWidth = Math.Max(columns * CellWidth, MinContentWidth) + ChromeWidth;
-        var panelHeight = SampleRows * CellHeight + ChromeHeight;
+        // The sample is drawn as large as the stage allows (the same proportions as the real panel), so the folder is easy to read.
+        var baseWidth = Math.Max(columns * CellWidth, MinContentWidth) + ChromeWidth;
+        var baseHeight = SampleRows * CellHeight + ChromeHeight;
+        _zoom = Math.Clamp(Math.Min((StageWidth - StageMargin) / baseWidth, (StageHeight - StageMargin) / baseHeight), 1, MaxZoom);
+        var panelWidth = baseWidth * _zoom;
+        var panelHeight = baseHeight * _zoom;
         var pixelWidth = (int)Math.Round(panelWidth * scale);
         var pixelHeight = (int)Math.Round(panelHeight * scale);
         _panel.Width = pixelWidth / scale;
         _panel.Height = pixelHeight / scale;
+        _panel.Padding = new Thickness(8 * _zoom, 7 * _zoom, 8 * _zoom, 8 * _zoom);
+        _heading.FontSize = 11 * _zoom;
+        _heading.Margin = new Thickness(0, 0, 0, 6 * _zoom);
+        var cornerRadius = PanelGlass.CornerRadius * _zoom;
 
         if (!theme.Glass)
         {
@@ -102,7 +114,7 @@ internal sealed class PanelPreview : Border
 
             // The system acrylic can't be drawn here; its surface color a little translucent stands for it.
             _panel.Background = new SolidColorBrush(theme.UseAcrylic ? Translucent(theme.Background) : theme.Background);
-            _panel.CornerRadius = new CornerRadius(8);
+            _panel.CornerRadius = new CornerRadius(8 * _zoom);
             _panel.BorderThickness = new Thickness(1);
             _panel.BorderBrush = new SolidColorBrush(theme.Outline);
             ShowContent(columns, theme);
@@ -111,14 +123,14 @@ internal sealed class PanelPreview : Border
 
         _panel.BorderThickness = new Thickness(0);
         _panel.BorderBrush = null;
-        _panel.CornerRadius = new CornerRadius(PanelGlass.CornerRadius);
+        _panel.CornerRadius = new CornerRadius(cornerRadius);
         if (_glass is null)
         {
             // Until the glass is drawn: its surface color, so the sample is never empty.
             _panel.Background = new SolidColorBrush(Translucent(theme.Background));
             ShowContent(columns, theme);
         }
-        else if (_glass.Columns != columns)
+        else if (_glass.Columns != columns || _glass.Window.Width != pixelWidth)
         {
             ShowContent(columns, theme);
         }
@@ -129,7 +141,7 @@ internal sealed class PanelPreview : Border
         _glass = new GlassJob(
             new ScreenImage(stage, wallpaper.Bgra),
             new ScreenRect(left, top, left + pixelWidth, top + pixelHeight),
-            new GlassStyle(scale, PanelGlass.CornerRadius, theme.Background.A / 255.0, (theme.Background.R, theme.Background.G, theme.Background.B), theme.GlassShade),
+            new GlassStyle(scale, cornerRadius, theme.Background.A / 255.0, (theme.Background.R, theme.Background.G, theme.Background.B), theme.GlassShade),
             theme,
             columns);
         if (Drawing.IsCompleted)
@@ -156,7 +168,7 @@ internal sealed class PanelPreview : Border
             var bitmap = BitmapSource.Create(job.Window.Width, job.Window.Height, 96, 96, PixelFormats.Pbgra32, null, pixels, job.Window.Width * 4);
             bitmap.Freeze();
             _panel.Background = new ImageBrush(bitmap) { Stretch = Stretch.Fill };
-            _panel.CornerRadius = new CornerRadius(PanelGlass.CornerRadius);
+            _panel.CornerRadius = new CornerRadius(job.Style.CornerRadius);
             ShowContent(job.Columns, job.Theme.WithTextFor(PanelGlass.Brightness(pixels) > PanelGlass.BrightGlass));
         }
     }
@@ -172,19 +184,20 @@ internal sealed class PanelPreview : Border
     private void FillItems(int columns, PanelTheme theme)
     {
         columns = Math.Max(columns, 1);
-        _items.Width = columns * CellWidth;
-        _items.Height = SampleRows * CellHeight;
+        var (cellWidth, cellHeight, tile) = (CellWidth * _zoom, CellHeight * _zoom, TileSize * _zoom);
+        _items.Width = columns * cellWidth;
+        _items.Height = SampleRows * cellHeight;
         _items.Children.Clear();
         _items.ColumnDefinitions.Clear();
         _items.RowDefinitions.Clear();
         for (var column = 0; column < columns; column++)
         {
-            _items.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(CellWidth) });
+            _items.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(cellWidth) });
         }
 
         for (var row = 0; row < SampleRows; row++)
         {
-            _items.RowDefinitions.Add(new RowDefinition { Height = new GridLength(CellHeight) });
+            _items.RowDefinitions.Add(new RowDefinition { Height = new GridLength(cellHeight) });
         }
 
         var label = new SolidColorBrush(theme.Foreground) { Opacity = 0.55 };
@@ -197,19 +210,19 @@ internal sealed class PanelPreview : Border
             };
             cell.Children.Add(new Border
             {
-                Width = TileSize,
-                Height = TileSize,
-                CornerRadius = new CornerRadius(TileSize * 0.22),
+                Width = tile,
+                Height = tile,
+                CornerRadius = new CornerRadius(tile * 0.22),
                 Background = new SolidColorBrush(TileColors[index % TileColors.Length]),
             });
             cell.Children.Add(new Shapes.Rectangle
             {
-                Width = TileSize * 0.85,
-                Height = 4,
-                RadiusX = 2,
-                RadiusY = 2,
+                Width = tile * 0.85,
+                Height = 4 * _zoom,
+                RadiusX = 2 * _zoom,
+                RadiusY = 2 * _zoom,
                 Fill = label,
-                Margin = new Thickness(0, 5, 0, 0),
+                Margin = new Thickness(0, 5 * _zoom, 0, 0),
             });
             Grid.SetColumn(cell, index % columns);
             Grid.SetRow(cell, index / columns);

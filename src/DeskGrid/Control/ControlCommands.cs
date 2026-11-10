@@ -71,6 +71,7 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
         ("island hide", "Takes away what NotiLand shows."),
         ("island timer", "Starts NotiLand's timer (the minutes set in Settings), or stops it if it runs."),
         ("island card", "Opens NotiLand's card (players, usage, folders, shelf), or closes it."),
+        ("island open", "Brings the player of the song that plays now (its app, or its browser tab) to the front."),
         ("island info", "Shows NotiLand's info (usage, system, players) for the seconds set in Settings."),
         ("island place <default|desktop|window|maximized|fullScreen>", "Lets you set where NotiLand is in that situation: every window goes down, drag NotiLand, Enter keeps the place, Esc keeps the old one."),
     ];
@@ -97,7 +98,7 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
             "close" when args.Count == 0 => Close(),
             "island" when args is ["show", _, ..] => IslandShow(args.Skip(1).ToList()),
             "island" when args is ["hide"] => IslandHide(),
-            "island" when args is ["timer" or "card" or "info"] => IslandRun(args[0]),
+            "island" when args is ["timer" or "card" or "info" or "open"] => IslandRun(args[0]),
             "island" when args is ["place", var scene] && IslandScene.All.Contains(scene) => IslandRun("place:" + scene),
             var command when Usage.Where(u => NameOf(u) == command).ToList() is { Count: > 0 } own =>
                 ControlResponse.Failure($"Wrong arguments. Usage: {string.Join(" or ", own.Select(u => u.Usage))}"),

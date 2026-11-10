@@ -112,7 +112,6 @@ internal partial class SettingsWindow : Window
         ColorSwatch.Background = new SolidColorBrush(_customColor);
         OpacitySlider.Value = Math.Clamp(OpacityOf(background, background.Style), OpacitySlider.Minimum, OpacitySlider.Maximum);
         ShadeSlider.Value = Math.Clamp(background.GlassShade ?? PanelBackground.DefaultGlassShade, ShadeSlider.Minimum, ShadeSlider.Maximum);
-        UpdateOpacityHint();
         foreach (var style in Enum.GetValues<PanelBackgroundStyle>())
         {
             BackgroundRadioFor(style).Checked += OnBackgroundChanged;
@@ -521,18 +520,7 @@ internal partial class SettingsWindow : Window
         }
 
         _shownStyle = style;
-        UpdateOpacityHint();
         RefreshPreview();
-    }
-
-    // Two styles need a word about what the slider does: the system one loses its blur, liquid glass is frosted by it.
-    private void UpdateOpacityHint()
-    {
-        var hint = BackgroundSystem.IsChecked == true ? Strings.SettingsOpacityHint
-            : BackgroundGlass.IsChecked == true ? Strings.SettingsOpacityHintGlass
-            : null;
-        OpacityHint.Text = hint;
-        OpacityHint.Visibility = hint is null ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private PanelBackgroundStyle SelectedBackground =>
@@ -613,7 +601,6 @@ internal partial class SettingsWindow : Window
         HotkeysButton.Content = Strings.SettingsHotkeysEdit;
         ShowHotkeysHint();
         AllowControlBox.Content = Strings.SettingsAllowControl;
-        AllowControlHint.Text = Strings.SettingsAllowControlHint;
         IslandBox.Content = Strings.SettingsIsland;
         IslandCardShow.Text = Strings.SettingsIslandCardShow;
         IslandCardShortcuts.Text = Strings.SettingsIslandCardShortcuts;
@@ -621,7 +608,6 @@ internal partial class SettingsWindow : Window
         IslandCardPlace.Text = Strings.SettingsIslandCardPlace;
         IslandShortcutsButton.Content = Strings.SettingsIslandShortcuts;
         IslandCardPlaces.Text = Strings.SettingsIslandCardPlaces;
-        IslandPlacesHint.Text = Strings.SettingsIslandPlacesHint;
         IslandCardLook.Text = Strings.SettingsIslandCardLook;
         IslandSizeLabel.Text = Strings.SettingsIslandSize;
         HoverExpandBox.Content = Strings.SettingsHoverExpand;
@@ -631,7 +617,6 @@ internal partial class SettingsWindow : Window
         IslandCardContents.Text = Strings.SettingsIslandCardContents;
         BuildCardParts();
         RefreshPlaces();
-        IslandHint.Text = Strings.SettingsIslandHint;
         IslandMusicLabel.Text = Strings.SettingsIslandMusic;
         MusicOff.Content = Strings.SettingsIslandMusicOff;
         MusicOnChange.Content = Strings.SettingsIslandMusicChange;
@@ -639,7 +624,6 @@ internal partial class SettingsWindow : Window
         IslandFoldersBox.Content = Strings.SettingsIslandFolders;
         IslandBatteryBox.Content = Strings.SettingsIslandBattery;
         IslandUsageBox.Content = Strings.SettingsIslandUsage;
-        IslandUsageHint.Text = Strings.SettingsIslandUsageHint;
         RefreshUsageConnection();
         UsageLimitLabel.Text = Strings.SettingsUsageLimit;
         UsageHoursLabel.Text = Strings.SettingsUsageHours;

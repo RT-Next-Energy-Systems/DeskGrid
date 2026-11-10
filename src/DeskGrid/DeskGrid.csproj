@@ -18,6 +18,11 @@
          zh-Hant is where WPF's own Traditional Chinese texts (e.g. a text box's Cut / Copy / Paste) live. -->
     <SatelliteResourceLanguages>en;zh-Hant;zh-TW</SatelliteResourceLanguages>
 
+    <!-- Lightweight in the background: no extra background-GC thread, and no profile-guided instrumentation overhead
+         in a program that mostly sits idle. -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <TieredPGO>false</TieredPGO>
+
     <!-- Release builds override Version from the git tag (see .github/workflows/release.yml). -->
     <Version>0.6.2</Version>
     <!-- The SDK would append "+<commit>" to the product version, so it differed between builds of one release.

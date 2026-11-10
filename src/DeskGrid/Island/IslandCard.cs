@@ -423,15 +423,56 @@ internal sealed class IslandCard : Window
             Background = Brushes.Transparent,
             Child = barTrack,
         };
-        hitBar.MouseLeftButtonUp += (_, e) =>
+        // Press and drag along the bar to scrub: the bar and the time follow the pointer, and the song jumps there on release.
+        double? scrubFraction = null;
+        double FractionAt(MouseEventArgs e) => Math.Clamp(e.GetPosition(barTrack).X / barTrack.ActualWidth, 0, 1);
+        hitBar.MouseLeftButtonDown += (_, e) =>
         {
-            if (barTrack.ActualWidth > 0 && _bars.TryGetValue(track.Source, out var state) && state.Song.Timeline is { } line && line.Duration > TimeSpan.Zero)
+            if (barTrack.ActualWidth > 0 && _bars.TryGetValue(track.Source, out var state) && state.Song.Timeline is { Duration.Ticks: > 0 })
             {
-                var fraction = e.GetPosition(barTrack).X / barTrack.ActualWidth;
-                _music.Seek?.Invoke(track.Source, line.SeekTarget(fraction));
+                _scrubbing = track.Source;
+                scrubFraction = FractionAt(e);
+                hitBar.CaptureMouse();
+                ShowScrub(track.Source, scrubFraction.Value);
                 e.Handled = true;
             }
         };
+        hitBar.MouseMove += (_, e) =>
+        {
+            if (scrubFraction is not null && hitBar.IsMouseCaptured)
+            {
+                _idle = TimeSpan.Zero;
+                scrubFraction = FractionAt(e);
+                ShowScrub(track.Source, scrubFraction.Value);
+            }
+        };
+        hitBar.MouseLeftButtonUp += (_, e) =>
+        {
+            if (scrubFraction is { } fraction && _bars.TryGetValue(track.Source, out var state) && state.Song.Timeline is { } line)
+            {
+                scrubFraction = null;
+                hitBar.ReleaseMouseCapture();
+                _music.Seek?.Invoke(track.Source, line.SeekTarget(fraction));
+                _scrubHoldUntil = DateTime.UtcNow.AddMilliseconds(1500); // The player reports the new position a moment later.
+                _scrubbing = null;
+                e.Handled = true;
+            }
+        };
+        hitBar.LostMouseCapture += (_, _) =>
+        {
+            scrubFraction = null;
+            _scrubbing = null;
+        };
+
+        foreach (var part in new FrameworkElement[] { cover, texts })
+        {
+            part.Cursor = Cursors.Hand;
+            part.MouseLeftButtonUp += (_, e) =>
+            {
+                _music.Open?.Invoke(track.Source);
+                e.Handled = true;
+            };
+        }
 
         var row = new StackPanel { Margin = new Thickness(0, spaced ? 12 : 0, 0, 0) };
         row.Children.Add(top);
@@ -454,6 +495,22 @@ internal sealed class IslandCard : Window
         fill.Tag = fraction;
         track.SizeChanged += (_, _) => Fill(track, fill);
         return (track, fill);
+    }
+
+    private string? _scrubbing; // The player whose bar is being dragged.
+    private DateTime _scrubHoldUntil;
+
+    // Shows where a drag along a song's bar would take it: the bar and the time.
+    private void ShowScrub(string source, double fraction)
+    {
+        if (!_bars.TryGetValue(source, out var bar) || bar.Song.Timeline is not { } line)
+        {
+            return;
+        }
+
+        bar.Fill.Tag = fraction;
+        Fill(bar.Rail, bar.Fill);
+        bar.Time.Text = MediaTimeline.Format(line.SeekTarget(fraction)) + " / " + MediaTimeline.Format(line.Duration);
     }
 
     private static void Fill(Border track, Border fill) => fill.Width = track.ActualWidth * Math.Clamp(fill.Tag is double f ? f : 0, 0, 1);
@@ -483,6 +540,11 @@ internal sealed class IslandCard : Window
 
         var (_, fill, barTrack, time) = bar;
         _bars[track.Source] = (track, fill, barTrack, time);
+        if (_scrubbing == track.Source || DateTime.UtcNow < _scrubHoldUntil)
+        {
+            return; // The user is moving (or has just moved) this bar: the player's report would pull it back.
+        }
+
         var now = DateTimeOffset.UtcNow;
         if (track.Timeline is { } line)
         {

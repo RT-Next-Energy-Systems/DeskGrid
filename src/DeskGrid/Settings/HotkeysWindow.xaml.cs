@@ -34,7 +34,7 @@ internal partial class HotkeysWindow : Window
 
         // DeskGrid itself first (including "open all folders"), then NotiLand, then one row per folder.
         AddGroup(Strings.HotkeysGroupGeneral, [.. HotkeyBindings.AppIds.Select(id => (id, LabelOf(id)))], config);
-        AddGroup(Strings.HotkeysGroupIsland, [.. HotkeyBindings.IslandIds.Select(id => (id, LabelOf(id)))], config, hint: Strings.HotkeysIslandHint);
+        AddGroup(Strings.HotkeysGroupIsland, [.. HotkeyBindings.IslandIds.Select(id => (id, LabelOf(id)))], config);
         AddGroup(Strings.HotkeysGroupFolders, [.. folderNames.Select(name => (HotkeyBindings.FolderId(name), name))], config,
             note: folderNames.Count == 0 ? Strings.HotkeysNoFolders : null);
     }

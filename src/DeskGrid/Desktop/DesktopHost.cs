@@ -20,7 +20,7 @@ internal sealed class DesktopHost : IDisposable
 
     private readonly List<DesktopSurface> _surfaces = [];
     private readonly DispatcherTimer _retryTimer = new() { Interval = TimeSpan.FromSeconds(1) };
-    private readonly DispatcherTimer _driftTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private readonly DispatcherTimer _driftTimer = new() { Interval = TimeSpan.FromSeconds(2) }; // Display changes are also handled at once (WM_DISPLAYCHANGE); this is the safety net.
     private readonly DispatcherTimer _displaySettled = new() { Interval = DisplaySettleDelay };
     private readonly DesktopIconWatcher _iconWatcher = new();
     private HwndSource? _shellEventsWindow;

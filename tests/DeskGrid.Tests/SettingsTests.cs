@@ -608,7 +608,7 @@ public sealed class SettingsWindowTests : IDisposable
         var before = Strings.Culture;
         try
         {
-            var (title, hint, texts) = await _ui.InvokeAsync(() =>
+            var (title, texts) = await _ui.InvokeAsync(() =>
             {
                 EnsureApplication();
                 Strings.Culture = new CultureInfo(culture);
@@ -619,7 +619,7 @@ public sealed class SettingsWindowTests : IDisposable
                     window.Show();
                     window.UpdateLayout();
                     var all = AllText(window.Entries).ToList();
-                    return (window.Title, window.Hint.Text, all);
+                    return (window.Title, all);
                 }
                 finally
                 {
@@ -628,7 +628,6 @@ public sealed class SettingsWindowTests : IDisposable
             });
 
             Assert.Contains(UpdateChecker.CurrentVersion.ToString(3), title);
-            Assert.Equal(Strings.ResourceManager.GetString("WhatsNewHint", new CultureInfo(culture)), hint);
             Assert.Contains(howToUse, texts);
             Assert.Single(texts, t => t == UpdateChecker.CurrentVersion.ToString(3)); // Only that version, not the older ones.
         }
