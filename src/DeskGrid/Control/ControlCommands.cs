@@ -41,6 +41,9 @@ internal interface IControlHost
 
     /// <summary>Runs an island action as its shortcut does: <c>timer</c>, <c>card</c> or <c>info</c>.</summary>
     void IslandAction(string action);
+
+    /// <summary>What Notiland is doing now (for status), or <see langword="null"/> when there is none.</summary>
+    JsonObject? IslandState { get; }
 }
 
 /// <summary>
@@ -64,11 +67,12 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
         ("open [folder]", "Opens a folder's panel next to its widget, or the list of all folders."),
         ("close", "Closes the open panel."),
         ("island show <text> [seconds] [--icon name] [--color #RRGGBB] [--progress 0-100] [--open folder:NAME|URL|path]",
-            "Shows a line of text on the island for a few seconds (default 5, at most 60). --icon: a symbol (check, warning, error, info, download, folder, mic, camera, bluetooth, timer, battery, system) or one character; --color: the symbol and bar; --progress: a bar under the text; --open: what a click does. Needs the island turned on in Settings."),
-        ("island hide", "Takes away what the island shows."),
-        ("island timer", "Starts the island's timer (the minutes set in Settings), or stops it if it runs."),
-        ("island card", "Opens the island's card (players, usage, folders, shelf), or closes it."),
-        ("island info", "Shows the island's info (usage, system, players) for the seconds set in Settings."),
+            "Shows a line of text on Notiland for a few seconds (default 5, at most 60). --icon: a symbol (check, warning, error, info, download, folder, mic, camera, bluetooth, timer, battery, system) or one character; --color: the symbol and bar; --progress: a bar under the text; --open: what a click does. Needs the island turned on in Settings."),
+        ("island hide", "Takes away what Notiland shows."),
+        ("island timer", "Starts Notiland's timer (the minutes set in Settings), or stops it if it runs."),
+        ("island card", "Opens Notiland's card (players, usage, folders, shelf), or closes it."),
+        ("island info", "Shows Notiland's info (usage, system, players) for the seconds set in Settings."),
+        ("island place <default|desktop|window|maximized|fullScreen>", "Lets you set where Notiland is in that situation: every window goes down, drag Notiland, Enter keeps the place, Esc keeps the old one."),
     ];
 
     public ControlResponse Execute(ControlRequest request)
@@ -80,7 +84,8 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
         }
 
         var args = request.Args;
-        return request.Command switch
+        // "notiland" is the name of the island now; "island" stays, for the scripts that use it.
+        return (request.Command == "notiland" ? "island" : request.Command) switch
         {
             "status" => Status(),
             "list" when args.Count <= 1 => List(args.Count == 1 ? args[0] : null),
@@ -93,6 +98,7 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
             "island" when args is ["show", _, ..] => IslandShow(args.Skip(1).ToList()),
             "island" when args is ["hide"] => IslandHide(),
             "island" when args is ["timer" or "card" or "info"] => IslandRun(args[0]),
+            "island" when args is ["place", var scene] && IslandScene.All.Contains(scene) => IslandRun("place:" + scene),
             var command when Usage.Where(u => NameOf(u) == command).ToList() is { Count: > 0 } own =>
                 ControlResponse.Failure($"Wrong arguments. Usage: {string.Join(" or ", own.Select(u => u.Usage))}"),
             var command => ControlResponse.Failure($"Unknown command \"{command}\". Commands: {string.Join(", ", Usage.Select(NameOf).Distinct())}."),
@@ -115,6 +121,7 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
         ["ready"] = host.Widgets is not null,
         ["folders"] = host.Widgets?.Count,
         ["openPanel"] = host.OpenPanel,
+        ["notiland"] = host.IslandState,
     });
 
     private ControlResponse List(string? name)
@@ -271,7 +278,7 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
     {
         if (!host.Config.IslandEnabled)
         {
-            return ControlResponse.Failure("The island is turned off. Turn on \"Show the island at the top of the screen\" in DeskGrid's Settings.");
+            return ControlResponse.Failure("Notiland is turned off. Turn on \"Show Notiland\" in DeskGrid's Settings.");
         }
 
         var text = rest[0].Trim();
@@ -356,7 +363,7 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
     {
         if (!host.Config.IslandEnabled)
         {
-            return ControlResponse.Failure("The island is turned off. Turn on \"Show the island at the top of the screen\" in DeskGrid's Settings.");
+            return ControlResponse.Failure("Notiland is turned off. Turn on \"Show Notiland\" in DeskGrid's Settings.");
         }
 
         host.IslandAction(action);

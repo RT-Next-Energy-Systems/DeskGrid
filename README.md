@@ -189,9 +189,10 @@ DeskGrid.exe --ctl <command> [arguments]
 | `move <folder> <item> <index>` | Puts an item at a position (0 = first) in its folder. |
 | `open [folder]` | Opens a folder's panel next to it, or the list of all folders. |
 | `close` | Closes the open panel. |
-| `island show <text> [seconds] [--icon name] [--color #RRGGBB] [--progress 0-100] [--open target]` | Shows a line on the island for a few seconds (default 5, at most 60), optionally with a symbol, a color, a progress bar and what a click opens (`folder:NAME`, an http(s) address or an existing path). The island must be turned on. |
-| `island hide` | Takes away what the island shows. |
-| `island timer` / `island card` / `island info` | Starts or stops the island timer; opens or closes the card; shows the info (usage, system, players). |
+| `island show <text> [seconds] [--icon name] [--color #RRGGBB] [--progress 0-100] [--open target]` | Shows a line on Notiland for a few seconds (default 5, at most 60), optionally with a symbol, a color, a progress bar and what a click opens (`folder:NAME`, an http(s) address or an existing path). Notiland must be turned on. |
+| `island hide` | Takes away what Notiland shows. |
+| `island timer` / `island card` / `island info` | Starts or stops the Notiland timer; opens or closes the card; shows the info (usage, system, players). |
+| `island place <situation>` | Sets where Notiland is in that situation (`default`, `desktop`, `window`, `maximized` or `fullScreen`): every window goes down, drag it (it snaps), Enter keeps, Esc cancels. |
 
 Each command prints one line of JSON, `{"ok":true,"result":…}` or `{"ok":false,"error":"…"}`, with characters outside
 ASCII written as `\uXXXX`, and exits with 0 (done), 1 (the command failed), 2 (DeskGrid is not running) or 3 (wrong
@@ -202,10 +203,10 @@ DeskGrid is a windowed program, so a command prompt doesn't wait for it: read it
 `DeskGrid.exe --ctl list | Out-String` in PowerShell. Under the hood it is a named pipe, `\\.\pipe\DeskGrid.Control.<user name>`,
 taking one line of JSON per connection (`{"command":"list","args":["Work"]}`), which other programs can use directly.
 
-### The island
+### Notiland
 
-A small black pill at the top centre of the primary screen that shows short messages. Tick **Show the island at the top
-of the screen** in Settings → Shortcuts (it is off by default), and a script or an AI agent can put a line on it with
+Notiland (the name DeskGrid gives its "island") is a small black pill, at the top centre of the primary screen unless you
+put it elsewhere, that shows short messages. Tick **Show Notiland** in Settings → Notiland (it is off by default), and a script or an AI agent can put a line on it with
 `DeskGrid.exe --ctl island show "Build finished" 10` (it also needs **Allow control from scripts and AI agents**).
 
 - A line stays for 5 seconds unless you give another time (up to 60); more lines wait their turn.
@@ -314,6 +315,7 @@ are MIT-licensed and were re-written for the CPU in C#. Their notice and license
 
 > Copyright (c) 2026 Sepehr Kalanaki (OverShifted/LiquidGlass)
 > Copyright (c) 2025 Shu Ding (shuding/liquid-glass)
+> Copyright (c) 2025 ryoppippi (ryoppippi/ccusage)
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 > documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -327,6 +329,12 @@ are MIT-licensed and were re-written for the CPU in C#. Their notice and license
 > WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 > COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 > OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Notiland's **AI usage** (`src/DeskGrid/Island/UsageMonitor.cs`) reads Claude Code's logs the way
+[ryoppippi/ccusage](https://github.com/ryoppippi/ccusage) does: the folders it looks in (`CLAUDE_CONFIG_DIR`,
+`~/.config/claude`, `~/.claude`), counting each response once (also when a sub-agent replays it), the four kinds of tokens,
+and Claude's 5-hour session blocks. That logic was ported to C# from ccusage's Rust sources (MIT); its copyright line is
+listed above with the same license text.
 
 "Liquid Glass" is a name used by Apple Inc. DeskGrid's glass is an approximation of the look, not Apple's code, and is
 not affiliated with or endorsed by Apple.

@@ -43,7 +43,12 @@ internal sealed record SettingsChoice(
     string IslandQuietFrom = "",
     string IslandQuietTo = "",
     string IslandHideInApps = "",
-    string IslandShowOverApps = "");
+    string IslandShowOverApps = "",
+    double IslandScale = 1,
+    bool HoverExpand = true,
+    bool HoverFullText = true,
+    bool HoverButtons = true,
+    bool HoverTime = true);
 
 /// <summary>One line of the language list: the language and the name it is shown under.</summary>
 internal sealed record LanguageOption(AppLanguage Language, string Label);
@@ -116,6 +121,11 @@ internal partial class SettingsWindow : Window
         IslandQuietToBox.Text = config.IslandQuietTo ?? "";
         IslandHideAppsBox.Text = config.IslandHideInApps ?? "";
         IslandShowOverBox.Text = config.IslandShowOverApps ?? "";
+        IslandSizeSlider.Value = Math.Clamp(Math.Round(config.IslandScale * 20) * 5, IslandSizeSlider.Minimum, IslandSizeSlider.Maximum);
+        HoverExpandBox.IsChecked = config.IslandHoverExpand;
+        HoverFullTextBox.IsChecked = config.IslandHoverFullText;
+        HoverButtonsBox.IsChecked = config.IslandHoverButtons;
+        HoverTimeBox.IsChecked = config.IslandHoverTime;
         UpdateIslandEnabled();
         MusicRadioFor(config.IslandMusic).IsChecked = true;
         Pages.SelectedItem = PageGeneralItem;
@@ -141,6 +151,7 @@ internal partial class SettingsWindow : Window
         choice.IslandShowSeconds, choice.IslandUsage, choice.UsageLimitMillions, choice.UsageHours, choice.UsageWarnPercent,
         choice.IslandPrivacy, choice.IslandBluetooth, choice.IslandDownloads, choice.IslandSystem, choice.IslandTimerMinutes, choice.IslandFollowPointer,
         choice.IslandQuietFrom, choice.IslandQuietTo, choice.IslandHideInApps, choice.IslandShowOverApps,
+        choice.IslandScale, choice.HoverExpand, choice.HoverFullText, choice.HoverButtons, choice.HoverTime,
         choice.PanelBackground.Style, choice.PanelBackground.CustomColor, choice.PanelBackground.CustomOpacity,
         choice.PanelBackground.Opacity, choice.PanelBackground.GlassShade);
 
@@ -197,7 +208,11 @@ internal partial class SettingsWindow : Window
     /// <summary>Puts the island back at the top centre of the screen.</summary>
     public Action? ResetIslandPosition { get; set; }
 
-    private void OnResetIsland(object sender, RoutedEventArgs e) => ResetIslandPosition?.Invoke();
+    private void OnResetIsland(object sender, RoutedEventArgs e)
+    {
+        ResetIslandPosition?.Invoke();
+        RefreshPlaces();
+    }
 
     // What the island does is dimmed while it is off, the usage numbers while usage is off.
     private void OnIslandSwitched(object sender, RoutedEventArgs e) => UpdateIslandEnabled();
@@ -208,6 +223,59 @@ internal partial class SettingsWindow : Window
     {
         IslandOptions.IsEnabled = IslandBox.IsChecked == true;
         UsageFields.IsEnabled = IslandUsageBox.IsChecked == true;
+        HoverOptions.IsEnabled = HoverExpandBox.IsChecked == true;
+    }
+
+    private void OnHoverSwitched(object sender, RoutedEventArgs e) => UpdateIslandEnabled();
+
+    private void OnIslandSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (IslandSizeValue is not null)
+        {
+            IslandSizeValue.Text = $"{IslandSizeSlider.Value:0}%";
+        }
+    }
+
+    /// <summary>Sets the place of a situation (the app shows the desktop and lets the user drag Notiland).</summary>
+    public Action<string>? EditIslandPlace { get; set; }
+
+    /// <summary>Gives a situation back the default place.</summary>
+    public Action<string>? ResetIslandPlace { get; set; }
+
+    /// <summary>Shows each situation with whether it has a place of its own, an Edit and a Reset button.</summary>
+    internal void RefreshPlaces()
+    {
+        IslandPlacesPanel.Children.Clear();
+        foreach (var scene in IslandScene.All)
+        {
+            var set = scene == IslandScene.Default ? _config.IslandX is not null : _config.IslandPlaces.ContainsKey(scene);
+            var status = set ? Strings.SettingsPlaceSet : scene == IslandScene.Default ? Strings.SettingsPlaceTop : Strings.SettingsPlaceUnset;
+            var row = new Grid { Margin = new Thickness(0, 3, 0, 3) };
+            row.ColumnDefinitions.Add(new ColumnDefinition());
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var name = new TextBlock { Text = IslandHost.SceneName(scene), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
+            var state = new TextBlock { Text = status, Opacity = 0.65, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 12, 0) };
+            var edit = new Button { Content = Strings.SettingsPlaceEdit, Padding = new Thickness(12, 4, 12, 4) };
+            var reset = new Button { Content = Strings.SettingsPlaceReset, Padding = new Thickness(12, 4, 12, 4), Margin = new Thickness(6, 0, 0, 0), IsEnabled = set };
+            System.Windows.Automation.AutomationProperties.SetName(edit, $"{Strings.SettingsPlaceEdit}: {name.Text}");
+            System.Windows.Automation.AutomationProperties.SetName(reset, $"{Strings.SettingsPlaceReset}: {name.Text}");
+            edit.Click += (_, _) => EditIslandPlace?.Invoke(scene);
+            reset.Click += (_, _) =>
+            {
+                ResetIslandPlace?.Invoke(scene);
+                RefreshPlaces();
+            };
+            Grid.SetColumn(state, 1);
+            Grid.SetColumn(edit, 2);
+            Grid.SetColumn(reset, 3);
+            row.Children.Add(name);
+            row.Children.Add(state);
+            row.Children.Add(edit);
+            row.Children.Add(reset);
+            IslandPlacesPanel.Children.Add(row);
+        }
     }
 
     private void OnIslandShortcuts(object sender, RoutedEventArgs e)
@@ -353,6 +421,15 @@ internal partial class SettingsWindow : Window
         IslandCardAway.Text = Strings.SettingsIslandCardAway;
         IslandCardPlace.Text = Strings.SettingsIslandCardPlace;
         IslandShortcutsButton.Content = Strings.SettingsIslandShortcuts;
+        IslandCardPlaces.Text = Strings.SettingsIslandCardPlaces;
+        IslandPlacesHint.Text = Strings.SettingsIslandPlacesHint;
+        IslandCardLook.Text = Strings.SettingsIslandCardLook;
+        IslandSizeLabel.Text = Strings.SettingsIslandSize;
+        HoverExpandBox.Content = Strings.SettingsHoverExpand;
+        HoverFullTextBox.Content = Strings.SettingsHoverFullText;
+        HoverButtonsBox.Content = Strings.SettingsHoverButtons;
+        HoverTimeBox.Content = Strings.SettingsHoverTime;
+        RefreshPlaces();
         IslandHint.Text = Strings.SettingsIslandHint;
         IslandMusicLabel.Text = Strings.SettingsIslandMusic;
         MusicOff.Content = Strings.SettingsIslandMusicOff;
@@ -501,7 +578,7 @@ internal partial class SettingsWindow : Window
         IslandBatteryBox.IsChecked == true,
         Number(IslandSecondsBox, _config.IslandShowSeconds, 0, 3600),
         IslandUsageBox.IsChecked == true,
-        Math.Clamp(double.TryParse(UsageLimitBox.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var limit) ? limit : _config.UsageLimitMillions, 0.01, 100000),
+        Math.Clamp(double.TryParse(UsageLimitBox.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var limit) ? limit : _config.UsageLimitMillions, 0, 100000),
         Number(UsageHoursBox, _config.UsageHours, 1, 720),
         Number(UsageWarnBox, _config.UsageWarnPercent, 1, 100),
         IslandPrivacyBox.IsChecked == true,
@@ -513,7 +590,12 @@ internal partial class SettingsWindow : Window
         Time(IslandQuietFromBox),
         Time(IslandQuietToBox),
         IslandHideAppsBox.Text.Trim(),
-        IslandShowOverBox.Text.Trim());
+        IslandShowOverBox.Text.Trim(),
+        IslandSizeSlider.Value / 100,
+        HoverExpandBox.IsChecked == true,
+        HoverFullTextBox.IsChecked == true,
+        HoverButtonsBox.IsChecked == true,
+        HoverTimeBox.IsChecked == true);
 
     // "HH:mm" as typed, or empty when it is not a time.
     private static string Time(TextBox box) => IslandRules.Parse(box.Text) is { } time ? time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) : "";

@@ -232,10 +232,10 @@ Cancel: ask again next time.</value>
     <value>Through "DeskGrid.exe --ctl", this account only. Nothing can be deleted.</value>
   </data>
   <data name="SettingsIsland" xml:space="preserve">
-    <value>Show the island at the top of the screen</value>
+    <value>Show Notiland</value>
   </data>
   <data name="SettingsIslandHint" xml:space="preserve">
-    <value>A small pill that shows short messages, for example from scripts through "DeskGrid.exe --ctl island", and the music and video that are playing. Press Esc to close what it shows; drag it to move it. It hides while a full-screen app runs.</value>
+    <value>Notiland is a small pill that shows short messages (for example from scripts through "DeskGrid.exe --ctl island") and the music and video that are playing. Esc closes what it shows; drag it to move it. It hides while a full-screen app runs.</value>
   </data>
   <data name="SettingsIslandMusic" xml:space="preserve">
     <value>Music and video</value>
@@ -267,32 +267,29 @@ Cancel: ask again next time.</value>
   <data name="IslandBatteryCritical" xml:space="preserve">
     <value>Battery very low · {0}%</value>
   </data>
-  <data name="HotkeyIsland" xml:space="preserve">
-    <value>Open folders under the island</value>
-  </data>
   <data name="SettingsIslandUsage" xml:space="preserve">
     <value>Warn about AI usage (Claude Code)</value>
   </data>
   <data name="SettingsIslandUsageHint" xml:space="preserve">
-    <value>Adds up the tokens Claude Code logged on this computer (in .claude\projects of your user folder). Nothing is sent anywhere. The usage shows with the "show the island" shortcut.</value>
+    <value>Counts what Claude Code logged on this computer (.claude and .config\claude in your user folder, or CLAUDE_CONFIG_DIR) the way ccusage does: each response once, all kinds of tokens, in Claude's session blocks. Nothing is sent anywhere.</value>
   </data>
   <data name="SettingsUsageLimit" xml:space="preserve">
-    <value>Limit (millions of tokens)</value>
+    <value>Limit per session (millions of tokens; 0 = your highest earlier session)</value>
   </data>
   <data name="SettingsUsageHours" xml:space="preserve">
-    <value>Counted over the last (hours)</value>
+    <value>Session length (hours; Claude's is 5)</value>
   </data>
   <data name="SettingsUsageWarn" xml:space="preserve">
     <value>Warn at (% of the limit)</value>
   </data>
   <data name="SettingsIslandSeconds" xml:space="preserve">
-    <value>Seconds the "show the island" shortcut keeps it up (0 = until hidden)</value>
+    <value>Seconds the "show or hide" shortcut keeps Notiland up (0 = until pressed again)</value>
   </data>
   <data name="SettingsIslandReset" xml:space="preserve">
-    <value>Put the island back at the top centre</value>
+    <value>Reset all places</value>
   </data>
   <data name="IslandUsageLine" xml:space="preserve">
-    <value>AI usage {0}% · {1} of {2} tokens (last {3} h)</value>
+    <value>AI usage {0}% · {1} of {2} tokens · resets in {3}</value>
   </data>
   <data name="IslandUsageWarn" xml:space="preserve">
     <value>AI usage is at {0}% of your limit</value>
@@ -303,14 +300,8 @@ Cancel: ask again next time.</value>
   <data name="IslandNothing" xml:space="preserve">
     <value>Nothing to show</value>
   </data>
-  <data name="HotkeyIslandShow" xml:space="preserve">
-    <value>Show the island for a few seconds</value>
-  </data>
   <data name="HotkeyIslandToggle" xml:space="preserve">
-    <value>Show or hide the island (stays up)</value>
-  </data>
-  <data name="HotkeyIslandHide" xml:space="preserve">
-    <value>Hide the island</value>
+    <value>Show or hide Notiland</value>
   </data>
   <data name="CardFolders" xml:space="preserve">
     <value>Folders</value>
@@ -346,13 +337,13 @@ Cancel: ask again next time.</value>
     <value>Added {0} item(s) to {1}</value>
   </data>
   <data name="HotkeyIslandTimer" xml:space="preserve">
-    <value>Start or stop the island timer</value>
+    <value>Start or stop the Notiland timer</value>
   </data>
   <data name="HotkeyIslandCard" xml:space="preserve">
-    <value>Open or close the island card</value>
+    <value>Open or close the Notiland card</value>
   </data>
   <data name="SettingsPageIsland" xml:space="preserve">
-    <value>Island</value>
+    <value>Notiland</value>
   </data>
   <data name="SettingsIslandPrivacy" xml:space="preserve">
     <value>Tell when a program starts using the microphone or camera</value>
@@ -398,6 +389,69 @@ Cancel: ask again next time.</value>
   </data>
   <data name="SettingsIslandShortcuts" xml:space="preserve">
     <value>Shortcuts…</value>
+  </data>
+  <data name="IslandUsageIdle" xml:space="preserve">
+    <value>AI usage: no Claude session running</value>
+  </data>
+  <data name="IslandPlaceEditing" xml:space="preserve">
+    <value>Drag to the place for “{0}” · Enter or double-click: done · Esc: cancel</value>
+  </data>
+  <data name="SceneDefault" xml:space="preserve">
+    <value>Default (anything else)</value>
+  </data>
+  <data name="SceneDesktop" xml:space="preserve">
+    <value>Desktop</value>
+  </data>
+  <data name="SceneFullScreen" xml:space="preserve">
+    <value>Full screen (programs it shows over)</value>
+  </data>
+  <data name="SceneMaximized" xml:space="preserve">
+    <value>A maximized window</value>
+  </data>
+  <data name="SceneWindow" xml:space="preserve">
+    <value>A window in front</value>
+  </data>
+  <data name="SettingsHoverButtons" xml:space="preserve">
+    <value>Show the music buttons (previous, play / pause, next)</value>
+  </data>
+  <data name="SettingsHoverExpand" xml:space="preserve">
+    <value>Open up when the pointer is over it</value>
+  </data>
+  <data name="SettingsHoverFullText" xml:space="preserve">
+    <value>Show all of a long line (up to three lines)</value>
+  </data>
+  <data name="SettingsHoverTime" xml:space="preserve">
+    <value>Show the song’s time</value>
+  </data>
+  <data name="SettingsIslandCardLook" xml:space="preserve">
+    <value>Size and pointer</value>
+  </data>
+  <data name="SettingsIslandCardPlaces" xml:space="preserve">
+    <value>Where it appears</value>
+  </data>
+  <data name="SettingsIslandPlacesHint" xml:space="preserve">
+    <value>Each situation can have a place of its own; one without uses the default. Edit shows the desktop; drag Notiland there and it snaps to the middle, the edges and the taskbar. Dragging it at other times changes the place of the situation in front.</value>
+  </data>
+  <data name="SettingsIslandSize" xml:space="preserve">
+    <value>Size</value>
+  </data>
+  <data name="SettingsPlaceEdit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="SettingsPlaceNeedsIsland" xml:space="preserve">
+    <value>Turn Notiland on and press Apply first.</value>
+  </data>
+  <data name="SettingsPlaceReset" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="SettingsPlaceSet" xml:space="preserve">
+    <value>Set</value>
+  </data>
+  <data name="SettingsPlaceTop" xml:space="preserve">
+    <value>Top centre</value>
+  </data>
+  <data name="SettingsPlaceUnset" xml:space="preserve">
+    <value>Same as default</value>
   </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>Privacy</value>
@@ -557,10 +611,10 @@ You can change this in the tray menu.</value>
     <value>Folders</value>
   </data>
   <data name="HotkeysGroupIsland" xml:space="preserve">
-    <value>Island</value>
+    <value>Notiland</value>
   </data>
   <data name="HotkeysIslandHint" xml:space="preserve">
-    <value>"Show" keeps the island up for the seconds set on the Island page of Settings (0 = until hidden). "Show or hide" and the timer stay until pressed again.</value>
+    <value>"Show or hide" keeps Notiland up for the seconds set on its Settings page (0 = until pressed again).</value>
   </data>
   <data name="HotkeysGroupCount" xml:space="preserve">
     <value>{0} of {1} set</value>

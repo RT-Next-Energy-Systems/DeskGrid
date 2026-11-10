@@ -56,7 +56,7 @@ internal sealed class IslandHotZone : Window
         var lift = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         lift.Tick += (_, _) =>
         {
-            if (IsVisible)
+            if (IsVisible && !IslandScene.SystemOverlayInFront())
             {
                 TopEdge.RaiseAboveTaskbar(new HWND(new WindowInteropHelper(this).Handle));
             }

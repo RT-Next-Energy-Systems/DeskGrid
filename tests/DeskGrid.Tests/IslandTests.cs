@@ -1,3 +1,4 @@
+using System.IO;
 using DeskGrid.Config;
 using DeskGrid.Desktop;
 using DeskGrid.Island;
@@ -240,25 +241,82 @@ public sealed class IslandMarqueeTests
 
 public sealed class UsageTests
 {
-    private static string Line(string id, int input, int output, string time, string type = "assistant") =>
-        "{\"type\":\"" + type + "\",\"timestamp\":\"" + time + "\",\"requestId\":\"r\",\"message\":{\"id\":\"" + id
-        + "\",\"usage\":{\"input_tokens\":" + input + ",\"output_tokens\":" + output
-        + ",\"cache_creation_input_tokens\":10,\"cache_read_input_tokens\":5000}}}";
+    private static string Line(
+        string id, int input, int output, string time, string? request = "r1", bool sidechain = false, int cacheRead = 0, string session = "s1") =>
+        "{\"type\":\"assistant\",\"timestamp\":\"" + time + "\""
+        + (request is null ? "" : ",\"requestId\":\"" + request + "\"")
+        + ",\"sessionId\":\"" + session + "\",\"isSidechain\":" + (sidechain ? "true" : "false")
+        + ",\"message\":{\"id\":\"" + id + "\",\"usage\":{\"input_tokens\":" + input + ",\"output_tokens\":" + output
+        + ",\"cache_creation_input_tokens\":10,\"cache_read_input_tokens\":" + cacheRead + "}}}";
 
-    private static readonly DateTimeOffset Since = new(2026, 11, 10, 8, 0, 0, TimeSpan.Zero);
+    private static long Total(params string[] lines)
+    {
+        var deduper = new UsageDeduper();
+        foreach (var line in lines)
+        {
+            deduper.Add(line, "file-session");
+        }
+
+        return deduper.Entries.Sum(e => e.Tokens);
+    }
 
     [Fact]
-    public void ACounter_CountsAMessageOnce_AtItsLargestSize_AndSkipsOldOnes()
-    {
-        var counter = new UsageCounter(Since);
-        counter.Add(Line("m1", 100, 5, "2026-11-10T09:00:00Z"));
-        counter.Add(Line("m1", 100, 50, "2026-11-10T09:00:01Z")); // The same message, streamed further.
-        counter.Add(Line("m2", 200, 20, "2026-11-10T10:00:00Z"));
-        counter.Add(Line("old", 999, 999, "2026-11-10T07:00:00Z"));
-        counter.Add(Line("user", 999, 999, "2026-11-10T10:00:00Z", type: "user"));
-        counter.Add("not json with \"usage\" in it");
+    public void AllFourKindsOfTokens_Count() =>
+        Assert.Equal(100 + 5 + 10 + 1000, Total(Line("msg_a", 100, 5, "2026-11-10T09:00:00Z", cacheRead: 1000)));
 
-        Assert.Equal(160 + 230, counter.Total); // The cache-creation tokens count (10 each), the cache reads do not.
+    [Fact]
+    public void OneResponse_WrittenOncePerContentBlock_CountsOnce_AtItsLargest() =>
+        Assert.Equal(100 + 50 + 10, Total(
+            Line("msg_a", 100, 5, "2026-11-10T09:00:00Z"),
+            Line("msg_a", 100, 50, "2026-11-10T09:00:01Z")));
+
+    [Fact]
+    public void DifferentRequests_AreDifferentResponses() =>
+        Assert.Equal(2 * (100 + 5 + 10), Total(
+            Line("msg_a", 100, 5, "2026-11-10T09:00:00Z", request: "r1"),
+            Line("msg_b", 100, 5, "2026-11-10T09:00:00Z", request: "r2")));
+
+    [Fact]
+    public void ASidechainReplayOfAParentMessage_IsNotCountedAgain() =>
+        Assert.Equal(100 + 5 + 10, Total(
+            Line("msg_a", 100, 5, "2026-11-10T09:00:00Z", request: null),
+            Line("msg_a", 100, 5, "2026-11-10T09:05:00Z", request: null, sidechain: true)));
+
+    [Fact]
+    public void LinesThatAreNotUsage_OrCutOff_AreSkipped() =>
+        Assert.Equal(0, Total("{\"type\":\"user\",\"message\":{\"content\":\"hi\"}}", "{\"message\":{\"usage\":", "not json \"usage\""));
+
+    private static readonly DateTimeOffset T = new(2026, 11, 10, 9, 20, 0, TimeSpan.Zero);
+
+    private static UsageEntry At(double hours, long tokens) => new(T.AddHours(hours), tokens);
+
+    [Fact]
+    public void TheRunningBlock_StartsAtTheHour_AndEndsFiveHoursLater()
+    {
+        var reading = UsageBlocks.Read([At(0, 100), At(1, 200)], TimeSpan.FromHours(5), T.AddHours(2));
+
+        Assert.Equal(300, reading.Tokens);
+        Assert.Equal(new DateTimeOffset(2026, 11, 10, 14, 0, 0, TimeSpan.Zero), reading.Resets);
+    }
+
+    [Fact]
+    public void AResponsePastTheBlocksEnd_StartsANewBlock_AndTheOldOneIsTheAutomaticLimit()
+    {
+        var reading = UsageBlocks.Read([At(0, 100), At(4.5, 400), At(5.5, 50)], TimeSpan.FromHours(5), T.AddHours(6));
+
+        Assert.Equal(50, reading.Tokens);
+        Assert.Equal(500, reading.HighestEarlier);
+        Assert.Equal(500, reading.LimitFor(new UsageOptions(0, 5, 80)));
+        Assert.Equal(2_000_000, reading.LimitFor(new UsageOptions(2, 5, 80)));
+    }
+
+    [Fact]
+    public void AfterALongPause_NoBlockRuns()
+    {
+        var reading = UsageBlocks.Read([At(0, 100)], TimeSpan.FromHours(5), T.AddHours(6));
+
+        Assert.Equal(0, reading.Tokens);
+        Assert.Null(reading.Resets);
     }
 
     [Fact]
@@ -266,17 +324,68 @@ public sealed class UsageTests
     {
         var options = new UsageOptions(5, 5, 80);
 
-        Assert.Equal(UsageLevel.Fine, UsageRules.LevelOf(3_999_999, options));
-        Assert.Equal(UsageLevel.Warn, UsageRules.LevelOf(4_000_000, options));
-        Assert.Equal(UsageLevel.Full, UsageRules.LevelOf(5_000_000, options));
+        Assert.Equal(UsageLevel.Fine, UsageRules.LevelOf(new UsageReading(3_999_999, null, 0), options));
+        Assert.Equal(UsageLevel.Warn, UsageRules.LevelOf(new UsageReading(4_000_000, null, 0), options));
+        Assert.Equal(UsageLevel.Full, UsageRules.LevelOf(new UsageReading(5_000_000, null, 0), options));
     }
 
     [Fact]
-    public void Short_WritesTokensTheShortWay()
+    public void Short_WritesTokensTheShortWay_AndLeftTheTimeToTheReset()
     {
         Assert.Equal("4.1M", UsageRules.Short(4_100_000));
         Assert.Equal("820K", UsageRules.Short(820_000));
         Assert.Equal("950", UsageRules.Short(950));
+        Assert.Equal("2h 05m", UsageRules.Left(T.AddMinutes(125), T));
+        Assert.Equal("45m", UsageRules.Left(T.AddMinutes(45), T));
+    }
+
+    [Fact]
+    public void TheDataFolders_AreThoseOfCcusage()
+    {
+        var home = Directory.CreateTempSubdirectory("home").FullName;
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(home, ".claude", "projects"));
+            Directory.CreateDirectory(Path.Combine(home, ".config", "claude", "projects"));
+            var custom = Path.Combine(home, "custom");
+            Directory.CreateDirectory(Path.Combine(custom, "projects"));
+
+            Assert.Equal(
+                [Path.Combine(home, ".config", "claude", "projects"), Path.Combine(home, ".claude", "projects")],
+                ClaudeData.ProjectFolders(_ => null, home));
+            Assert.Equal([Path.Combine(custom, "projects")], ClaudeData.ProjectFolders(name => name == "CLAUDE_CONFIG_DIR" ? custom + ", nowhere" : null, home));
+        }
+        finally
+        {
+            Directory.Delete(home, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void TheReader_ReadsOnlyWhatWasAppended_AndWaitsForAnUnfinishedLine()
+    {
+        var root = Directory.CreateTempSubdirectory("projects").FullName;
+        try
+        {
+            var log = Path.Combine(root, "p", "s.jsonl");
+            Directory.CreateDirectory(Path.GetDirectoryName(log)!);
+            var now = DateTimeOffset.UtcNow;
+            string Stamp(int minutes) => now.AddMinutes(-minutes).ToString("O");
+            File.WriteAllText(log, Line("msg_a", 100, 0, Stamp(30), request: "r1") + "\n");
+            var reader = new UsageReader();
+            Assert.Equal(110, reader.Read([root], TimeSpan.FromHours(5), now).Tokens);
+
+            var second = Line("msg_b", 200, 0, Stamp(10), request: "r2");
+            File.AppendAllText(log, second[..20]); // Half a line: not counted yet.
+            Assert.Equal(110, reader.Read([root], TimeSpan.FromHours(5), now).Tokens);
+
+            File.AppendAllText(log, second[20..] + "\n");
+            Assert.Equal(320, reader.Read([root], TimeSpan.FromHours(5), now).Tokens);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
     }
 }
 

@@ -41,6 +41,7 @@ internal sealed class IslandCard : Window
     private string? _pressedPath;
     private TimeSpan _idle;
     private ScreenPoint _home;
+    private int _pillHeight; // In pixels: the card goes under (or over) the pill.
     private Func<CardModel> _model = () => new CardModel([], null, null, null, [], []);
 
     public IslandCard(MusicActions music)
@@ -102,10 +103,11 @@ internal sealed class IslandCard : Window
     public event Action<string>? ShelfOpened;
 
     /// <summary>Opens the card under the island, whose top edge is at <paramref name="home"/> (the middle of it, in screen pixels).</summary>
-    public void Open(Func<CardModel> model, ScreenPoint home)
+    public void Open(Func<CardModel> model, ScreenPoint home, int pillHeight)
     {
         _model = model;
         _home = home;
+        _pillHeight = pillHeight;
         _signature = "";
         Build(model());
         var handle = new HWND(new WindowInteropHelper(this).EnsureHandle());
@@ -146,7 +148,11 @@ internal sealed class IslandCard : Window
     {
         Refresh();
         _idle = IsMouseOver ? TimeSpan.Zero : _idle + _tick.Interval;
-        TopEdge.RaiseAboveTaskbar(new HWND(new WindowInteropHelper(this).Handle));
+        if (!IslandScene.SystemOverlayInFront())
+        {
+            TopEdge.RaiseAboveTaskbar(new HWND(new WindowInteropHelper(this).Handle));
+        }
+
         if (_idle >= IdleClose)
         {
             Close();
@@ -425,7 +431,7 @@ internal sealed class IslandCard : Window
         var height = _frame.DesiredSize.Height;
         (Width, Height) = (CardWidth, height);
         var (w, h) = (monitor.ToPixels(CardWidth), monitor.ToPixels(height));
-        var below = _home.Y + monitor.ToPixels(TopEdge.PillRoom + Gap);
+        var below = _home.Y + _pillHeight + monitor.ToPixels(Gap);
         var y = below + h <= screen.Bottom ? below : Math.Max(screen.Top, _home.Y - monitor.ToPixels(Gap) - h);
         var x = Math.Clamp(_home.X - w / 2, screen.Left, Math.Max(screen.Left, screen.Right - w));
         PInvoke.SetWindowPos(window, new HWND(-1), x, y, w, h, SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);

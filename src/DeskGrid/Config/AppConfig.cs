@@ -59,10 +59,10 @@ internal sealed class AppConfig
     /// <summary>Whether the island watches the AI usage read from Claude Code's logs on this computer and warns (see the other <c>Usage</c> settings).</summary>
     public bool IslandUsage { get; set; }
 
-    /// <summary>The usage limit the user sets, in millions of tokens within <see cref="UsageHours"/>.</summary>
-    public double UsageLimitMillions { get; set; } = 5;
+    /// <summary>The usage limit per session block in millions of tokens; 0 = the highest earlier block (as ccusage's "max").</summary>
+    public double UsageLimitMillions { get; set; }
 
-    /// <summary>The span the usage is counted over, in hours back from now.</summary>
+    /// <summary>The length of a session block in hours (Claude's is 5).</summary>
     public int UsageHours { get; set; } = 5;
 
     /// <summary>The percentage of the limit at which the island warns.</summary>
@@ -96,6 +96,25 @@ internal sealed class AppConfig
 
     /// <summary>Whether the island, at its default place, appears on the screen the pointer is on.</summary>
     public bool IslandFollowPointer { get; set; }
+
+    /// <summary>The size of Notiland, 1 = 100 %.</summary>
+    public double IslandScale { get; set; } = 1;
+
+    /// <summary>What Notiland does under the pointer: open at all, show a whole line, the music buttons, the song's time.</summary>
+    public bool IslandHoverExpand { get; set; } = true;
+
+    public bool IslandHoverFullText { get; set; } = true;
+
+    public bool IslandHoverButtons { get; set; } = true;
+
+    public bool IslandHoverTime { get; set; } = true;
+
+    /// <summary>
+    /// Notiland's place in each situation (desktop, window, maximized, full screen), keyed by its name; the default place is
+    /// <see cref="IslandX"/>, <see cref="IslandY"/>. A situation without one uses the default.
+    /// </summary>
+    [JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
+    public Dictionary<string, IslandPlace> IslandPlaces { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Whether holding the pointer at the top centre of the screen for a moment opens the list of all folders.</summary>
     public bool IslandFolders { get; set; } = true;
@@ -162,6 +181,17 @@ internal sealed class AppConfig
         IslandHideInApps = other.IslandHideInApps;
         IslandShowOverApps = other.IslandShowOverApps;
         IslandFollowPointer = other.IslandFollowPointer;
+        IslandScale = other.IslandScale;
+        IslandHoverExpand = other.IslandHoverExpand;
+        IslandHoverFullText = other.IslandHoverFullText;
+        IslandHoverButtons = other.IslandHoverButtons;
+        IslandHoverTime = other.IslandHoverTime;
+        IslandPlaces.Clear();
+        foreach (var (scene, place) in other.IslandPlaces)
+        {
+            IslandPlaces[scene] = place;
+        }
+
         FolderOrder = other.FolderOrder;
         Hotkeys.Clear();
         foreach (var (action, key) in other.Hotkeys)
@@ -242,6 +272,14 @@ internal enum PanelOpenMode
 }
 
 /// <summary>What the island shows of the music that is playing.</summary>
+/// <summary>Where Notiland is in one situation: the middle of its top edge, in screen pixels.</summary>
+internal sealed class IslandPlace
+{
+    public int X { get; set; }
+
+    public int Y { get; set; }
+}
+
 internal enum IslandMusicMode
 {
     /// <summary>Nothing; the system media controls are not even read.</summary>

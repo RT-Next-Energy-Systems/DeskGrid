@@ -118,12 +118,7 @@ public partial class App : Application
         _island.OpenFoldersRequested += (_, _) => OpenFoldersFromIsland();
         _island.ActionRequested += RunIslandAction;
         _island.FolderNames = () => _catalog?.Widgets.Select(w => w.Name).ToList() ?? [];
-        _island.PositionChanged += (x, y) =>
-        {
-            _configStore.Config.IslandX = x;
-            _configStore.Config.IslandY = y;
-            _configStore.Save();
-        };
+        _island.PlaceChanged += SaveIslandPlace;
         _island.Apply(IslandOptions.From(_configStore.Config));
         _hotkeys = new HotkeyService();
         _hotkeys.Pressed += (_, id) => RunHotkey(id);
@@ -181,6 +176,66 @@ public partial class App : Application
     {
         Log.Error("Unhandled exception", e.Exception);
         e.Handled = _started && e.Exception is not OutOfMemoryException;
+    }
+
+    // A place of Notiland changed (dragged, set in Settings, reset): the default one is IslandX / IslandY, the others are kept by
+    // situation. The options are applied again so it is where it now belongs.
+    private void SaveIslandPlace(string scene, ScreenPoint? place)
+    {
+        var config = _configStore!.Config;
+        if (scene == IslandScene.Default)
+        {
+            (config.IslandX, config.IslandY) = (place?.X, place?.Y);
+        }
+        else if (place is { } point)
+        {
+            config.IslandPlaces[scene] = new IslandPlace { X = point.X, Y = point.Y };
+        }
+        else
+        {
+            config.IslandPlaces.Remove(scene);
+        }
+
+        _configStore.Save();
+        _island?.Apply(IslandOptions.From(config));
+    }
+
+    // Settings asked to set the place of a situation: every window goes down so the desktop shows (Notiland is placed on a
+    // clear screen), Notiland waits to be dragged, and the windows come back when it is done.
+    private void EditIslandPlace(string scene, SettingsWindow? settings)
+    {
+        if (_island is null || !_configStore!.Config.IslandEnabled)
+        {
+            if (settings is not null)
+            {
+                MessageBox.Show(settings, Strings.SettingsPlaceNeedsIsland, Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+
+            return;
+        }
+
+        ShellWindows("MinimizeAll");
+        _island.BeginPlaceEdit(scene, () =>
+        {
+            ShellWindows("UndoMinimizeALL");
+            settings?.RefreshPlaces();
+        });
+    }
+
+    // Shell.Application's "minimize all windows" and its undo, as Win+M and Win+Shift+M do.
+    private static void ShellWindows(string verb)
+    {
+        try
+        {
+            if (Type.GetTypeFromProgID("Shell.Application") is { } type && Activator.CreateInstance(type) is { } shell)
+            {
+                type.InvokeMember(verb, System.Reflection.BindingFlags.InvokeMethod, null, shell, null);
+            }
+        }
+        catch (Exception exception) when (exception is System.Runtime.InteropServices.COMException or System.Reflection.TargetInvocationException)
+        {
+            Log.Error($"The shell could not {verb}", exception);
+        }
     }
 
     // The pointer rested at the top centre of the screen: the list of all folders opens right under the island's place.
@@ -686,16 +741,8 @@ public partial class App : Application
                     OpenPanel(OpenMessageAtCursor(OpenRequest.AllFolders));
                     break;
 
-                case HotkeyBindings.IslandShow:
-                    _island?.ShowInfo();
-                    break;
-
                 case HotkeyBindings.IslandToggle:
                     _island?.ToggleInfo();
-                    break;
-
-                case HotkeyBindings.IslandHide:
-                    _island?.Hide();
                     break;
 
                 case HotkeyBindings.IslandTimer:
@@ -706,17 +753,6 @@ public partial class App : Application
                     _island?.ToggleCard();
                     break;
 
-                case HotkeyBindings.Island:
-                    if (_panels?.OpenPanelName == ControlCommands.AllFolders)
-                    {
-                        _panels.Close();
-                    }
-                    else
-                    {
-                        OpenFoldersFromIsland();
-                    }
-
-                    break;
 
                 default:
                     if (HotkeyBindings.FolderNameOf(id) is { } folder)
@@ -780,11 +816,13 @@ public partial class App : Application
         settings.PinAllFolders = PinAllFoldersToTaskbar;
         settings.ResetIslandPosition = () =>
         {
-            var config = _configStore!.Config;
-            (config.IslandX, config.IslandY) = (null, null);
-            _configStore.Save();
-            _island!.Apply(IslandOptions.From(config));
+            foreach (var scene in IslandScene.All)
+            {
+                SaveIslandPlace(scene, null);
+            }
         };
+        settings.ResetIslandPlace = scene => SaveIslandPlace(scene, null);
+        settings.EditIslandPlace = scene => EditIslandPlace(scene, settings);
         settings.EditHotkeys = () => EditHotkeys(settings);
         settings.ExportSettings = () => ExportSettings(settings);
         settings.ImportSettings = () => ImportSettings(settings);
@@ -901,6 +939,11 @@ public partial class App : Application
         config.IslandQuietTo = choice.IslandQuietTo.Length == 0 ? null : choice.IslandQuietTo;
         config.IslandHideInApps = choice.IslandHideInApps.Length == 0 ? null : choice.IslandHideInApps;
         config.IslandShowOverApps = choice.IslandShowOverApps.Length == 0 ? null : choice.IslandShowOverApps;
+        config.IslandScale = choice.IslandScale;
+        config.IslandHoverExpand = choice.HoverExpand;
+        config.IslandHoverFullText = choice.HoverFullText;
+        config.IslandHoverButtons = choice.HoverButtons;
+        config.IslandHoverTime = choice.HoverTime;
         _island!.Apply(IslandOptions.From(config));
         _configStore.Save();
 
@@ -952,12 +995,15 @@ public partial class App : Application
 
         public void HideIsland() => app._island?.Hide();
 
+        public System.Text.Json.Nodes.JsonObject? IslandState => app._island?.State();
+
         public void IslandAction(string action)
         {
             switch (action)
             {
                 case "timer": app._island?.ToggleTimer(); break;
                 case "card": app._island?.ToggleCard(); break;
+                case var place when place.StartsWith("place:", StringComparison.Ordinal): app.EditIslandPlace(place["place:".Length..], null); break;
                 default: app._island?.ShowInfo(); break;
             }
         }

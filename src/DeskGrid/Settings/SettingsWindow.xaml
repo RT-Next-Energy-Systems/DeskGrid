@@ -309,10 +309,35 @@
 
             <Border Style="{StaticResource Card}">
               <StackPanel>
+                <TextBlock x:Name="IslandCardPlaces" Style="{StaticResource CardTitle}" />
+                <TextBlock x:Name="IslandPlacesHint" Margin="0,2,0,8" TextWrapping="Wrap" Opacity="0.7" />
+                <StackPanel x:Name="IslandPlacesPanel" />
+                <Button x:Name="IslandResetButton" Margin="0,8,0,0" Padding="12,5" HorizontalAlignment="Left" Click="OnResetIsland" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock x:Name="IslandCardLook" Style="{StaticResource CardTitle}" />
+                <DockPanel Margin="0,4,0,8">
+                  <TextBlock x:Name="IslandSizeLabel" DockPanel.Dock="Left" VerticalAlignment="Center" Margin="0,0,12,0" />
+                  <TextBlock x:Name="IslandSizeValue" DockPanel.Dock="Right" VerticalAlignment="Center" Width="48" TextAlignment="Right" />
+                  <Slider x:Name="IslandSizeSlider" Minimum="70" Maximum="160" TickFrequency="5" IsSnapToTickEnabled="True" VerticalAlignment="Center" ValueChanged="OnIslandSizeChanged" />
+                </DockPanel>
+                <CheckBox x:Name="HoverExpandBox" MinWidth="0" Checked="OnHoverSwitched" Unchecked="OnHoverSwitched" />
+                <StackPanel x:Name="HoverOptions" Margin="24,2,0,0">
+                  <CheckBox x:Name="HoverFullTextBox" Margin="0,2,0,0" MinWidth="0" />
+                  <CheckBox x:Name="HoverButtonsBox" Margin="0,2,0,0" MinWidth="0" />
+                  <CheckBox x:Name="HoverTimeBox" Margin="0,2,0,0" MinWidth="0" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
                 <TextBlock x:Name="IslandCardPlace" Style="{StaticResource CardTitle}" />
                 <CheckBox x:Name="IslandFoldersBox" Margin="0,6,0,0" MinWidth="0" />
                 <CheckBox x:Name="IslandFollowBox" Margin="0,2,0,0" MinWidth="0" />
-                <Button x:Name="IslandResetButton" Margin="0,10,0,0" Padding="12,5" HorizontalAlignment="Left" Click="OnResetIsland" />
               </StackPanel>
             </Border>
           </StackPanel>

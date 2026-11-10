@@ -25,6 +25,7 @@ internal sealed record IslandLook(string? Glyph = null, string? Accent = null, d
         ["battery"] = "",
         ["system"] = "",
         ["usage"] = "",
+        ["move"] = "",
     };
 
     /// <summary>The names that can be given as an icon.</summary>

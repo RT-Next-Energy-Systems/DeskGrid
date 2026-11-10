@@ -128,3 +128,5 @@ GetSystemTimes
 GlobalMemoryStatusEx
 MEMORYSTATUSEX
 FILETIME
+IsZoomed
+IsIconic

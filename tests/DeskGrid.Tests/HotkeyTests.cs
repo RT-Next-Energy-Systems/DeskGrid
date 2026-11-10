@@ -198,7 +198,7 @@ public sealed class HotkeysWindowTests : IDisposable
     public void Dispose() => _ui.Dispose();
 
     [Fact]
-    public async Task TheActions_AreGroupedAsFoldersIslandAndDeskGrid_EachWithACountOfWhatIsSet()
+    public async Task TheActions_AreGroupedAsDeskGridFoldersAndIsland_EachWithACountOfWhatIsSet()
     {
         var (titles, counts, afterEdit) = await _ui.InvokeAsync(() =>
         {
@@ -220,9 +220,9 @@ public sealed class HotkeysWindowTests : IDisposable
 
         string Count(int set, int of) => string.Format(DeskGrid.Resources.Strings.HotkeysGroupCount, set, of);
 
-        Assert.Equal([DeskGrid.Resources.Strings.HotkeysGroupFolders, DeskGrid.Resources.Strings.HotkeysGroupIsland, DeskGrid.Resources.Strings.HotkeysGroupGeneral], titles);
-        Assert.Equal([Count(2, 3), Count(0, 6), Count(0, 2)], counts); // All folders (Ctrl+M) and Games are set.
-        Assert.Equal(Count(1, 6), afterEdit[1]);
+        Assert.Equal([DeskGrid.Resources.Strings.HotkeysGroupGeneral, DeskGrid.Resources.Strings.HotkeysGroupFolders, DeskGrid.Resources.Strings.HotkeysGroupIsland], titles);
+        Assert.Equal([Count(1, 3), Count(1, 2), Count(0, 3)], counts); // All folders (Ctrl+M) in DeskGrid, Games in Folders.
+        Assert.Equal(Count(1, 3), afterEdit[2]);
     }
 
     [Fact]

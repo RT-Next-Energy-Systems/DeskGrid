@@ -32,12 +32,11 @@ internal partial class HotkeysWindow : Window
         OkButton.Content = Strings.ButtonOk;
         CancelButton.Content = Strings.ButtonCancel;
 
-        // Folders first (what is used most), then the island, then DeskGrid itself.
-        AddGroup(Strings.HotkeysGroupFolders,
-            [(HotkeyBindings.AllFolders, LabelOf(HotkeyBindings.AllFolders)), .. folderNames.Select(name => (HotkeyBindings.FolderId(name), name))],
-            config, note: folderNames.Count == 0 ? Strings.HotkeysNoFolders : null);
-        AddGroup(Strings.HotkeysGroupIsland, [.. HotkeyBindings.IslandIds.Select(id => (id, LabelOf(id)))], config, hint: Strings.HotkeysIslandHint);
+        // DeskGrid itself first (including "open all folders"), then one row per folder, then the island.
         AddGroup(Strings.HotkeysGroupGeneral, [.. HotkeyBindings.AppIds.Select(id => (id, LabelOf(id)))], config);
+        AddGroup(Strings.HotkeysGroupFolders, [.. folderNames.Select(name => (HotkeyBindings.FolderId(name), name))], config,
+            note: folderNames.Count == 0 ? Strings.HotkeysNoFolders : null);
+        AddGroup(Strings.HotkeysGroupIsland, [.. HotkeyBindings.IslandIds.Select(id => (id, LabelOf(id)))], config, hint: Strings.HotkeysIslandHint);
     }
 
     public event EventHandler<IReadOnlyList<HotkeyChoice>>? Applied;
@@ -49,10 +48,7 @@ internal partial class HotkeysWindow : Window
     public static string LabelOf(string id) => HotkeyBindings.FolderNameOf(id) ?? id switch
     {
         HotkeyBindings.AllFolders => Strings.HotkeyAllFolders,
-        HotkeyBindings.Island => Strings.HotkeyIsland,
-        HotkeyBindings.IslandShow => Strings.HotkeyIslandShow,
         HotkeyBindings.IslandToggle => Strings.HotkeyIslandToggle,
-        HotkeyBindings.IslandHide => Strings.HotkeyIslandHide,
         HotkeyBindings.IslandTimer => Strings.HotkeyIslandTimer,
         HotkeyBindings.IslandCard => Strings.HotkeyIslandCard,
         HotkeyBindings.NewFolder => Strings.HotkeyNewFolder,

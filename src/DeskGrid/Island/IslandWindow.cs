@@ -4,7 +4,6 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using System.Windows.Threading;
 using DeskGrid.Desktop;
 using DeskGrid.Resources;
 using Windows.Win32;
@@ -13,22 +12,26 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace DeskGrid.Island;
 
+/// <summary>What Notiland does when the pointer is over it: open at all, show all of a line, the music buttons, the song's time.</summary>
+internal sealed record IslandHover(bool Expand = true, bool FullText = true, bool Buttons = true, bool Time = true);
+
 /// <summary>
-/// The island: a black pill at the top centre of the primary screen that shows one line of text, with a cover when it is a
-/// song. The window is a fixed transparent room the pill grows in, so only the pill takes the mouse (the transparent rest
-/// of a layered window lets clicks through). It never takes focus. With the pointer over it the pill opens: a line shows all
-/// of its text, a song shows the buttons for the previous song, play / pause and the next song.
+/// Notiland: a black pill (at the top centre of the primary screen unless the user put it elsewhere) that shows one line of
+/// text, with a cover when it is a song. The window is a fixed transparent room the pill grows in, so only the pill takes
+/// the mouse (the transparent rest of a layered window lets clicks through). It never takes focus. With the pointer over it
+/// the pill opens as <see cref="Hover"/> says: a line shows all of its text, a song its buttons and time. It can be dragged
+/// anywhere, to any screen; while dragged it snaps to helpful places and shows guide lines.
 /// </summary>
 internal sealed class IslandWindow : Window
 {
-    // Sizes in DIPs.
+    // Sizes in DIPs, at size 100 %.
     internal const double RoomWidth = 420;
     internal const double RoomHeight = 120;
     internal const double TopGap = 8;
     private const double PadX = 16;
     private const double PadY = 9;
     private const double LineHeight = 18;
-    private const double PillHeight = LineHeight + 2 * PadY; // Also the pill's smallest width, so it starts and ends as a circle.
+    internal const double PillHeight = LineHeight + 2 * PadY; // Also the pill's smallest width, so it starts and ends as a circle.
     private const double CoverSize = 22;
     private const double CoverGap = 8;
     private const double ButtonSize = 28;
@@ -39,10 +42,10 @@ internal sealed class IslandWindow : Window
     private const int OpenMaxLines = 3;
 
     // Segoe MDL2 Assets.
-    private const string PreviousGlyph = "\uE892";
-    private const string NextGlyph = "\uE893";
-    private const string PlayGlyph = "\uE768";
-    private const string PauseGlyph = "\uE769";
+    private const string PreviousGlyph = "";
+    private const string NextGlyph = "";
+    private const string PlayGlyph = "";
+    private const string PauseGlyph = "";
 
     private static readonly QuinticEase Ease = FrozenEase();
     private static readonly Duration Grow = new(TimeSpan.FromMilliseconds(280));
@@ -53,27 +56,31 @@ internal sealed class IslandWindow : Window
     private readonly Border _coverBox;
     private readonly Image _cover;
     private readonly TextBlock _text;
-    private readonly Border _textBox;
+    private readonly Canvas _textBox; // A canvas does not cut its child to its own size: only its clip does, so a moved text shows its tail.
+    private readonly TextBlock _time;
     private readonly TextBlock _symbol;
     private readonly StackPanel _content;
     private readonly Border _barTrack;
     private readonly Border _barFill;
-    private IslandLook? _look;
-    private bool _live; // The pill shows a line that changes (a timer, the system's state): a click opens the card.
-    private double _progress;
     private readonly TranslateTransform _scroll = new();
     private readonly StackPanel _buttons;
     private readonly TextBlock _playGlyph;
+    private SnapGuideWindow? _guides;
+    private (string Text, double Overflow)? _marquee; // What the scrolling runs for now.
+    private IslandLook? _look;
+    private bool _live; // The pill shows a line that changes (a timer, the system's state): a click opens the card.
+    private double _progress;
     private MusicActions? _music;
     private string _source = ""; // The player the music buttons act on.
     private bool _present;
     private double _overflow; // How far the text is wider than the room it has, in DIPs.
+    private Size _pillSize = new(PillHeight, PillHeight); // The size the pill is going to, in DIPs at 100 %.
     private ScreenPoint? _anchor; // Where the user put the island: the middle of its top edge, in screen pixels.
+    private ScreenPoint? _followHome; // At its default place on the pointer's screen: where it appeared.
     private (int X, int Y, int AnchorX, int Top)? _drag; // The pointer and the island when a press began.
     private bool _dragged;
-
-    /// <summary>Whether the island, at its default place, appears on the screen the pointer is on (not always the primary one).</summary>
-    public bool FollowPointer { get; set; }
+    private double _scale = 1;
+    private IslandHover _hover = new();
 
     public IslandWindow()
     {
@@ -106,12 +113,19 @@ internal sealed class IslandWindow : Window
             FontSize = 13,
             LineHeight = LineHeight,
             LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
-            VerticalAlignment = VerticalAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Left,
             RenderTransform = _scroll,
         };
+
         // Shows as much of the text as fits; a longer line scrolls inside it (see RestartMarquee).
-        _textBox = new Border { ClipToBounds = true, Child = _text, VerticalAlignment = VerticalAlignment.Center };
+        _textBox = new Canvas { ClipToBounds = true, VerticalAlignment = VerticalAlignment.Center, Children = { _text } };
+        _time = new TextBlock
+        {
+            Foreground = new SolidColorBrush(Color.FromArgb(170, 255, 255, 255)),
+            FontSize = 12,
+            Margin = new Thickness(8, 0, 0, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Visibility = Visibility.Collapsed,
+        };
         _symbol = Glyph("");
         _symbol.Margin = new Thickness(0, 0, 8, 0);
         _symbol.Visibility = Visibility.Collapsed;
@@ -133,7 +147,7 @@ internal sealed class IslandWindow : Window
         {
             Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Center,
-            Children = { _symbol, _coverBox, _textBox, _buttons },
+            Children = { _symbol, _coverBox, _textBox, _time, _buttons },
         };
         _barFill = new Border { Background = Brushes.White, CornerRadius = new CornerRadius(1.5), HorizontalAlignment = HorizontalAlignment.Left, Width = 0 };
         _barTrack = new Border
@@ -173,20 +187,97 @@ internal sealed class IslandWindow : Window
         _pill.MouseMove += OnPillMove;
         _pill.MouseLeftButtonUp += OnPillUp;
         Content = _pill;
+        Closed += (_, _) => _guides?.Close();
     }
+
+    /// <summary>Whether the island, at its default place, appears on the screen the pointer is on (not always the primary one).</summary>
+    public bool FollowPointer { get; set; }
+
+    /// <summary>Other places the island has (other situations), to snap to while it is dragged.</summary>
+    public IReadOnlyList<ScreenPoint> SnapTargets { get; set; } = [];
+
+    /// <summary>The pointer is over the pill.</summary>
+    public bool IsHovered { get; private set; }
+
+    /// <summary>Whether a press on the pill is being dragged now.</summary>
+    public bool IsDragging => _drag is not null && _dragged;
+
+    /// <summary>Raised when <see cref="IsHovered"/> changed.</summary>
+    public event EventHandler? HoverChanged;
+
+    /// <summary>Raised when a line (not a song) was clicked.</summary>
+    public event EventHandler? Clicked;
+
+    /// <summary>Raised when the pill was clicked twice quickly (ends the placing of the island in Settings).</summary>
+    public event EventHandler? DoubleClicked;
+
+    /// <summary>Raised when a line with an action (<see cref="IslandLook.Action"/>) was clicked.</summary>
+    public event Action<string>? ActionRequested;
+
+    /// <summary>Raised when a song or other line without an action was clicked: the card is wanted.</summary>
+    public event EventHandler? ExpandRequested;
+
+    /// <summary>Raised when files are dragged over the pill.</summary>
+    public event EventHandler? FilesHovered;
 
     /// <summary>Raised when the user dropped the island somewhere: the middle of its top edge, in screen pixels.</summary>
     public event Action<int, int>? PositionChanged;
 
-    /// <summary>Puts the island where the user wants it (the middle of its top edge, in screen pixels); <see langword="null"/> is the top centre of the primary screen.</summary>
-    public void SetAnchor(int? x, int? y)
+    /// <summary>The size of the pill, 1 = 100 %.</summary>
+    public double PillScale
     {
-        _anchor = x is { } ax && y is { } ay ? new ScreenPoint(ax, ay) : null;
-        if (new WindowInteropHelper(this).Handle != 0)
+        get => _scale;
+        set
+        {
+            var scale = Math.Clamp(value, 0.5, 2);
+            if (Math.Abs(scale - _scale) < 0.001)
+            {
+                return;
+            }
+
+            _scale = scale;
+            var transform = new ScaleTransform(scale, scale);
+            transform.Freeze();
+            _pill.LayoutTransform = transform;
+            if (new WindowInteropHelper(this).Handle != 0)
+            {
+                Reposition();
+            }
+        }
+    }
+
+    /// <summary>What the pill does under the pointer.</summary>
+    public IslandHover Hover
+    {
+        get => _hover;
+        set
+        {
+            _hover = value;
+            if (IsVisible && _present)
+            {
+                Resize();
+            }
+        }
+    }
+
+    /// <summary>Puts the island where the user wants it (the middle of its top edge, in screen pixels); <see langword="null"/> is its default place.</summary>
+    public void SetAnchor(ScreenPoint? anchor)
+    {
+        if (_anchor == anchor)
+        {
+            return;
+        }
+
+        _anchor = anchor;
+        if (new WindowInteropHelper(this).Handle != 0 && !IsDragging)
         {
             Reposition();
         }
     }
+
+    public void SetAnchor(int? x, int? y) => SetAnchor(x is { } ax && y is { } ay ? new ScreenPoint(ax, ay) : null);
+
+    // ---- Dragging ----
 
     // A press on the pill may become a drag of the whole island (the window is a room around the pill, so the window
     // moves, to any screen); one that stays put is a click. The buttons keep their own clicks.
@@ -197,8 +288,14 @@ internal sealed class IslandWindow : Window
             return;
         }
 
+        if (e.ClickCount == 2)
+        {
+            DoubleClicked?.Invoke(this, EventArgs.Empty);
+            return;
+        }
+
         PInvoke.GetCursorPos(out var cursor);
-        PInvoke.GetWindowRect(new HWND(new WindowInteropHelper(this).Handle), out var rect);
+        PInvoke.GetWindowRect(Handle, out var rect);
         _drag = (cursor.X, cursor.Y, (rect.left + rect.right) / 2, rect.top);
         _dragged = false;
         _pill.CaptureMouse();
@@ -218,16 +315,25 @@ internal sealed class IslandWindow : Window
             return;
         }
 
-        _dragged = true;
-        var window = new HWND(new WindowInteropHelper(this).Handle);
-        PInvoke.GetWindowRect(window, out var rect);
+        if (!_dragged)
+        {
+            _dragged = true;
+            SetOpen(false); // Closed while dragged: it is the small pill that is put in its place, right up to an edge.
+        }
 
-        // The pill is kept wholly on the screen the pointer is on, as wide as it gets when it opens under the pointer.
-        var scale = (rect.right - rect.left) / RoomWidth; // Pixels per DIP of the screen the window is on now.
-        var anchor = TopEdge.Clamp(new ScreenPoint(start.AnchorX + dx, start.Top + dy), (int)Math.Round(OpenMaxWidth * scale),
-            (int)Math.Round(Math.Max(_pill.ActualHeight, TopEdge.PillRoom) * scale), TopEdge.BoundsAt(new ScreenPoint(cursor.X, cursor.Y)));
-        PInvoke.SetWindowPos(window, HWND.Null, anchor.X - (rect.right - rect.left) / 2, anchor.Y, 0, 0,
+        PInvoke.GetWindowRect(Handle, out var rect);
+        var roomPixels = rect.right - rect.left;
+        var perUnit = roomPixels / RoomWidth; // Pixels per DIP of the pill (its size and the screen's DPI).
+        var perDip = perUnit / _scale; // Pixels per DIP of the screen.
+        var point = new ScreenPoint(cursor.X, cursor.Y);
+        var snap = IslandSnap.Snap(
+            new ScreenPoint(start.AnchorX + dx, start.Top + dy),
+            (int)Math.Round(_pillSize.Width * perUnit), (int)Math.Round(_pillSize.Height * perUnit),
+            TopEdge.BoundsAt(point), MonitorArea.At(point).WorkArea, SnapTargets, perDip);
+        PInvoke.SetWindowPos(Handle, HWND.Null, snap.Anchor.X - roomPixels / 2, snap.Anchor.Y, 0, 0,
             SET_WINDOW_POS_FLAGS.SWP_NOSIZE | SET_WINDOW_POS_FLAGS.SWP_NOZORDER | SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
+        _guides ??= new SnapGuideWindow();
+        _guides.ShowGuides(TopEdge.BoundsAt(point), perDip, snap.Lines);
     }
 
     private void OnPillUp(object sender, MouseButtonEventArgs e)
@@ -237,13 +343,17 @@ internal sealed class IslandWindow : Window
             return;
         }
 
+        var dragged = _dragged;
         _drag = null;
+        _dragged = false;
         _pill.ReleaseMouseCapture();
-        if (_dragged)
+        _guides?.Hide();
+        if (dragged)
         {
-            PInvoke.GetWindowRect(new HWND(new WindowInteropHelper(this).Handle), out var rect);
+            PInvoke.GetWindowRect(Handle, out var rect);
             _anchor = new ScreenPoint((rect.left + rect.right) / 2, rect.top);
             Reposition(); // The size of the screen it landed on.
+            SetOpen(_pill.IsMouseOver);
             PositionChanged?.Invoke(_anchor.Value.X, _anchor.Value.Y);
         }
         else if (_look?.Action is { } action)
@@ -260,6 +370,8 @@ internal sealed class IslandWindow : Window
             ExpandRequested?.Invoke(this, EventArgs.Empty); // A song (or a timer, the state of the system): the card.
         }
     }
+
+    private HWND Handle => new(new WindowInteropHelper(this).EnsureHandle());
 
     // Frozen, so the one shared easing can be used by any thread's animations (an unfrozen one belongs to its first thread).
     private static QuinticEase FrozenEase()
@@ -293,29 +405,13 @@ internal sealed class IslandWindow : Window
         return button;
     }
 
-    /// <summary>The pointer is over the pill.</summary>
-    public bool IsHovered { get; private set; }
+    // ---- What it shows ----
 
-    /// <summary>Raised when <see cref="IsHovered"/> changed.</summary>
-    public event EventHandler? HoverChanged;
-
-    /// <summary>Raised when a line (not a song) was clicked.</summary>
-    public event EventHandler? Clicked;
-
-    /// <summary>Raised when a line with an action (<see cref="IslandLook.Action"/>) was clicked.</summary>
-    public event Action<string>? ActionRequested;
-
-    /// <summary>Raised when a song or other line without an action was clicked: the card is wanted.</summary>
-    public event EventHandler? ExpandRequested;
-
-    /// <summary>Raised when files are dragged over the pill.</summary>
-    public event EventHandler? FilesHovered;
+    public void MarkLive(bool live) => _live = live;
 
     /// <summary>
     /// Fills the bar under the text to <paramref name="fraction"/> (0 to 1); <see langword="null"/> takes the bar away.
     /// </summary>
-    public void MarkLive(bool live) => _live = live;
-
     public void SetProgress(double? fraction)
     {
         var shown = fraction is not null;
@@ -331,6 +427,17 @@ internal sealed class IslandWindow : Window
     }
 
     private void FillBar() => _barFill.Width = _barTrack.ActualWidth * _progress;
+
+    /// <summary>The song's time ("1:05 / 3:12"), shown while the pill is open if the hover settings say so; <see langword="null"/> for none.</summary>
+    public void SetTime(string? time)
+    {
+        var before = _time.Text;
+        _time.Text = time ?? "";
+        if ((before.Length == 0) != (_time.Text.Length == 0) && IsVisible && _present && IsOpen)
+        {
+            Resize();
+        }
+    }
 
     /// <summary>Changes the text of the line that is up, in place (a timer ticking), and its bar.</summary>
     public void Update(string text, double? progress)
@@ -367,16 +474,23 @@ internal sealed class IslandWindow : Window
         _text.Text = text;
         _cover.Source = cover;
         _coverBox.Visibility = cover is null ? Visibility.Collapsed : Visibility.Visible;
+        if (music is null)
+        {
+            _time.Text = "";
+        }
+
         _music = music;
         _present = true;
-        var entering = !IsVisible;
-        if (entering)
+        if (!IsVisible)
         {
             IsHovered = false; // A pill that was hidden under the pointer gets no MouseLeave.
-            Reposition(new HWND(new WindowInteropHelper(this).EnsureHandle()));
-            var size = PillSize();
+            _followHome = FollowPointer && _anchor is null && PInvoke.GetCursorPos(out var cursor)
+                ? TopEdge.DefaultAnchor(TopGap, new ScreenPoint(cursor.X, cursor.Y))
+                : null;
+            _pillSize = PillSize();
+            Place(Handle);
             StopAnimations();
-            (_pill.Width, _pill.Height, _pill.Opacity) = (size.Height, size.Height, 0);
+            (_pill.Width, _pill.Height, _pill.Opacity) = (_pillSize.Height, _pillSize.Height, 0);
             Show(); // Not activated: ShowActivated is off.
         }
 
@@ -388,6 +502,7 @@ internal sealed class IslandWindow : Window
     public void Withdraw(bool animated)
     {
         _present = false;
+        _marquee = null; // Shown again, a long line starts from its beginning.
         if (!IsVisible)
         {
             return;
@@ -411,44 +526,85 @@ internal sealed class IslandWindow : Window
         });
     }
 
+    // ---- Place ----
+
     // The window must not take focus or show in Alt+Tab; set once, before it is first shown.
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        TopEdge.Prepare(this, RoomWidth, RoomHeight, TopGap, () => { if (_drag is null) { Reposition(); } });
+        TopEdge.Prepare(this, RoomWidth, RoomHeight, TopGap, () =>
+        {
+            if (!IsDragging)
+            {
+                Reposition();
+            }
+        });
     }
 
-    private ScreenPoint? Near() => FollowPointer && _anchor is null && PInvoke.GetCursorPos(out var cursor) ? new ScreenPoint(cursor.X, cursor.Y) : null;
+    private ScreenPoint? Pointer() => PInvoke.GetCursorPos(out var cursor) ? new ScreenPoint(cursor.X, cursor.Y) : null;
 
     /// <summary>The middle of the top edge of the island: where the user put it, or its default place.</summary>
-    public ScreenPoint HomePoint() => _anchor ?? TopEdge.DefaultAnchor(TopGap, Near());
+    public ScreenPoint HomePoint() =>
+        _anchor ?? (IsVisible ? _followHome : null) ?? TopEdge.DefaultAnchor(TopGap, FollowPointer ? Pointer() : null);
+
+    /// <summary>Where the pill is now on the screen, in pixels (its top edge's middle and its size), for the card.</summary>
+    public (ScreenPoint Home, int PillHeight) PillOnScreen()
+    {
+        var home = HomePoint();
+        var monitor = MonitorArea.At(home);
+        return (home, monitor.ToPixels(PillHeight * _scale));
+    }
+
+    /// <summary>Where the pill is on the screen now (pixels: left, top, width, height), or <see langword="null"/> while hidden.</summary>
+    public (int Left, int Top, int Width, int Height)? PillRect()
+    {
+        if (!IsVisible)
+        {
+            return null;
+        }
+
+        PInvoke.GetWindowRect(Handle, out var rect);
+        var perUnit = (rect.right - rect.left) / RoomWidth;
+        var (width, height) = ((int)Math.Round(_pillSize.Width * perUnit), (int)Math.Round(_pillSize.Height * perUnit));
+        return (rect.left + (rect.right - rect.left - width) / 2, rect.top, width, height);
+    }
 
     /// <summary>Lifts the island above the taskbar, which comes back on top whenever it is used.</summary>
     public void RaiseAboveTaskbar()
     {
         if (IsVisible)
         {
-            TopEdge.RaiseAboveTaskbar(new HWND(new WindowInteropHelper(this).Handle));
+            TopEdge.RaiseAboveTaskbar(Handle);
         }
     }
 
-    /// <summary>Puts the window back at the top centre of the primary screen (the screens changed).</summary>
-    public void Reposition() => Reposition(new HWND(new WindowInteropHelper(this).EnsureHandle()));
+    /// <summary>Puts the window back where it belongs (the screens changed, or its place or size did).</summary>
+    public void Reposition() => Place(Handle);
 
-    private void Reposition(HWND window)
+    // The room goes where the pill's home is, in the size of that screen and of the pill. Near a screen's edge the room is
+    // moved so all of the pill stays on the screen while it is open (it grows from its middle); it goes back when it closes.
+    private void Place(HWND window)
     {
-        if (_anchor is { } anchor)
-        {
-            TopEdge.PlaceAt(window, RoomWidth, RoomHeight, anchor);
-        }
-        else
-        {
-            TopEdge.Place(window, RoomWidth, RoomHeight, TopGap, Near());
-        }
+        var home = HomePoint();
+        var monitor = MonitorArea.At(home);
+        var perUnit = monitor.ToPixels(1000) / 1000.0 * _scale;
+        var (roomWidth, roomHeight) = ((int)Math.Round(RoomWidth * perUnit), (int)Math.Round(RoomHeight * perUnit));
+        var on = TopEdge.Clamp(home, (int)Math.Round(_pillSize.Width * perUnit), (int)Math.Round(_pillSize.Height * perUnit), TopEdge.BoundsAt(home));
+        (Width, Height) = (RoomWidth * _scale, RoomHeight * _scale);
+        PInvoke.SetWindowPos(window, new HWND(-1), on.X - roomWidth / 2, on.Y, roomWidth, roomHeight, SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
     }
+
+    // ---- Open, size, scrolling ----
+
+    private bool IsOpen => IsHovered && _hover.Expand && !IsDragging;
 
     private void SetOpen(bool open)
     {
+        if (open && IsDragging)
+        {
+            return;
+        }
+
         IsHovered = open;
         if (IsVisible && _present)
         {
@@ -458,17 +614,24 @@ internal sealed class IslandWindow : Window
         HoverChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    // The size the pill has for what it shows. Closed: one line. Open: a line shows up to three; a song stays one line
-    // and makes room for its buttons.
+    // The size the pill has for what it shows. Closed: one line. Open (as the hover settings say): a line shows up to three;
+    // a song stays one line and makes room for its time and buttons.
     private Size PillSize()
     {
-        var open = IsHovered;
-        var buttons = open && _music is not null;
-        var wraps = open && _music is null;
+        var open = IsOpen;
+        var buttons = open && _music is not null && _hover.Buttons;
+        var time = open && _music is not null && _hover.Time && _time.Text.Length > 0;
+        var wraps = open && _music is null && _hover.FullText;
         _buttons.Visibility = buttons ? Visibility.Visible : Visibility.Collapsed;
-        var extra = (_cover.Source is null ? 0 : CoverSize + CoverGap) + (buttons ? ButtonsWidth + ButtonsGap : 0);
+        _time.Visibility = time ? Visibility.Visible : Visibility.Collapsed;
+        _time.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        _symbol.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var extra = (_symbol.Visibility == Visibility.Visible ? _symbol.DesiredSize.Width + 8 : 0)
+            + (_cover.Source is null ? 0 : CoverSize + CoverGap)
+            + (buttons ? ButtonsWidth + ButtonsGap : 0)
+            + (time ? _time.DesiredSize.Width + 8 : 0);
 
-        var room = (open ? OpenMaxWidth : ClosedMaxWidth) - 2 * PadX - extra;
+        var room = Math.Max(40, (open ? OpenMaxWidth : ClosedMaxWidth) - 2 * PadX - extra);
         _text.Width = double.NaN;
         _text.TextWrapping = wraps ? TextWrapping.Wrap : TextWrapping.NoWrap;
         _text.MaxHeight = (wraps ? OpenMaxLines : 1) * LineHeight;
@@ -477,7 +640,15 @@ internal sealed class IslandWindow : Window
         var natural = _text.DesiredSize.Width;
         _text.Width = natural; // Fixed while the pill grows, so the text does not wrap again on the way.
         _textBox.Width = wraps ? natural : Math.Min(natural, room);
+        _textBox.Height = _text.DesiredSize.Height;
         _overflow = wraps ? 0 : Math.Max(0, natural - room);
+        // Measured here, outside a layout pass: the panels above the text are not marked as changed by it, and would answer
+        // with the size they had for the line before (a short line after a long one kept the long one's width).
+        foreach (var panel in new UIElement[] { _textBox, _row, _content })
+        {
+            panel.InvalidateMeasure();
+        }
+
         _content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         var content = _content.DesiredSize;
         return new Size(Math.Max(content.Width + 2 * PadX, PillHeight), Math.Max(content.Height + 2 * PadY, PillHeight));
@@ -485,9 +656,14 @@ internal sealed class IslandWindow : Window
 
     private void Resize()
     {
-        var size = PillSize();
-        Animate(WidthProperty, size.Width, Grow);
-        Animate(HeightProperty, size.Height, Grow);
+        _pillSize = PillSize();
+        Animate(WidthProperty, _pillSize.Width, Grow);
+        Animate(HeightProperty, _pillSize.Height, Grow);
+        if (!IsDragging && new WindowInteropHelper(this).Handle != 0)
+        {
+            Place(Handle); // Near an edge, the open pill stays on the screen.
+        }
+
         RestartMarquee();
     }
 
@@ -495,6 +671,15 @@ internal sealed class IslandWindow : Window
     // run all the time: the first rest is what lets the reader begin to read.
     private void RestartMarquee()
     {
+        // The same text with the same room keeps scrolling where it is: a song's player reports often (its position), and
+        // each report used to start the scrolling over, so it never got past its first rest.
+        var key = (_text.Text, Math.Round(_overflow));
+        if (_marquee == key)
+        {
+            return;
+        }
+
+        _marquee = key;
         _scroll.BeginAnimation(TranslateTransform.XProperty, null);
         _scroll.X = 0;
         if (_overflow < 1)
@@ -512,6 +697,15 @@ internal sealed class IslandWindow : Window
         animation.KeyFrames.Add(new LinearDoubleKeyFrame(0, atEnd + Marquee.Return));
         _scroll.BeginAnimation(TranslateTransform.XProperty, animation);
     }
+
+    /// <summary>The size the pill is going to, in DIPs at 100 %; for the tests.</summary>
+    internal Size PillTarget => _pillSize;
+
+    /// <summary>What the text scrolls by now, in DIPs; for the tests.</summary>
+    internal double Overflow => _overflow;
+
+    /// <summary>The width the text is cut to, in DIPs; for the tests.</summary>
+    internal double TextRoom => _textBox.Width;
 
     private void StopAnimations()
     {

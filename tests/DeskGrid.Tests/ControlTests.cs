@@ -413,5 +413,7 @@ public sealed class ControlCommandsTests : IDisposable
         public List<string> IslandActions { get; } = [];
 
         public void IslandAction(string action) => IslandActions.Add(action);
+
+        public System.Text.Json.Nodes.JsonObject? IslandState => null;
     }
 }

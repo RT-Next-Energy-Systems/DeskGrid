@@ -10,9 +10,16 @@ namespace DeskGrid.Island;
 
 /// <summary>What else the island watches and how it behaves, beyond the song, the battery and the usage.</summary>
 internal sealed record IslandExtras(
-    bool Privacy = false, bool Bluetooth = false, bool Downloads = false, bool System = false, int TimerMinutes = 25, IslandRules? Rules = null)
+    bool Privacy = false, bool Bluetooth = false, bool Downloads = false, bool System = false, int TimerMinutes = 25, IslandRules? Rules = null,
+    double Scale = 1, IslandHover? Hover = null, IReadOnlyDictionary<string, ScreenPoint>? Places = null)
 {
     public IslandRules RulesOrDefault => Rules ?? new IslandRules();
+
+    public IslandHover HoverOrDefault => Hover ?? new IslandHover();
+
+    /// <summary>The place set for <paramref name="scene"/>, else the default place, else none (the top centre).</summary>
+    public ScreenPoint? PlaceFor(string scene) =>
+        Places is null ? null : Places.TryGetValue(scene, out var place) ? place : Places.TryGetValue(IslandScene.Default, out var home) ? home : null;
 }
 
 /// <summary>What the island is set to do.</summary>
@@ -30,7 +37,23 @@ internal sealed record IslandOptions(
             config.IslandPrivacy, config.IslandBluetooth, config.IslandDownloads, config.IslandSystem, config.IslandTimerMinutes,
             new IslandRules(
                 config.IslandQuietFrom, config.IslandQuietTo, IslandRules.SplitApps(config.IslandHideInApps),
-                IslandRules.SplitApps(config.IslandShowOverApps), config.IslandFollowPointer)));
+                IslandRules.SplitApps(config.IslandShowOverApps), config.IslandFollowPointer),
+            config.IslandScale,
+            new IslandHover(config.IslandHoverExpand, config.IslandHoverFullText, config.IslandHoverButtons, config.IslandHoverTime),
+            PlacesOf(config)));
+
+    /// <summary>Every place the user set: the default one and each situation's.</summary>
+    public static Dictionary<string, ScreenPoint> PlacesOf(AppConfig config)
+    {
+        var places = config.IslandPlaces.ToDictionary(p => p.Key, p => new ScreenPoint(p.Value.X, p.Value.Y), StringComparer.OrdinalIgnoreCase);
+        places.Remove(IslandScene.Default);
+        if (config.IslandX is { } x && config.IslandY is { } y)
+        {
+            places[IslandScene.Default] = new ScreenPoint(x, y);
+        }
+
+        return places;
+    }
 }
 
 /// <summary>
@@ -93,7 +116,8 @@ internal sealed class IslandHost : IDisposable
     public event EventHandler? OpenFoldersRequested;
 
     /// <summary>Raised when the user dropped the island somewhere: the middle of its top edge, in screen pixels.</summary>
-    public event Action<int, int>? PositionChanged;
+    /// <summary>Raised when a place changed (dragged, or set in Settings): the situation, and the place (null = reset).</summary>
+    public event Action<string, ScreenPoint?>? PlaceChanged;
 
     /// <summary>Raised with the target of a clicked line (<c>folder:Name</c>, an address or a path), or the folder chosen on the card.</summary>
     public event Action<string>? ActionRequested;
@@ -145,11 +169,142 @@ internal sealed class IslandHost : IDisposable
         ApplyHotZone();
         if (_window is not null)
         {
-            _window.FollowPointer = options.Extras.RulesOrDefault.FollowPointer;
-            _window.SetAnchor(options.X, options.Y);
+            Configure(_window);
         }
 
         Refresh();
+    }
+
+    // ---- Places ----
+
+    private string _scene = IslandScene.Default; // The situation in front, as last seen.
+    private string? _editing; // The situation whose place is being set in Settings, if one is.
+    private ScreenPoint? _editPlace; // Where it was dropped while being set.
+    private Action? _editEnded;
+
+    /// <summary>What Notiland does now, for `--ctl status`: the situation, whether a place is being set, the line that is up, the places.</summary>
+    public System.Text.Json.Nodes.JsonObject State()
+    {
+        var places = new System.Text.Json.Nodes.JsonObject();
+        foreach (var (scene, place) in _options.Extras.Places ?? new Dictionary<string, ScreenPoint>())
+        {
+            places[scene] = new System.Text.Json.Nodes.JsonArray(place.X, place.Y);
+        }
+
+        return new System.Text.Json.Nodes.JsonObject
+        {
+            ["enabled"] = _options.Enabled,
+            ["scene"] = _scene,
+            ["editing"] = _editing,
+            ["overlay"] = _overlayUp,
+            ["line"] = _shown switch
+            {
+                IslandActivity activity => activity.Text,
+                LiveLine live => live.Text,
+                MediaTrack track => MusicPolicy.Label(track),
+                _ => null,
+            },
+            ["waiting"] = _queue.Waiting,
+            ["places"] = places,
+            ["pill"] = _window?.PillRect() is { } pill ? new System.Text.Json.Nodes.JsonArray(pill.Left, pill.Top, pill.Width, pill.Height) : null,
+        };
+    }
+
+    /// <summary>The situation in front, as last seen; for the tests.</summary>
+    internal string Scene => _scene;
+
+    private void Configure(IslandWindow window)
+    {
+        var extras = _options.Extras;
+        window.FollowPointer = extras.RulesOrDefault.FollowPointer;
+        window.PillScale = extras.Scale;
+        window.Hover = extras.HoverOrDefault;
+        ApplyPlace();
+    }
+
+    // Puts the window in the place of the situation in front (or of the one being set), and gives it the other places to snap to.
+    private void ApplyPlace()
+    {
+        if (_window is null)
+        {
+            return;
+        }
+
+        var scene = _editing ?? _scene;
+        var places = _options.Extras.Places ?? new Dictionary<string, ScreenPoint>();
+        _window.SnapTargets = [.. places.Where(p => p.Key != scene).Select(p => p.Value)];
+        _window.SetAnchor(_editing is not null && _editPlace is { } dropped ? dropped : _options.Extras.PlaceFor(scene));
+    }
+
+    // Dragged by hand: while a place is being set it is that place; otherwise it is the place of the situation in front if
+    // that has one, else the default place (the one the user sees).
+    private void OnDragged(ScreenPoint point)
+    {
+        if (_editing is not null)
+        {
+            _editPlace = point;
+            return;
+        }
+
+        var places = _options.Extras.Places;
+        var scene = places is not null && places.ContainsKey(_scene) ? _scene : IslandScene.Default;
+        PlaceChanged?.Invoke(scene, point);
+    }
+
+    /// <summary>The name a situation has in Settings.</summary>
+    public static string SceneName(string scene) => scene switch
+    {
+        IslandScene.Desktop => Strings.SceneDesktop,
+        IslandScene.Window => Strings.SceneWindow,
+        IslandScene.Maximized => Strings.SceneMaximized,
+        IslandScene.FullScreen => Strings.SceneFullScreen,
+        _ => Strings.SceneDefault,
+    };
+
+    /// <summary>
+    /// Lets the user set the place of <paramref name="scene"/>: Notiland shows up there (or where it would be now) saying what
+    /// to do, ready to be dragged; Enter or a double click keeps the place, Esc keeps the old one. <paramref name="ended"/> is
+    /// called either way.
+    /// </summary>
+    public void BeginPlaceEdit(string scene, Action ended)
+    {
+        if (!_options.Enabled)
+        {
+            ended();
+            return;
+        }
+
+        EndPlaceEdit(save: false);
+        _card?.Close();
+        _editing = scene;
+        _editPlace = null;
+        _editEnded = ended;
+        ApplyPlace();
+        Refresh();
+    }
+
+    /// <summary>Whether a place is being set; for the tests.</summary>
+    internal bool EditingPlace => _editing is not null;
+
+    /// <summary>Ends the setting of a place, keeping where it was dropped (<paramref name="save"/>) or not.</summary>
+    internal void EndPlaceEdit(bool save)
+    {
+        if (_editing is not { } scene)
+        {
+            return;
+        }
+
+        var dropped = _editPlace;
+        var ended = _editEnded;
+        (_editing, _editPlace, _editEnded) = (null, null, null);
+        if (save && dropped is { } place)
+        {
+            PlaceChanged?.Invoke(scene, place); // The app saves it and applies the options again.
+        }
+
+        ApplyPlace();
+        Refresh();
+        ended?.Invoke();
     }
 
     /// <summary>
@@ -171,11 +326,26 @@ internal sealed class IslandHost : IDisposable
         var down = EscapeDown();
         var pressed = down && !_escapeWasDown;
         _escapeWasDown = down;
-        if (pressed)
+        var enter = (PInvoke.GetAsyncKeyState(0x0D) & 0x8000) != 0;
+        var entered = enter && !_enterWasDown;
+        _enterWasDown = enter;
+        if (entered && _editing is not null)
+        {
+            EndPlaceEdit(save: true); // Enter keeps the place being set.
+        }
+        else if (pressed && !OverlayJustUp())
         {
             Dismiss();
         }
     }
+
+    private bool _enterWasDown;
+
+    // Esc that closes a screen snip or Start is theirs, not a request to close what Notiland shows (the overlay may be gone
+    // by the time the key is seen, so a moment after it counts too).
+    private bool OverlayJustUp() => IslandScene.SystemOverlayInFront() || Environment.TickCount64 - _overlaySeen < 1000;
+    private bool _overlayUp;
+    private long _overlaySeen = long.MinValue / 2; // When a system overlay was last in front (TickCount64).
 
     // Runs the watch while the pill or the card is up (a key already held when it appears does not count as a press).
     private void UpdateEscapeWatch()
@@ -184,6 +354,7 @@ internal sealed class IslandHost : IDisposable
         if (needed && !_escape.IsEnabled)
         {
             _escapeWasDown = EscapeDown();
+            _enterWasDown = (PInvoke.GetAsyncKeyState(0x0D) & 0x8000) != 0;
             _escape.Start();
         }
         else if (!needed)
@@ -195,6 +366,12 @@ internal sealed class IslandHost : IDisposable
     /// <summary>Esc: closes the card; else the line that is up, the timer's display, the info, or the song that stays up (until what plays changes).</summary>
     internal void Dismiss()
     {
+        if (_editing is not null)
+        {
+            EndPlaceEdit(save: false); // Esc leaves the place as it was.
+            return;
+        }
+
         if (CardOpen)
         {
             _card!.Close();
@@ -246,7 +423,7 @@ internal sealed class IslandHost : IDisposable
         }
     }
 
-    /// <summary>The "toggle" shortcut: the info stays up until the shortcut is pressed again.</summary>
+    /// <summary>The "show or hide" shortcut: the info for the set seconds (0 = until pressed again), or away if it is up.</summary>
     public void ToggleInfo()
     {
         if (!_options.Enabled)
@@ -254,7 +431,8 @@ internal sealed class IslandHost : IDisposable
             return;
         }
 
-        _info = _info is null ? TimeSpan.MaxValue : null;
+        // Shown for the set seconds (0 = until pressed again); pressed while up, it hides.
+        _info = _info is not null ? null : _options.ShowSeconds > 0 ? Now + TimeSpan.FromSeconds(_options.ShowSeconds) : TimeSpan.MaxValue;
         Refresh();
     }
 
@@ -320,16 +498,17 @@ internal sealed class IslandHost : IDisposable
                 Diagnostics.Log.Error("A file on the shelf could not be opened", exception);
             }
         };
-        _card.Open(CardModelNow, Window().HomePoint());
+        var (home, pillHeight) = Window().PillOnScreen();
+        _card.Open(CardModelNow, home, pillHeight);
         UpdateEscapeWatch();
     }
 
     private CardModel CardModelNow()
     {
-        var usage = _usage?.Tokens is { } tokens ? tokens : (long?)null;
-        var percent = usage is { } t && _usage is not null ? UsageRules.Percent(t, _usage.Options) : (double?)null;
+        var reading = _usage?.Reading;
+        var percent = reading is not null ? UsageRules.Percent(reading, _usage!.Options) : (double?)null;
         return new CardModel(
-            _tracks, usage is { } u ? UsageLine(u) : null, percent,
+            _tracks, reading is not null ? UsageLine(reading) : null, percent,
             _options.Extras.System ? _system.Read(Now) : null,
             FolderNames?.Invoke() ?? [], _shelf.Paths);
     }
@@ -339,9 +518,9 @@ internal sealed class IslandHost : IDisposable
     private List<object> InfoItems()
     {
         var items = new List<object>();
-        if (_usage?.Tokens is { } tokens)
+        if (_usage?.Reading is { } reading)
         {
-            items.Add(new IslandActivity(UsageLine(tokens), TimeSpan.Zero, Look: UsageLook(tokens)));
+            items.Add(new IslandActivity(UsageLine(reading), TimeSpan.Zero, Look: UsageLook(reading)));
         }
 
         if (_options.Extras.System)
@@ -365,16 +544,23 @@ internal sealed class IslandHost : IDisposable
 
     // ---- AI usage ----
 
-    private string UsageLine(long tokens)
+    // "AI usage 42% · 1.2M of 3M tokens · resets in 2h 05m", or, with no block running, that nothing is counted now.
+    private string UsageLine(UsageReading reading)
     {
         var options = _usage!.Options;
-        return string.Format(Strings.IslandUsageLine, Math.Round(UsageRules.Percent(tokens, options)), UsageRules.Short(tokens),
-            UsageRules.Short(options.LimitTokens), options.Hours);
+        if (reading.Resets is not { } resets)
+        {
+            return Strings.IslandUsageIdle;
+        }
+
+        var limit = reading.LimitFor(options);
+        return string.Format(Strings.IslandUsageLine, Math.Round(UsageRules.Percent(reading, options)), UsageRules.Short(reading.Tokens),
+            limit > 0 ? UsageRules.Short(limit) : "?", UsageRules.Left(resets, DateTimeOffset.UtcNow));
     }
 
-    private IslandLook UsageLook(long tokens)
+    private IslandLook UsageLook(UsageReading reading)
     {
-        var percent = UsageRules.Percent(tokens, _usage!.Options);
+        var percent = UsageRules.Percent(reading, _usage!.Options);
         var accent = percent >= 100 ? "#E84D4D" : percent >= _usage.Options.WarnPercent ? "#F0A030" : "#4CC38A";
         return new IslandLook("usage", accent, Math.Min(percent, 100) / 100);
     }
@@ -389,10 +575,10 @@ internal sealed class IslandHost : IDisposable
         else if (_usage is null)
         {
             _usage = new UsageMonitor(options);
-            _usage.Alert += (level, tokens) =>
+            _usage.Alert += (level, reading) =>
             {
-                var percent = Math.Round(UsageRules.Percent(tokens, _usage!.Options));
-                Show(string.Format(level == UsageLevel.Full ? Strings.IslandUsageFull : Strings.IslandUsageWarn, percent), TimeSpan.FromSeconds(8), UsageLook(tokens));
+                var percent = Math.Round(UsageRules.Percent(reading, _usage!.Options));
+                Show(string.Format(level == UsageLevel.Full ? Strings.IslandUsageFull : Strings.IslandUsageWarn, percent), TimeSpan.FromSeconds(8), UsageLook(reading));
             };
         }
         else
@@ -415,6 +601,7 @@ internal sealed class IslandHost : IDisposable
 
     private void Stop()
     {
+        (_editing, _editPlace, _editEnded) = (null, null, null);
         _timer.Stop();
         _queue.Clear();
         StopMusic();
@@ -631,8 +818,24 @@ internal sealed class IslandHost : IDisposable
     private void Refresh()
     {
         var now = Now;
-        var concealed = Concealed();
-        _queue.Hold(concealed || _window?.IsHovered == true, now);
+        // The situation in front decides where Notiland is (while it is placed in Settings, that place is shown instead).
+        var scene = _editing ?? IslandScene.Detect(_scene);
+        if (scene != _scene)
+        {
+            _scene = scene;
+            ApplyPlace();
+        }
+
+        // A system overlay (a screen snip, Start) in front: Notiland stays under it like any window, and its lines wait.
+        var overlay = IslandScene.SystemOverlayInFront();
+        _overlayUp = overlay;
+        if (overlay)
+        {
+            _overlaySeen = Environment.TickCount64;
+        }
+
+        var concealed = _editing is null && Concealed();
+        _queue.Hold(concealed || overlay || _window?.IsHovered == true, now);
         if (_queue.Tick(now))
         {
             return; // CurrentChanged has come back here for the next one.
@@ -650,7 +853,7 @@ internal sealed class IslandHost : IDisposable
             _info = null;
         }
 
-        object? wanted = _queue.Current;
+        object? wanted = _editing is { } editing ? new LiveLine("place", string.Format(Strings.IslandPlaceEditing, SceneName(editing)), new IslandLook("move", "#4CC3FF")) : _queue.Current;
         if (wanted is null && _countdown.Running && !_timerHidden)
         {
             wanted = new LiveLine("timer", string.Format(Strings.IslandTimerLeft, IslandTimer.Format(_countdown.Left(now))),
@@ -713,7 +916,10 @@ internal sealed class IslandHost : IDisposable
 
         UpdateProgress();
         UpdateEscapeWatch();
-        _window?.RaiseAboveTaskbar(); // Over the taskbar, which jumps back up when it is clicked.
+        if (!overlay)
+        {
+            _window?.RaiseAboveTaskbar(); // Over the taskbar, which jumps back up when it is clicked.
+        }
     }
 
     // The bar of a song under the text follows its position between the reports of the player.
@@ -731,7 +937,11 @@ internal sealed class IslandHost : IDisposable
         }
 
         var current = _tracks.FirstOrDefault(t => t.Source == source);
-        _window.SetProgress(current?.Timeline?.Fraction(DateTimeOffset.UtcNow, current.Playing));
+        var now = DateTimeOffset.UtcNow;
+        _window.SetProgress(current?.Timeline?.Fraction(now, current.Playing));
+        _window.SetTime(current?.Timeline is { } line
+            ? MediaTimeline.Format(line.PositionAt(now, current.Playing)) + " / " + MediaTimeline.Format(line.Duration)
+            : null);
     }
 
     // The same line of the info (a player is the same player when it has a new song; a live line when it has a new text).
@@ -750,6 +960,10 @@ internal sealed class IslandHost : IDisposable
             case IslandActivity activity:
                 window.Display(activity.Text, activity.Cover, activity.IsMusic ? _musicActions : null, activity.Source, activity.Look);
                 window.SetPlaying(activity.IsMusic && _tracks.Any(t => t.Source == activity.Source && t.Playing));
+                break;
+            case MediaTrack track when previous is MediaTrack before && before.Source == track.Source && MusicPolicy.SameSong(before, track):
+                // The same song with a new position or state: only what changed, so the text keeps scrolling and the bar stays.
+                window.SetPlaying(track.Playing);
                 break;
             case MediaTrack track:
                 window.Display(MusicPolicy.Label(track), track.Cover, _musicActions, track.Source);
@@ -778,9 +992,10 @@ internal sealed class IslandHost : IDisposable
     {
         if (_window is null)
         {
-            _window = new IslandWindow { FollowPointer = _options.Extras.RulesOrDefault.FollowPointer };
-            _window.SetAnchor(_options.X, _options.Y);
-            _window.PositionChanged += (x, y) => PositionChanged?.Invoke(x, y);
+            _window = new IslandWindow();
+            Configure(_window);
+            _window.PositionChanged += (x, y) => OnDragged(new ScreenPoint(x, y));
+            _window.DoubleClicked += (_, _) => EndPlaceEdit(save: true);
             _window.HoverChanged += (_, _) => Refresh();
             _window.Clicked += (_, _) => _queue.Dismiss(Now);
             _window.ActionRequested += target => ActionRequested?.Invoke(target);

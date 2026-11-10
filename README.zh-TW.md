@@ -175,9 +175,10 @@ DeskGrid.exe --ctl <指令> [參數]
 | `move <資料夾> <項目> <位置>` | 把項目移到資料夾中的某個位置（0 = 第一個）。 |
 | `open [資料夾]` | 在資料夾旁開啟它的面板，或開啟所有資料夾的清單。 |
 | `close` | 關閉開啟中的面板。 |
-| `island show <文字> [秒數] [--icon 名稱] [--color #RRGGBB] [--progress 0-100] [--open 目標]` | 在提示島上顯示一行字幾秒鐘（預設 5 秒，最多 60 秒），可加符號、顏色、進度條，以及點一下要開啟的目標（`folder:名稱`、http(s) 網址或已存在的路徑）。要先開啟提示島。 |
-| `island hide` | 收起提示島正在顯示的內容。 |
-| `island timer` / `island card` / `island info` | 開始或停止提示島計時器；開啟或關閉卡片；顯示資訊（用量、系統、播放器）。 |
+| `island show <文字> [秒數] [--icon 名稱] [--color #RRGGBB] [--progress 0-100] [--open 目標]` | 在 Notiland 上顯示一行字幾秒鐘（預設 5 秒，最多 60 秒），可加符號、顏色、進度條，以及點一下要開啟的目標（`folder:名稱`、http(s) 網址或已存在的路徑）。要先開啟 Notiland。 |
+| `island hide` | 收起 Notiland 正在顯示的內容。 |
+| `island timer` / `island card` / `island info` | 開始或停止 Notiland 計時器；開啟或關閉卡片；顯示資訊（用量、系統、播放器）。 |
+| `island place <情境>` | 設定 Notiland 在該情境（`default`、`desktop`、`window`、`maximized` 或 `fullScreen`）的位置：所有視窗縮小，拖動它（會吸附），Enter 儲存，Esc 取消。 |
 
 每個指令會印出一行 JSON：`{"ok":true,"result":…}` 或 `{"ok":false,"error":"…"}`，ASCII 以外的字元寫成
 `\uXXXX`；結束代碼為 0（完成）、1（指令失敗）、2（DeskGrid 沒有在執行）或 3（用法錯誤）。項目以檔名指定，與 `list`
@@ -187,9 +188,9 @@ DeskGrid 是視窗程式，命令提示字元不會等它結束，所以請透�
 `DeskGrid.exe --ctl list | Out-String`。底層是一條 named pipe：`\\.\pipe\DeskGrid.Control.<使用者名稱>`，每次連線送一行
 JSON（`{"command":"list","args":["Work"]}`），其他程式也可以直接使用。
 
-### 提示島
+### Notiland
 
-主螢幕頂端正中央的一顆黑色小膠囊，用來顯示簡短訊息。在 設定 → 快速鍵 勾選 **在螢幕頂端顯示提示島**（預設關閉）後，腳本或 AI agent 就能用
+Notiland（DeskGrid 的「提示島」，正式名稱）是一顆黑色小膠囊，預設在主螢幕頂端正中央，也可以拖到別處，用來顯示簡短訊息。在 設定 → Notiland 勾選 **顯示 Notiland**（預設關閉）後，腳本或 AI agent 就能用
 `DeskGrid.exe --ctl island show "建置完成" 10` 在上面放一行字（同時需要勾選 **允許腳本與 AI agent 控制**）。
 
 - 一行字預設停 5 秒，也可以指定別的秒數（最多 60 秒）；多則訊息會排隊輪流顯示。
@@ -284,6 +285,7 @@ dotnet publish src/DeskGrid/DeskGrid.csproj -p:PublishProfile=win-x64   # -> art
 
 > Copyright (c) 2026 Sepehr Kalanaki (OverShifted/LiquidGlass)
 > Copyright (c) 2025 Shu Ding (shuding/liquid-glass)
+> Copyright (c) 2025 ryoppippi (ryoppippi/ccusage)
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 > documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -297,6 +299,11 @@ dotnet publish src/DeskGrid/DeskGrid.csproj -p:PublishProfile=win-x64   # -> art
 > WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 > COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 > OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Notiland 的 **AI 用量**（`src/DeskGrid/Island/UsageMonitor.cs`）依
+[ryoppippi/ccusage](https://github.com/ryoppippi/ccusage) 的方式讀取 Claude Code 的記錄：要找的資料夾（`CLAUDE_CONFIG_DIR`、
+`~/.config/claude`、`~/.claude`）、每個回應只算一次（子代理重播的也一樣）、四種 token，以及 Claude 的 5 小時工作階段區塊。
+這段邏輯由 ccusage 的 Rust 原始碼（MIT）改寫為 C#，其著作權聲明列在上方，授權條文相同。
 
 「Liquid Glass」是 Apple Inc. 使用的名稱。DeskGrid 的玻璃只是模仿那種外觀，不是 Apple 的程式碼，也與 Apple 無關、
 未獲其認可。
