@@ -1,3 +1,4 @@
+using DeskGrid.Config;
 using DeskGrid.Desktop;
 using DeskGrid.Island;
 using DeskGrid.Threading;
@@ -101,6 +102,35 @@ public sealed class ActivityQueueTests
     }
 
     [Fact]
+    public void ANewSong_ReplacesTheOneBeforeIt_ShownOrWaiting()
+    {
+        var queue = new ActivityQueue();
+        IslandActivity Song(string text) => new(text, TimeSpan.FromSeconds(5), null, IsMusic: true);
+        queue.Show(Line("message", 5), Start);
+        queue.Show(Song("one"), Start);
+        queue.Show(Song("two"), Start);
+
+        Assert.Equal(1, queue.Waiting); // The message is shown; only the newest song waits.
+        queue.Dismiss(Start);
+        Assert.Equal("two", queue.Current?.Text);
+    }
+
+    [Fact]
+    public void ANewSong_ReplacesTheSongThatIsShown_AtOnce()
+    {
+        var queue = new ActivityQueue();
+        queue.Show(new IslandActivity("one", TimeSpan.FromSeconds(5), null, IsMusic: true), Start);
+
+        queue.Show(new IslandActivity("two", TimeSpan.FromSeconds(5), null, IsMusic: true), Start + TimeSpan.FromSeconds(1));
+
+        Assert.Equal("two", queue.Current?.Text);
+        Assert.Equal(0, queue.Waiting);
+        // The new one has its own five seconds.
+        Assert.False(queue.Tick(Start + TimeSpan.FromSeconds(5.9)));
+        Assert.True(queue.Tick(Start + TimeSpan.FromSeconds(6)));
+    }
+
+    [Fact]
     public void CurrentChanged_IsRaisedForEachChange()
     {
         var queue = new ActivityQueue();
@@ -116,13 +146,186 @@ public sealed class ActivityQueueTests
     }
 }
 
+public sealed class MusicPolicyTests
+{
+    private static MediaTrack Song(string title = "Song", string artist = "Artist", bool playing = true) => new(title, artist, playing, null);
+
+    [Theory]
+    [InlineData("WhilePlaying", true, true)]
+    [InlineData("WhilePlaying", false, false)] // Paused: nothing stays up.
+    [InlineData("OnChange", true, false)]
+    [InlineData("Off", true, false)]
+    public void ShowsWhilePlaying_OnlyInThatMode_AndOnlyWhilePlaying(string modeName, bool playing, bool shown) =>
+        Assert.Equal(shown, MusicPolicy.ShowsWhilePlaying(Enum.Parse<IslandMusicMode>(modeName), Song(playing: playing)));
+
+    [Fact]
+    public void ShowsWhilePlaying_IsFalseWithoutASong() =>
+        Assert.False(MusicPolicy.ShowsWhilePlaying(IslandMusicMode.WhilePlaying, null));
+
+    [Fact]
+    public void Announces_ANewSong_ButNotTheSameOneAgain()
+    {
+        var first = Song("A");
+
+        Assert.True(MusicPolicy.Announces(IslandMusicMode.OnChange, null, first));
+        Assert.False(MusicPolicy.Announces(IslandMusicMode.OnChange, first, first with { Playing = true }));
+        Assert.True(MusicPolicy.Announces(IslandMusicMode.OnChange, first, Song("B")));
+        Assert.True(MusicPolicy.Announces(IslandMusicMode.OnChange, first, Song("A", "Someone else")));
+    }
+
+    [Fact]
+    public void Announces_NotWhenPausedOrInAnotherMode()
+    {
+        Assert.False(MusicPolicy.Announces(IslandMusicMode.OnChange, null, Song(playing: false)));
+        Assert.False(MusicPolicy.Announces(IslandMusicMode.WhilePlaying, null, Song()));
+        Assert.False(MusicPolicy.Announces(IslandMusicMode.Off, null, Song()));
+        Assert.False(MusicPolicy.Announces(IslandMusicMode.OnChange, null, null));
+    }
+
+    [Fact]
+    public void Label_LeavesOutAnEmptyArtist()
+    {
+        Assert.Equal("Song — Artist", MusicPolicy.Label(Song()));
+        Assert.Equal("Song", MusicPolicy.Label(Song(artist: "")));
+    }
+}
+
+public sealed class MusicRotationTests
+{
+    private static MediaTrack Track(string source, bool playing = true) => new(source, "", playing, null, source);
+
+    [Fact]
+    public void PlayingToShow_KeepsEveryPlayer_ThatPlays_OnlyWhileThePlayingModeIsOn()
+    {
+        MediaTrack[] all = [Track("music"), Track("video"), Track("paused", playing: false)];
+
+        Assert.Equal(["music", "video"], MusicPolicy.PlayingToShow(IslandMusicMode.WhilePlaying, all).Select(t => t.Source));
+        Assert.Empty(MusicPolicy.PlayingToShow(IslandMusicMode.OnChange, all));
+    }
+
+    [Fact]
+    public void Rotate_GivesEachPlayerItsTurn_ByTheClock()
+    {
+        MediaTrack[] playing = [Track("a"), Track("b")];
+        var turn = TimeSpan.FromSeconds(4);
+
+        Assert.Equal("a", MusicPolicy.Rotate(playing, TimeSpan.FromSeconds(0), turn)?.Source);
+        Assert.Equal("b", MusicPolicy.Rotate(playing, TimeSpan.FromSeconds(4), turn)?.Source);
+        Assert.Equal("a", MusicPolicy.Rotate(playing, TimeSpan.FromSeconds(8), turn)?.Source);
+        Assert.Null(MusicPolicy.Rotate<MediaTrack>([], TimeSpan.Zero, turn));
+    }
+}
+
+public sealed class IslandMarqueeTests
+{
+    [Fact]
+    public void AShortLine_StaysAsLongAsAsked_ALongOneUntilItHasScrolledBy()
+    {
+        var five = TimeSpan.FromSeconds(5);
+
+        Assert.Equal(five, Marquee.ToRead("Build done", five));
+        var long200 = new string('x', 200);
+        Assert.True(Marquee.ToRead(long200, five) > TimeSpan.FromSeconds(20));
+        Assert.Equal(TimeSpan.FromSeconds(60), Marquee.ToRead(long200, TimeSpan.FromSeconds(60)));
+    }
+
+    [Fact]
+    public void AnEastAsianCharacter_IsCountedWider() =>
+        Assert.True(Marquee.EstimateWidth("提示島提示島") > Marquee.EstimateWidth("island"));
+
+    [Fact]
+    public void ACycle_RestsAtBothEnds() =>
+        Assert.Equal(TimeSpan.FromSeconds(1.5 + 2 + 1.5 + 0.25), Marquee.Cycle(80));
+}
+
+public sealed class UsageTests
+{
+    private static string Line(string id, int input, int output, string time, string type = "assistant") =>
+        "{\"type\":\"" + type + "\",\"timestamp\":\"" + time + "\",\"requestId\":\"r\",\"message\":{\"id\":\"" + id
+        + "\",\"usage\":{\"input_tokens\":" + input + ",\"output_tokens\":" + output
+        + ",\"cache_creation_input_tokens\":10,\"cache_read_input_tokens\":5000}}}";
+
+    private static readonly DateTimeOffset Since = new(2026, 11, 10, 8, 0, 0, TimeSpan.Zero);
+
+    [Fact]
+    public void ACounter_CountsAMessageOnce_AtItsLargestSize_AndSkipsOldOnes()
+    {
+        var counter = new UsageCounter(Since);
+        counter.Add(Line("m1", 100, 5, "2026-11-10T09:00:00Z"));
+        counter.Add(Line("m1", 100, 50, "2026-11-10T09:00:01Z")); // The same message, streamed further.
+        counter.Add(Line("m2", 200, 20, "2026-11-10T10:00:00Z"));
+        counter.Add(Line("old", 999, 999, "2026-11-10T07:00:00Z"));
+        counter.Add(Line("user", 999, 999, "2026-11-10T10:00:00Z", type: "user"));
+        counter.Add("not json with \"usage\" in it");
+
+        Assert.Equal(160 + 230, counter.Total); // The cache-creation tokens count (10 each), the cache reads do not.
+    }
+
+    [Fact]
+    public void TheLevel_FollowsTheWarningPercentAndTheLimit()
+    {
+        var options = new UsageOptions(5, 5, 80);
+
+        Assert.Equal(UsageLevel.Fine, UsageRules.LevelOf(3_999_999, options));
+        Assert.Equal(UsageLevel.Warn, UsageRules.LevelOf(4_000_000, options));
+        Assert.Equal(UsageLevel.Full, UsageRules.LevelOf(5_000_000, options));
+    }
+
+    [Fact]
+    public void Short_WritesTokensTheShortWay()
+    {
+        Assert.Equal("4.1M", UsageRules.Short(4_100_000));
+        Assert.Equal("820K", UsageRules.Short(820_000));
+        Assert.Equal("950", UsageRules.Short(950));
+    }
+}
+
+public sealed class TopEdgeClampTests
+{
+    [Fact]
+    public void TheWholePill_StaysOnTheScreen_AndCanReachTheBottomEdge()
+    {
+        var screen = new ScreenRect(0, 0, 1920, 1080);
+
+        Assert.Equal(new ScreenPoint(400, 0), TopEdge.Clamp(new ScreenPoint(-50, -9), 800, 36, screen));
+        Assert.Equal(new ScreenPoint(1520, 1044), TopEdge.Clamp(new ScreenPoint(5000, 5000), 800, 36, screen)); // Down onto the taskbar.
+        Assert.Equal(new ScreenPoint(900, 40), TopEdge.Clamp(new ScreenPoint(900, 40), 800, 36, screen));
+    }
+
+    [Fact]
+    public void OnASecondScreen_ThePillStaysInsideThatScreen() =>
+        Assert.Equal(new ScreenPoint(2320, 0), TopEdge.Clamp(new ScreenPoint(1930, -5), 800, 36, new ScreenRect(1920, 0, 3840, 1080)));
+}
+
+public sealed class BatteryRulesTests
+{
+    private static BatteryEvent Between(int before, bool beforeCharging, int now, bool nowCharging) =>
+        BatteryRules.Between(new BatteryReading(before, beforeCharging), new BatteryReading(now, nowCharging));
+
+    [Fact]
+    public void TheCharger_IsTold_BothWays()
+    {
+        Assert.Equal(BatteryEvent.ChargerConnected, Between(50, false, 50, true));
+        Assert.Equal(BatteryEvent.ChargerRemoved, Between(80, true, 80, false));
+    }
+
+    [Fact]
+    public void LowAndCritical_AreTold_OnceWhenCrossed_AndNotWhileCharging()
+    {
+        Assert.Equal(BatteryEvent.Low, Between(21, false, 20, false));
+        Assert.Equal(BatteryEvent.None, Between(20, false, 19, false));
+        Assert.Equal(BatteryEvent.Critical, Between(11, false, 10, false));
+        Assert.Equal(BatteryEvent.None, Between(21, true, 19, true));
+    }
+}
+
 public sealed class FullscreenGuardTests
 {
     // The Shell's values (the enum is internal to the app): 1 not present, 2 busy, 3 D3D full screen, 4 presentation,
     // 5 accepts notifications, 6 quiet time, 7 app.
     [Theory]
     [InlineData(1, false)]
-    [InlineData(2, true)]
+    [InlineData(2, false)] // BUSY: also reported for an ordinary maximized window.
     [InlineData(3, true)]
     [InlineData(4, true)]
     [InlineData(5, false)]
@@ -139,11 +342,11 @@ public sealed class IslandPlacementTests
 {
     [Fact]
     public void Place_CentresOnTheWorkArea_BelowItsTopEdge() =>
-        Assert.Equal(new ScreenPoint(750, 8), IslandWindow.Place(new ScreenRect(0, 0, 1920, 1040), 420, 8));
+        Assert.Equal(new ScreenPoint(750, 8), TopEdge.Center(new ScreenRect(0, 0, 1920, 1040), 420, 8));
 
     [Fact]
     public void Place_OnASecondMonitor_StaysInsideIt() =>
-        Assert.Equal(new ScreenPoint(2670, 48), IslandWindow.Place(new ScreenRect(1920, 40, 3840, 1080), 420, 8));
+        Assert.Equal(new ScreenPoint(2670, 48), TopEdge.Center(new ScreenRect(1920, 40, 3840, 1080), 420, 8));
 }
 
 [Collection(nameof(ShellCollection))]
@@ -187,10 +390,10 @@ public sealed class IslandWindowTests : IDisposable
             using var host = new IslandHost();
             host.Show("ignored", TimeSpan.FromSeconds(5)); // Off: nothing is made.
             var off = host.HasWindow;
-            host.Enabled = true;
+            host.Apply(new IslandOptions(true, IslandMusicMode.Off, false));
             host.Show("hello", TimeSpan.FromSeconds(5));
             var on = host.HasWindow;
-            host.Enabled = false;
+            host.Apply(new IslandOptions(false, IslandMusicMode.Off, false));
             return (off, on, host.HasWindow);
         });
 

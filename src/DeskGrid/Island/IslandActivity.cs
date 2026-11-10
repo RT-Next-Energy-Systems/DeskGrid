@@ -1,7 +1,7 @@
 namespace DeskGrid.Island;
 
-/// <summary>One thing the island shows for a while: a line of text.</summary>
-internal sealed record IslandActivity(string Text, TimeSpan Duration)
+/// <summary>One thing the island shows for a while: a line of text; a song also has its cover and the music buttons.</summary>
+internal sealed record IslandActivity(string Text, TimeSpan Duration, System.Windows.Media.ImageSource? Cover = null, bool IsMusic = false, string Source = "")
 {
     /// <summary>How long a line stays when the sender names no time.</summary>
     public static readonly TimeSpan DefaultDuration = TimeSpan.FromSeconds(5);

@@ -250,7 +250,7 @@ public sealed class HotkeysWindowTests : IDisposable
         Assert.NotNull(choices);
         Assert.Null(choices.Single(c => c.Id == HotkeyBindings.AllFolders).Key);
         Assert.Equal("Ctrl+Alt+G", choices.Single(c => c.Id == HotkeyBindings.FolderId("Games")).Key?.ToString());
-        Assert.Equal(3 + 1, choices.Count);
+        Assert.Equal(HotkeyBindings.GeneralIds.Count + 1, choices.Count);
     }
 
     [Fact]

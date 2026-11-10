@@ -24,6 +24,19 @@ internal sealed class ActivityQueue
 
     public void Show(IslandActivity activity, TimeSpan now)
     {
+        if (activity.IsMusic)
+        {
+            // A song replaces the one before it, shown or waiting: skipping through songs must not queue up one notice per song.
+            var others = _waiting.Where(waiting => !waiting.IsMusic).ToList();
+            _waiting.Clear();
+            others.ForEach(_waiting.Enqueue);
+            if (Current is { IsMusic: true })
+            {
+                Start(activity, now);
+                return;
+            }
+        }
+
         if (Current is null)
         {
             Start(activity, now);

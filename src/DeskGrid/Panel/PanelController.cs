@@ -61,7 +61,10 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
     }
 
     /// <summary>Opens the list of all folders at <paramref name="anchor"/> (asked for from the taskbar), or closes it if it is open.</summary>
-    public void ToggleList(IReadOnlyList<WidgetFolder> folders, ScreenRect anchor)
+    /// <param name="folders">The folders to list.</param>
+    /// <param name="anchor">Where the panel is to open.</param>
+    /// <param name="nearAnchor">Open at <paramref name="anchor"/> whatever "where a folder opens" says (the island's list hangs under the island).</param>
+    public void ToggleList(IReadOnlyList<WidgetFolder> folders, ScreenRect anchor, bool nearAnchor = false)
     {
         if (ClosedByThisRequest(ListKey))
         {
@@ -75,7 +78,7 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
             return;
         }
 
-        Open(anchor, activate: true, panel => panel.ShowList(folders));
+        Open(anchor, activate: true, panel => panel.ShowList(folders), nearAnchor);
     }
 
     /// <summary>
@@ -151,7 +154,7 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
         _ => null,
     };
 
-    private void Open(ScreenRect anchor, bool activate, Action<PopupPanel> fill)
+    private void Open(ScreenRect anchor, bool activate, Action<PopupPanel> fill, bool nearAnchor = false)
     {
         var config = configStore.Config;
         var theme = PanelTheme.Resolve(config.PanelBackground, PanelTheme.SystemUsesDarkTheme, Backdrop.IsAcrylicSupported);
@@ -159,7 +162,7 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
         {
             // Held over a widget by a drag, a panel has to be at that widget: the cursor can't travel across the screen
             // to a centered one without the drag counting as having left.
-            OpenMode = activate ? config.PanelOpenMode : PanelOpenMode.Nearby,
+            OpenMode = activate && !nearAnchor ? config.PanelOpenMode : PanelOpenMode.Nearby,
             ActivateWhenShown = activate,
             ShowActivated = activate,
             Renamer = (oldName, newName) => FolderRenamer?.Invoke(oldName, newName),

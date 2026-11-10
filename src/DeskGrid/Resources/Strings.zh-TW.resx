@@ -229,7 +229,82 @@
     <value>在螢幕頂端顯示提示島</value>
   </data>
   <data name="SettingsIslandHint" xml:space="preserve">
-    <value>顯示簡短訊息的小膠囊，例如腳本透過「DeskGrid.exe --ctl island」送來的訊息。全螢幕程式執行時會自動隱藏。</value>
+    <value>顯示簡短訊息的小膠囊，例如腳本透過「DeskGrid.exe --ctl island」送來的訊息，以及正在播放的音樂與影片。全螢幕程式執行時會自動隱藏。</value>
+  </data>
+  <data name="SettingsIslandMusic" xml:space="preserve">
+    <value>音樂與影片</value>
+  </data>
+  <data name="SettingsIslandMusicOff" xml:space="preserve">
+    <value>不顯示</value>
+  </data>
+  <data name="SettingsIslandMusicChange" xml:space="preserve">
+    <value>換歌時顯示</value>
+  </data>
+  <data name="SettingsIslandMusicWhile" xml:space="preserve">
+    <value>播放時一直顯示</value>
+  </data>
+  <data name="SettingsIslandFolders" xml:space="preserve">
+    <value>游標停在螢幕頂端時開啟資料夾</value>
+  </data>
+  <data name="SettingsIslandBattery" xml:space="preserve">
+    <value>顯示電池變化（插上／拔掉充電器、電量低）</value>
+  </data>
+  <data name="IslandBatteryCharging" xml:space="preserve">
+    <value>已連接充電器 · {0}%</value>
+  </data>
+  <data name="IslandBatteryUnplugged" xml:space="preserve">
+    <value>使用電池 · {0}%</value>
+  </data>
+  <data name="IslandBatteryLow" xml:space="preserve">
+    <value>電量偏低 · {0}%</value>
+  </data>
+  <data name="IslandBatteryCritical" xml:space="preserve">
+    <value>電量極低 · {0}%</value>
+  </data>
+  <data name="HotkeyIsland" xml:space="preserve">
+    <value>在提示島下方開啟資料夾</value>
+  </data>
+  <data name="SettingsIslandUsage" xml:space="preserve">
+    <value>AI 用量告警（Claude Code）</value>
+  </data>
+  <data name="SettingsIslandUsageHint" xml:space="preserve">
+    <value>加總 Claude Code 在這台電腦上記錄的 token（使用者資料夾下的 .claude\projects）。不會傳送到任何地方。用量會顯示在「顯示提示島」快捷鍵的內容裡。</value>
+  </data>
+  <data name="SettingsUsageLimit" xml:space="preserve">
+    <value>上限（百萬 token）</value>
+  </data>
+  <data name="SettingsUsageHours" xml:space="preserve">
+    <value>統計最近幾小時</value>
+  </data>
+  <data name="SettingsUsageWarn" xml:space="preserve">
+    <value>達到上限的幾 % 時告警</value>
+  </data>
+  <data name="SettingsIslandSeconds" xml:space="preserve">
+    <value>「顯示提示島」快捷鍵顯示的秒數（0 = 持續到被隱藏）</value>
+  </data>
+  <data name="SettingsIslandReset" xml:space="preserve">
+    <value>把提示島放回頂端正中央</value>
+  </data>
+  <data name="IslandUsageLine" xml:space="preserve">
+    <value>AI 用量 {0}% · {2} 中已用 {1} token（最近 {3} 小時）</value>
+  </data>
+  <data name="IslandUsageWarn" xml:space="preserve">
+    <value>AI 用量已達上限的 {0}%</value>
+  </data>
+  <data name="IslandUsageFull" xml:space="preserve">
+    <value>AI 用量已達上限（{0}%）</value>
+  </data>
+  <data name="IslandNothing" xml:space="preserve">
+    <value>沒有可顯示的內容</value>
+  </data>
+  <data name="HotkeyIslandShow" xml:space="preserve">
+    <value>顯示提示島幾秒鐘</value>
+  </data>
+  <data name="HotkeyIslandToggle" xml:space="preserve">
+    <value>顯示／隱藏提示島（持續顯示）</value>
+  </data>
+  <data name="HotkeyIslandHide" xml:space="preserve">
+    <value>隱藏提示島</value>
   </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>隱私</value>

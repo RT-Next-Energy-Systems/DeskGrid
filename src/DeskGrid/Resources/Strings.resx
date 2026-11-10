@@ -235,7 +235,82 @@ Cancel: ask again next time.</value>
     <value>Show the island at the top of the screen</value>
   </data>
   <data name="SettingsIslandHint" xml:space="preserve">
-    <value>A small pill that shows short messages, for example from scripts through "DeskGrid.exe --ctl island". It hides while a full-screen app runs.</value>
+    <value>A small pill that shows short messages, for example from scripts through "DeskGrid.exe --ctl island", and the music and video that are playing. It hides while a full-screen app runs.</value>
+  </data>
+  <data name="SettingsIslandMusic" xml:space="preserve">
+    <value>Music and video</value>
+  </data>
+  <data name="SettingsIslandMusicOff" xml:space="preserve">
+    <value>Don't show</value>
+  </data>
+  <data name="SettingsIslandMusicChange" xml:space="preserve">
+    <value>When the song changes</value>
+  </data>
+  <data name="SettingsIslandMusicWhile" xml:space="preserve">
+    <value>While music plays</value>
+  </data>
+  <data name="SettingsIslandFolders" xml:space="preserve">
+    <value>Open the folders when the pointer rests at the top edge</value>
+  </data>
+  <data name="SettingsIslandBattery" xml:space="preserve">
+    <value>Show battery changes (charger plugged in or out, low battery)</value>
+  </data>
+  <data name="IslandBatteryCharging" xml:space="preserve">
+    <value>Charger connected · {0}%</value>
+  </data>
+  <data name="IslandBatteryUnplugged" xml:space="preserve">
+    <value>On battery · {0}%</value>
+  </data>
+  <data name="IslandBatteryLow" xml:space="preserve">
+    <value>Battery low · {0}%</value>
+  </data>
+  <data name="IslandBatteryCritical" xml:space="preserve">
+    <value>Battery very low · {0}%</value>
+  </data>
+  <data name="HotkeyIsland" xml:space="preserve">
+    <value>Open folders under the island</value>
+  </data>
+  <data name="SettingsIslandUsage" xml:space="preserve">
+    <value>Warn about AI usage (Claude Code)</value>
+  </data>
+  <data name="SettingsIslandUsageHint" xml:space="preserve">
+    <value>Adds up the tokens Claude Code logged on this computer (in .claude\projects of your user folder). Nothing is sent anywhere. The usage shows with the "show the island" shortcut.</value>
+  </data>
+  <data name="SettingsUsageLimit" xml:space="preserve">
+    <value>Limit (millions of tokens)</value>
+  </data>
+  <data name="SettingsUsageHours" xml:space="preserve">
+    <value>Counted over the last (hours)</value>
+  </data>
+  <data name="SettingsUsageWarn" xml:space="preserve">
+    <value>Warn at (% of the limit)</value>
+  </data>
+  <data name="SettingsIslandSeconds" xml:space="preserve">
+    <value>Seconds the "show the island" shortcut keeps it up (0 = until hidden)</value>
+  </data>
+  <data name="SettingsIslandReset" xml:space="preserve">
+    <value>Put the island back at the top centre</value>
+  </data>
+  <data name="IslandUsageLine" xml:space="preserve">
+    <value>AI usage {0}% · {1} of {2} tokens (last {3} h)</value>
+  </data>
+  <data name="IslandUsageWarn" xml:space="preserve">
+    <value>AI usage is at {0}% of your limit</value>
+  </data>
+  <data name="IslandUsageFull" xml:space="preserve">
+    <value>AI usage reached your limit ({0}%)</value>
+  </data>
+  <data name="IslandNothing" xml:space="preserve">
+    <value>Nothing to show</value>
+  </data>
+  <data name="HotkeyIslandShow" xml:space="preserve">
+    <value>Show the island for a few seconds</value>
+  </data>
+  <data name="HotkeyIslandToggle" xml:space="preserve">
+    <value>Show or hide the island (stays up)</value>
+  </data>
+  <data name="HotkeyIslandHide" xml:space="preserve">
+    <value>Hide the island</value>
   </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>Privacy</value>

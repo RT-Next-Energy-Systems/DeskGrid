@@ -42,6 +42,35 @@ internal sealed class AppConfig
     /// <summary>Whether the island (a small pill at the top of the screen that shows short messages) exists. Off until the user turns it on.</summary>
     public bool IslandEnabled { get; set; }
 
+    /// <summary>What the island shows of the music that is playing (read from Windows' system media controls, on this computer only).</summary>
+    public IslandMusicMode IslandMusic { get; set; } = IslandMusicMode.WhilePlaying;
+
+    /// <summary>Whether the island says when the charger is plugged in or out and when the battery runs low.</summary>
+    public bool IslandBattery { get; set; }
+
+    /// <summary>Where the user dragged the island, on any screen: the middle of its top edge in physical screen pixels; null = the top centre of the primary screen.</summary>
+    public int? IslandX { get; set; }
+
+    public int? IslandY { get; set; }
+
+    /// <summary>How many seconds the "show the island" shortcut keeps it up; 0 = until it is pressed again or the hide shortcut.</summary>
+    public int IslandShowSeconds { get; set; } = 5;
+
+    /// <summary>Whether the island watches the AI usage read from Claude Code's logs on this computer and warns (see the other <c>Usage</c> settings).</summary>
+    public bool IslandUsage { get; set; }
+
+    /// <summary>The usage limit the user sets, in millions of tokens within <see cref="UsageHours"/>.</summary>
+    public double UsageLimitMillions { get; set; } = 5;
+
+    /// <summary>The span the usage is counted over, in hours back from now.</summary>
+    public int UsageHours { get; set; } = 5;
+
+    /// <summary>The percentage of the limit at which the island warns.</summary>
+    public int UsageWarnPercent { get; set; } = 80;
+
+    /// <summary>Whether holding the pointer at the top centre of the screen for a moment opens the list of all folders.</summary>
+    public bool IslandFolders { get; set; } = true;
+
     /// <summary>
     /// Keyboard shortcuts of the general actions (see <see cref="HotkeyBindings"/>), written like <c>Ctrl+M</c>. Starts with the
     /// defaults; an entry in the file replaces its default, and an empty text means the user cleared it.
@@ -84,6 +113,16 @@ internal sealed class AppConfig
         CheckForUpdatesAtStartup = other.CheckForUpdatesAtStartup;
         AllowControl = other.AllowControl;
         IslandEnabled = other.IslandEnabled;
+        IslandMusic = other.IslandMusic;
+        IslandFolders = other.IslandFolders;
+        IslandBattery = other.IslandBattery;
+        IslandX = other.IslandX;
+        IslandY = other.IslandY;
+        IslandShowSeconds = other.IslandShowSeconds;
+        IslandUsage = other.IslandUsage;
+        UsageLimitMillions = other.UsageLimitMillions;
+        UsageHours = other.UsageHours;
+        UsageWarnPercent = other.UsageWarnPercent;
         FolderOrder = other.FolderOrder;
         Hotkeys.Clear();
         foreach (var (action, key) in other.Hotkeys)
@@ -161,6 +200,19 @@ internal enum PanelOpenMode
 
     /// <summary>In the middle of the widget's screen, always the same size (set by the column count), whatever is in the folder.</summary>
     Centered,
+}
+
+/// <summary>What the island shows of the music that is playing.</summary>
+internal enum IslandMusicMode
+{
+    /// <summary>Nothing; the system media controls are not even read.</summary>
+    Off,
+
+    /// <summary>The song and its cover for a few seconds when a new one starts.</summary>
+    OnChange,
+
+    /// <summary>The song and its cover for as long as music plays.</summary>
+    WhilePlaying,
 }
 
 /// <summary>The language of DeskGrid's own texts.</summary>

@@ -24,7 +24,15 @@ internal sealed record SettingsChoice(
     AppLanguage Language,
     bool CheckForUpdatesAtStartup,
     bool AllowControl,
-    bool IslandEnabled);
+    bool IslandEnabled,
+    IslandMusicMode IslandMusic,
+    bool IslandFolders,
+    bool IslandBattery = false,
+    int IslandShowSeconds = 5,
+    bool IslandUsage = false,
+    double UsageLimitMillions = 5,
+    int UsageHours = 5,
+    int UsageWarnPercent = 80);
 
 /// <summary>One line of the language list: the language and the name it is shown under.</summary>
 internal sealed record LanguageOption(AppLanguage Language, string Label);
@@ -80,6 +88,14 @@ internal partial class SettingsWindow : Window
         CheckAtStartupBox.IsChecked = config.CheckForUpdatesAtStartup;
         AllowControlBox.IsChecked = config.AllowControl;
         IslandBox.IsChecked = config.IslandEnabled;
+        IslandFoldersBox.IsChecked = config.IslandFolders;
+        IslandBatteryBox.IsChecked = config.IslandBattery;
+        IslandUsageBox.IsChecked = config.IslandUsage;
+        UsageLimitBox.Text = config.UsageLimitMillions.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        UsageHoursBox.Text = config.UsageHours.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        UsageWarnBox.Text = config.UsageWarnPercent.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        IslandSecondsBox.Text = config.IslandShowSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        MusicRadioFor(config.IslandMusic).IsChecked = true;
         Pages.SelectedItem = PageGeneralItem;
 
         // Wired after the values are set, so filling the controls does not draw the preview again and again.
@@ -99,7 +115,8 @@ internal partial class SettingsWindow : Window
     // PanelBackground has no value equality, so what the window holds is compared as text.
     private static string Key(SettingsChoice choice) => string.Join('|',
         choice.RootPath, choice.PanelColumns, choice.DropMode, choice.DeleteMode, choice.PanelOpenMode, choice.Language,
-        choice.CheckForUpdatesAtStartup, choice.AllowControl, choice.IslandEnabled,
+        choice.CheckForUpdatesAtStartup, choice.AllowControl, choice.IslandEnabled, choice.IslandMusic, choice.IslandFolders, choice.IslandBattery,
+        choice.IslandShowSeconds, choice.IslandUsage, choice.UsageLimitMillions, choice.UsageHours, choice.UsageWarnPercent,
         choice.PanelBackground.Style, choice.PanelBackground.CustomColor, choice.PanelBackground.CustomOpacity,
         choice.PanelBackground.Opacity, choice.PanelBackground.GlassShade);
 
@@ -150,6 +167,11 @@ internal partial class SettingsWindow : Window
 
     /// <summary>Asks the user for a settings file and takes it over (the caller closes this window when it did).</summary>
     public Action? ImportSettings { get; set; }
+
+    /// <summary>Puts the island back at the top centre of the screen.</summary>
+    public Action? ResetIslandPosition { get; set; }
+
+    private void OnResetIsland(object sender, RoutedEventArgs e) => ResetIslandPosition?.Invoke();
 
     private void OnExport(object sender, RoutedEventArgs e) => ExportSettings?.Invoke();
 
@@ -284,6 +306,19 @@ internal partial class SettingsWindow : Window
         AllowControlHint.Text = Strings.SettingsAllowControlHint;
         IslandBox.Content = Strings.SettingsIsland;
         IslandHint.Text = Strings.SettingsIslandHint;
+        IslandMusicLabel.Text = Strings.SettingsIslandMusic;
+        MusicOff.Content = Strings.SettingsIslandMusicOff;
+        MusicOnChange.Content = Strings.SettingsIslandMusicChange;
+        MusicWhilePlaying.Content = Strings.SettingsIslandMusicWhile;
+        IslandFoldersBox.Content = Strings.SettingsIslandFolders;
+        IslandBatteryBox.Content = Strings.SettingsIslandBattery;
+        IslandUsageBox.Content = Strings.SettingsIslandUsage;
+        IslandUsageHint.Text = Strings.SettingsIslandUsageHint;
+        UsageLimitLabel.Text = Strings.SettingsUsageLimit;
+        UsageHoursLabel.Text = Strings.SettingsUsageHours;
+        UsageWarnLabel.Text = Strings.SettingsUsageWarn;
+        IslandSecondsLabel.Text = Strings.SettingsIslandSeconds;
+        IslandResetButton.Content = Strings.SettingsIslandReset;
         GitHubLabel.Text = Strings.SettingsGitHub;
 
         // Only owner/name: the label already says GitHub, and the whole address would not fit beside the button.
@@ -401,7 +436,26 @@ internal partial class SettingsWindow : Window
         LanguageBox.SelectedValue as AppLanguage? ?? _config.Language,
         CheckAtStartupBox.IsChecked == true,
         AllowControlBox.IsChecked == true,
-        IslandBox.IsChecked == true);
+        IslandBox.IsChecked == true,
+        MusicOff.IsChecked == true ? IslandMusicMode.Off : MusicWhilePlaying.IsChecked == true ? IslandMusicMode.WhilePlaying : IslandMusicMode.OnChange,
+        IslandFoldersBox.IsChecked == true,
+        IslandBatteryBox.IsChecked == true,
+        Number(IslandSecondsBox, _config.IslandShowSeconds, 0, 3600),
+        IslandUsageBox.IsChecked == true,
+        Math.Clamp(double.TryParse(UsageLimitBox.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var limit) ? limit : _config.UsageLimitMillions, 0.01, 100000),
+        Number(UsageHoursBox, _config.UsageHours, 1, 720),
+        Number(UsageWarnBox, _config.UsageWarnPercent, 1, 100));
+
+    // A whole number typed in a box; what it held before when the text is not one, kept within the range.
+    private static int Number(TextBox box, int fallback, int min, int max) =>
+        Math.Clamp(int.TryParse(box.Text.Trim(), out var value) ? value : fallback, min, max);
+
+    private RadioButton MusicRadioFor(IslandMusicMode mode) => mode switch
+    {
+        IslandMusicMode.Off => MusicOff,
+        IslandMusicMode.WhilePlaying => MusicWhilePlaying,
+        _ => MusicOnChange,
+    };
 
     /// <summary>Checks what the controls hold and hands it to <see cref="Applied"/>; false (with the reason shown) if it is not valid.</summary>
     private bool Apply()

@@ -44,6 +44,10 @@ internal partial class HotkeysWindow : Window
     public static string LabelOf(string id) => HotkeyBindings.FolderNameOf(id) ?? id switch
     {
         HotkeyBindings.AllFolders => Strings.HotkeyAllFolders,
+        HotkeyBindings.Island => Strings.HotkeyIsland,
+        HotkeyBindings.IslandShow => Strings.HotkeyIslandShow,
+        HotkeyBindings.IslandToggle => Strings.HotkeyIslandToggle,
+        HotkeyBindings.IslandHide => Strings.HotkeyIslandHide,
         HotkeyBindings.NewFolder => Strings.HotkeyNewFolder,
         _ => Strings.HotkeySettings,
     };

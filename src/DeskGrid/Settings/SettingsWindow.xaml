@@ -197,6 +197,33 @@
             <StackPanel>
               <CheckBox x:Name="IslandBox" MinWidth="0" />
               <TextBlock x:Name="IslandHint" Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.7" />
+              <TextBlock x:Name="IslandMusicLabel" Style="{StaticResource CardTitle}" Margin="0,12,0,0" TextWrapping="Wrap" />
+              <StackPanel>
+                <RadioButton MinWidth="0" x:Name="MusicOff" GroupName="IslandMusic" />
+                <RadioButton MinWidth="0" x:Name="MusicOnChange" GroupName="IslandMusic" />
+                <RadioButton MinWidth="0" x:Name="MusicWhilePlaying" GroupName="IslandMusic" />
+              </StackPanel>
+              <CheckBox x:Name="IslandFoldersBox" Margin="0,12,0,0" MinWidth="0" />
+              <CheckBox x:Name="IslandBatteryBox" Margin="0,6,0,0" MinWidth="0" />
+              <CheckBox x:Name="IslandUsageBox" Margin="0,6,0,0" MinWidth="0" />
+              <TextBlock x:Name="IslandUsageHint" Margin="24,2,0,0" TextWrapping="Wrap" Opacity="0.7" />
+              <StackPanel Orientation="Horizontal" Margin="24,6,0,0">
+                <TextBox x:Name="UsageLimitBox" Width="64" />
+                <TextBlock x:Name="UsageLimitLabel" Margin="8,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="24,6,0,0">
+                <TextBox x:Name="UsageHoursBox" Width="64" />
+                <TextBlock x:Name="UsageHoursLabel" Margin="8,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="24,6,0,0">
+                <TextBox x:Name="UsageWarnBox" Width="64" />
+                <TextBlock x:Name="UsageWarnLabel" Margin="8,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+              <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                <TextBox x:Name="IslandSecondsBox" Width="64" />
+                <TextBlock x:Name="IslandSecondsLabel" Margin="8,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
+              </StackPanel>
+              <Button x:Name="IslandResetButton" Margin="0,12,0,0" Padding="12,5" HorizontalAlignment="Left" Click="OnResetIsland" />
             </StackPanel>
           </Border>
 

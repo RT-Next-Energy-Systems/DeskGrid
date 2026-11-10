@@ -14,6 +14,10 @@ internal static class HotkeyBindings
     public const string AllFolders = "allFolders";
     public const string NewFolder = "newFolder";
     public const string Settings = "settings";
+    public const string Island = "island";
+    public const string IslandShow = "islandShow";
+    public const string IslandToggle = "islandToggle";
+    public const string IslandHide = "islandHide";
 
     // A folder's action is this plus the folder's name.
     private const string FolderPrefix = "folder:";
@@ -25,7 +29,7 @@ internal static class HotkeyBindings
     public static Hotkey DefaultAllFolders { get; } = new(HotkeyModifiers.Ctrl, 'M');
 
     /// <summary>The actions that don't belong to a folder, in the order the shortcut window lists them.</summary>
-    public static IReadOnlyList<string> GeneralIds { get; } = [AllFolders, NewFolder, Settings];
+    public static IReadOnlyList<string> GeneralIds { get; } = [AllFolders, Island, IslandShow, IslandToggle, IslandHide, NewFolder, Settings];
 
     public static string FolderId(string folderName) => FolderPrefix + folderName;
 

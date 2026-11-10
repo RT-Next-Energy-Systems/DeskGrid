@@ -122,3 +122,5 @@ RegisterHotKey
 UnregisterHotKey
 WM_HOTKEY
 HOT_KEY_MODIFIERS
+GetSystemPowerStatus
+SYSTEM_POWER_STATUS

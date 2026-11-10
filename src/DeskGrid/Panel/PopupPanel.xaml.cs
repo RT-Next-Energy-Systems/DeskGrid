@@ -758,6 +758,26 @@ internal partial class PopupPanel : Window
             _followsDrag = true;
             _watch.Start();
         }
+        else
+        {
+            ContentRendered += OnFirstFrameCheckFocus;
+        }
+    }
+
+    // A panel opened by a timer or a hotkey (not by a click on DeskGrid) may be refused the focus by Windows. Without the
+    // focus it never gets Deactivated, so a click elsewhere or Esc would not close it: watch for those instead.
+    private void OnFirstFrameCheckFocus(object? sender, EventArgs e)
+    {
+        ContentRendered -= OnFirstFrameCheckFocus;
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (!_closing && !_hiddenForDrag && !IsActive)
+            {
+                _followsDrag = true;
+                _awaitsClick = true;
+                _watch.Start();
+            }
+        }, DispatcherPriority.ApplicationIdle);
     }
 
     private void OnFirstFrame(object? sender, EventArgs e)

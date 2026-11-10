@@ -92,6 +92,7 @@ public partial class App : Application
         _desktopHost.DisplayChanged += (_, _) =>
         {
             _panels?.Close(); // Its widget may be on another monitor now.
+            _island?.OnDisplayChanged();
             _board?.OnDisplayChanged();
         };
         _desktopHost.Start();
@@ -113,7 +114,15 @@ public partial class App : Application
         _panels.DeleteRequested += (_, folder) => DeleteFolder(folder);
         _panels.FolderRenamer = RenameFolder;
         _tray = new TrayIcon(Strings.AppName, TrayMenu);
-        _island = new IslandHost { Enabled = _configStore.Config.IslandEnabled };
+        _island = new IslandHost();
+        _island.OpenFoldersRequested += (_, _) => OpenFoldersFromIsland();
+        _island.PositionChanged += (x, y) =>
+        {
+            _configStore.Config.IslandX = x;
+            _configStore.Config.IslandY = y;
+            _configStore.Save();
+        };
+        _island.Apply(IslandOptions.From(_configStore.Config));
         _hotkeys = new HotkeyService();
         _hotkeys.Pressed += (_, id) => RunHotkey(id);
         ApplyHotkeys(report: false);
@@ -170,6 +179,21 @@ public partial class App : Application
     {
         Log.Error("Unhandled exception", e.Exception);
         e.Handled = _started && e.Exception is not OutOfMemoryException;
+    }
+
+    // The pointer rested at the top centre of the screen: the list of all folders opens right under the island's place.
+    private void OpenFoldersFromIsland()
+    {
+        if (_catalog is not { } catalog || _panels is null || _panels.OpenPanelName == ControlCommands.AllFolders)
+        {
+            return;
+        }
+
+        var area = MonitorArea.Primary;
+        var centre = (area.WorkArea.Left + area.WorkArea.Right) / 2;
+        var half = area.ToPixels(60);
+        var bottom = area.WorkArea.Top + area.ToPixels(IslandWindow.TopGap + 36);
+        _panels.ToggleList(catalog.Widgets, new ScreenRect(centre - half, area.WorkArea.Top, centre + half, bottom), nearAnchor: true);
     }
 
     private IReadOnlyList<TrayMenuItem> TrayMenu() =>
@@ -619,6 +643,30 @@ public partial class App : Application
                     OpenPanel(OpenMessageAtCursor(OpenRequest.AllFolders));
                     break;
 
+                case HotkeyBindings.IslandShow:
+                    _island?.ShowInfo();
+                    break;
+
+                case HotkeyBindings.IslandToggle:
+                    _island?.ToggleInfo();
+                    break;
+
+                case HotkeyBindings.IslandHide:
+                    _island?.Hide();
+                    break;
+
+                case HotkeyBindings.Island:
+                    if (_panels?.OpenPanelName == ControlCommands.AllFolders)
+                    {
+                        _panels.Close();
+                    }
+                    else
+                    {
+                        OpenFoldersFromIsland();
+                    }
+
+                    break;
+
                 default:
                     if (HotkeyBindings.FolderNameOf(id) is { } folder)
                     {
@@ -679,6 +727,13 @@ public partial class App : Application
         settings.Applied += (_, choice) => ApplySettings(choice);
         settings.CheckForUpdates = () => CheckForUpdatesAsync(manual: true, settings);
         settings.PinAllFolders = PinAllFoldersToTaskbar;
+        settings.ResetIslandPosition = () =>
+        {
+            var config = _configStore!.Config;
+            (config.IslandX, config.IslandY) = (null, null);
+            _configStore.Save();
+            _island!.Apply(IslandOptions.From(config));
+        };
         settings.EditHotkeys = () => EditHotkeys(settings);
         settings.ExportSettings = () => ExportSettings(settings);
         settings.ImportSettings = () => ImportSettings(settings);
@@ -746,7 +801,7 @@ public partial class App : Application
         config.ReplaceWith(imported);
         UiLanguage.Apply(config.Language);
         _configStore.Save();
-        _island!.Enabled = config.IslandEnabled;
+        _island!.Apply(IslandOptions.From(config));
         StartWidgets();
         ApplyHotkeys(report: true);
         owner.CloseDiscarding(); // It shows the settings that were just replaced.
@@ -777,7 +832,15 @@ public partial class App : Application
         config.CheckForUpdatesAtStartup = choice.CheckForUpdatesAtStartup;
         config.AllowControl = choice.AllowControl;
         config.IslandEnabled = choice.IslandEnabled;
-        _island!.Enabled = choice.IslandEnabled;
+        config.IslandMusic = choice.IslandMusic;
+        config.IslandFolders = choice.IslandFolders;
+        config.IslandBattery = choice.IslandBattery;
+        config.IslandShowSeconds = choice.IslandShowSeconds;
+        config.IslandUsage = choice.IslandUsage;
+        config.UsageLimitMillions = choice.UsageLimitMillions;
+        config.UsageHours = choice.UsageHours;
+        config.UsageWarnPercent = choice.UsageWarnPercent;
+        _island!.Apply(IslandOptions.From(config));
         _configStore.Save();
 
         if (rootChanged)
