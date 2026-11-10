@@ -27,7 +27,7 @@ internal static class AutoBackup
         var name = Path.GetFileName(filePath);
         if (!name.StartsWith(Prefix, StringComparison.OrdinalIgnoreCase)
             || !name.EndsWith(ConfigPorter.Extension, StringComparison.OrdinalIgnoreCase)
-            || name.Length < Prefix.Length + 10 + ConfigPorter.Extension.Length)
+            || name.Length != Prefix.Length + 10 + ConfigPorter.Extension.Length)
         {
             return null;
         }

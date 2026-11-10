@@ -78,6 +78,12 @@ internal sealed class PanelGlass(PanelTheme theme, Action<Brush> apply, Action<b
                 // Nothing to look through: a frosted panel that is still readable.
                 Log.Info("The screen could not be read for the panel's glass; drawing it plain.");
                 apply(new SolidColorBrush(Color.FromArgb(0xD9, theme.Background.R, theme.Background.G, theme.Background.B)));
+                if (!_drawn)
+                {
+                    _drawn = true;
+                    var luma = (0.2126 * theme.Background.R + 0.7152 * theme.Background.G + 0.0722 * theme.Background.B) / 255.0;
+                    brightnessKnown(luma > BrightGlass);
+                }
             }
         }
 

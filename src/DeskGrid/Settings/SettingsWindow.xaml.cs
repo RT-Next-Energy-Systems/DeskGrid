@@ -100,7 +100,7 @@ internal partial class SettingsWindow : Window
         AutoBackupBox.IsChecked = config.AutoBackupEnabled;
         AutoBackupHourBox.ItemsSource = BackupHourOptions();
         AutoBackupHourBox.SelectedValue = Math.Clamp(config.AutoBackupHour, 0, 23);
-        AutoBackupDaysBox.ItemsSource = Enumerable.Range(AppConfig.MinAutoBackupDays, AppConfig.MaxAutoBackupDays).ToList();
+        AutoBackupDaysBox.ItemsSource = Enumerable.Range(AppConfig.MinAutoBackupDays, AppConfig.MaxAutoBackupDays - AppConfig.MinAutoBackupDays + 1).ToList();
         AutoBackupDaysBox.SelectedItem = Math.Clamp(config.AutoBackupDays, AppConfig.MinAutoBackupDays, AppConfig.MaxAutoBackupDays);
         UpdateAutoBackupEnabled();
 

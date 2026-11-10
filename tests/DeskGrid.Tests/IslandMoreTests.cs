@@ -251,5 +251,6 @@ public sealed class MediaTimelineTests
     [Theory]
     [InlineData(65, "1:05")]
     [InlineData(3723, "1:02:03")]
+    [InlineData(-5, "0:00")]
     public void Format_WritesTimes(int seconds, string text) => Assert.Equal(text, MediaTimeline.Format(TimeSpan.FromSeconds(seconds)));
 }

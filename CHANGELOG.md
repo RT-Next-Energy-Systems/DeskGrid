@@ -22,6 +22,12 @@
 - Point at the pill to read all of the text; click it to dismiss it.
 - Settings → **General** → **Backup**: tick **Automatic daily backup**, pick the daily backup hour and how many days to keep (up to 30), or click **Restore** and choose a date from the menu.
 
+### Fixed
+
+- Clicking a file's remove button on the shelf removes it without opening it.
+- Folder deletion across drives handles read-only files cleanly.
+- Automatic backup date parsing strictly matches backup file names, and the backup days dropdown stops at 30 days.
+
 ## 0.6.2
 
 ### Changed

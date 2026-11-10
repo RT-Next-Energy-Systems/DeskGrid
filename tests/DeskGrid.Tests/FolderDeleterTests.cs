@@ -66,6 +66,20 @@ public sealed class FolderDeleterTests : IDisposable
     }
 
     [Fact]
+    public void CopyThenDelete_WithReadOnlyFiles_DeletesSuccessfully()
+    {
+        _temp.CreateFile(@"root\Dev\Notes\readonly.txt", FileAttributes.ReadOnly);
+        var source = Path.Combine(Folder, "Notes");
+        var target = Path.Combine(Desktop, "Notes");
+
+        FolderDeleter.CopyThenDelete(source, target);
+
+        Assert.False(Directory.Exists(source));
+        Assert.True(File.Exists(Path.Combine(target, "readonly.txt")));
+        File.SetAttributes(Path.Combine(target, "readonly.txt"), FileAttributes.Normal);
+    }
+
+    [Fact]
     public void CopyThenDelete_WhenACopyFails_KeepsTheOriginalAndLeavesNoPartialCopy()
     {
         var source = Path.Combine(Folder, "Notes");

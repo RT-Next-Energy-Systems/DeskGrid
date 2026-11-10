@@ -113,8 +113,15 @@ internal sealed record MediaTimeline(TimeSpan Duration, TimeSpan Position, DateT
         Duration <= TimeSpan.Zero ? TimeSpan.Zero : TimeSpan.FromTicks((long)Math.Round(Duration.Ticks * Math.Clamp(fraction, 0, 1)));
 
     /// <summary>"1:05" or "1:02:03".</summary>
-    public static string Format(TimeSpan time) =>
-        time.TotalHours >= 1 ? $"{(int)time.TotalHours}:{time.Minutes:00}:{time.Seconds:00}" : $"{time.Minutes}:{time.Seconds:00}";
+    public static string Format(TimeSpan time)
+    {
+        if (time < TimeSpan.Zero)
+        {
+            time = TimeSpan.Zero;
+        }
+
+        return time.TotalHours >= 1 ? $"{(int)time.TotalHours}:{time.Minutes:00}:{time.Seconds:00}" : $"{time.Minutes}:{time.Seconds:00}";
+    }
 }
 
 /// <summary>What the buttons and progress bar of a music pill or card do; each is told which player (<see cref="MediaTrack.Source"/>) to act on.</summary>

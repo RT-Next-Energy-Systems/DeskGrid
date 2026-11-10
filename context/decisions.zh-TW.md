@@ -727,3 +727,18 @@
 **Alternatives**: 在卡片內做框選多選（最多 12 個項目，一顆「全部 (N)」晶片更直覺）；逐幀改動 Win32 視窗尺寸做動畫（分層視窗頻繁改尺寸容易閃爍，對 `_frame` 做 `ScaleTransform` + `Opacity` 最平滑）。
 **Consequences**: 不必在 `AppConfig` 新增設定，既有設定檔直接相容。由 `MediaTimelineTests`、`UiLanguageTests` 與 `MarkdownPairsTests` 驗證。
 **Author**: 使用者要求；設計並實作
+
+---
+
+### 2026-11-10（五）— 自動備份檔名解析、物件別名、UI 拖曳與唯讀資料夾刪除等全專案穩定性修復
+**Decision**:
+1. **自動備份日期解析（`AutoBackup.TryParseDate`）**：嚴格檢查檔名長度等於 `Prefix.Length + 10 + ConfigPorter.Extension.Length`，避免帶後綴的檔案（如 `_copy.json`）被誤判為自動備份並在輪替時遭意外刪除。
+2. **設定備份天數範圍（`SettingsWindow`）**：`AutoBackupDaysBox` 的 `Enumerable.Range` 傳入個數改為 `Max - Min + 1` 而非 `Max`，確保選單上限正確落在 30 天。
+3. **AppConfig 物件獨立性（`AppConfig.ReplaceWith`）**：深層複製 `FolderOrder`、`PanelBackground` 與 `Widgets` 中的每個項目，防止共享物件參照導致狀態互相污染。
+4. **暫存區移除與清空點擊事件冒泡（`IslandCard`）**：在移除叉號（`×`）與清空按鈕加上 `MouseLeftButtonDown` 事件攔截（`e.Handled = true`），避免滑鼠按下事件冒泡至外層晶片導致擷取滑鼠並在放開時誤開檔案。
+5. **唯讀資料夾刪除（`FolderDeleter.CopyThenDelete`）**：跨磁碟搬移資料夾時，在刪除原件前遞迴將所有檔案與目錄屬性重設為 `Normal`，避免因唯讀屬性引發 `UnauthorizedAccessException`。
+6. **Shell 影像安全與玻璃降級（`ShellImage`、`PanelGlass`）**：在存取 DIB 像素前檢查 `bmBits != null` 避免記憶體存取違規；螢幕截圖失敗降級純色時亦回報亮度以維持文字對比。
+**Reason**: 全專案 Bug 排查與邊界條件加固。
+**Alternatives**: 僅依賴未處理例外紀錄。
+**Consequences**: 檔案刪除更穩健、UI 不會誤觸開檔、備份解析精確且物件完全獨立。
+**Author**: Antigravity

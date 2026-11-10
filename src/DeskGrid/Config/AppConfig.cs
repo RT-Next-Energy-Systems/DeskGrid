@@ -170,7 +170,14 @@ internal sealed class AppConfig
         PanelColumns = other.PanelColumns;
         DropMode = other.DropMode;
         DeleteMode = other.DeleteMode;
-        PanelBackground = other.PanelBackground;
+        PanelBackground = new()
+        {
+            Style = other.PanelBackground.Style,
+            CustomColor = other.PanelBackground.CustomColor,
+            CustomOpacity = other.PanelBackground.CustomOpacity,
+            Opacity = other.PanelBackground.Opacity,
+            GlassShade = other.PanelBackground.GlassShade,
+        };
         PanelOpenMode = other.PanelOpenMode;
         Language = other.Language;
         AutoBackupEnabled = other.AutoBackupEnabled;
@@ -210,7 +217,7 @@ internal sealed class AppConfig
             IslandPlaces[scene] = place;
         }
 
-        FolderOrder = other.FolderOrder;
+        FolderOrder = [.. other.FolderOrder];
         Hotkeys.Clear();
         foreach (var (action, key) in other.Hotkeys)
         {
@@ -220,7 +227,12 @@ internal sealed class AppConfig
         Widgets.Clear();
         foreach (var (name, widget) in other.Widgets)
         {
-            Widgets[name] = widget;
+            Widgets[name] = new WidgetConfig
+            {
+                Position = widget.Position,
+                ItemOrder = [.. widget.ItemOrder],
+                Hotkey = widget.Hotkey,
+            };
         }
     }
 }

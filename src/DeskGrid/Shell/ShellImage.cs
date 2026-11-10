@@ -207,7 +207,7 @@ internal static class ShellImage
     private static unsafe BitmapSource ToBitmapSource(HBITMAP bitmap)
     {
         DIBSECTION dib;
-        if (PInvoke.GetObject(bitmap, sizeof(DIBSECTION), &dib) == 0 || dib.dsBm.bmBitsPixel != 32)
+        if (PInvoke.GetObject(bitmap, sizeof(DIBSECTION), &dib) == 0 || dib.dsBm.bmBitsPixel != 32 || dib.dsBm.bmBits == null)
         {
             throw new COMException("Shell image is not a 32-bit DIB section.");
         }

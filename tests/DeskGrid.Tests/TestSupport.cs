@@ -35,9 +35,17 @@ internal sealed class TempDirectory : IDisposable
     {
         try
         {
-            Directory.Delete(Path, recursive: true);
+            if (Directory.Exists(Path))
+            {
+                foreach (var file in Directory.EnumerateFiles(Path, "*", new EnumerationOptions { AttributesToSkip = 0, RecurseSubdirectories = true }))
+                {
+                    File.SetAttributes(file, FileAttributes.Normal);
+                }
+
+                Directory.Delete(Path, recursive: true);
+            }
         }
-        catch (IOException)
+        catch (Exception)
         {
             // A watcher may still hold a handle; %TEMP% gets cleaned eventually.
         }

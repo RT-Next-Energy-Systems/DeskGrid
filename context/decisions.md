@@ -725,3 +725,18 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Dragging a selection rectangle inside the card (too heavy for up to 12 chips); animating the window's Win32 bounds on every frame (causes layered-window resize jitter, whereas a GPU `ScaleTransform` + `Opacity` on `_frame` is smooth).
 **Consequences**: No new settings in `AppConfig`; existing configs work unchanged. Covered by `MediaTimelineTests`, `UiLanguageTests`, and `MarkdownPairsTests`.
 **Author**: The user asked; designed and implemented
+
+---
+
+### 2026-11-10 (5) — Robustness fixes across backup date parsing, list aliasing, UI drag, and folder deletion
+**Decision**:
+1. **AutoBackup date parsing (`AutoBackup.TryParseDate`)**: Strictly check that backup file name length equals `Prefix.Length + 10 + ConfigPorter.Extension.Length` so suffixed files (e.g. `_copy.json`) are not misparsed and unintentionally pruned.
+2. **Settings backup days count (`SettingsWindow`)**: `Enumerable.Range` in `AutoBackupDaysBox` takes `count = Max - Min + 1` instead of `Max`, properly capping available retention days at 30.
+3. **AppConfig object isolation (`AppConfig.ReplaceWith`)**: `FolderOrder`, `PanelBackground`, and `Widgets` dictionary values are deeply copied instead of sharing references.
+4. **Shelf remove and clear click bubbling (`IslandCard`)**: Handled `MouseLeftButtonDown` on the remove cross (`×`) and clear button to prevent bubbling mouse-down to the chip container, which captured the mouse and opened the file upon release.
+5. **Read-only folder deletion (`FolderDeleter.CopyThenDelete`)**: Recursively clear `FileAttributes.Normal` before deleting directories during cross-volume moves to prevent `UnauthorizedAccessException`.
+6. **Shell image safety & panel glass fallback (`ShellImage`, `PanelGlass`)**: Guard against null `bmBits` before reading DIB section pixels to avoid `AccessViolationException`; inform text brightness when screen capture fallback to solid color occurs.
+**Reason**: Comprehensive bug sweep across edge cases in recent features.
+**Alternatives**: Relying on unhandled exception logging.
+**Consequences**: Clean deletion, no UI cross-click actions, accurate backups, and complete object independence.
+**Author**: Antigravity

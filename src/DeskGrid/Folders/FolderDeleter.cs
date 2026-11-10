@@ -119,7 +119,7 @@ internal static class FolderDeleter
         {
             try
             {
-                Directory.Delete(target, recursive: true);
+                DeleteDirectoryRecursively(target);
             }
             catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException)
             {
@@ -129,7 +129,29 @@ internal static class FolderDeleter
             throw;
         }
 
-        Directory.Delete(source, recursive: true);
+        DeleteDirectoryRecursively(source);
+    }
+
+    private static void DeleteDirectoryRecursively(string path)
+    {
+        if (!Directory.Exists(path))
+        {
+            return;
+        }
+
+        foreach (var file in Directory.EnumerateFiles(path, "*", AllEntries))
+        {
+            File.SetAttributes(file, FileAttributes.Normal);
+            File.Delete(file);
+        }
+
+        foreach (var directory in Directory.EnumerateDirectories(path, "*", AllEntries))
+        {
+            DeleteDirectoryRecursively(directory);
+        }
+
+        File.SetAttributes(path, FileAttributes.Normal);
+        Directory.Delete(path, recursive: false);
     }
 
     private static void CopyDirectory(string source, string target)

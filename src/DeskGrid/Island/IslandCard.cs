@@ -269,6 +269,7 @@ internal sealed class IslandCard : Window
         };
         clear.MouseEnter += (_, _) => clear.Opacity = 1;
         clear.MouseLeave += (_, _) => clear.Opacity = 0.85;
+        clear.MouseLeftButtonDown += (_, e) => e.Handled = true;
         clear.MouseLeftButtonUp += (_, e) =>
         {
             ShelfCleared?.Invoke();
@@ -375,7 +376,12 @@ internal sealed class IslandCard : Window
 
     private void UpdateBar(MediaTrack track)
     {
-        var (_, fill, barTrack, time) = _bars[track.Source];
+        if (!_bars.TryGetValue(track.Source, out var bar))
+        {
+            return;
+        }
+
+        var (_, fill, barTrack, time) = bar;
         _bars[track.Source] = (track, fill, barTrack, time);
         var now = DateTimeOffset.UtcNow;
         if (track.Timeline is { } line)
@@ -468,6 +474,7 @@ internal sealed class IslandCard : Window
             Text = "", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 9, Foreground = Dim, Margin = new Thickness(8, 2, 0, 0),
             VerticalAlignment = VerticalAlignment.Center, Background = Brushes.Transparent,
         };
+        cross.MouseLeftButtonDown += (_, e) => e.Handled = true;
         cross.MouseLeftButtonUp += (_, e) =>
         {
             ShelfRemoved?.Invoke(path);

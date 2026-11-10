@@ -81,6 +81,28 @@ public sealed class ConfigPorterTests : IDisposable
         Assert.Equal("v0.6.0", current.SkippedUpdateVersion);
     }
 
+    [Fact]
+    public void ReplaceWith_DoesNotAliasCollectionsOrSubObjects()
+    {
+        var source = new AppConfig
+        {
+            FolderOrder = ["A", "B"],
+            PanelBackground = new PanelBackground { Style = PanelBackgroundStyle.Custom, CustomColor = "#112233" },
+        };
+        source.Widgets["Folder1"] = new WidgetConfig { ItemOrder = ["item1.lnk"] };
+
+        var target = new AppConfig();
+        target.ReplaceWith(source);
+
+        target.FolderOrder.Add("C");
+        target.PanelBackground.CustomColor = "#FFFFFF";
+        target.Widgets["Folder1"].ItemOrder.Add("item2.lnk");
+
+        Assert.Equal(["A", "B"], source.FolderOrder);
+        Assert.Equal("#112233", source.PanelBackground.CustomColor);
+        Assert.Equal(["item1.lnk"], source.Widgets["Folder1"].ItemOrder);
+    }
+
     // Every setting property on AppConfig (except this computer's own history) must round-trip through Export/TryImport and ReplaceWith.
     // Adding a new setting to AppConfig without adding it to ReplaceWith fails this test immediately.
     [Fact]
@@ -179,5 +201,14 @@ public sealed class ConfigPorterTests : IDisposable
         var list = AutoBackup.List(dir);
         Assert.Equal(["2026-11-04", "2026-11-03", "2026-11-02"], list.Select(e => e.Label));
         Assert.False(File.Exists(day1));
+    }
+
+    [Fact]
+    public void AutoBackup_TryParseDate_RejectsInvalidSuffixes()
+    {
+        Assert.Equal(new DateOnly(2026, 11, 10), AutoBackup.TryParseDate(@"C:\Backups\DeskGrid_2026_11_10.json"));
+        Assert.Null(AutoBackup.TryParseDate(@"C:\Backups\DeskGrid_2026_11_10_copy.json"));
+        Assert.Null(AutoBackup.TryParseDate(@"C:\Backups\DeskGrid_2026_11_10.bak"));
+        Assert.Null(AutoBackup.TryParseDate(@"C:\Backups\Other_2026_11_10.json"));
     }
 }
