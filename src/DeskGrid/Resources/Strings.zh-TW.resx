@@ -531,7 +531,16 @@
     <value>DeskGrid</value>
   </data>
   <data name="HotkeysGroupFolders" xml:space="preserve">
-    <value>開啟資料夾</value>
+    <value>資料夾</value>
+  </data>
+  <data name="HotkeysGroupIsland" xml:space="preserve">
+    <value>提示島</value>
+  </data>
+  <data name="HotkeysIslandHint" xml:space="preserve">
+    <value>「顯示」會讓提示島顯示設定裡「提示島」分頁指定的秒數（0 = 直到被隱藏）；「顯示／隱藏」和計時器會一直保持到再按一次。</value>
+  </data>
+  <data name="HotkeysGroupCount" xml:space="preserve">
+    <value>已設定 {0}/{1}</value>
   </data>
   <data name="HotkeysNoFolders" xml:space="preserve">
     <value>還沒有資料夾</value>

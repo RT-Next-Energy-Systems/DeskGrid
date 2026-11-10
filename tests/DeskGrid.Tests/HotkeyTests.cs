@@ -198,6 +198,34 @@ public sealed class HotkeysWindowTests : IDisposable
     public void Dispose() => _ui.Dispose();
 
     [Fact]
+    public async Task TheActions_AreGroupedAsFoldersIslandAndDeskGrid_EachWithACountOfWhatIsSet()
+    {
+        var (titles, counts, afterEdit) = await _ui.InvokeAsync(() =>
+        {
+            TestApplication.Ensure();
+            var config = new AppConfig();
+            config.Widgets["Games"] = new WidgetConfig { Hotkey = "Ctrl+Alt+1" };
+            var window = new HotkeysWindow(config, ["Games", "Work"]);
+            string[] Read(Func<System.Windows.Controls.StackPanel, IEnumerable<string>> pick) =>
+                [.. window.Groups.Children.OfType<System.Windows.Controls.Border>().SelectMany(b => pick((System.Windows.Controls.StackPanel)b.Child))];
+            string Heading(System.Windows.Controls.StackPanel card, bool title) =>
+                ((System.Windows.Controls.TextBlock)((System.Windows.Controls.DockPanel)card.Children[0]).Children[title ? 1 : 0]).Text;
+
+            var titlesNow = Read(card => [Heading(card, title: true)]);
+            var countsNow = Read(card => [Heading(card, title: false)]);
+            window.BoxFor(HotkeyBindings.IslandTimer).Value = Hotkey.Parse("Ctrl+Alt+T");
+            window.RefreshCounts();
+            return (titlesNow, countsNow, Read(card => [Heading(card, title: false)]));
+        });
+
+        string Count(int set, int of) => string.Format(DeskGrid.Resources.Strings.HotkeysGroupCount, set, of);
+
+        Assert.Equal([DeskGrid.Resources.Strings.HotkeysGroupFolders, DeskGrid.Resources.Strings.HotkeysGroupIsland, DeskGrid.Resources.Strings.HotkeysGroupGeneral], titles);
+        Assert.Equal([Count(2, 3), Count(0, 6), Count(0, 2)], counts); // All folders (Ctrl+M) and Games are set.
+        Assert.Equal(Count(1, 6), afterEdit[1]);
+    }
+
+    [Fact]
     public async Task ShowsTheCurrentShortcuts_ForTheGeneralActionsAndEachFolder()
     {
         var (all, newFolder, games) = await _ui.InvokeAsync(() =>

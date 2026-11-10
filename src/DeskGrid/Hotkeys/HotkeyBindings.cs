@@ -33,6 +33,12 @@ internal static class HotkeyBindings
     /// <summary>The actions that don't belong to a folder, in the order the shortcut window lists them.</summary>
     public static IReadOnlyList<string> GeneralIds { get; } = [AllFolders, Island, IslandShow, IslandToggle, IslandHide, IslandTimer, IslandCard, NewFolder, Settings];
 
+    /// <summary>The island's actions, as the shortcut window groups them.</summary>
+    public static IReadOnlyList<string> IslandIds { get; } = [Island, IslandShow, IslandToggle, IslandHide, IslandTimer, IslandCard];
+
+    /// <summary>The actions of DeskGrid itself (not of folders or the island).</summary>
+    public static IReadOnlyList<string> AppIds { get; } = [NewFolder, Settings];
+
     public static string FolderId(string folderName) => FolderPrefix + folderName;
 
     public static string? FolderNameOf(string id) => id.StartsWith(FolderPrefix, StringComparison.Ordinal) ? id[FolderPrefix.Length..] : null;

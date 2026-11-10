@@ -19,6 +19,7 @@ internal sealed record HotkeyChoice(string Id, Hotkey? Key);
 internal partial class HotkeysWindow : Window
 {
     private readonly List<(string Id, string Label, HotkeyBox Box)> _rows = [];
+    private readonly List<Action> _counters = [];
 
     public HotkeysWindow(AppConfig config, IReadOnlyList<string> folderNames)
     {
@@ -31,8 +32,12 @@ internal partial class HotkeysWindow : Window
         OkButton.Content = Strings.ButtonOk;
         CancelButton.Content = Strings.ButtonCancel;
 
-        AddGroup(Strings.HotkeysGroupGeneral, HotkeyBindings.GeneralIds.Select(id => (id, LabelOf(id))), config);
-        AddGroup(Strings.HotkeysGroupFolders, folderNames.Select(name => (HotkeyBindings.FolderId(name), name)), config);
+        // Folders first (what is used most), then the island, then DeskGrid itself.
+        AddGroup(Strings.HotkeysGroupFolders,
+            [(HotkeyBindings.AllFolders, LabelOf(HotkeyBindings.AllFolders)), .. folderNames.Select(name => (HotkeyBindings.FolderId(name), name))],
+            config, note: folderNames.Count == 0 ? Strings.HotkeysNoFolders : null);
+        AddGroup(Strings.HotkeysGroupIsland, [.. HotkeyBindings.IslandIds.Select(id => (id, LabelOf(id)))], config, hint: Strings.HotkeysIslandHint);
+        AddGroup(Strings.HotkeysGroupGeneral, [.. HotkeyBindings.AppIds.Select(id => (id, LabelOf(id)))], config);
     }
 
     public event EventHandler<IReadOnlyList<HotkeyChoice>>? Applied;
@@ -54,22 +59,45 @@ internal partial class HotkeysWindow : Window
         _ => Strings.HotkeySettings,
     };
 
-    private void AddGroup(string title, IEnumerable<(string Id, string Label)> actions, AppConfig config)
+    // A card per group: its title with how many of its actions have a shortcut (kept up to date while editing), an optional
+    // hint under the title, a row per action, and an optional dim note under the rows (e.g. "No folders yet").
+    private void AddGroup(string title, IReadOnlyList<(string Id, string Label)> actions, AppConfig config, string? hint = null, string? note = null)
     {
         var rows = new StackPanel();
+        var boxes = new List<HotkeyBox>();
         foreach (var (id, label) in actions)
         {
             rows.Children.Add(MakeRow(id, label, HotkeyBindings.Get(config, id)));
+            boxes.Add(_rows[^1].Box);
         }
 
-        if (rows.Children.Count == 0)
+        var count = new TextBlock { VerticalAlignment = VerticalAlignment.Center, Opacity = 0.6, FontSize = 12 };
+        void UpdateCount() => count.Text = string.Format(Strings.HotkeysGroupCount, boxes.Count(box => box.Value is not null), boxes.Count);
+        UpdateCount();
+        _counters.Add(UpdateCount);
+        foreach (var box in boxes)
         {
-            rows.Children.Add(new TextBlock { Text = Strings.HotkeysNoFolders, Opacity = 0.75 });
+            box.ValueChanged += (_, _) => UpdateCount();
         }
+
+        var heading = new DockPanel { Margin = new Thickness(0, 0, 0, 4) };
+        DockPanel.SetDock(count, Dock.Right);
+        heading.Children.Add(count);
+        heading.Children.Add(new TextBlock { Text = title, Style = (Style)FindResource("CardTitle"), VerticalAlignment = VerticalAlignment.Center });
 
         var content = new StackPanel();
-        content.Children.Add(new TextBlock { Text = title, Style = (Style)FindResource("CardTitle") });
+        content.Children.Add(heading);
+        if (hint is not null)
+        {
+            content.Children.Add(new TextBlock { Text = hint, Opacity = 0.7, FontSize = 12, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 6) });
+        }
+
         content.Children.Add(rows);
+        if (note is not null)
+        {
+            content.Children.Add(new TextBlock { Text = note, Opacity = 0.7, Margin = new Thickness(0, 6, 0, 0) });
+        }
+
         Groups.Children.Add(new Border { Style = (Style)FindResource("Card"), Child = content });
     }
 
@@ -99,6 +127,7 @@ internal partial class HotkeysWindow : Window
         clear.Click += (_, _) =>
         {
             box.Value = null;
+            RefreshCounts();
             Error.Visibility = Visibility.Collapsed;
         };
 
@@ -117,6 +146,9 @@ internal partial class HotkeysWindow : Window
         return row;
     }
 
+    /// <summary>Brings the "n of m set" of every group up to date (after a box was set in code: cleared, reset).</summary>
+    internal void RefreshCounts() => _counters.ForEach(update => update());
+
     private void ShowError(string text)
     {
         Error.Text = text;
@@ -129,6 +161,8 @@ internal partial class HotkeysWindow : Window
         {
             box.Value = HotkeyBindings.DefaultOf(id);
         }
+
+        RefreshCounts();
 
         Error.Visibility = Visibility.Collapsed;
     }

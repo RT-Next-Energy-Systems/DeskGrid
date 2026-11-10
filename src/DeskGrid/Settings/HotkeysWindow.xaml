@@ -6,7 +6,7 @@
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
         SizeToContent="Height"
-        Width="520"
+        Width="560"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner">
   <!-- The rows are made in code (they hold HotkeyBox, a type of this assembly, which XAML here can't name). -->
