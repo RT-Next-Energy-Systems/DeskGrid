@@ -220,9 +220,9 @@ public sealed class HotkeysWindowTests : IDisposable
 
         string Count(int set, int of) => string.Format(DeskGrid.Resources.Strings.HotkeysGroupCount, set, of);
 
-        Assert.Equal([DeskGrid.Resources.Strings.HotkeysGroupGeneral, DeskGrid.Resources.Strings.HotkeysGroupFolders, DeskGrid.Resources.Strings.HotkeysGroupIsland], titles);
-        Assert.Equal([Count(1, 3), Count(1, 2), Count(0, 3)], counts); // All folders (Ctrl+M) in DeskGrid, Games in Folders.
-        Assert.Equal(Count(1, 3), afterEdit[2]);
+        Assert.Equal([DeskGrid.Resources.Strings.HotkeysGroupGeneral, DeskGrid.Resources.Strings.HotkeysGroupIsland, DeskGrid.Resources.Strings.HotkeysGroupFolders], titles);
+        Assert.Equal([Count(1, 3), Count(0, 3), Count(1, 2)], counts); // All folders (Ctrl+M) in DeskGrid, Games in Folders.
+        Assert.Equal(Count(1, 3), afterEdit[1]);
     }
 
     [Fact]

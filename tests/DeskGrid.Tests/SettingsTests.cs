@@ -416,6 +416,103 @@ public sealed class SettingsWindowTests : IDisposable
         Assert.True(drawn);
     }
 
+    [Fact]
+    public async Task PanelPreview_ResizesWidthWithColumns_AndShowsBorderForNonGlass()
+    {
+        var (width2, width4, width6, borderOnDark, borderOnGlass) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var preview = new PanelPreview();
+            var panel = (System.Windows.Controls.Border)preview.Child;
+            preview.Update(new PanelBackground { Style = PanelBackgroundStyle.Dark }, 2);
+            var w2 = panel.Width;
+            var darkBorder = panel.BorderThickness.Left;
+            preview.Update(new PanelBackground { Style = PanelBackgroundStyle.Dark }, 4);
+            var w4 = panel.Width;
+            preview.Update(new PanelBackground { Style = PanelBackgroundStyle.Dark }, 6);
+            var w6 = panel.Width;
+            preview.Update(new PanelBackground { Style = PanelBackgroundStyle.LiquidGlass }, 4);
+            var glassBorder = panel.BorderThickness.Left;
+            return (w2, w4, w6, darkBorder, glassBorder);
+        });
+
+        Assert.True(width2 < width4 && width4 < width6);
+        Assert.Equal(1, borderOnDark);
+        Assert.Equal(0, borderOnGlass);
+    }
+
+    [Fact]
+    public async Task NotilandPageIcon_IsDistinctFromAboutPageIcon()
+    {
+        var (islandIcon, aboutIcon) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path });
+            string Glyph(System.Windows.Controls.ListBoxItem item) =>
+                ((System.Windows.Controls.TextBlock)((System.Windows.Controls.StackPanel)item.Content).Children[0]).Text;
+            return (Glyph(window.PageIslandItem), Glyph(window.PageAboutItem));
+        });
+
+        Assert.NotEqual(aboutIcon, islandIcon);
+    }
+
+    [Fact]
+    public async Task QuietHours_AreScrollableDropdowns_AndApplyReportsChosenTimes()
+    {
+        var (isScrollable, choice) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path, IslandQuietFrom = "22:00", IslandQuietTo = "07:00" });
+            SettingsChoice? applied = null;
+            window.Applied += (_, c) => applied = c;
+            window.Show();
+            var scrollable = window.IslandQuietFromBox.MaxDropDownHeight > 0 && window.IslandQuietFromBox.Items.Count > 24;
+            window.IslandQuietFromBox.SelectedValue = "23:30";
+            window.IslandQuietToBox.SelectedValue = "06:30";
+            window.ApplyButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            window.CloseDiscarding();
+            return (scrollable, applied);
+        });
+
+        Assert.True(isScrollable);
+        Assert.Equal("23:30", choice?.IslandQuietFrom);
+        Assert.Equal("06:30", choice?.IslandQuietTo);
+    }
+
+    [Fact]
+    public async Task AutoBackup_AndOneClickRestoreMenu_ReportSettingsAndRestoreSelectedDay()
+    {
+        var (choice, restoredPath, maxDays) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path });
+            SettingsChoice? applied = null;
+            window.Applied += (_, c) => applied = c;
+            string? restored = null;
+            window.ListBackups = () => [new BackupEntry(new DateOnly(2026, 11, 10), "2026-11-10", @"C:\Backups\DeskGrid_2026_11_10.json")];
+            window.RestoreBackup = path => restored = path;
+            window.Show();
+
+            window.AutoBackupBox.IsChecked = true;
+            window.AutoBackupHourBox.SelectedValue = 21;
+            window.AutoBackupDaysBox.SelectedItem = 15;
+            var max = window.AutoBackupDaysBox.Items.Cast<int>().Max();
+            window.ApplyButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+
+            var menu = window.BuildRestoreMenu();
+            var firstItem = (System.Windows.Controls.MenuItem)menu.Items[0];
+            firstItem.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.MenuItem.ClickEvent));
+            window.CloseDiscarding();
+            return (applied, restored, max);
+        });
+
+        Assert.Equal(30, maxDays);
+        Assert.True(choice?.AutoBackupEnabled);
+        Assert.Equal(21, choice?.AutoBackupHour);
+        Assert.Equal(15, choice?.AutoBackupDays);
+        Assert.Equal(@"C:\Backups\DeskGrid_2026_11_10.json", restoredPath);
+    }
+
     // A dragged slider asks for the glass at every step. Drawn on the UI thread each time, that held the window up
     // (about 80 ms a step) with the steps piling up behind the mouse; a user reported the computer hanging.
     [Fact]

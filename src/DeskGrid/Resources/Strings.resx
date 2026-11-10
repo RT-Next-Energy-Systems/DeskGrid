@@ -235,7 +235,7 @@ Cancel: ask again next time.</value>
     <value>Show Notiland</value>
   </data>
   <data name="SettingsIslandHint" xml:space="preserve">
-    <value>Notiland is a small pill that shows short messages (for example from scripts through "DeskGrid.exe --ctl island") and the music and video that are playing. Esc closes what it shows; drag it to move it. It hides while a full-screen app runs.</value>
+    <value>Notiland is a small pill that shows short messages (for example from scripts through "DeskGrid.exe --ctl island") and the music and video that are playing. Esc closes it when expanded; drag it to move it. It hides while a full-screen app runs.</value>
   </data>
   <data name="SettingsIslandMusic" xml:space="preserve">
     <value>Music and video</value>
@@ -309,6 +309,12 @@ Cancel: ask again next time.</value>
   <data name="CardShelf" xml:space="preserve">
     <value>Shelf</value>
   </data>
+  <data name="CardShelfAll" xml:space="preserve">
+    <value>All ({0})</value>
+  </data>
+  <data name="CardShelfClear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
   <data name="CardShelfHint" xml:space="preserve">
     <value>Drop files here to park them. Drag them out later to a folder.</value>
   </data>
@@ -361,10 +367,13 @@ Cancel: ask again next time.</value>
     <value>Timer length (minutes)</value>
   </data>
   <data name="SettingsIslandQuietFrom" xml:space="preserve">
-    <value>Quiet hours start (HH:mm, empty = none)</value>
+    <value>Quiet hours start</value>
   </data>
   <data name="SettingsIslandQuietTo" xml:space="preserve">
-    <value>Quiet hours end (HH:mm)</value>
+    <value>Quiet hours end</value>
+  </data>
+  <data name="SettingsQuietNone" xml:space="preserve">
+    <value>Off</value>
   </data>
   <data name="SettingsIslandHideApps" xml:space="preserve">
     <value>Hide while these programs are in front (names, comma separated)</value>
@@ -665,7 +674,19 @@ Pick other keys in Settings.</value>
     <value>Export…</value>
   </data>
   <data name="SettingsImport" xml:space="preserve">
-    <value>Import…</value>
+    <value>Restore…</value>
+  </data>
+  <data name="SettingsAutoBackup" xml:space="preserve">
+    <value>Daily automatic backup</value>
+  </data>
+  <data name="SettingsAutoBackupHour" xml:space="preserve">
+    <value>Backup time</value>
+  </data>
+  <data name="SettingsAutoBackupDays" xml:space="preserve">
+    <value>Backups to keep (days)</value>
+  </data>
+  <data name="SettingsBackupNone" xml:space="preserve">
+    <value>No automatic backups yet</value>
   </data>
   <data name="PortFileFilter" xml:space="preserve">
     <value>DeskGrid settings (*.json)|*.json</value>

@@ -211,6 +211,43 @@ public sealed class MediaTimelineTests
     public void ALiveStream_HasNoFraction() =>
         Assert.Null(new MediaTimeline(TimeSpan.Zero, TimeSpan.Zero, At).Fraction(At, playing: true));
 
+    [Fact]
+    public void SeekTarget_MapsFractionOntoDuration_AndClampsToEnds()
+    {
+        var line = new MediaTimeline(TimeSpan.FromMinutes(4), TimeSpan.Zero, At);
+
+        Assert.Equal(TimeSpan.FromMinutes(1), line.SeekTarget(0.25));
+        Assert.Equal(TimeSpan.Zero, line.SeekTarget(-0.5));
+        Assert.Equal(TimeSpan.FromMinutes(4), line.SeekTarget(1.5));
+        Assert.Equal(TimeSpan.Zero, new MediaTimeline(TimeSpan.Zero, TimeSpan.Zero, At).SeekTarget(0.5));
+    }
+
+    [Fact]
+    public void DominantColor_FindsAColoredCover_AndSkipsGreyOrNull()
+    {
+        Assert.Null(MediaTrack.DominantColor(null));
+
+        var grey = new byte[4 * 4 * 4];
+        for (var i = 0; i < grey.Length; i += 4)
+        {
+            (grey[i], grey[i + 1], grey[i + 2], grey[i + 3]) = (120, 120, 120, 255);
+        }
+
+        var greyBmp = System.Windows.Media.Imaging.BitmapSource.Create(4, 4, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, grey, 16);
+        Assert.Null(MediaTrack.DominantColor(greyBmp));
+
+        var blue = new byte[4 * 4 * 4];
+        for (var i = 0; i < blue.Length; i += 4)
+        {
+            (blue[i], blue[i + 1], blue[i + 2], blue[i + 3]) = (220, 80, 30, 255); // BGRA: strong blue.
+        }
+
+        var blueBmp = System.Windows.Media.Imaging.BitmapSource.Create(4, 4, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, blue, 16);
+        var color = MediaTrack.DominantColor(blueBmp);
+        Assert.NotNull(color);
+        Assert.True(color!.Value.B > color.Value.R && color.Value.B > color.Value.G);
+    }
+
     [Theory]
     [InlineData(65, "1:05")]
     [InlineData(3723, "1:02:03")]

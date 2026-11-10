@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using DeskGrid.Config;
 using DeskGrid.Folders;
@@ -48,10 +49,19 @@ internal sealed record SettingsChoice(
     bool HoverExpand = true,
     bool HoverFullText = true,
     bool HoverButtons = true,
-    bool HoverTime = true);
+    bool HoverTime = true,
+    bool AutoBackupEnabled = false,
+    int AutoBackupHour = AppConfig.DefaultAutoBackupHour,
+    int AutoBackupDays = AppConfig.DefaultAutoBackupDays);
 
 /// <summary>One line of the language list: the language and the name it is shown under.</summary>
 internal sealed record LanguageOption(AppLanguage Language, string Label);
+
+/// <summary>One hour in the daily automatic backup dropdown.</summary>
+internal sealed record BackupHourOption(int Hour, string Label);
+
+/// <summary>One entry in the scrollable quiet-hours dropdown (<c>""</c> = off, or <c>"HH:mm"</c>).</summary>
+internal sealed record QuietTimeOption(string Value, string Label);
 
 /// <summary>
 /// Edits a copy of the settings; <see cref="Applied"/> fires on Apply (and on Done, when the user wants the changes
@@ -87,6 +97,12 @@ internal partial class SettingsWindow : Window
         LanguageBox.SelectedValue = config.Language;
         (config.DropMode == DropMode.Copy ? DropCopy : DropMove).IsChecked = true;
         (config.DeleteMode == DeleteMode.DeleteItems ? DeleteItems : DeleteMove).IsChecked = true;
+        AutoBackupBox.IsChecked = config.AutoBackupEnabled;
+        AutoBackupHourBox.ItemsSource = BackupHourOptions();
+        AutoBackupHourBox.SelectedValue = Math.Clamp(config.AutoBackupHour, 0, 23);
+        AutoBackupDaysBox.ItemsSource = Enumerable.Range(AppConfig.MinAutoBackupDays, AppConfig.MaxAutoBackupDays).ToList();
+        AutoBackupDaysBox.SelectedItem = Math.Clamp(config.AutoBackupDays, AppConfig.MinAutoBackupDays, AppConfig.MaxAutoBackupDays);
+        UpdateAutoBackupEnabled();
 
         var background = config.PanelBackground;
         BackgroundRadioFor(background.Style).IsChecked = true;
@@ -117,8 +133,8 @@ internal partial class SettingsWindow : Window
         IslandSystemBox.IsChecked = config.IslandSystem;
         IslandTimerBox.Text = config.IslandTimerMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture);
         IslandFollowBox.IsChecked = config.IslandFollowPointer;
-        IslandQuietFromBox.Text = config.IslandQuietFrom ?? "";
-        IslandQuietToBox.Text = config.IslandQuietTo ?? "";
+        PopulateQuietTime(IslandQuietFromBox, config.IslandQuietFrom);
+        PopulateQuietTime(IslandQuietToBox, config.IslandQuietTo);
         IslandHideAppsBox.Text = config.IslandHideInApps ?? "";
         IslandShowOverBox.Text = config.IslandShowOverApps ?? "";
         IslandSizeSlider.Value = Math.Clamp(Math.Round(config.IslandScale * 20) * 5, IslandSizeSlider.Minimum, IslandSizeSlider.Maximum);
@@ -152,6 +168,7 @@ internal partial class SettingsWindow : Window
         choice.IslandPrivacy, choice.IslandBluetooth, choice.IslandDownloads, choice.IslandSystem, choice.IslandTimerMinutes, choice.IslandFollowPointer,
         choice.IslandQuietFrom, choice.IslandQuietTo, choice.IslandHideInApps, choice.IslandShowOverApps,
         choice.IslandScale, choice.HoverExpand, choice.HoverFullText, choice.HoverButtons, choice.HoverTime,
+        choice.AutoBackupEnabled, choice.AutoBackupHour, choice.AutoBackupDays,
         choice.PanelBackground.Style, choice.PanelBackground.CustomColor, choice.PanelBackground.CustomOpacity,
         choice.PanelBackground.Opacity, choice.PanelBackground.GlassShade);
 
@@ -205,8 +222,18 @@ internal partial class SettingsWindow : Window
     /// <summary>Asks the user for a settings file and takes it over (the caller closes this window when it did).</summary>
     public Action? ImportSettings { get; set; }
 
+    /// <summary>Lists the available automatic daily backups (newest first) for the one-click restore menu.</summary>
+    public Func<IReadOnlyList<BackupEntry>>? ListBackups { get; set; } = () => AutoBackup.List(AutoBackup.DefaultDirectory);
+
+    /// <summary>Restores the settings from the chosen automatic backup file path in one click.</summary>
+    public Action<string>? RestoreBackup { get; set; }
+
     /// <summary>Puts the island back at the top centre of the screen.</summary>
     public Action? ResetIslandPosition { get; set; }
+
+    private void OnAutoBackupSwitched(object sender, RoutedEventArgs e) => UpdateAutoBackupEnabled();
+
+    private void UpdateAutoBackupEnabled() => AutoBackupOptions.IsEnabled = AutoBackupBox.IsChecked == true;
 
     private void OnResetIsland(object sender, RoutedEventArgs e)
     {
@@ -286,7 +313,39 @@ internal partial class SettingsWindow : Window
 
     private void OnExport(object sender, RoutedEventArgs e) => ExportSettings?.Invoke();
 
-    private void OnImport(object sender, RoutedEventArgs e) => ImportSettings?.Invoke();
+    private void OnImport(object sender, RoutedEventArgs e)
+    {
+        var menu = BuildRestoreMenu();
+        menu.PlacementTarget = ImportButton;
+        menu.Placement = PlacementMode.Bottom;
+        menu.IsOpen = true;
+    }
+
+    /// <summary>Builds the one-click restore menu listing each daily automatic backup (newest first) and a Browse option.</summary>
+    internal ContextMenu BuildRestoreMenu()
+    {
+        var menu = new ContextMenu();
+        var backups = ListBackups?.Invoke() ?? [];
+        if (backups.Count == 0)
+        {
+            menu.Items.Add(new MenuItem { Header = Strings.SettingsBackupNone, IsEnabled = false });
+        }
+        else
+        {
+            foreach (var entry in backups)
+            {
+                var item = new MenuItem { Header = entry.Label, Tag = entry.FilePath };
+                item.Click += (_, _) => RestoreBackup?.Invoke(entry.FilePath);
+                menu.Items.Add(item);
+            }
+        }
+
+        menu.Items.Add(new Separator());
+        var browse = new MenuItem { Header = Strings.SettingsBrowse };
+        browse.Click += (_, _) => ImportSettings?.Invoke();
+        menu.Items.Add(browse);
+        return menu;
+    }
 
     private void OnPinAll(object sender, RoutedEventArgs e) => PinAllFolders?.Invoke();
 
@@ -395,6 +454,43 @@ internal partial class SettingsWindow : Window
         new(AppLanguage.TraditionalChinese, Strings.LanguageNameChinese),
     ];
 
+    private static BackupHourOption[] BackupHourOptions() =>
+        [.. Enumerable.Range(0, 24).Select(hour => new BackupHourOption(hour, $"{hour:00}:00"))];
+
+    private static string NormalizedTime(string? text) =>
+        IslandRules.Parse(text) is { } time ? time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) : "";
+
+    private static List<QuietTimeOption> QuietTimeOptions(string? current)
+    {
+        var options = new List<QuietTimeOption> { new("", Strings.SettingsQuietNone) };
+        var times = new SortedSet<string>(StringComparer.Ordinal);
+        for (var hour = 0; hour < 24; hour++)
+        {
+            times.Add($"{hour:00}:00");
+            times.Add($"{hour:00}:30");
+        }
+
+        var normalized = NormalizedTime(current);
+        if (normalized.Length > 0)
+        {
+            times.Add(normalized);
+        }
+
+        foreach (var time in times)
+        {
+            options.Add(new QuietTimeOption(time, time));
+        }
+
+        return options;
+    }
+
+    private static void PopulateQuietTime(ComboBox box, string? value)
+    {
+        var normalized = NormalizedTime(value);
+        box.ItemsSource = QuietTimeOptions(normalized);
+        box.SelectedValue = normalized;
+    }
+
     private void LocalizeTexts()
     {
         Title = Strings.SettingsTitle;
@@ -408,6 +504,9 @@ internal partial class SettingsWindow : Window
         BackupLabel.Text = Strings.SettingsBackup;
         ExportButton.Content = Strings.SettingsExport;
         ImportButton.Content = Strings.SettingsImport;
+        AutoBackupBox.Content = Strings.SettingsAutoBackup;
+        AutoBackupHourLabel.Text = Strings.SettingsAutoBackupHour;
+        AutoBackupDaysLabel.Text = Strings.SettingsAutoBackupDays;
         TaskbarLabel.Text = Strings.SettingsTaskbar;
         PinAllButton.Content = Strings.SettingsPinAll;
         HotkeysLabel.Text = Strings.SettingsHotkeys;
@@ -595,10 +694,13 @@ internal partial class SettingsWindow : Window
         HoverExpandBox.IsChecked == true,
         HoverFullTextBox.IsChecked == true,
         HoverButtonsBox.IsChecked == true,
-        HoverTimeBox.IsChecked == true);
+        HoverTimeBox.IsChecked == true,
+        AutoBackupBox.IsChecked == true,
+        AutoBackupHourBox.SelectedValue as int? ?? _config.AutoBackupHour,
+        AutoBackupDaysBox.SelectedItem as int? ?? _config.AutoBackupDays);
 
-    // "HH:mm" as typed, or empty when it is not a time.
-    private static string Time(TextBox box) => IslandRules.Parse(box.Text) is { } time ? time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) : "";
+    // "HH:mm" as chosen in the scrollable menu, or empty when off.
+    private static string Time(ComboBox box) => box.SelectedValue as string ?? "";
 
     // A whole number typed in a box; what it held before when the text is not one, kept within the range.
     private static int Number(TextBox box, int fallback, int min, int max) =>
@@ -632,6 +734,8 @@ internal partial class SettingsWindow : Window
             LocalizeTexts();
             LanguageBox.ItemsSource = LanguageOptions();
             LanguageBox.SelectedValue = choice.Language;
+            PopulateQuietTime(IslandQuietFromBox, choice.IslandQuietFrom);
+            PopulateQuietTime(IslandQuietToBox, choice.IslandQuietTo);
         }
 
         return true;

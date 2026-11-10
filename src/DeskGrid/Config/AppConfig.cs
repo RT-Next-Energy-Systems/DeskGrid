@@ -12,6 +12,12 @@ namespace DeskGrid.Config;
 internal sealed class AppConfig
 {
     public const int DefaultPanelColumns = 3;
+    public const int MinPanelColumns = 1;
+    public const int MaxPanelColumns = 8;
+    public const int DefaultAutoBackupHour = 12;
+    public const int DefaultAutoBackupDays = 7;
+    public const int MinAutoBackupDays = 1;
+    public const int MaxAutoBackupDays = 30;
 
     public static string DefaultRootPath { get; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "DeskGrid");
@@ -29,6 +35,15 @@ internal sealed class AppConfig
     public PanelOpenMode PanelOpenMode { get; set; } = PanelOpenMode.Nearby;
 
     public AppLanguage Language { get; set; } = AppLanguage.System;
+
+    /// <summary>Whether DeskGrid automatically saves a daily backup of the settings.</summary>
+    public bool AutoBackupEnabled { get; set; }
+
+    /// <summary>The hour of the day (0 to 23) at or after which the daily automatic backup is written.</summary>
+    public int AutoBackupHour { get; set; } = DefaultAutoBackupHour;
+
+    /// <summary>How many automatic daily backups to keep (1 to 30); older ones are deleted automatically.</summary>
+    public int AutoBackupDays { get; set; } = DefaultAutoBackupDays;
 
     /// <summary>Whether DeskGrid asks GitHub for a newer release a few seconds after it starts. The only network use that isn't the user's own request.</summary>
     public bool CheckForUpdatesAtStartup { get; set; } = true;
@@ -158,6 +173,9 @@ internal sealed class AppConfig
         PanelBackground = other.PanelBackground;
         PanelOpenMode = other.PanelOpenMode;
         Language = other.Language;
+        AutoBackupEnabled = other.AutoBackupEnabled;
+        AutoBackupHour = other.AutoBackupHour;
+        AutoBackupDays = other.AutoBackupDays;
         CheckForUpdatesAtStartup = other.CheckForUpdatesAtStartup;
         AllowControl = other.AllowControl;
         IslandEnabled = other.IslandEnabled;

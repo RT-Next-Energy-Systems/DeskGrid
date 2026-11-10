@@ -596,6 +596,12 @@ internal sealed class IslandWindow : Window
 
     // ---- Open, size, scrolling ----
 
+    /// <summary>Whether the pill is currently expanded (hovered with hover-expand enabled).</summary>
+    public bool IsExpanded => IsOpen;
+
+    /// <summary>Collapses the pill back to its compact size.</summary>
+    public void Collapse() => SetOpen(false);
+
     private bool IsOpen => IsHovered && _hover.Expand && !IsDragging;
 
     private void SetOpen(bool open)

@@ -1,4 +1,4 @@
-﻿# Decisions
+# Decisions
 
 > 只能新增，不得覆蓋或刪除既有紀錄。若某個決策後來被推翻，新增一筆新紀錄說明並引用原紀錄的日期，不要修改原紀錄。
 >
@@ -701,3 +701,29 @@
 **Alternatives**: 直接 fork 或複製 BrimDeck（授權沒問題，其他都有問題）；用應用程式工具列保留螢幕空間（所有視窗會縮小、widget 格線會移位）；平常也顯示一顆小膠囊（會蓋住分頁列，暫不採用，沒有訊息時什麼都不顯示）；改用 Windows toast（我們無法調整樣式或排隊）。
 **Consequences**: 新增一種「在其他視窗上面」的頂層視窗（最上層、不啟用、分層）：開始功能表、Alt+Tab、安全桌面和 UAC 仍然會蓋住它。全螢幕規則只看 Shell 回報什麼。顯示訊息時膠囊會蓋住頂端正中央底下的東西。後續步驟（透過系統媒體控制顯示正在播放、電池、把資料夾面板當成展開畫面、快速鍵）是計畫中、尚未實作；BrimDeck 的修改程式、驅動和讀登入資料都不會複製。
 **Author**: 使用者提出並選定第一步；Claude 研究、設計並實作
+
+---
+
+### 2026-11-10（三）— 每日自動備份、一鍵還原選單、備份完整性測試、動態面板預覽與 Notiland Esc／介面修正
+**Decision**:
+1. **面板預覽（`PanelPreview`）**：預覽面板寬度改為隨欄數與 App 數量動態伸縮（`42×52` DIP 格子、`26` DIP 圖示，對應 `PopupPanel` 的 `76×96`／`48` 比例），不再把少欄數拉寬在固定 250 DIP 寬度內；非玻璃樣式也畫出 `1 px` 外框（`theme.Outline`），與實際 `PopupPanel` 外觀一致。
+2. **設定與快速鍵介面**：`PageIslandItem` 改用鈴鐺圖示 `&#xEA8F;`（與「關於」的 `&#xE946;` 區隔）；`HotkeysWindow` 分區順序改為 *DeskGrid* → *Notiland* → *資料夾*；Notiland 的「什麼時候不出現」時間設定（`IslandQuietFromBox`、`IslandQuietToBox`）改為滾動式下拉選單 `ComboBox`（`00:00`–`23:00`，`MaxDropDownHeight="220"`）。
+3. **Notiland 的 Esc 行為**：按下 Esc 只會取消位置編輯或收合展開後的 Notiland（`CardOpen` 或游標展開的 `_window.IsExpanded`）；若已經是縮小狀態，按 Esc 不會有作用。
+4. **備份完整性檢查、自動備份與一鍵還原**：`ConfigPorterTests.ExportImport_AndReplaceWith_CoverEverySettingPropertyOfAppConfig` 以反射驗證 `AppConfig` 的每個設定屬性都有納入 `ConfigPorter.Export`／`TryImport` 與 `AppConfig.ReplaceWith`（並寫入 `CLAUDE.md`／`CLAUDE.zh-TW.md`）。啟用 `autoBackupEnabled` 後，`AutoBackup` 每天在 `autoBackupHour`（`0`–`23`）或之後於 `%APPDATA%\DeskGrid\backups\` 產生 `DeskGrid_auto_yyyy_MM_dd.json`，並自動刪除超過 `autoBackupDays`（`1`–`30` 天）的舊備份。點擊「還原」（`ImportButton`）會跳出選單，列出各日備份供一鍵還原，最下方提供「瀏覽檔案…」以載入外部備份檔。
+**Reason**: 使用者要求（/goal，共 8 項修正）。
+**Alternatives**: 維持固定寬度預覽（2 欄時格子間距失真）；把每日還原與檔案還原拆成兩顆按鈕（單一「還原」按鈕配選單更精簡）。
+**Consequences**: 未來在 `AppConfig` 新增任何設定屬性若漏改 `AppConfig.ReplaceWith`，測試會立即失敗。自動備份最多在 `%APPDATA%\DeskGrid\backups\` 保留 30 個檔案（每個僅數 KB）。
+**Author**: 使用者提出（/goal）；依規格實作
+
+---
+
+### 2026-11-10（四）— 對比 macOS 靈動島生態後的 Notiland 四項強化
+**Decision**:
+1. **卡片進場動畫（`IslandCard.Open`）**：開啟 `IslandCard` 時，`_frame` 以 220 ms 的凍結 `QuinticEase`（`EaseOut`）執行透明度（`0` → `1`）與縮放（`0.94` → `1.0`）動畫，縮放原點朝向膠囊那一側（在膠囊下方時為 `(0.5, 0)`，靠近螢幕底邊改在膠囊上方時為 `(0.5, 1)`）。
+2. **媒體進度條點擊跳轉（`NowPlaying.Seek`、`MediaTimeline.SeekTarget`）**：在 `IslandCard` 點擊播放器的進度條（4 DIP 軌道外包 12 DIP 透明點擊區），會依點擊位置比例透過 `GlobalSystemMediaTransportControlsSession.TryChangePlaybackPositionAsync` 跳轉播放時間。
+3. **專輯封面主色調提取（`MediaTrack.DominantColor`）**：載入歌曲封面縮圖時，`DominantColor` 取樣排除過暗、過亮與灰階像素並以彩度加權平均，對偏暗色提亮至可讀亮度（`>= 115`），讓膠囊與卡片上的歌曲進度條自動呈現封面主色調。
+4. **暫存區整批拖出與一鍵清空（`IslandCard`）**：當 `IslandShelf` 有 2 個以上檔案時，暫存區最前方顯示「全部 (N)」晶片，拖曳它會將全部檔案路徑一起放入 `DataFormats.FileDrop`（放開成功後一併清空暫存區）；暫存區標題右側並提供「清空」按鈕。
+**Reason**: 研究並對比 macOS 靈動島應用（Alcove、NotchNook、BoringNotch、DynamicLake）與 Notiland 後，使用者要求列出可改善重點並直接執行。
+**Alternatives**: 在卡片內做框選多選（最多 12 個項目，一顆「全部 (N)」晶片更直覺）；逐幀改動 Win32 視窗尺寸做動畫（分層視窗頻繁改尺寸容易閃爍，對 `_frame` 做 `ScaleTransform` + `Opacity` 最平滑）。
+**Consequences**: 不必在 `AppConfig` 新增設定，既有設定檔直接相容。由 `MediaTimelineTests`、`UiLanguageTests` 與 `MarkdownPairsTests` 驗證。
+**Author**: 使用者要求；設計並實作

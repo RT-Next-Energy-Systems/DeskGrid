@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using DeskGrid.Desktop;
 using DeskGrid.Resources;
@@ -29,19 +30,23 @@ internal sealed class IslandCard : Window
     private const double Pad = 14;
     private const double Gap = 8; // DIPs between the pill and the card.
     private static readonly TimeSpan IdleClose = TimeSpan.FromSeconds(8);
+    private static readonly Duration EnterDuration = new(TimeSpan.FromMilliseconds(220));
+    private static readonly QuinticEase Ease = FrozenEase();
 
     private readonly StackPanel _body = new();
     private readonly Border _frame;
+    private readonly ScaleTransform _scale = new(1, 1);
     private readonly DispatcherTimer _tick = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly Dictionary<string, (MediaTrack Song, Border Fill, Border Rail, TextBlock Time)> _bars = new(StringComparer.Ordinal);
     private readonly MusicActions _music;
     private TextBlock? _system;
     private string _signature = "";
     private Point? _pressed;
-    private string? _pressedPath;
+    private string[]? _pressedPaths;
     private TimeSpan _idle;
     private ScreenPoint _home;
     private int _pillHeight; // In pixels: the card goes under (or over) the pill.
+    private bool _opensAbove;
     private Func<CardModel> _model = () => new CardModel([], null, null, null, [], []);
 
     public IslandCard(MusicActions music)
@@ -68,6 +73,7 @@ internal sealed class IslandCard : Window
             Padding = new Thickness(Pad),
             Child = _body,
             Margin = new Thickness(0),
+            RenderTransform = _scale,
         };
         Content = _frame;
         _tick.Tick += (_, _) => OnTick();
@@ -90,6 +96,13 @@ internal sealed class IslandCard : Window
         Closed += (_, _) => _tick.Stop();
     }
 
+    private static QuinticEase FrozenEase()
+    {
+        var ease = new QuinticEase { EasingMode = EasingMode.EaseOut };
+        ease.Freeze();
+        return ease;
+    }
+
     /// <summary>Raised with the name of the folder the user chose.</summary>
     public event Action<string>? FolderChosen;
 
@@ -98,6 +111,9 @@ internal sealed class IslandCard : Window
 
     /// <summary>Raised when the user took a file off the shelf (the cross), or dragged it out to somewhere that took it.</summary>
     public event Action<string>? ShelfRemoved;
+
+    /// <summary>Raised when the user cleared all files from the shelf, or dragged them all out at once.</summary>
+    public event Action? ShelfCleared;
 
     /// <summary>Raised when the user clicked a file on the shelf.</summary>
     public event Action<string>? ShelfOpened;
@@ -114,7 +130,13 @@ internal sealed class IslandCard : Window
         Place(handle);
         if (!IsVisible)
         {
+            _frame.RenderTransformOrigin = new Point(0.5, _opensAbove ? 1.0 : 0.0);
+            _frame.Opacity = 0;
+            (_scale.ScaleX, _scale.ScaleY) = (0.94, 0.94);
             Show();
+            _frame.BeginAnimation(OpacityProperty, new DoubleAnimation(1, EnterDuration) { EasingFunction = Ease });
+            _scale.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation(1, EnterDuration) { EasingFunction = Ease });
+            _scale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(1, EnterDuration) { EasingFunction = Ease });
         }
 
         TopEdge.RaiseAboveTaskbar(handle);
@@ -206,7 +228,7 @@ internal sealed class IslandCard : Window
             any = true;
         }
 
-        _body.Children.Add(Heading(Strings.CardShelf, any));
+        _body.Children.Add(ShelfHeading(model.Shelf.Count, any));
         if (model.Shelf.Count == 0)
         {
             _body.Children.Add(Label(Strings.CardShelfHint, new Thickness(0), dim: true));
@@ -214,6 +236,11 @@ internal sealed class IslandCard : Window
         else
         {
             var shelf = new WrapPanel();
+            if (model.Shelf.Count > 1)
+            {
+                shelf.Children.Add(ShelfBundleChip([.. model.Shelf]));
+            }
+
             foreach (var path in model.Shelf)
             {
                 shelf.Children.Add(ShelfChip(path));
@@ -221,6 +248,37 @@ internal sealed class IslandCard : Window
 
             _body.Children.Add(shelf);
         }
+    }
+
+    private UIElement ShelfHeading(int count, bool spaced)
+    {
+        var title = Heading(Strings.CardShelf, spaced);
+        if (count == 0)
+        {
+            return title;
+        }
+
+        var clear = new TextBlock
+        {
+            Text = Strings.CardShelfClear,
+            Foreground = Dim,
+            FontSize = 11,
+            Margin = new Thickness(0, spaced ? 14 : 0, 0, 6),
+            Background = Brushes.Transparent,
+            Opacity = 0.85,
+        };
+        clear.MouseEnter += (_, _) => clear.Opacity = 1;
+        clear.MouseLeave += (_, _) => clear.Opacity = 0.85;
+        clear.MouseLeftButtonUp += (_, e) =>
+        {
+            ShelfCleared?.Invoke();
+            e.Handled = true;
+        };
+        var row = new DockPanel { LastChildFill = true };
+        DockPanel.SetDock(clear, Dock.Right);
+        row.Children.Add(clear);
+        row.Children.Add(title);
+        return row;
     }
 
     private UIElement TrackRow(MediaTrack track)
@@ -251,14 +309,32 @@ internal sealed class IslandCard : Window
         top.Children.Add(buttons);
         top.Children.Add(texts);
 
-        var (barTrack, fill) = Bar(0, Brushes.White);
+        var accent = track.Accent is { } color ? new SolidColorBrush(color) : Brushes.White;
+        var (barTrack, fill) = Bar(0, accent);
         var time = new TextBlock { Foreground = Dim, FontSize = 11, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 2, 0, 0) };
         _bars[track.Source] = (track, fill, barTrack, time);
         UpdateBar(track);
 
+        var hitBar = new Border
+        {
+            Margin = new Thickness(0, 4, 0, 0),
+            Padding = new Thickness(0, 4, 0, 4),
+            Background = Brushes.Transparent,
+            Child = barTrack,
+        };
+        hitBar.MouseLeftButtonUp += (_, e) =>
+        {
+            if (barTrack.ActualWidth > 0 && _bars.TryGetValue(track.Source, out var state) && state.Song.Timeline is { } line && line.Duration > TimeSpan.Zero)
+            {
+                var fraction = e.GetPosition(barTrack).X / barTrack.ActualWidth;
+                _music.Seek?.Invoke(track.Source, line.SeekTarget(fraction));
+                e.Handled = true;
+            }
+        };
+
         var row = new StackPanel { Margin = new Thickness(0, 0, 0, 10) };
         row.Children.Add(top);
-        row.Children.Add(new Border { Margin = new Thickness(0, 8, 0, 0), Child = barTrack });
+        row.Children.Add(hitBar);
         row.Children.Add(time);
         return row;
     }
@@ -300,6 +376,7 @@ internal sealed class IslandCard : Window
     private void UpdateBar(MediaTrack track)
     {
         var (_, fill, barTrack, time) = _bars[track.Source];
+        _bars[track.Source] = (track, fill, barTrack, time);
         var now = DateTimeOffset.UtcNow;
         if (track.Timeline is { } line)
         {
@@ -360,6 +437,27 @@ internal sealed class IslandCard : Window
         return chip;
     }
 
+    // A chip that drags every file on the shelf at once.
+    private UIElement ShelfBundleChip(string[] paths)
+    {
+        var chip = new Border
+        {
+            CornerRadius = new CornerRadius(9), Padding = new Thickness(9, 5, 9, 5), Margin = new Thickness(0, 0, 6, 6),
+            Background = new SolidColorBrush(Color.FromArgb(55, 255, 255, 255)),
+            Child = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                Children =
+                {
+                    new TextBlock { Text = "", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 11, Foreground = Brushes.White, Margin = new Thickness(0, 1, 6, 0), VerticalAlignment = VerticalAlignment.Center },
+                    new TextBlock { Text = string.Format(Strings.CardShelfAll, paths.Length), Foreground = Brushes.White, FontSize = 12, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center },
+                },
+            },
+        };
+        WireShelfDrag(chip, paths, null);
+        return chip;
+    }
+
     // A file on the shelf: a click opens it, a drag takes it out (to a folder's panel, a widget, Explorer), the cross removes it.
     private UIElement ShelfChip(string path)
     {
@@ -381,14 +479,20 @@ internal sealed class IslandCard : Window
             Background = new SolidColorBrush(Color.FromArgb(38, 255, 255, 255)),
             Child = new StackPanel { Orientation = Orientation.Horizontal, Children = { label, cross } },
         };
+        WireShelfDrag(chip, [path], () => ShelfOpened?.Invoke(path));
+        return chip;
+    }
+
+    private void WireShelfDrag(Border chip, string[] paths, Action? onClick)
+    {
         chip.MouseLeftButtonDown += (_, e) =>
         {
-            (_pressed, _pressedPath) = (e.GetPosition(this), path);
+            (_pressed, _pressedPaths) = (e.GetPosition(this), paths);
             chip.CaptureMouse();
         };
         chip.MouseMove += (_, e) =>
         {
-            if (e.LeftButton != MouseButtonState.Pressed || _pressed is not { } start || _pressedPath != path)
+            if (e.LeftButton != MouseButtonState.Pressed || _pressed is not { } start || !ReferenceEquals(_pressedPaths, paths))
             {
                 return;
             }
@@ -400,24 +504,32 @@ internal sealed class IslandCard : Window
             }
 
             _pressed = null;
+            _pressedPaths = null;
             chip.ReleaseMouseCapture();
-            var data = new DataObject(DataFormats.FileDrop, new[] { path });
+            var data = new DataObject(DataFormats.FileDrop, paths);
             var effect = DragDrop.DoDragDrop(chip, data, DragDropEffects.Copy | DragDropEffects.Link);
             if (effect != DragDropEffects.None)
             {
-                ShelfRemoved?.Invoke(path); // It went somewhere: it is not waiting here any more.
+                if (paths.Length > 1)
+                {
+                    ShelfCleared?.Invoke();
+                }
+                else
+                {
+                    ShelfRemoved?.Invoke(paths[0]); // It went somewhere: it is not waiting here any more.
+                }
             }
         };
         chip.MouseLeftButtonUp += (_, _) =>
         {
             chip.ReleaseMouseCapture();
-            if (_pressed is not null && _pressedPath == path)
+            if (_pressed is not null && ReferenceEquals(_pressedPaths, paths))
             {
                 _pressed = null;
-                ShelfOpened?.Invoke(path);
+                _pressedPaths = null;
+                onClick?.Invoke();
             }
         };
-        return chip;
     }
 
     // ---- Place ----
@@ -432,7 +544,8 @@ internal sealed class IslandCard : Window
         (Width, Height) = (CardWidth, height);
         var (w, h) = (monitor.ToPixels(CardWidth), monitor.ToPixels(height));
         var below = _home.Y + _pillHeight + monitor.ToPixels(Gap);
-        var y = below + h <= screen.Bottom ? below : Math.Max(screen.Top, _home.Y - monitor.ToPixels(Gap) - h);
+        _opensAbove = below + h > screen.Bottom;
+        var y = !_opensAbove ? below : Math.Max(screen.Top, _home.Y - monitor.ToPixels(Gap) - h);
         var x = Math.Clamp(_home.X - w / 2, screen.Left, Math.Max(screen.Left, screen.Right - w));
         PInvoke.SetWindowPos(window, new HWND(-1), x, y, w, h, SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
     }

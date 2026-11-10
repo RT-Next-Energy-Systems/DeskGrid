@@ -7,7 +7,12 @@
 - **The island**: a small black pill at the top centre of the screen that shows a line of text for a few seconds and
   then goes. Scripts and AI agents send it lines with `DeskGrid.exe --ctl island show`. Several lines wait their turn.
   Point at it and it opens to show all of the text (and waits while you read); it hides while a full-screen game or
-  video is up. It is off until you turn it on.
+  video is up. Clicking a song or timer opens the Notiland card with a smooth entrance animation, album-cover-tinted
+  progress bars that you can click to seek, and a file shelf with one-drag batch export (`All (N)`) and `Clear`. It is
+  off until you turn it on.
+- **Automatic daily backup and one-click restore**: Settings → General → **Backup** can automatically back up all
+  settings once a day at your chosen hour and keep up to 30 days of backups (older ones are deleted automatically).
+  Clicking **Restore** opens a menu to restore any saved day's backup in one click, or browse for a backup file.
 
 ### How to use
 
@@ -15,6 +20,7 @@
 - Send a line: `DeskGrid.exe --ctl island show "Build finished" 10` (the number is how many seconds, 5 if left out).
   `DeskGrid.exe --ctl island hide` takes it away.
 - Point at the pill to read all of the text; click it to dismiss it.
+- Settings → **General** → **Backup**: tick **Automatic daily backup**, pick the daily backup hour and how many days to keep (up to 30), or click **Restore** and choose a date from the menu.
 
 ## 0.6.2
 

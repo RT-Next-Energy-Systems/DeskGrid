@@ -43,7 +43,7 @@
       </ListBoxItem>
       <ListBoxItem x:Name="PageIslandItem" Padding="10,9">
         <StackPanel Orientation="Horizontal">
-          <TextBlock Width="26" FontFamily="Segoe MDL2 Assets" Text="&#xE946;" VerticalAlignment="Center" />
+          <TextBlock Width="26" FontFamily="Segoe MDL2 Assets" Text="&#xEA8F;" VerticalAlignment="Center" />
           <TextBlock x:Name="PageIslandText" VerticalAlignment="Center" />
         </StackPanel>
       </ListBoxItem>
@@ -98,11 +98,24 @@
           </Border>
 
           <Border Style="{StaticResource Card}">
-            <DockPanel>
-              <Button MinWidth="84" Padding="12,5" x:Name="ImportButton" DockPanel.Dock="Right" Margin="8,0,0,0" Click="OnImport" />
-              <Button MinWidth="84" Padding="12,5" x:Name="ExportButton" DockPanel.Dock="Right" Margin="8,0,0,0" Click="OnExport" />
-              <TextBlock x:Name="BackupLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
-            </DockPanel>
+            <StackPanel>
+              <DockPanel>
+                <Button MinWidth="84" Padding="12,5" x:Name="ImportButton" DockPanel.Dock="Right" Margin="8,0,0,0" Click="OnImport" />
+                <Button MinWidth="84" Padding="12,5" x:Name="ExportButton" DockPanel.Dock="Right" Margin="8,0,0,0" Click="OnExport" />
+                <TextBlock x:Name="BackupLabel" FontWeight="SemiBold" VerticalAlignment="Center" />
+              </DockPanel>
+              <CheckBox x:Name="AutoBackupBox" Margin="0,10,0,0" MinWidth="0" Checked="OnAutoBackupSwitched" Unchecked="OnAutoBackupSwitched" />
+              <StackPanel x:Name="AutoBackupOptions" Margin="24,6,0,0">
+                <DockPanel Margin="0,2,0,2">
+                  <ComboBox x:Name="AutoBackupHourBox" DockPanel.Dock="Right" Width="110" MaxDropDownHeight="220" DisplayMemberPath="Label" SelectedValuePath="Hour" />
+                  <TextBlock x:Name="AutoBackupHourLabel" VerticalAlignment="Center" />
+                </DockPanel>
+                <DockPanel Margin="0,4,0,0">
+                  <ComboBox x:Name="AutoBackupDaysBox" DockPanel.Dock="Right" Width="110" MaxDropDownHeight="220" />
+                  <TextBlock x:Name="AutoBackupDaysLabel" VerticalAlignment="Center" />
+                </DockPanel>
+              </StackPanel>
+            </StackPanel>
           </Border>
         </StackPanel>
       </ScrollViewer>
@@ -296,9 +309,9 @@
                     <RowDefinition Height="Auto" />
                   </Grid.RowDefinitions>
                   <TextBlock x:Name="IslandQuietFromLabel" Grid.Row="0" VerticalAlignment="Center" Margin="0,3,12,3" TextWrapping="Wrap" />
-                  <TextBox x:Name="IslandQuietFromBox" Grid.Row="0" Grid.Column="1" Width="90" Margin="0,3,0,3" />
+                  <ComboBox x:Name="IslandQuietFromBox" Grid.Row="0" Grid.Column="1" Width="110" MaxDropDownHeight="220" Margin="0,3,0,3" DisplayMemberPath="Label" SelectedValuePath="Value" />
                   <TextBlock x:Name="IslandQuietToLabel" Grid.Row="1" VerticalAlignment="Center" Margin="0,3,12,3" TextWrapping="Wrap" />
-                  <TextBox x:Name="IslandQuietToBox" Grid.Row="1" Grid.Column="1" Width="90" Margin="0,3,0,3" />
+                  <ComboBox x:Name="IslandQuietToBox" Grid.Row="1" Grid.Column="1" Width="110" MaxDropDownHeight="220" Margin="0,3,0,3" DisplayMemberPath="Label" SelectedValuePath="Value" />
                 </Grid>
                 <TextBlock x:Name="IslandHideAppsLabel" Margin="0,10,0,4" TextWrapping="Wrap" />
                 <TextBox x:Name="IslandHideAppsBox" />

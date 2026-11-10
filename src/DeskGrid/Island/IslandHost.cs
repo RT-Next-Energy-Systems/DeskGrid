@@ -95,19 +95,21 @@ internal sealed class IslandHost : IDisposable
     // TimeSpan.MaxValue to stay until it is pressed again.
     private TimeSpan? _info;
 
-    // Esc closes what the island shows. The island never takes the focus, so the key is watched, not received: a quick timer
-    // that only runs while something is up. A song that stays up while it plays is hidden until what plays changes.
+    // Esc closes the expanded Notiland (or cancels setting a place). The island never takes the focus, so the key is watched,
+    // not received: a quick timer that only runs while needed.
     private readonly DispatcherTimer _escape = new() { Interval = TimeSpan.FromMilliseconds(40) };
     private bool _escapeWasDown;
-    private bool _timerHidden;
-    private string? _hiddenMusic;
 
     public IslandHost()
     {
         _timer = new DispatcherTimer { Interval = CheckEvery };
         _timer.Tick += (_, _) => Refresh();
         _queue.CurrentChanged += (_, _) => Refresh();
-        _musicActions = new MusicActions(source => _music?.Previous(source), source => _music?.PlayPause(source), source => _music?.Next(source));
+        _musicActions = new MusicActions(
+            source => _music?.Previous(source),
+            source => _music?.PlayPause(source),
+            source => _music?.Next(source),
+            (source, pos) => _music?.Seek(source, pos));
         _shelf.Changed += (_, _) => _card?.Refresh();
         _escape.Tick += (_, _) => OnEscapeTick();
     }
@@ -139,9 +141,6 @@ internal sealed class IslandHost : IDisposable
 
     /// <summary>The text of the line that is up, if any; for the tests.</summary>
     internal string? CurrentLine => _queue.Current?.Text;
-
-    /// <summary>Whether the timer's display was closed with Esc; for the tests.</summary>
-    internal bool TimerHidden => _timerHidden;
 
     /// <summary>Whether the timer runs; for the tests.</summary>
     internal bool TimerRunning => _countdown.Running;
@@ -347,10 +346,10 @@ internal sealed class IslandHost : IDisposable
     private bool _overlayUp;
     private long _overlaySeen = long.MinValue / 2; // When a system overlay was last in front (TickCount64).
 
-    // Runs the watch while the pill or the card is up (a key already held when it appears does not count as a press).
+    // Runs the watch while the island is expanded, the card is open, or a place is being edited.
     private void UpdateEscapeWatch()
     {
-        var needed = _shown is not null || CardOpen;
+        var needed = _editing is not null || CardOpen || _window is { IsExpanded: true };
         if (needed && !_escape.IsEnabled)
         {
             _escapeWasDown = EscapeDown();
@@ -363,7 +362,7 @@ internal sealed class IslandHost : IDisposable
         }
     }
 
-    /// <summary>Esc: closes the card; else the line that is up, the timer's display, the info, or the song that stays up (until what plays changes).</summary>
+    /// <summary>Esc: cancels setting a place, or closes the expanded Notiland (the card or the expanded pill); does nothing while collapsed.</summary>
     internal void Dismiss()
     {
         if (_editing is not null)
@@ -378,28 +377,11 @@ internal sealed class IslandHost : IDisposable
             return;
         }
 
-        if (_queue.Current is not null)
+        if (_window is { IsExpanded: true })
         {
-            _queue.Dismiss(Now);
+            _window.Collapse();
         }
-        else if (_countdown.Running && !_timerHidden)
-        {
-            _timerHidden = true; // The timer runs on and says when it is done.
-        }
-        else if (_info is not null)
-        {
-            _info = null;
-        }
-        else
-        {
-            _hiddenMusic = PlayingSignature();
-        }
-
-        Refresh();
     }
-
-    private string PlayingSignature() =>
-        string.Join('|', MusicPolicy.PlayingToShow(_options.Music, _tracks).Select(t => t.Source + ':' + t.Title));
 
     /// <summary>Takes away what the island shows and what waits (a song that plays on is not touched), the timer and the info of a shortcut.</summary>
     public void Hide()
@@ -451,7 +433,6 @@ internal sealed class IslandHost : IDisposable
         else
         {
             _countdown.Start(TimeSpan.FromMinutes(Math.Max(1, _options.Extras.TimerMinutes)), Now);
-            _timerHidden = false;
         }
 
         Refresh();
@@ -487,6 +468,7 @@ internal sealed class IslandHost : IDisposable
         _card.FolderChosen += name => ActionRequested?.Invoke(IslandAction.FolderPrefix + name);
         _card.ShelfDropped += paths => _shelf.Add(paths);
         _card.ShelfRemoved += _shelf.Remove;
+        _card.ShelfCleared += _shelf.Clear;
         _card.ShelfOpened += path =>
         {
             try
@@ -651,7 +633,8 @@ internal sealed class IslandHost : IDisposable
             {
                 _announced[track.Source] = track;
                 var label = MusicPolicy.Label(track);
-                _queue.Show(new IslandActivity(label, Marquee.ToRead(label, IslandActivity.DefaultDuration), track.Cover, IsMusic: true, track.Source), Now);
+                var look = track.Accent is { } c ? new IslandLook(Accent: $"#{c.R:X2}{c.G:X2}{c.B:X2}") : null;
+                _queue.Show(new IslandActivity(label, Marquee.ToRead(label, IslandActivity.DefaultDuration), track.Cover, IsMusic: true, track.Source, look), Now);
             }
         }
     }
@@ -843,7 +826,6 @@ internal sealed class IslandHost : IDisposable
 
         if (_countdown.TakeDone(now))
         {
-            _timerHidden = false;
             _queue.Show(new IslandActivity(Strings.IslandTimerDone, TimeSpan.FromSeconds(10), Look: new IslandLook("timer", "#4CC38A")), now);
             return;
         }
@@ -854,7 +836,7 @@ internal sealed class IslandHost : IDisposable
         }
 
         object? wanted = _editing is { } editing ? new LiveLine("place", string.Format(Strings.IslandPlaceEditing, SceneName(editing)), new IslandLook("move", "#4CC3FF")) : _queue.Current;
-        if (wanted is null && _countdown.Running && !_timerHidden)
+        if (wanted is null && _countdown.Running)
         {
             wanted = new LiveLine("timer", string.Format(Strings.IslandTimerLeft, IslandTimer.Format(_countdown.Left(now))),
                 new IslandLook("timer", null, _countdown.Elapsed(now)));
@@ -873,17 +855,6 @@ internal sealed class IslandHost : IDisposable
         {
             // Everything that plays, music or video, takes turns on the pill.
             var playing = MusicPolicy.PlayingToShow(_options.Music, _tracks);
-            if (_hiddenMusic is not null)
-            {
-                if (PlayingSignature() == _hiddenMusic)
-                {
-                    playing = []; // Closed with Esc, and nothing new plays.
-                }
-                else
-                {
-                    _hiddenMusic = null;
-                }
-            }
 
             // Under the pointer the pill stays with its player, so the buttons act on what the user is looking at.
             wanted = _window?.IsHovered == true && _shown is MediaTrack current && playing.FirstOrDefault(t => t.Source == current.Source) is { } held
@@ -966,7 +937,8 @@ internal sealed class IslandHost : IDisposable
                 window.SetPlaying(track.Playing);
                 break;
             case MediaTrack track:
-                window.Display(MusicPolicy.Label(track), track.Cover, _musicActions, track.Source);
+                var trackLook = track.Accent is { } c ? new IslandLook(Accent: $"#{c.R:X2}{c.G:X2}{c.B:X2}") : null;
+                window.Display(MusicPolicy.Label(track), track.Cover, _musicActions, track.Source, trackLook);
                 window.SetPlaying(track.Playing);
                 break;
             case LiveLine live when previous is LiveLine before && before.Kind == live.Kind:

@@ -699,3 +699,29 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Forking or copying BrimDeck (licence is fine, the rest is not); an application bar that reserves screen space (it would shrink every window and move the widget grid); showing the island always as a small idle pill (it covers tab strips; rejected for now, nothing shows while there is no line); a Windows toast instead (cannot be styled or queued by us).
 **Consequences**: A new top-level window kind that is above other windows (topmost, never active, layered): Start, Alt+Tab, the secure desktop and UAC still cover it. The full-screen rule is only what the Shell reports. The pill covers what is under it at the top centre while a line is up. The next steps (now playing through the system media controls, battery, the folder panel as its open view, a hotkey) are planned, not built; BrimDeck's patching, driver and sign-in reading will not be copied.
 **Author**: The user asked and chose the first step; Claude researched, designed and built it
+
+---
+
+### 2026-11-10 (3) — Automatic daily backup, one-click restore menu, backup completeness test, dynamic panel preview, and Notiland Esc / UI refinements
+**Decision**:
+1. **Panel preview (`PanelPreview`)**: The preview panel now resizes its width dynamically with the column count (`42×52` DIP cells, `26` DIP tiles, matching `PopupPanel`'s `76×96` / `48` proportions) instead of stretching columns across a fixed 250 DIP box, and draws a `1 px` outline (`theme.Outline`) for non-glass styles to match the real `PopupPanel`.
+2. **Settings & Shortcuts UI**: `PageIslandItem` uses the notification bell icon `&#xEA8F;` (distinct from About's `&#xE946;`); `HotkeysWindow` orders its groups as *DeskGrid* → *Notiland* → *Folders*; Notiland's quiet-hours fields (`IslandQuietFromBox`, `IslandQuietToBox`) are scrollable `ComboBox`es (`00:00`–`23:00`, `MaxDropDownHeight="220"`).
+3. **Notiland Esc behavior**: Pressing Esc only cancels place editing or collapses an expanded Notiland (`CardOpen` or hover-expanded `_window.IsExpanded`); when Notiland is already collapsed, Esc does nothing.
+4. **Backup completeness, automatic daily backup, and one-click restore**: `ConfigPorterTests.ExportImport_AndReplaceWith_CoverEverySettingPropertyOfAppConfig` uses reflection to verify that every setting property of `AppConfig` round-trips through `ConfigPorter.Export`/`TryImport` and `AppConfig.ReplaceWith` (documented in `CLAUDE.md` / `CLAUDE.zh-TW.md`). `AutoBackup` saves `DeskGrid_auto_yyyy_MM_dd.json` in `%APPDATA%\DeskGrid\backups\` once per day at or after `autoBackupHour` (`0`–`23`) while `autoBackupEnabled` is on, and prunes the oldest automatic backups beyond `autoBackupDays` (`1`–`30`). Clicking Restore (`ImportButton`) opens a menu listing the saved daily backups newest-first for one-click restore, plus `Browse file…` for external backup files.
+**Reason**: Requested by the user (/goal, 8 items).
+**Alternatives**: Keeping a fixed-width preview (misrepresents 2-column and 8-column panels); separate buttons for daily restore vs. file restore (a single Restore button with a menu is cleaner and avoids extra buttons).
+**Consequences**: Adding any property to `AppConfig` without updating `AppConfig.ReplaceWith` fails `ConfigPorterTests` immediately. Automatic backups keep at most 30 files (~a few KB each) in `%APPDATA%\DeskGrid\backups\`.
+**Author**: The user asked (/goal); implemented per specification
+
+---
+
+### 2026-11-10 (4) — Notiland improvements from the macOS notch ecosystem comparison
+**Decision**:
+1. **Card entrance animation (`IslandCard.Open`)**: Opening `IslandCard` animates `_frame`'s opacity (`0` → `1`) and scale (`0.94` → `1.0`) over 220 ms with a frozen `QuinticEase` (`EaseOut`), anchored at the edge facing the pill (`RenderTransformOrigin` `(0.5, 0)` when below the pill, `(0.5, 1)` when above it near the bottom of the screen).
+2. **Clickable media progress bar (`NowPlaying.Seek`, `MediaTimeline.SeekTarget`)**: Clicking a player's progress bar in `IslandCard` seeks to that fraction of the track via `GlobalSystemMediaTransportControlsSession.TryChangePlaybackPositionAsync`. The bar has a 12 DIP vertical hit box around the 4 DIP rail.
+3. **Dominant cover accent color (`MediaTrack.DominantColor`)**: When a track's cover thumbnail is loaded, `DominantColor` samples non-grey, non-extreme pixels weighted by chroma and lifts dark colors to readable luminance (`>= 115`) so both the pill's and the card's progress bars take the cover's accent color instead of plain white.
+4. **Batch drag and one-click clear on the shelf (`IslandCard`)**: When 2 or more files are on `IslandShelf`, `IslandCard` shows an `All (N)` chip that drags all parked paths at once (`DataFormats.FileDrop` with the full array, clearing the shelf on drop), and a `Clear` action in the Shelf heading.
+**Reason**: After comparing macOS Dynamic Island apps (Alcove, NotchNook, BoringNotch, DynamicLake) with Notiland, the user asked to list and execute the key improvements.
+**Alternatives**: Dragging a selection rectangle inside the card (too heavy for up to 12 chips); animating the window's Win32 bounds on every frame (causes layered-window resize jitter, whereas a GPU `ScaleTransform` + `Opacity` on `_frame` is smooth).
+**Consequences**: No new settings in `AppConfig`; existing configs work unchanged. Covered by `MediaTimelineTests`, `UiLanguageTests`, and `MarkdownPairsTests`.
+**Author**: The user asked; designed and implemented

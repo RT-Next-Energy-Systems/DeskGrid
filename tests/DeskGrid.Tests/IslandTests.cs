@@ -491,34 +491,29 @@ public sealed class IslandWindowTests : IDisposable
     }
 
     [Fact]
-    public async Task Escape_ClosesTheCard_ThenOneLineAtATime_ThenTheTimersDisplay_ThenTheInfo()
+    public async Task Escape_ClosesOnlyTheExpandedIsland_AndDoesNothingWhenCollapsed()
     {
-        var steps = await _ui.InvokeAsync(() =>
+        var (cardBefore, cardAfter, lineAfter, timerAfter, infoAfter) = await _ui.InvokeAsync(() =>
         {
             TestApplication.Ensure();
             using var host = new IslandHost();
             host.Apply(new IslandOptions(true, IslandMusicMode.Off, false));
-            var log = new List<string?>();
             host.Show("a", TimeSpan.FromSeconds(30));
-            host.Show("b", TimeSpan.FromSeconds(30));
-            log.Add(host.CurrentLine);
-            host.Dismiss();
-            log.Add(host.CurrentLine); // The next line.
-            host.Dismiss();
-            log.Add(host.CurrentLine); // Nothing left.
-
             host.ToggleTimer();
             host.ShowInfo();
-            host.Dismiss(); // The timer's display goes first (it keeps running) ...
-            log.Add($"{host.TimerRunning}/{host.TimerHidden}/{host.InfoUp}");
-            host.Dismiss(); // ... then the info.
-            log.Add($"{host.TimerRunning}/{host.TimerHidden}/{host.InfoUp}");
-            return log;
+            host.OpenCard();
+            var before = host.CardOpen;
+            host.Dismiss(); // Closes the expanded card.
+            var afterCard = host.CardOpen;
+            host.Dismiss(); // Already collapsed: Esc does nothing to the line, timer, or info.
+            return (before, afterCard, host.CurrentLine, host.TimerRunning, host.InfoUp);
         });
 
-        Assert.Equal(["a", "b", null], steps.Take(3));
-        Assert.Equal("True/True/True", steps[3]);
-        Assert.Equal("True/True/False", steps[4]);
+        Assert.True(cardBefore);
+        Assert.False(cardAfter);
+        Assert.Equal("a", lineAfter);
+        Assert.True(timerAfter);
+        Assert.True(infoAfter);
     }
 
     [Fact]

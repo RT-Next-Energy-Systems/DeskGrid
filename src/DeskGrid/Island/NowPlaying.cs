@@ -53,6 +53,18 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
 
     public void Next(string source) => Control(source, session => session.TrySkipNextAsync());
 
+    public void Seek(string source, TimeSpan position)
+    {
+        if (!_entries.TryGetValue(source, out var entry))
+        {
+            return;
+        }
+
+        var start = entry.Session.GetTimelineProperties()?.StartTime ?? TimeSpan.Zero;
+        var target = (start + (position < TimeSpan.Zero ? TimeSpan.Zero : position)).Ticks;
+        Control(source, session => session.TryChangePlaybackPositionAsync(target));
+    }
+
     public void Dispose()
     {
         _disposed = true;
@@ -162,11 +174,11 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
             var timeline = line is null || duration <= TimeSpan.Zero ? null : new MediaTimeline(duration, line.Position - line.StartTime, line.LastUpdatedTime);
             if (properties is not null && (properties.Title.Length > 0 || properties.Artist.Length > 0))
             {
-                var cover = entry.Cover is { } known && known.Title == properties.Title && known.Artist == properties.Artist
-                    ? known.Image
+                (System.Windows.Media.ImageSource? cover, System.Windows.Media.Color? accent) = entry.Cover is { } known && known.Title == properties.Title && known.Artist == properties.Artist
+                    ? (known.Image, known.Accent)
                     : await ReadCoverAsync(properties.Thumbnail);
-                entry.Cover = (properties.Title, properties.Artist, cover);
-                track = new MediaTrack(properties.Title, properties.Artist, playing, cover, entry.Id, timeline);
+                entry.Cover = (properties.Title, properties.Artist, cover, accent);
+                track = new MediaTrack(properties.Title, properties.Artist, playing, cover, entry.Id, timeline, accent);
             }
         }
         catch (Exception exception)
@@ -196,11 +208,11 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
         }
     }
 
-    private static async Task<System.Windows.Media.ImageSource?> ReadCoverAsync(IRandomAccessStreamReference? thumbnail)
+    private static async Task<(System.Windows.Media.ImageSource? Image, System.Windows.Media.Color? Accent)> ReadCoverAsync(IRandomAccessStreamReference? thumbnail)
     {
         if (thumbnail is null)
         {
-            return null;
+            return (null, null);
         }
 
         try
@@ -217,12 +229,12 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
             image.StreamSource = bytes;
             image.EndInit();
             image.Freeze();
-            return image;
+            return (image, MediaTrack.DominantColor(image));
         }
         catch (Exception exception)
         {
             Log.Error("The cover of a song could not be read; it is shown without", exception);
-            return null;
+            return (null, null);
         }
     }
 
@@ -237,7 +249,7 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
 
         public int Generation { get; set; } // Counts the readings, so the answer of an older one is dropped.
 
-        public (string Title, string Artist, System.Windows.Media.ImageSource? Image)? Cover { get; set; }
+        public (string Title, string Artist, System.Windows.Media.ImageSource? Image, System.Windows.Media.Color? Accent)? Cover { get; set; }
     }
 
     private void Detach(Entry entry)

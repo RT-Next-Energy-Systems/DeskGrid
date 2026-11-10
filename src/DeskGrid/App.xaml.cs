@@ -46,6 +46,7 @@ public partial class App : Application
     private ControlChannel? _controlChannel;
     private HotkeyService? _hotkeys;
     private IslandHost? _island;
+    private DispatcherTimer? _autoBackupTimer;
     private OpenMessage? _pendingOpen;
     private bool _checkingUpdates;
     private bool _runningHotkey;
@@ -129,12 +130,17 @@ public partial class App : Application
         _controlChannel = new ControlChannel(request => Dispatcher.InvokeAsync(() => commands.Execute(request)).Task);
         _ = StartWidgetsAsync(startedByWindows: AutoStart.WasStartedByWindows(e.Args));
         _ = CheckForUpdatesAtStartupAsync();
+        _autoBackupTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
+        _autoBackupTimer.Tick += (_, _) => CheckAutoBackup();
+        _autoBackupTimer.Start();
+        CheckAutoBackup();
         _started = true;
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
         _exiting.Cancel();
+        _autoBackupTimer?.Stop();
         _settings?.CloseDiscarding(); // Exiting: no question to ask.
         _instanceChannel?.Dispose();
         _controlChannel?.Dispose();
@@ -826,10 +832,26 @@ public partial class App : Application
         settings.EditHotkeys = () => EditHotkeys(settings);
         settings.ExportSettings = () => ExportSettings(settings);
         settings.ImportSettings = () => ImportSettings(settings);
+        settings.RestoreBackup = path => RestoreFromFile(settings, path, confirm: false);
         settings.Closed += (_, _) => _settings = null;
         _settings = settings;
         settings.Show();
         settings.Activate();
+    }
+
+    private void CheckAutoBackup()
+    {
+        try
+        {
+            if (_configStore is { } store)
+            {
+                AutoBackup.RunIfDue(store.Config, DateTime.Now, AutoBackup.DefaultDirectory);
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            Log.Error("Automatic settings backup failed", exception);
+        }
     }
 
     private void ExportSettings(Window owner)
@@ -857,22 +879,25 @@ public partial class App : Application
         }
     }
 
-    // Takes over a settings file: everything is replaced, so the widgets are rebuilt from the new folder order and positions.
+    // Takes over a settings file chosen from disk: everything is replaced, so the widgets are rebuilt from the new folder order and positions.
     private void ImportSettings(SettingsWindow owner)
     {
         var dialog = new Microsoft.Win32.OpenFileDialog { DefaultExt = ConfigPorter.Extension, Filter = Strings.PortFileFilter };
-        if (dialog.ShowDialog(owner) != true)
+        if (dialog.ShowDialog(owner) == true)
         {
-            return;
+            RestoreFromFile(owner, dialog.FileName, confirm: true);
         }
+    }
 
-        if (ConfigPorter.TryImport(dialog.FileName, out var problem) is not { } imported)
+    private void RestoreFromFile(SettingsWindow owner, string filePath, bool confirm)
+    {
+        if (ConfigPorter.TryImport(filePath, out var problem) is not { } imported)
         {
             MessageBox.Show(owner, string.Format(Strings.ImportFailed, problem), Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
 
-        if (MessageBox.Show(owner, string.Format(Strings.ImportConfirm, dialog.FileName), Strings.AppName,
+        if (confirm && MessageBox.Show(owner, string.Format(Strings.ImportConfirm, filePath), Strings.AppName,
                 MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes)
         {
             return;
@@ -890,6 +915,7 @@ public partial class App : Application
         config.ReplaceWith(imported);
         UiLanguage.Apply(config.Language);
         _configStore.Save();
+        CheckAutoBackup();
         _island!.Apply(IslandOptions.From(config));
         StartWidgets();
         ApplyHotkeys(report: true);
@@ -917,6 +943,9 @@ public partial class App : Application
         config.PanelBackground = choice.PanelBackground;
         config.PanelOpenMode = choice.PanelOpenMode;
         config.Language = choice.Language;
+        config.AutoBackupEnabled = choice.AutoBackupEnabled;
+        config.AutoBackupHour = choice.AutoBackupHour;
+        config.AutoBackupDays = choice.AutoBackupDays;
         UiLanguage.Apply(config.Language);
         config.CheckForUpdatesAtStartup = choice.CheckForUpdatesAtStartup;
         config.AllowControl = choice.AllowControl;
@@ -946,6 +975,7 @@ public partial class App : Application
         config.IslandHoverTime = choice.HoverTime;
         _island!.Apply(IslandOptions.From(config));
         _configStore.Save();
+        CheckAutoBackup();
 
         if (rootChanged)
         {
