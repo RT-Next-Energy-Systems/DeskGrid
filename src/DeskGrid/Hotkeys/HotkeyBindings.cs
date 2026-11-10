@@ -30,7 +30,7 @@ internal static class HotkeyBindings
     /// <summary>The actions that don't belong to a folder, in the order the shortcut window lists them.</summary>
     public static IReadOnlyList<string> GeneralIds { get; } = [AllFolders, IslandToggle, IslandCard, IslandTimer, NewFolder, Settings];
 
-    /// <summary>Notiland's actions, as the shortcut window groups them: show or hide (for the set seconds), the card, the timer.</summary>
+    /// <summary>NotiLand's actions, as the shortcut window groups them: show or hide (for the set seconds), the card, the timer.</summary>
     public static IReadOnlyList<string> IslandIds { get; } = [IslandToggle, IslandCard, IslandTimer];
 
     /// <summary>The actions of DeskGrid itself (not of folders or the island).</summary>

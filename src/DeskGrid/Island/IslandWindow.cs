@@ -4,6 +4,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 using DeskGrid.Desktop;
 using DeskGrid.Resources;
 using Windows.Win32;
@@ -12,11 +13,11 @@ using Windows.Win32.UI.WindowsAndMessaging;
 
 namespace DeskGrid.Island;
 
-/// <summary>What Notiland does when the pointer is over it: open at all, show all of a line, the music buttons, the song's time.</summary>
+/// <summary>What NotiLand does when the pointer is over it: open at all, show all of a line, the music buttons, the song's time.</summary>
 internal sealed record IslandHover(bool Expand = true, bool FullText = true, bool Buttons = true, bool Time = true);
 
 /// <summary>
-/// Notiland: a black pill (at the top centre of the primary screen unless the user put it elsewhere) that shows one line of
+/// NotiLand: a black pill (at the top centre of the primary screen unless the user put it elsewhere) that shows one line of
 /// text, with a cover when it is a song. The window is a fixed transparent room the pill grows in, so only the pill takes
 /// the mouse (the transparent rest of a layered window lets clicks through). It never takes focus. With the pointer over it
 /// the pill opens as <see cref="Hover"/> says: a line shows all of its text, a song its buttons and time. It can be dragged
@@ -47,9 +48,15 @@ internal sealed class IslandWindow : Window
     private const string PlayGlyph = "";
     private const string PauseGlyph = "";
 
-    private static readonly QuinticEase Ease = FrozenEase();
-    private static readonly Duration Grow = new(TimeSpan.FromMilliseconds(280));
-    private static readonly Duration Leave = new(TimeSpan.FromMilliseconds(180));
+    // iOS-like curve: leaves quickly but arrives softly, with no hard stop at the end (a quintic ease-out jumped most of the way
+    // in the first frames and then crept).
+    private static readonly KeySpline Spline = FrozenSpline();
+    private static readonly Duration Grow = new(TimeSpan.FromMilliseconds(360));
+    private static readonly Duration Leave = new(TimeSpan.FromMilliseconds(220));
+
+    // The pointer must have stayed away this long before the pill closes again: grazing the edge while it resizes, or the
+    // trip from the pill to the card, does not make it flutter.
+    private static readonly TimeSpan CloseDelay = TimeSpan.FromMilliseconds(140);
 
     private readonly Border _pill;
     private readonly StackPanel _row;
@@ -63,6 +70,7 @@ internal sealed class IslandWindow : Window
     private readonly Border _barTrack;
     private readonly Border _barFill;
     private readonly TranslateTransform _scroll = new();
+    private readonly DispatcherTimer _closeTimer;
     private readonly StackPanel _buttons;
     private readonly TextBlock _playGlyph;
     private SnapGuideWindow? _guides;
@@ -181,13 +189,47 @@ internal sealed class IslandWindow : Window
                 FilesHovered?.Invoke(this, EventArgs.Empty);
             }
         };
-        _pill.MouseEnter += (_, _) => SetOpen(true);
-        _pill.MouseLeave += (_, _) => SetOpen(false);
+        _closeTimer = new DispatcherTimer(DispatcherPriority.Normal, Dispatcher) { Interval = CloseDelay };
+        _closeTimer.Tick += (_, _) =>
+        {
+            _closeTimer.Stop();
+            if (!_pill.IsMouseOver)
+            {
+                SetOpen(false);
+            }
+        };
+        _pill.MouseEnter += (_, _) =>
+        {
+            _closeTimer.Stop();
+            SetOpen(true);
+        };
+        _pill.MouseLeave += (_, _) =>
+        {
+            if (_dragged || !IsHovered)
+            {
+                SetOpen(false);
+            }
+            else
+            {
+                _closeTimer.Stop();
+                _closeTimer.Start();
+            }
+        };
         _pill.MouseLeftButtonDown += OnPillDown;
         _pill.MouseMove += OnPillMove;
         _pill.MouseLeftButtonUp += OnPillUp;
         Content = _pill;
         Closed += (_, _) => _guides?.Close();
+
+        // A press that ends without a release reaching the pill (capture taken away, window hidden) is the end of the drag too.
+        _pill.LostMouseCapture += (_, _) => EndDragState();
+        IsVisibleChanged += (_, _) =>
+        {
+            if (!IsVisible)
+            {
+                EndDragState();
+            }
+        };
     }
 
     /// <summary>Whether the island, at its default place, appears on the screen the pointer is on (not always the primary one).</summary>
@@ -336,6 +378,17 @@ internal sealed class IslandWindow : Window
         _guides.ShowGuides(TopEdge.BoundsAt(point), perDip, snap.Lines);
     }
 
+    // Forgets a drag that is no longer going on and takes its guide lines away.
+    private void EndDragState()
+    {
+        _guides?.Hide();
+        if (_drag is not null && !_pill.IsMouseCaptured)
+        {
+            _drag = null;
+            _dragged = false;
+        }
+    }
+
     private void OnPillUp(object sender, MouseButtonEventArgs e)
     {
         if (_drag is null)
@@ -373,12 +426,12 @@ internal sealed class IslandWindow : Window
 
     private HWND Handle => new(new WindowInteropHelper(this).EnsureHandle());
 
-    // Frozen, so the one shared easing can be used by any thread's animations (an unfrozen one belongs to its first thread).
-    private static QuinticEase FrozenEase()
+    // Frozen, so the one shared curve can be used by any thread's animations (an unfrozen one belongs to its first thread).
+    private static KeySpline FrozenSpline()
     {
-        var ease = new QuinticEase { EasingMode = EasingMode.EaseOut };
-        ease.Freeze();
-        return ease;
+        var spline = new KeySpline(0.32, 0.72, 0, 1);
+        spline.Freeze();
+        return spline;
     }
 
     private static TextBlock Glyph(string glyph) => new()
@@ -494,7 +547,7 @@ internal sealed class IslandWindow : Window
             Show(); // Not activated: ShowActivated is off.
         }
 
-        Resize(); // Also starts the scrolling of a long line.
+        Resize(force: true); // Also starts the scrolling of a long line.
         Animate(OpacityProperty, 1, Grow);
     }
 
@@ -660,14 +713,20 @@ internal sealed class IslandWindow : Window
         return new Size(Math.Max(content.Width + 2 * PadX, PillHeight), Math.Max(content.Height + 2 * PadY, PillHeight));
     }
 
-    private void Resize()
+    private void Resize(bool force = false)
     {
-        _pillSize = PillSize();
-        Animate(WidthProperty, _pillSize.Width, Grow);
-        Animate(HeightProperty, _pillSize.Height, Grow);
-        if (!IsDragging && new WindowInteropHelper(this).Handle != 0)
+        var size = PillSize();
+        var unchanged = !force && Math.Abs(size.Width - _pillSize.Width) < 0.5 && Math.Abs(size.Height - _pillSize.Height) < 0.5;
+        _pillSize = size;
+        if (!unchanged)
         {
-            Place(Handle); // Near an edge, the open pill stays on the screen.
+            // A fresh animation per change, so a pointer that goes in and out mid-way turns the pill around smoothly.
+            Animate(WidthProperty, _pillSize.Width, Grow);
+            Animate(HeightProperty, _pillSize.Height, Grow);
+            if (!IsDragging && new WindowInteropHelper(this).Handle != 0)
+            {
+                Place(Handle); // Near an edge, the open pill stays on the screen.
+            }
         }
 
         RestartMarquee();
@@ -723,7 +782,9 @@ internal sealed class IslandWindow : Window
 
     private void Animate(DependencyProperty property, double to, Duration duration, EventHandler? completed = null)
     {
-        var animation = new DoubleAnimation(to, duration) { EasingFunction = Ease };
+        // One key frame on the spline: it starts from wherever the property is now, so a change in the middle of another
+        // continues smoothly instead of jumping.
+        var animation = new DoubleAnimationUsingKeyFrames { Duration = duration, KeyFrames = { new SplineDoubleKeyFrame(to, KeyTime.FromPercent(1), Spline) } };
         if (completed is not null)
         {
             animation.Completed += completed;

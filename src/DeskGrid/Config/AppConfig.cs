@@ -112,10 +112,10 @@ internal sealed class AppConfig
     /// <summary>Whether the island, at its default place, appears on the screen the pointer is on.</summary>
     public bool IslandFollowPointer { get; set; }
 
-    /// <summary>The size of Notiland, 1 = 100 %.</summary>
+    /// <summary>The size of NotiLand, 1 = 100 %.</summary>
     public double IslandScale { get; set; } = 1;
 
-    /// <summary>What Notiland does under the pointer: open at all, show a whole line, the music buttons, the song's time.</summary>
+    /// <summary>What NotiLand does under the pointer: open at all, show a whole line, the music buttons, the song's time.</summary>
     public bool IslandHoverExpand { get; set; } = true;
 
     public bool IslandHoverFullText { get; set; } = true;
@@ -125,7 +125,14 @@ internal sealed class AppConfig
     public bool IslandHoverTime { get; set; } = true;
 
     /// <summary>
-    /// Notiland's place in each situation (desktop, window, maximized, full screen), keyed by its name; the default place is
+    /// What the expanded card shows and in which order: ids from <see cref="DeskGrid.Island.CardSections"/> joined by commas
+    /// (a string, not a list, so a file entry cannot be added to the default list). <see langword="null"/> = all, in the default order;
+    /// empty = none.
+    /// </summary>
+    public string? IslandCardSections { get; set; }
+
+    /// <summary>
+    /// NotiLand's place in each situation (desktop, window, maximized, full screen), keyed by its name; the default place is
     /// <see cref="IslandX"/>, <see cref="IslandY"/>. A situation without one uses the default.
     /// </summary>
     [JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
@@ -211,6 +218,7 @@ internal sealed class AppConfig
         IslandHoverFullText = other.IslandHoverFullText;
         IslandHoverButtons = other.IslandHoverButtons;
         IslandHoverTime = other.IslandHoverTime;
+        IslandCardSections = other.IslandCardSections;
         IslandPlaces.Clear();
         foreach (var (scene, place) in other.IslandPlaces)
         {
@@ -302,7 +310,7 @@ internal enum PanelOpenMode
 }
 
 /// <summary>What the island shows of the music that is playing.</summary>
-/// <summary>Where Notiland is in one situation: the middle of its top edge, in screen pixels.</summary>
+/// <summary>Where NotiLand is in one situation: the middle of its top edge, in screen pixels.</summary>
 internal sealed class IslandPlace
 {
     public int X { get; set; }

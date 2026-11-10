@@ -704,11 +704,11 @@
 
 ---
 
-### 2026-11-10（三）— 每日自動備份、一鍵還原選單、備份完整性測試、動態面板預覽與 Notiland Esc／介面修正
+### 2026-11-10（三）— 每日自動備份、一鍵還原選單、備份完整性測試、動態面板預覽與 NotiLand Esc／介面修正
 **Decision**:
 1. **面板預覽（`PanelPreview`）**：預覽面板寬度改為隨欄數與 App 數量動態伸縮（`42×52` DIP 格子、`26` DIP 圖示，對應 `PopupPanel` 的 `76×96`／`48` 比例），不再把少欄數拉寬在固定 250 DIP 寬度內；非玻璃樣式也畫出 `1 px` 外框（`theme.Outline`），與實際 `PopupPanel` 外觀一致。
-2. **設定與快速鍵介面**：`PageIslandItem` 改用鈴鐺圖示 `&#xEA8F;`（與「關於」的 `&#xE946;` 區隔）；`HotkeysWindow` 分區順序改為 *DeskGrid* → *Notiland* → *資料夾*；Notiland 的「什麼時候不出現」時間設定（`IslandQuietFromBox`、`IslandQuietToBox`）改為滾動式下拉選單 `ComboBox`（`00:00`–`23:00`，`MaxDropDownHeight="220"`）。
-3. **Notiland 的 Esc 行為**：按下 Esc 只會取消位置編輯或收合展開後的 Notiland（`CardOpen` 或游標展開的 `_window.IsExpanded`）；若已經是縮小狀態，按 Esc 不會有作用。
+2. **設定與快速鍵介面**：`PageIslandItem` 改用鈴鐺圖示 `&#xEA8F;`（與「關於」的 `&#xE946;` 區隔）；`HotkeysWindow` 分區順序改為 *DeskGrid* → *NotiLand* → *資料夾*；NotiLand 的「什麼時候不出現」時間設定（`IslandQuietFromBox`、`IslandQuietToBox`）改為滾動式下拉選單 `ComboBox`（`00:00`–`23:00`，`MaxDropDownHeight="220"`）。
+3. **NotiLand 的 Esc 行為**：按下 Esc 只會取消位置編輯或收合展開後的 NotiLand（`CardOpen` 或游標展開的 `_window.IsExpanded`）；若已經是縮小狀態，按 Esc 不會有作用。
 4. **備份完整性檢查、自動備份與一鍵還原**：`ConfigPorterTests.ExportImport_AndReplaceWith_CoverEverySettingPropertyOfAppConfig` 以反射驗證 `AppConfig` 的每個設定屬性都有納入 `ConfigPorter.Export`／`TryImport` 與 `AppConfig.ReplaceWith`（並寫入 `CLAUDE.md`／`CLAUDE.zh-TW.md`）。啟用 `autoBackupEnabled` 後，`AutoBackup` 每天在 `autoBackupHour`（`0`–`23`）或之後於 `%APPDATA%\DeskGrid\backups\` 產生 `DeskGrid_auto_yyyy_MM_dd.json`，並自動刪除超過 `autoBackupDays`（`1`–`30` 天）的舊備份。點擊「還原」（`ImportButton`）會跳出選單，列出各日備份供一鍵還原，最下方提供「瀏覽檔案…」以載入外部備份檔。
 **Reason**: 使用者要求（/goal，共 8 項修正）。
 **Alternatives**: 維持固定寬度預覽（2 欄時格子間距失真）；把每日還原與檔案還原拆成兩顆按鈕（單一「還原」按鈕配選單更精簡）。
@@ -717,13 +717,13 @@
 
 ---
 
-### 2026-11-10（四）— 對比 macOS 靈動島生態後的 Notiland 四項強化
+### 2026-11-10（四）— 對比 macOS 靈動島生態後的 NotiLand 四項強化
 **Decision**:
 1. **卡片進場動畫（`IslandCard.Open`）**：開啟 `IslandCard` 時，`_frame` 以 220 ms 的凍結 `QuinticEase`（`EaseOut`）執行透明度（`0` → `1`）與縮放（`0.94` → `1.0`）動畫，縮放原點朝向膠囊那一側（在膠囊下方時為 `(0.5, 0)`，靠近螢幕底邊改在膠囊上方時為 `(0.5, 1)`）。
 2. **媒體進度條點擊跳轉（`NowPlaying.Seek`、`MediaTimeline.SeekTarget`）**：在 `IslandCard` 點擊播放器的進度條（4 DIP 軌道外包 12 DIP 透明點擊區），會依點擊位置比例透過 `GlobalSystemMediaTransportControlsSession.TryChangePlaybackPositionAsync` 跳轉播放時間。
 3. **專輯封面主色調提取（`MediaTrack.DominantColor`）**：載入歌曲封面縮圖時，`DominantColor` 取樣排除過暗、過亮與灰階像素並以彩度加權平均，對偏暗色提亮至可讀亮度（`>= 115`），讓膠囊與卡片上的歌曲進度條自動呈現封面主色調。
 4. **暫存區整批拖出與一鍵清空（`IslandCard`）**：當 `IslandShelf` 有 2 個以上檔案時，暫存區最前方顯示「全部 (N)」晶片，拖曳它會將全部檔案路徑一起放入 `DataFormats.FileDrop`（放開成功後一併清空暫存區）；暫存區標題右側並提供「清空」按鈕。
-**Reason**: 研究並對比 macOS 靈動島應用（Alcove、NotchNook、BoringNotch、DynamicLake）與 Notiland 後，使用者要求列出可改善重點並直接執行。
+**Reason**: 研究並對比 macOS 靈動島應用（Alcove、NotchNook、BoringNotch、DynamicLake）與 NotiLand 後，使用者要求列出可改善重點並直接執行。
 **Alternatives**: 在卡片內做框選多選（最多 12 個項目，一顆「全部 (N)」晶片更直覺）；逐幀改動 Win32 視窗尺寸做動畫（分層視窗頻繁改尺寸容易閃爍，對 `_frame` 做 `ScaleTransform` + `Opacity` 最平滑）。
 **Consequences**: 不必在 `AppConfig` 新增設定，既有設定檔直接相容。由 `MediaTimelineTests`、`UiLanguageTests` 與 `MarkdownPairsTests` 驗證。
 **Author**: 使用者要求；設計並實作
@@ -742,3 +742,12 @@
 **Alternatives**: 僅依賴未處理例外紀錄。
 **Consequences**: 檔案刪除更穩健、UI 不會誤觸開檔、備份解析精確且物件完全獨立。
 **Author**: Antigravity
+
+---
+
+### 2026-11-10（六）— 資料夾內 App 反白圓角與資料夾外框圓角一致化
+**Decision**: 在 `PopupPanel.xaml` 中，將 `ItemButton` 控制項範本內 `Background` 邊框的 `CornerRadius` 從 `4` 改為 `8`，與資料夾外框圓角（`Frame.CornerRadius = 8`）保持一致。同時在 `PopupPanel.xaml` 的 `Frame` 與 `ApplyTheme` 的 Acrylic 分支明確指定 `CornerRadius` 為 `8`。資料夾外框圓角維持不變。
+**Reason**: 使用者要求修正 DG 資料夾外框圓角（8）與內部 App 反白圓角（原為 4）不一致的問題，並指示保持 DG 資料夾圓角不變（「dg圓角勿動」）。
+**Alternatives**: 將資料夾外框圓角縮小為 4（使用者已明確要求「dg圓角勿動」）。
+**Consequences**: 開啟資料夾後，App 的懸停/聚焦反白框與資料夾視窗的圓角完全協調一致。由 `ItemHighlight_CornerRadius_MatchesPanelFrame` 單元測試驗證。
+**Author**: 使用者要求；Antigravity 實作

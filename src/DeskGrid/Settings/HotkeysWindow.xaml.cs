@@ -32,7 +32,7 @@ internal partial class HotkeysWindow : Window
         OkButton.Content = Strings.ButtonOk;
         CancelButton.Content = Strings.ButtonCancel;
 
-        // DeskGrid itself first (including "open all folders"), then Notiland, then one row per folder.
+        // DeskGrid itself first (including "open all folders"), then NotiLand, then one row per folder.
         AddGroup(Strings.HotkeysGroupGeneral, [.. HotkeyBindings.AppIds.Select(id => (id, LabelOf(id)))], config);
         AddGroup(Strings.HotkeysGroupIsland, [.. HotkeyBindings.IslandIds.Select(id => (id, LabelOf(id)))], config, hint: Strings.HotkeysIslandHint);
         AddGroup(Strings.HotkeysGroupFolders, [.. folderNames.Select(name => (HotkeyBindings.FolderId(name), name))], config,

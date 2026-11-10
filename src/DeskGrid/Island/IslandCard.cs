@@ -17,7 +17,11 @@ namespace DeskGrid.Island;
 /// <summary>What the card shows: every player, the usage, the state of the system, the folders and the shelf.</summary>
 internal sealed record CardModel(
     IReadOnlyList<MediaTrack> Tracks, string? UsageText, double? UsagePercent, string? SystemText,
-    IReadOnlyList<string> Folders, IReadOnlyList<string> Shelf);
+    IReadOnlyList<string> Folders, IReadOnlyList<string> Shelf, IReadOnlyList<string>? Sections = null, IReadOnlyList<(string Text, double Percent)>? MoreUsage = null)
+{
+    /// <summary>The parts to show, in order (every part when none were chosen).</summary>
+    public IReadOnlyList<string> ShownSections => Sections ?? CardSections.All;
+}
 
 /// <summary>
 /// The island opened up: a dark card under (or over, near the bottom of the screen) the pill with the players and their
@@ -30,8 +34,9 @@ internal sealed class IslandCard : Window
     private const double Pad = 14;
     private const double Gap = 8; // DIPs between the pill and the card.
     private static readonly TimeSpan IdleClose = TimeSpan.FromSeconds(8);
-    private static readonly Duration EnterDuration = new(TimeSpan.FromMilliseconds(220));
-    private static readonly QuinticEase Ease = FrozenEase();
+    private static readonly Duration EnterDuration = new(TimeSpan.FromMilliseconds(380));
+    private static readonly Duration LeaveDuration = new(TimeSpan.FromMilliseconds(200));
+    private static readonly KeySpline Spline = FrozenSpline();
 
     private readonly StackPanel _body = new();
     private readonly Border _frame;
@@ -96,11 +101,24 @@ internal sealed class IslandCard : Window
         Closed += (_, _) => _tick.Stop();
     }
 
-    private static QuinticEase FrozenEase()
+    // The same curve as the pill's, so the pill and the card move as one thing. Frozen: shared by every UI thread.
+    private static KeySpline FrozenSpline()
     {
-        var ease = new QuinticEase { EasingMode = EasingMode.EaseOut };
-        ease.Freeze();
-        return ease;
+        var spline = new KeySpline(0.32, 0.72, 0, 1);
+        spline.Freeze();
+        return spline;
+    }
+
+    private static DoubleAnimationUsingKeyFrames Spring(double to, Duration duration, double from = double.NaN)
+    {
+        var animation = new DoubleAnimationUsingKeyFrames { Duration = duration };
+        if (!double.IsNaN(from))
+        {
+            animation.KeyFrames.Add(new DiscreteDoubleKeyFrame(from, KeyTime.FromPercent(0)));
+        }
+
+        animation.KeyFrames.Add(new SplineDoubleKeyFrame(to, KeyTime.FromPercent(1), Spline));
+        return animation;
     }
 
     /// <summary>Raised with the name of the folder the user chose.</summary>
@@ -119,7 +137,7 @@ internal sealed class IslandCard : Window
     public event Action<string>? ShelfOpened;
 
     /// <summary>Opens the card under the island, whose top edge is at <paramref name="home"/> (the middle of it, in screen pixels).</summary>
-    public void Open(Func<CardModel> model, ScreenPoint home, int pillHeight)
+    public void Open(Func<CardModel> model, ScreenPoint home, int pillHeight, int pillWidth = 0)
     {
         _model = model;
         _home = home;
@@ -130,18 +148,69 @@ internal sealed class IslandCard : Window
         Place(handle);
         if (!IsVisible)
         {
+            // The card grows out of the pill: it starts as wide as the pill and flat, and opens to its size (and fades in
+            // quickly), so pill and card read as one shape opening up.
+            var fromX = pillWidth > 0 ? Math.Clamp(pillWidth / (double)MonitorArea.At(_home).ToPixels(CardWidth), 0.3, 0.97) : 0.9;
             _frame.RenderTransformOrigin = new Point(0.5, _opensAbove ? 1.0 : 0.0);
             _frame.Opacity = 0;
-            (_scale.ScaleX, _scale.ScaleY) = (0.94, 0.94);
+            (_scale.ScaleX, _scale.ScaleY) = (fromX, 0.45);
+            // Drawn once and moved as a picture while it animates: re-drawing every control on every frame is what made the
+            // opening stutter. Dropped when it ends, so the text is sharp again.
+            _frame.CacheMode = new BitmapCache(VisualTreeHelper.GetDpi(this).DpiScaleX);
             Show();
-            _frame.BeginAnimation(OpacityProperty, new DoubleAnimation(1, EnterDuration) { EasingFunction = Ease });
-            _scale.BeginAnimation(ScaleTransform.ScaleXProperty, new DoubleAnimation(1, EnterDuration) { EasingFunction = Ease });
-            _scale.BeginAnimation(ScaleTransform.ScaleYProperty, new DoubleAnimation(1, EnterDuration) { EasingFunction = Ease });
+            var from = fromX;
+            // Started after the first layout and render: the cost of making the window must not eat the animation's first frames.
+            Dispatcher.InvokeAsync(() =>
+            {
+                if (IsClosing || !IsVisible)
+                {
+                    return;
+                }
+
+                var done = Spring(1, EnterDuration, from);
+                done.Completed += (_, _) => _frame.CacheMode = null;
+                _scale.BeginAnimation(ScaleTransform.ScaleXProperty, done);
+                _scale.BeginAnimation(ScaleTransform.ScaleYProperty, Spring(1, EnterDuration, 0.45));
+                _frame.BeginAnimation(OpacityProperty, Spring(1, new Duration(TimeSpan.FromMilliseconds(160)), 0));
+            }, DispatcherPriority.Loaded);
         }
 
         TopEdge.RaiseAboveTaskbar(handle);
         _idle = TimeSpan.Zero;
         _tick.Start();
+    }
+
+    /// <summary>Whether the card is on its way out (it ends a moment later).</summary>
+    public bool IsClosing { get; private set; }
+
+    /// <summary>Closes with a short animation back toward the pill; <see cref="Window.Close"/> closes at once.</summary>
+    public void CloseSmoothly()
+    {
+        if (IsClosing)
+        {
+            return;
+        }
+
+        if (!IsVisible)
+        {
+            Close();
+            return;
+        }
+
+        IsClosing = true;
+        _tick.Stop();
+        _frame.CacheMode = new BitmapCache(VisualTreeHelper.GetDpi(this).DpiScaleX);
+        var fade = Spring(0, LeaveDuration);
+        fade.Completed += (_, _) =>
+        {
+            if (IsVisible)
+            {
+                Close();
+            }
+        };
+        _frame.BeginAnimation(OpacityProperty, fade);
+        _scale.BeginAnimation(ScaleTransform.ScaleXProperty, Spring(0.9, LeaveDuration));
+        _scale.BeginAnimation(ScaleTransform.ScaleYProperty, Spring(0.6, LeaveDuration));
     }
 
     // The tool-window styles so it takes no focus and has no Alt+Tab entry; and a fresh place when the screen's DPI differs.
@@ -177,15 +246,15 @@ internal sealed class IslandCard : Window
 
         if (_idle >= IdleClose)
         {
-            Close();
+            CloseSmoothly();
         }
     }
 
     // ---- Content ----
 
     private static string Signature(CardModel m) => string.Join('|',
-        m.Tracks.Select(t => $"{t.Source}:{t.Title}:{t.Artist}:{t.Playing}"), m.UsageText is null, m.SystemText is null,
-        string.Join(',', m.Folders), string.Join(',', m.Shelf));
+        m.Tracks.Select(t => $"{t.Source}:{t.Title}:{t.Artist}:{t.Playing}"), m.UsageText is null, m.MoreUsage?.Count ?? 0, m.SystemText is null,
+        string.Join(',', m.Folders), string.Join(',', m.Shelf), string.Join(',', m.ShownSections));
 
     private void Build(CardModel model)
     {
@@ -194,60 +263,91 @@ internal sealed class IslandCard : Window
         _bars.Clear();
         _system = null;
         var any = false;
+        var shelfShown = false;
 
-        foreach (var track in model.Tracks.Take(3))
+        // The parts in the order the user chose; a part that has nothing to show (no player, no usage reading) is left out.
+        foreach (var section in model.ShownSections)
         {
-            _body.Children.Add(TrackRow(track));
-            any = true;
-        }
-
-        if (model.UsageText is { } usage)
-        {
-            _body.Children.Add(Label(usage, new Thickness(0, any ? 12 : 0, 0, 4)));
-            _body.Children.Add(Bar(model.UsagePercent ?? 0, UsageBrush(model.UsagePercent ?? 0)).Track);
-            any = true;
-        }
-
-        if (model.SystemText is not null)
-        {
-            _system = Label(model.SystemText, new Thickness(0, any ? 12 : 0, 0, 0));
-            _body.Children.Add(_system);
-            any = true;
-        }
-
-        if (model.Folders.Count > 0)
-        {
-            _body.Children.Add(Heading(Strings.CardFolders, any));
-            var panel = new WrapPanel();
-            foreach (var folder in model.Folders.Take(14))
+            switch (section)
             {
-                panel.Children.Add(Chip("", folder, () => FolderChosen?.Invoke(folder)));
-            }
+                case CardSections.Players:
+                    foreach (var track in model.Tracks.Take(3))
+                    {
+                        _body.Children.Add(TrackRow(track, any));
+                        any = true;
+                    }
 
-            _body.Children.Add(panel);
-            any = true;
+                    break;
+                case CardSections.Usage when model.UsageText is not null || model.MoreUsage is { Count: > 0 }:
+                    // One row for each tool that reports its usage: Claude Code first, then the others found.
+                    var rows = new List<(string Text, double Percent)>();
+                    if (model.UsageText is { } usage)
+                    {
+                        rows.Add((usage, model.UsagePercent ?? 0));
+                    }
+
+                    rows.AddRange(model.MoreUsage ?? []);
+                    foreach (var (text, percent) in rows)
+                    {
+                        _body.Children.Add(Label(text, new Thickness(0, any ? 12 : 0, 0, 4)));
+                        _body.Children.Add(Bar(percent, UsageBrush(percent)).Track);
+                        any = true;
+                    }
+
+                    break;
+                case CardSections.System when model.SystemText is not null:
+                    _system = Label(model.SystemText, new Thickness(0, any ? 12 : 0, 0, 0));
+                    _body.Children.Add(_system);
+                    any = true;
+                    break;
+                case CardSections.Folders when model.Folders.Count > 0:
+                    _body.Children.Add(Heading(Strings.CardFolders, any));
+                    var panel = new WrapPanel();
+                    foreach (var folder in model.Folders.Take(14))
+                    {
+                        panel.Children.Add(Chip("", folder, () => FolderChosen?.Invoke(folder)));
+                    }
+
+                    _body.Children.Add(panel);
+                    any = true;
+                    break;
+                case CardSections.Shelf:
+                    AddShelf(model, any);
+                    shelfShown = true;
+                    any = true;
+                    break;
+            }
         }
 
-        _body.Children.Add(ShelfHeading(model.Shelf.Count, any));
+        // Files can only be dropped where the shelf is.
+        AllowDrop = shelfShown;
+        if (!any)
+        {
+            _body.Children.Add(Label(Strings.CardEmpty, new Thickness(0), dim: true));
+        }
+    }
+
+    private void AddShelf(CardModel model, bool spaced)
+    {
+        _body.Children.Add(ShelfHeading(model.Shelf.Count, spaced));
         if (model.Shelf.Count == 0)
         {
             _body.Children.Add(Label(Strings.CardShelfHint, new Thickness(0), dim: true));
+            return;
         }
-        else
+
+        var shelf = new WrapPanel();
+        if (model.Shelf.Count > 1)
         {
-            var shelf = new WrapPanel();
-            if (model.Shelf.Count > 1)
-            {
-                shelf.Children.Add(ShelfBundleChip([.. model.Shelf]));
-            }
-
-            foreach (var path in model.Shelf)
-            {
-                shelf.Children.Add(ShelfChip(path));
-            }
-
-            _body.Children.Add(shelf);
+            shelf.Children.Add(ShelfBundleChip([.. model.Shelf]));
         }
+
+        foreach (var path in model.Shelf)
+        {
+            shelf.Children.Add(ShelfChip(path));
+        }
+
+        _body.Children.Add(shelf);
     }
 
     private UIElement ShelfHeading(int count, bool spaced)
@@ -282,7 +382,7 @@ internal sealed class IslandCard : Window
         return row;
     }
 
-    private UIElement TrackRow(MediaTrack track)
+    private UIElement TrackRow(MediaTrack track, bool spaced)
     {
         var cover = new Border
         {
@@ -333,7 +433,7 @@ internal sealed class IslandCard : Window
             }
         };
 
-        var row = new StackPanel { Margin = new Thickness(0, 0, 0, 10) };
+        var row = new StackPanel { Margin = new Thickness(0, spaced ? 12 : 0, 0, 0) };
         row.Children.Add(top);
         row.Children.Add(hitBar);
         row.Children.Add(time);

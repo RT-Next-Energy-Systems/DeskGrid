@@ -7,7 +7,7 @@
 - **The island**: a small black pill at the top centre of the screen that shows a line of text for a few seconds and
   then goes. Scripts and AI agents send it lines with `DeskGrid.exe --ctl island show`. Several lines wait their turn.
   Point at it and it opens to show all of the text (and waits while you read); it hides while a full-screen game or
-  video is up. Clicking a song or timer opens the Notiland card with a smooth entrance animation, album-cover-tinted
+  video is up. Clicking a song or timer opens the NotiLand card with a smooth entrance animation, album-cover-tinted
   progress bars that you can click to seek, and a file shelf with one-drag batch export (`All (N)`) and `Clear`. It is
   off until you turn it on.
 - **Automatic daily backup and one-click restore**: Settings → General → **Backup** can automatically back up all
@@ -22,11 +22,19 @@
 - Point at the pill to read all of the text; click it to dismiss it.
 - Settings → **General** → **Backup**: tick **Automatic daily backup**, pick the daily backup hour and how many days to keep (up to 30), or click **Restore** and choose a date from the menu.
 
+### Changed
+
+- NotiLand opens and closes more smoothly: the pill grows along a softer curve, no longer flutters when the pointer grazes its edge, and the card now grows out of the pill (and leaves toward it) instead of just appearing.
+- Settings → NotiLand → **What the card shows**: tick the parts the card opens with (music and video, AI usage, system, folders, shelf) and move them up or down.
+- AI usage can show Claude's own numbers (the 5-hour and weekly percentages and when they reset) instead of a guess counted from logs: Settings → NotiLand → AI usage → **Connect to Claude Code…**. It needs a Claude.ai Pro, Max or Ultra plan, and the numbers appear after Claude Code's next response.
+- DeskGrid now finds which AI tools are on the computer (Claude Code, Codex, Antigravity, Gemini CLI, Cursor, GitHub Copilot) and lists them under Settings → NotiLand → AI usage. Tools that keep their plan usage on disk (Claude Code, Codex) get their own bar on the card; the others are listed as found.
+
 ### Fixed
 
 - Clicking a file's remove button on the shelf removes it without opening it.
 - Folder deletion across drives handles read-only files cleanly.
 - Automatic backup date parsing strictly matches backup file names, and the backup days dropdown stops at 30 days.
+- Folder item hover and focus highlight corner radius matches the folder panel frame (8 px).
 
 ## 0.6.2
 

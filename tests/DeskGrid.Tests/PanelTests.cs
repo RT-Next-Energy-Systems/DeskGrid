@@ -361,6 +361,32 @@ public sealed class PopupPanelTests : IDisposable
         await closed.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
     }
 
+    [Fact]
+    public async Task ItemHighlight_CornerRadius_MatchesPanelFrame()
+    {
+        await _ui.InvokeAsync(() =>
+        {
+            using var icons = new IconService();
+            var theme = PanelTheme.Resolve(new PanelBackground { Style = PanelBackgroundStyle.Dark }, false, false);
+            var panel = new PopupPanel(new ScreenRect(200, 200, 201, 201), 3, theme, icons) { ShowActivated = false };
+            panel.ShowFolder(Folder("Notes", 1));
+            panel.Show();
+            try
+            {
+                var container = panel.Items.ItemContainerGenerator.ContainerFromIndex(0);
+                var button = (System.Windows.Controls.Button)System.Windows.Media.VisualTreeHelper.GetChild(container, 0);
+                button.ApplyTemplate();
+                var background = (System.Windows.Controls.Border)System.Windows.Media.VisualTreeHelper.GetChild(button, 0);
+                Assert.Equal(new System.Windows.CornerRadius(8), background.CornerRadius);
+                Assert.Equal(panel.Frame.CornerRadius, background.CornerRadius);
+            }
+            finally
+            {
+                panel.Close();
+            }
+        });
+    }
+
     [System.Runtime.InteropServices.DllImport("user32.dll")]
     private static extern bool EndMenu();
 

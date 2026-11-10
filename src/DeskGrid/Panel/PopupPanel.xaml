@@ -29,7 +29,7 @@
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Button">
-            <Border x:Name="Background" CornerRadius="4" Padding="2,4" Background="{TemplateBinding Tag}">
+            <Border x:Name="Background" CornerRadius="8" Padding="2,4" Background="{TemplateBinding Tag}">
               <ContentPresenter />
             </Border>
             <ControlTemplate.Triggers>
@@ -70,7 +70,7 @@
     </Style>
   </Window.Resources>
 
-  <Border x:Name="Frame" Padding="12">
+  <Border x:Name="Frame" Padding="12" CornerRadius="8">
     <StackPanel>
       <!-- The folder's name; hovering shows a pencil, clicking turns it into a box to rename the folder.
            A folder opened from the list of all folders has an arrow back to the list. -->

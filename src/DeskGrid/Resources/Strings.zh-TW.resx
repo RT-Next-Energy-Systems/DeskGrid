@@ -226,10 +226,10 @@
     <value>透過「DeskGrid.exe --ctl」，僅限本帳戶。無法刪除任何東西。</value>
   </data>
   <data name="SettingsIsland" xml:space="preserve">
-    <value>顯示 Notiland</value>
+    <value>顯示 NotiLand</value>
   </data>
   <data name="SettingsIslandHint" xml:space="preserve">
-    <value>Notiland 是顯示簡短訊息的小膠囊，例如腳本透過「DeskGrid.exe --ctl island」送來的訊息，以及正在播放的音樂與影片。按 Esc 關閉展開的內容，拖動可移動位置。全螢幕程式執行時會自動隱藏。</value>
+    <value>NotiLand 是顯示簡短訊息的小膠囊，例如腳本透過「DeskGrid.exe --ctl island」送來的訊息，以及正在播放的音樂與影片。按 Esc 關閉展開的內容，拖動可移動位置。全螢幕程式執行時會自動隱藏。</value>
   </data>
   <data name="SettingsIslandMusic" xml:space="preserve">
     <value>音樂與影片</value>
@@ -295,7 +295,7 @@
     <value>沒有可顯示的內容</value>
   </data>
   <data name="HotkeyIslandToggle" xml:space="preserve">
-    <value>顯示／隱藏 Notiland</value>
+    <value>顯示／隱藏 NotiLand</value>
   </data>
   <data name="CardFolders" xml:space="preserve">
     <value>資料夾</value>
@@ -337,13 +337,13 @@
     <value>已加入 {0} 個項目到 {1}</value>
   </data>
   <data name="HotkeyIslandTimer" xml:space="preserve">
-    <value>開始／停止 Notiland 計時器</value>
+    <value>開始／停止 NotiLand 計時器</value>
   </data>
   <data name="HotkeyIslandCard" xml:space="preserve">
-    <value>開啟／關閉 Notiland 卡片</value>
+    <value>開啟／關閉 NotiLand 卡片</value>
   </data>
   <data name="SettingsPageIsland" xml:space="preserve">
-    <value>Notiland</value>
+    <value>NotiLand</value>
   </data>
   <data name="SettingsIslandPrivacy" xml:space="preserve">
     <value>有程式開始使用麥克風或相機時提示</value>
@@ -426,6 +426,75 @@
   <data name="SettingsHoverTime" xml:space="preserve">
     <value>顯示播放時間</value>
   </data>
+  <data name="CardEmpty" xml:space="preserve">
+    <value>沒有可顯示的內容。可以到設定選擇卡片要顯示什麼。</value>
+  </data>
+  <data name="CardPartFolders" xml:space="preserve">
+    <value>資料夾</value>
+  </data>
+  <data name="CardPartPlayers" xml:space="preserve">
+    <value>音樂與影片</value>
+  </data>
+  <data name="CardPartShelf" xml:space="preserve">
+    <value>暫存架</value>
+  </data>
+  <data name="CardPartSystem" xml:space="preserve">
+    <value>系統狀態</value>
+  </data>
+  <data name="CardPartUsage" xml:space="preserve">
+    <value>AI 用量</value>
+  </data>
+  <data name="SettingsIslandCardContents" xml:space="preserve">
+    <value>卡片內容</value>
+  </data>
+  <data name="SettingsMoveDown" xml:space="preserve">
+    <value>下移</value>
+  </data>
+  <data name="SettingsMoveUp" xml:space="preserve">
+    <value>上移</value>
+  </data>
+  <data name="IslandUsagePlan" xml:space="preserve">
+    <value>AI 用量 {0}% · {1} 後重置</value>
+  </data>
+  <data name="IslandUsagePlanWeek" xml:space="preserve">
+    <value>AI 用量 {0}% · {1} 後重置 · 本週 {2}%</value>
+  </data>
+  <data name="SettingsUsageConnect" xml:space="preserve">
+    <value>連接 Claude Code…</value>
+  </data>
+  <data name="SettingsUsageConnectAsk" xml:space="preserve">
+    <value>DeskGrid 會修改 Claude Code 的 settings.json 裡的狀態列設定，才能讀到 Claude 自己的用量。你原本的狀態列照常運作，也會在旁邊備份一份 settings.json。要繼續嗎？</value>
+  </data>
+  <data name="SettingsUsageConnectDone" xml:space="preserve">
+    <value>已連接。Claude Code 下一次回應之後就會出現數字。</value>
+  </data>
+  <data name="SettingsUsageConnected" xml:space="preserve">
+    <value>已連接：顯示的是 Claude 自己回報的用量。</value>
+  </data>
+  <data name="SettingsUsageDisconnect" xml:space="preserve">
+    <value>中斷與 Claude Code 的連接</value>
+  </data>
+  <data name="SettingsUsageFailed" xml:space="preserve">
+    <value>無法修改 Claude Code 的設定：{0}</value>
+  </data>
+  <data name="SettingsUsageNotConnected" xml:space="preserve">
+    <value>未連接：數字是從 log 估算的，只是參考。</value>
+  </data>
+  <data name="IslandToolUsage" xml:space="preserve">
+    <value>{0} {1}% · {2} 後重置</value>
+  </data>
+  <data name="IslandToolUsageWeek" xml:space="preserve">
+    <value>{0} {1}% · {2} 後重置 · 本週 {3}%</value>
+  </data>
+  <data name="SettingsUsageFound" xml:space="preserve">
+    <value>這台電腦上找到：{0}</value>
+  </data>
+  <data name="SettingsUsageFoundNone" xml:space="preserve">
+    <value>這台電腦上沒有找到 AI 工具。</value>
+  </data>
+  <data name="SettingsUsageNoData" xml:space="preserve">
+    <value>{0}（讀不到用量）</value>
+  </data>
   <data name="SettingsIslandCardLook" xml:space="preserve">
     <value>大小與滑鼠移上去時</value>
   </data>
@@ -433,7 +502,7 @@
     <value>顯示位置</value>
   </data>
   <data name="SettingsIslandPlacesHint" xml:space="preserve">
-    <value>每個情境可以有自己的位置，沒設定的就用預設位置。按「編輯」會切到桌面，拖動 Notiland 時會吸附到中央、邊緣和工作列。平常拖動則會改動目前情境的位置。</value>
+    <value>每個情境可以有自己的位置，沒設定的就用預設位置。按「編輯」會切到桌面，拖動 NotiLand 時會吸附到中央、邊緣和工作列。平常拖動則會改動目前情境的位置。</value>
   </data>
   <data name="SettingsIslandSize" xml:space="preserve">
     <value>大小</value>
@@ -442,7 +511,7 @@
     <value>編輯</value>
   </data>
   <data name="SettingsPlaceNeedsIsland" xml:space="preserve">
-    <value>請先開啟 Notiland 並按「套用」。</value>
+    <value>請先開啟 NotiLand 並按「套用」。</value>
   </data>
   <data name="SettingsPlaceReset" xml:space="preserve">
     <value>重設</value>
@@ -612,10 +681,10 @@
     <value>資料夾</value>
   </data>
   <data name="HotkeysGroupIsland" xml:space="preserve">
-    <value>Notiland</value>
+    <value>NotiLand</value>
   </data>
   <data name="HotkeysIslandHint" xml:space="preserve">
-    <value>「顯示／隱藏」會讓 Notiland 顯示設定頁指定的秒數（0 = 直到再按一次）。</value>
+    <value>「顯示／隱藏」會讓 NotiLand 顯示設定頁指定的秒數（0 = 直到再按一次）。</value>
   </data>
   <data name="HotkeysGroupCount" xml:space="preserve">
     <value>已設定 {0}/{1}</value>

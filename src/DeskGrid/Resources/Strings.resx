@@ -232,10 +232,10 @@ Cancel: ask again next time.</value>
     <value>Through "DeskGrid.exe --ctl", this account only. Nothing can be deleted.</value>
   </data>
   <data name="SettingsIsland" xml:space="preserve">
-    <value>Show Notiland</value>
+    <value>Show NotiLand</value>
   </data>
   <data name="SettingsIslandHint" xml:space="preserve">
-    <value>Notiland is a small pill that shows short messages (for example from scripts through "DeskGrid.exe --ctl island") and the music and video that are playing. Esc closes it when expanded; drag it to move it. It hides while a full-screen app runs.</value>
+    <value>NotiLand is a small pill that shows short messages (for example from scripts through "DeskGrid.exe --ctl island") and the music and video that are playing. Esc closes it when expanded; drag it to move it. It hides while a full-screen app runs.</value>
   </data>
   <data name="SettingsIslandMusic" xml:space="preserve">
     <value>Music and video</value>
@@ -283,7 +283,7 @@ Cancel: ask again next time.</value>
     <value>Warn at (% of the limit)</value>
   </data>
   <data name="SettingsIslandSeconds" xml:space="preserve">
-    <value>Seconds the "show or hide" shortcut keeps Notiland up (0 = until pressed again)</value>
+    <value>Seconds the "show or hide" shortcut keeps NotiLand up (0 = until pressed again)</value>
   </data>
   <data name="SettingsIslandReset" xml:space="preserve">
     <value>Reset all places</value>
@@ -301,7 +301,7 @@ Cancel: ask again next time.</value>
     <value>Nothing to show</value>
   </data>
   <data name="HotkeyIslandToggle" xml:space="preserve">
-    <value>Show or hide Notiland</value>
+    <value>Show or hide NotiLand</value>
   </data>
   <data name="CardFolders" xml:space="preserve">
     <value>Folders</value>
@@ -343,13 +343,13 @@ Cancel: ask again next time.</value>
     <value>Added {0} item(s) to {1}</value>
   </data>
   <data name="HotkeyIslandTimer" xml:space="preserve">
-    <value>Start or stop the Notiland timer</value>
+    <value>Start or stop the NotiLand timer</value>
   </data>
   <data name="HotkeyIslandCard" xml:space="preserve">
-    <value>Open or close the Notiland card</value>
+    <value>Open or close the NotiLand card</value>
   </data>
   <data name="SettingsPageIsland" xml:space="preserve">
-    <value>Notiland</value>
+    <value>NotiLand</value>
   </data>
   <data name="SettingsIslandPrivacy" xml:space="preserve">
     <value>Tell when a program starts using the microphone or camera</value>
@@ -432,6 +432,75 @@ Cancel: ask again next time.</value>
   <data name="SettingsHoverTime" xml:space="preserve">
     <value>Show the song’s time</value>
   </data>
+  <data name="CardEmpty" xml:space="preserve">
+    <value>Nothing to show. Choose what the card shows in Settings.</value>
+  </data>
+  <data name="CardPartFolders" xml:space="preserve">
+    <value>Folders</value>
+  </data>
+  <data name="CardPartPlayers" xml:space="preserve">
+    <value>Music and video</value>
+  </data>
+  <data name="CardPartShelf" xml:space="preserve">
+    <value>Shelf</value>
+  </data>
+  <data name="CardPartSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="CardPartUsage" xml:space="preserve">
+    <value>AI usage</value>
+  </data>
+  <data name="SettingsIslandCardContents" xml:space="preserve">
+    <value>What the card shows</value>
+  </data>
+  <data name="SettingsMoveDown" xml:space="preserve">
+    <value>Move down</value>
+  </data>
+  <data name="SettingsMoveUp" xml:space="preserve">
+    <value>Move up</value>
+  </data>
+  <data name="IslandUsagePlan" xml:space="preserve">
+    <value>AI usage {0}% · resets in {1}</value>
+  </data>
+  <data name="IslandUsagePlanWeek" xml:space="preserve">
+    <value>AI usage {0}% · resets in {1} · week {2}%</value>
+  </data>
+  <data name="SettingsUsageConnect" xml:space="preserve">
+    <value>Connect to Claude Code…</value>
+  </data>
+  <data name="SettingsUsageConnectAsk" xml:space="preserve">
+    <value>DeskGrid will change the status line in Claude Code’s settings.json so it can read Claude’s own usage. Your current status line keeps working, and a copy of settings.json is saved next to it. Continue?</value>
+  </data>
+  <data name="SettingsUsageConnectDone" xml:space="preserve">
+    <value>Connected. The numbers appear after the next Claude Code response.</value>
+  </data>
+  <data name="SettingsUsageConnected" xml:space="preserve">
+    <value>Connected: the numbers are Claude’s own.</value>
+  </data>
+  <data name="SettingsUsageDisconnect" xml:space="preserve">
+    <value>Disconnect from Claude Code</value>
+  </data>
+  <data name="SettingsUsageFailed" xml:space="preserve">
+    <value>Could not change Claude Code’s settings: {0}</value>
+  </data>
+  <data name="SettingsUsageNotConnected" xml:space="preserve">
+    <value>Not connected: the numbers are counted from the logs and are only a guess.</value>
+  </data>
+  <data name="IslandToolUsage" xml:space="preserve">
+    <value>{0} {1}% · resets in {2}</value>
+  </data>
+  <data name="IslandToolUsageWeek" xml:space="preserve">
+    <value>{0} {1}% · resets in {2} · week {3}%</value>
+  </data>
+  <data name="SettingsUsageFound" xml:space="preserve">
+    <value>Found on this computer: {0}</value>
+  </data>
+  <data name="SettingsUsageFoundNone" xml:space="preserve">
+    <value>No AI tool found on this computer.</value>
+  </data>
+  <data name="SettingsUsageNoData" xml:space="preserve">
+    <value>{0} (no usage data)</value>
+  </data>
   <data name="SettingsIslandCardLook" xml:space="preserve">
     <value>Size and pointer</value>
   </data>
@@ -439,7 +508,7 @@ Cancel: ask again next time.</value>
     <value>Where it appears</value>
   </data>
   <data name="SettingsIslandPlacesHint" xml:space="preserve">
-    <value>Each situation can have a place of its own; one without uses the default. Edit shows the desktop; drag Notiland there and it snaps to the middle, the edges and the taskbar. Dragging it at other times changes the place of the situation in front.</value>
+    <value>Each situation can have a place of its own; one without uses the default. Edit shows the desktop; drag NotiLand there and it snaps to the middle, the edges and the taskbar. Dragging it at other times changes the place of the situation in front.</value>
   </data>
   <data name="SettingsIslandSize" xml:space="preserve">
     <value>Size</value>
@@ -448,7 +517,7 @@ Cancel: ask again next time.</value>
     <value>Edit</value>
   </data>
   <data name="SettingsPlaceNeedsIsland" xml:space="preserve">
-    <value>Turn Notiland on and press Apply first.</value>
+    <value>Turn NotiLand on and press Apply first.</value>
   </data>
   <data name="SettingsPlaceReset" xml:space="preserve">
     <value>Reset</value>
@@ -620,10 +689,10 @@ You can change this in the tray menu.</value>
     <value>Folders</value>
   </data>
   <data name="HotkeysGroupIsland" xml:space="preserve">
-    <value>Notiland</value>
+    <value>NotiLand</value>
   </data>
   <data name="HotkeysIslandHint" xml:space="preserve">
-    <value>"Show or hide" keeps Notiland up for the seconds set on its Settings page (0 = until pressed again).</value>
+    <value>"Show or hide" keeps NotiLand up for the seconds set on its Settings page (0 = until pressed again).</value>
   </data>
   <data name="HotkeysGroupCount" xml:space="preserve">
     <value>{0} of {1} set</value>

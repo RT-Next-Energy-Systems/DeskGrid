@@ -7,7 +7,7 @@ using Windows.Win32.UI.WindowsAndMessaging;
 namespace DeskGrid.Island;
 
 /// <summary>
-/// The situations Notiland can have a place of its own for. <see cref="Default"/> is the place it has when the situation
+/// The situations NotiLand can have a place of its own for. <see cref="Default"/> is the place it has when the situation
 /// has none (and when none is known).
 /// </summary>
 internal static class IslandScene
@@ -24,7 +24,7 @@ internal static class IslandScene
     /// <summary>
     /// What is in front now: the desktop (nothing, or the desktop itself), a full-screen window (as big as its screen), a
     /// maximized one, or an ordinary one. DeskGrid's own windows and the taskbar keep whatever was there before
-    /// (<paramref name="before"/>), so opening a panel or clicking the taskbar does not move Notiland.
+    /// (<paramref name="before"/>), so opening a panel or clicking the taskbar does not move NotiLand.
     /// </summary>
     public static string Detect(string before)
     {
@@ -75,7 +75,7 @@ internal static class IslandScene
     }
 
     /// <summary>
-    /// Whether a system overlay that Notiland must not cover is in front: the screen-snip tool (Win+Shift+S, Print Screen),
+    /// Whether a system overlay that NotiLand must not cover is in front: the screen-snip tool (Win+Shift+S, Print Screen),
     /// Start, search, the notification centre. Then it neither lifts itself above other windows nor counts down.
     /// </summary>
     public static bool SystemOverlayInFront() => IsOverlay(IslandRules.ForegroundApp());

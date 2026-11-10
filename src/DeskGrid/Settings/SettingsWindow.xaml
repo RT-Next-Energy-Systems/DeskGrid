@@ -253,6 +253,11 @@
               <StackPanel>
                 <CheckBox x:Name="IslandUsageBox" MinWidth="0" FontWeight="SemiBold" Checked="OnUsageSwitched" Unchecked="OnUsageSwitched" />
                 <TextBlock x:Name="IslandUsageHint" Margin="0,4,0,8" TextWrapping="Wrap" Opacity="0.7" />
+                <TextBlock x:Name="UsageFoundText" Margin="0,0,0,8" TextWrapping="Wrap" />
+                <DockPanel Margin="0,0,0,8">
+                  <Button x:Name="UsageConnectButton" DockPanel.Dock="Left" Padding="12,5" Click="OnUsageConnect" />
+                  <TextBlock x:Name="UsageConnectStatus" Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" Opacity="0.7" />
+                </DockPanel>
                 <Grid x:Name="UsageFields">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -343,6 +348,13 @@
                   <CheckBox x:Name="HoverButtonsBox" Margin="0,2,0,0" MinWidth="0" />
                   <CheckBox x:Name="HoverTimeBox" Margin="0,2,0,0" MinWidth="0" />
                 </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock x:Name="IslandCardContents" Style="{StaticResource CardTitle}" />
+                <StackPanel x:Name="CardSectionsPanel" Margin="0,4,0,0" />
               </StackPanel>
             </Border>
 

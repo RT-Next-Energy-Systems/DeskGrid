@@ -702,11 +702,11 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 
 ---
 
-### 2026-11-10 (3) — Automatic daily backup, one-click restore menu, backup completeness test, dynamic panel preview, and Notiland Esc / UI refinements
+### 2026-11-10 (3) — Automatic daily backup, one-click restore menu, backup completeness test, dynamic panel preview, and NotiLand Esc / UI refinements
 **Decision**:
 1. **Panel preview (`PanelPreview`)**: The preview panel now resizes its width dynamically with the column count (`42×52` DIP cells, `26` DIP tiles, matching `PopupPanel`'s `76×96` / `48` proportions) instead of stretching columns across a fixed 250 DIP box, and draws a `1 px` outline (`theme.Outline`) for non-glass styles to match the real `PopupPanel`.
-2. **Settings & Shortcuts UI**: `PageIslandItem` uses the notification bell icon `&#xEA8F;` (distinct from About's `&#xE946;`); `HotkeysWindow` orders its groups as *DeskGrid* → *Notiland* → *Folders*; Notiland's quiet-hours fields (`IslandQuietFromBox`, `IslandQuietToBox`) are scrollable `ComboBox`es (`00:00`–`23:00`, `MaxDropDownHeight="220"`).
-3. **Notiland Esc behavior**: Pressing Esc only cancels place editing or collapses an expanded Notiland (`CardOpen` or hover-expanded `_window.IsExpanded`); when Notiland is already collapsed, Esc does nothing.
+2. **Settings & Shortcuts UI**: `PageIslandItem` uses the notification bell icon `&#xEA8F;` (distinct from About's `&#xE946;`); `HotkeysWindow` orders its groups as *DeskGrid* → *NotiLand* → *Folders*; NotiLand's quiet-hours fields (`IslandQuietFromBox`, `IslandQuietToBox`) are scrollable `ComboBox`es (`00:00`–`23:00`, `MaxDropDownHeight="220"`).
+3. **NotiLand Esc behavior**: Pressing Esc only cancels place editing or collapses an expanded NotiLand (`CardOpen` or hover-expanded `_window.IsExpanded`); when NotiLand is already collapsed, Esc does nothing.
 4. **Backup completeness, automatic daily backup, and one-click restore**: `ConfigPorterTests.ExportImport_AndReplaceWith_CoverEverySettingPropertyOfAppConfig` uses reflection to verify that every setting property of `AppConfig` round-trips through `ConfigPorter.Export`/`TryImport` and `AppConfig.ReplaceWith` (documented in `CLAUDE.md` / `CLAUDE.zh-TW.md`). `AutoBackup` saves `DeskGrid_auto_yyyy_MM_dd.json` in `%APPDATA%\DeskGrid\backups\` once per day at or after `autoBackupHour` (`0`–`23`) while `autoBackupEnabled` is on, and prunes the oldest automatic backups beyond `autoBackupDays` (`1`–`30`). Clicking Restore (`ImportButton`) opens a menu listing the saved daily backups newest-first for one-click restore, plus `Browse file…` for external backup files.
 **Reason**: Requested by the user (/goal, 8 items).
 **Alternatives**: Keeping a fixed-width preview (misrepresents 2-column and 8-column panels); separate buttons for daily restore vs. file restore (a single Restore button with a menu is cleaner and avoids extra buttons).
@@ -715,13 +715,13 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 
 ---
 
-### 2026-11-10 (4) — Notiland improvements from the macOS notch ecosystem comparison
+### 2026-11-10 (4) — NotiLand improvements from the macOS notch ecosystem comparison
 **Decision**:
 1. **Card entrance animation (`IslandCard.Open`)**: Opening `IslandCard` animates `_frame`'s opacity (`0` → `1`) and scale (`0.94` → `1.0`) over 220 ms with a frozen `QuinticEase` (`EaseOut`), anchored at the edge facing the pill (`RenderTransformOrigin` `(0.5, 0)` when below the pill, `(0.5, 1)` when above it near the bottom of the screen).
 2. **Clickable media progress bar (`NowPlaying.Seek`, `MediaTimeline.SeekTarget`)**: Clicking a player's progress bar in `IslandCard` seeks to that fraction of the track via `GlobalSystemMediaTransportControlsSession.TryChangePlaybackPositionAsync`. The bar has a 12 DIP vertical hit box around the 4 DIP rail.
 3. **Dominant cover accent color (`MediaTrack.DominantColor`)**: When a track's cover thumbnail is loaded, `DominantColor` samples non-grey, non-extreme pixels weighted by chroma and lifts dark colors to readable luminance (`>= 115`) so both the pill's and the card's progress bars take the cover's accent color instead of plain white.
 4. **Batch drag and one-click clear on the shelf (`IslandCard`)**: When 2 or more files are on `IslandShelf`, `IslandCard` shows an `All (N)` chip that drags all parked paths at once (`DataFormats.FileDrop` with the full array, clearing the shelf on drop), and a `Clear` action in the Shelf heading.
-**Reason**: After comparing macOS Dynamic Island apps (Alcove, NotchNook, BoringNotch, DynamicLake) with Notiland, the user asked to list and execute the key improvements.
+**Reason**: After comparing macOS Dynamic Island apps (Alcove, NotchNook, BoringNotch, DynamicLake) with NotiLand, the user asked to list and execute the key improvements.
 **Alternatives**: Dragging a selection rectangle inside the card (too heavy for up to 12 chips); animating the window's Win32 bounds on every frame (causes layered-window resize jitter, whereas a GPU `ScaleTransform` + `Opacity` on `_frame` is smooth).
 **Consequences**: No new settings in `AppConfig`; existing configs work unchanged. Covered by `MediaTimelineTests`, `UiLanguageTests`, and `MarkdownPairsTests`.
 **Author**: The user asked; designed and implemented
@@ -740,3 +740,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Relying on unhandled exception logging.
 **Consequences**: Clean deletion, no UI cross-click actions, accurate backups, and complete object independence.
 **Author**: Antigravity
+
+---
+
+### 2026-11-10 (6) — App highlight corner radius aligned with folder panel frame
+**Decision**: In `PopupPanel.xaml`, `ItemButton` template's `Background` border `CornerRadius` is changed from `4` to `8`, matching the folder panel frame's corner radius (`Frame.CornerRadius = 8`). `Frame`'s `CornerRadius` is also explicitly set to `8` in `PopupPanel.xaml` and in `ApplyTheme` for Acrylic mode. The folder outer frame's corner radius remains untouched.
+**Reason**: User requested fixing the visual inconsistency between the DG folder's outer border corner radius (8) and the highlight corner radius of apps inside it (previously 4), keeping the folder corner radius unchanged.
+**Alternatives**: Changing the folder frame's corner radius down to 4 (explicitly rejected by the user: "dg圓角勿動").
+**Consequences**: The hover/selection highlight of apps inside the folder now matches the folder window's rounded corners cleanly. Covered by `ItemHighlight_CornerRadius_MatchesPanelFrame` test.
+**Author**: User requested; Antigravity implemented

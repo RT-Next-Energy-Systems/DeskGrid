@@ -149,6 +149,7 @@ public sealed class ConfigPorterTests : IDisposable
             IslandHoverFullText = false,
             IslandHoverButtons = false,
             IslandHoverTime = false,
+            IslandCardSections = "shelf,players",
             IslandFolders = false,
             FolderOrder = ["Work", "Games"],
         };

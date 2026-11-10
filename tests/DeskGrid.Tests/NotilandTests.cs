@@ -93,7 +93,7 @@ public sealed class IslandPlacesTests
 [Collection(nameof(ShellCollection))]
 public sealed class NotilandWindowTests : IDisposable
 {
-    private readonly DispatcherThread _ui = new("Notiland UI");
+    private readonly DispatcherThread _ui = new("NotiLand UI");
 
     public void Dispose() => _ui.Dispose();
 

@@ -603,6 +603,7 @@ internal partial class PopupPanel : Window
                 GlassFrameThickness = new Thickness(-1),
                 UseAeroCaptionButtons = false,
             });
+            Frame.CornerRadius = new CornerRadius(8);
         }
         else if (_theme.Glass)
         {

@@ -11,7 +11,8 @@ namespace DeskGrid.Island;
 /// <summary>What else the island watches and how it behaves, beyond the song, the battery and the usage.</summary>
 internal sealed record IslandExtras(
     bool Privacy = false, bool Bluetooth = false, bool Downloads = false, bool System = false, int TimerMinutes = 25, IslandRules? Rules = null,
-    double Scale = 1, IslandHover? Hover = null, IReadOnlyDictionary<string, ScreenPoint>? Places = null)
+    double Scale = 1, IslandHover? Hover = null, IReadOnlyDictionary<string, ScreenPoint>? Places = null,
+    IReadOnlyList<string>? CardSections = null)
 {
     public IslandRules RulesOrDefault => Rules ?? new IslandRules();
 
@@ -40,7 +41,8 @@ internal sealed record IslandOptions(
                 IslandRules.SplitApps(config.IslandShowOverApps), config.IslandFollowPointer),
             config.IslandScale,
             new IslandHover(config.IslandHoverExpand, config.IslandHoverFullText, config.IslandHoverButtons, config.IslandHoverTime),
-            PlacesOf(config)));
+            PlacesOf(config),
+            Island.CardSections.Parse(config.IslandCardSections)));
 
     /// <summary>Every place the user set: the default one and each situation's.</summary>
     public static Dictionary<string, ScreenPoint> PlacesOf(AppConfig config)
@@ -95,7 +97,7 @@ internal sealed class IslandHost : IDisposable
     // TimeSpan.MaxValue to stay until it is pressed again.
     private TimeSpan? _info;
 
-    // Esc closes the expanded Notiland (or cancels setting a place). The island never takes the focus, so the key is watched,
+    // Esc closes the expanded NotiLand (or cancels setting a place). The island never takes the focus, so the key is watched,
     // not received: a quick timer that only runs while needed.
     private readonly DispatcherTimer _escape = new() { Interval = TimeSpan.FromMilliseconds(40) };
     private bool _escapeWasDown;
@@ -149,7 +151,7 @@ internal sealed class IslandHost : IDisposable
     internal IslandShelf Shelf => _shelf;
 
     /// <summary>Whether the card is open; for the tests.</summary>
-    internal bool CardOpen => _card is { IsVisible: true };
+    internal bool CardOpen => _card is { IsVisible: true, IsClosing: false };
 
     /// <summary>Sets what the island does. Turning it off takes away what it shows and what waits.</summary>
     public void Apply(IslandOptions options)
@@ -181,7 +183,7 @@ internal sealed class IslandHost : IDisposable
     private ScreenPoint? _editPlace; // Where it was dropped while being set.
     private Action? _editEnded;
 
-    /// <summary>What Notiland does now, for `--ctl status`: the situation, whether a place is being set, the line that is up, the places.</summary>
+    /// <summary>What NotiLand does now, for `--ctl status`: the situation, whether a place is being set, the line that is up, the places.</summary>
     public System.Text.Json.Nodes.JsonObject State()
     {
         var places = new System.Text.Json.Nodes.JsonObject();
@@ -261,7 +263,7 @@ internal sealed class IslandHost : IDisposable
     };
 
     /// <summary>
-    /// Lets the user set the place of <paramref name="scene"/>: Notiland shows up there (or where it would be now) saying what
+    /// Lets the user set the place of <paramref name="scene"/>: NotiLand shows up there (or where it would be now) saying what
     /// to do, ready to be dragged; Enter or a double click keeps the place, Esc keeps the old one. <paramref name="ended"/> is
     /// called either way.
     /// </summary>
@@ -340,7 +342,7 @@ internal sealed class IslandHost : IDisposable
 
     private bool _enterWasDown;
 
-    // Esc that closes a screen snip or Start is theirs, not a request to close what Notiland shows (the overlay may be gone
+    // Esc that closes a screen snip or Start is theirs, not a request to close what NotiLand shows (the overlay may be gone
     // by the time the key is seen, so a moment after it counts too).
     private bool OverlayJustUp() => IslandScene.SystemOverlayInFront() || Environment.TickCount64 - _overlaySeen < 1000;
     private bool _overlayUp;
@@ -362,7 +364,7 @@ internal sealed class IslandHost : IDisposable
         }
     }
 
-    /// <summary>Esc: cancels setting a place, or closes the expanded Notiland (the card or the expanded pill); does nothing while collapsed.</summary>
+    /// <summary>Esc: cancels setting a place, or closes the expanded NotiLand (the card or the expanded pill); does nothing while collapsed.</summary>
     internal void Dismiss()
     {
         if (_editing is not null)
@@ -373,7 +375,7 @@ internal sealed class IslandHost : IDisposable
 
         if (CardOpen)
         {
-            _card!.Close();
+            _card!.CloseSmoothly();
             return;
         }
 
@@ -443,7 +445,7 @@ internal sealed class IslandHost : IDisposable
     {
         if (CardOpen)
         {
-            _card!.Close();
+            _card!.CloseSmoothly();
         }
         else
         {
@@ -460,16 +462,22 @@ internal sealed class IslandHost : IDisposable
         }
 
         _shelf.Prune();
-        _card = new IslandCard(_musicActions);
-        _card.Closed += (_, _) => {
-            _card = null;
+        var card = new IslandCard(_musicActions);
+        _card = card;
+        card.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(_card, card))
+            {
+                _card = null; // Not a newer card, opened while this one was still leaving.
+            }
+
             UpdateEscapeWatch();
         };
-        _card.FolderChosen += name => ActionRequested?.Invoke(IslandAction.FolderPrefix + name);
-        _card.ShelfDropped += paths => _shelf.Add(paths);
-        _card.ShelfRemoved += _shelf.Remove;
-        _card.ShelfCleared += _shelf.Clear;
-        _card.ShelfOpened += path =>
+        card.FolderChosen += name => ActionRequested?.Invoke(IslandAction.FolderPrefix + name);
+        card.ShelfDropped += paths => _shelf.Add(paths);
+        card.ShelfRemoved += _shelf.Remove;
+        card.ShelfCleared += _shelf.Clear;
+        card.ShelfOpened += path =>
         {
             try
             {
@@ -481,7 +489,7 @@ internal sealed class IslandHost : IDisposable
             }
         };
         var (home, pillHeight) = Window().PillOnScreen();
-        _card.Open(CardModelNow, home, pillHeight);
+        card.Open(CardModelNow, home, pillHeight, Window().PillRect()?.Width ?? 0);
         UpdateEscapeWatch();
     }
 
@@ -492,7 +500,8 @@ internal sealed class IslandHost : IDisposable
         return new CardModel(
             _tracks, reading is not null ? UsageLine(reading) : null, percent,
             _options.Extras.System ? _system.Read(Now) : null,
-            FolderNames?.Invoke() ?? [], _shelf.Paths);
+            FolderNames?.Invoke() ?? [], _shelf.Paths, _options.Extras.CardSections,
+            [.. (reading?.Others ?? []).Select(o => (ToolLine(o), o.Plan.FivePercent))]);
     }
 
     // ---- Info ----
@@ -503,6 +512,10 @@ internal sealed class IslandHost : IDisposable
         if (_usage?.Reading is { } reading)
         {
             items.Add(new IslandActivity(UsageLine(reading), TimeSpan.Zero, Look: UsageLook(reading)));
+            foreach (var other in reading.Others ?? [])
+            {
+                items.Add(new IslandActivity(ToolLine(other), TimeSpan.Zero, Look: new IslandLook("usage", other.Plan.FivePercent >= 100 ? "#E84D4D" : other.Plan.FivePercent >= 80 ? "#F0A030" : "#4CC38A", Math.Min(other.Plan.FivePercent, 100) / 100)));
+            }
         }
 
         if (_options.Extras.System)
@@ -535,9 +548,26 @@ internal sealed class IslandHost : IDisposable
             return Strings.IslandUsageIdle;
         }
 
+        if (reading.Plan is { } plan)
+        {
+            var left = UsageRules.Left(plan.FiveResets, DateTimeOffset.UtcNow);
+            return plan.WeekPercent is { } week
+                ? string.Format(Strings.IslandUsagePlanWeek, Math.Round(plan.FivePercent), left, Math.Round(week))
+                : string.Format(Strings.IslandUsagePlan, Math.Round(plan.FivePercent), left);
+        }
+
         var limit = reading.LimitFor(options);
         return string.Format(Strings.IslandUsageLine, Math.Round(UsageRules.Percent(reading, options)), UsageRules.Short(reading.Tokens),
             limit > 0 ? UsageRules.Short(limit) : "?", UsageRules.Left(resets, DateTimeOffset.UtcNow));
+    }
+
+    // "Codex 12% · resets in 3h 10m · week 40%".
+    private static string ToolLine(ToolUsage use)
+    {
+        var left = UsageRules.Left(use.Plan.FiveResets, DateTimeOffset.UtcNow);
+        return use.Plan.WeekPercent is { } week
+            ? string.Format(Strings.IslandToolUsageWeek, use.Tool.Name, Math.Round(use.Plan.FivePercent), left, Math.Round(week))
+            : string.Format(Strings.IslandToolUsage, use.Tool.Name, Math.Round(use.Plan.FivePercent), left);
     }
 
     private IslandLook UsageLook(UsageReading reading)
@@ -801,7 +831,7 @@ internal sealed class IslandHost : IDisposable
     private void Refresh()
     {
         var now = Now;
-        // The situation in front decides where Notiland is (while it is placed in Settings, that place is shown instead).
+        // The situation in front decides where NotiLand is (while it is placed in Settings, that place is shown instead).
         var scene = _editing ?? IslandScene.Detect(_scene);
         if (scene != _scene)
         {
@@ -809,7 +839,7 @@ internal sealed class IslandHost : IDisposable
             ApplyPlace();
         }
 
-        // A system overlay (a screen snip, Start) in front: Notiland stays under it like any window, and its lines wait.
+        // A system overlay (a screen snip, Start) in front: NotiLand stays under it like any window, and its lines wait.
         var overlay = IslandScene.SystemOverlayInFront();
         _overlayUp = overlay;
         if (overlay)
@@ -951,6 +981,28 @@ internal sealed class IslandHost : IDisposable
         }
     }
 
+    // A change of hover starts the pill's animation; the refresh (queries of the foreground window and the like) waits until
+    // that animation's first frames are drawn, one refresh for any number of changes.
+    private bool _refreshQueued;
+
+    private void RefreshSoon()
+    {
+        if (_refreshQueued)
+        {
+            return;
+        }
+
+        _refreshQueued = true;
+        _dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
+        {
+            _refreshQueued = false;
+            if (_window is not null)
+            {
+                Refresh();
+            }
+        });
+    }
+
     private void Withdraw(bool animated)
     {
         if (_shown is not null)
@@ -968,7 +1020,7 @@ internal sealed class IslandHost : IDisposable
             Configure(_window);
             _window.PositionChanged += (x, y) => OnDragged(new ScreenPoint(x, y));
             _window.DoubleClicked += (_, _) => EndPlaceEdit(save: true);
-            _window.HoverChanged += (_, _) => Refresh();
+            _window.HoverChanged += (_, _) => RefreshSoon();
             _window.Clicked += (_, _) => _queue.Dismiss(Now);
             _window.ActionRequested += target => ActionRequested?.Invoke(target);
             _window.ExpandRequested += (_, _) => ToggleCard();

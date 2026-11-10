@@ -55,6 +55,7 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        Settings.SmoothWheel.Install();
         if (ControlCli.IsRequest(e.Args))
         {
             // A command for the running DeskGrid (from a script or an AI agent): send it, print the answer, exit.
@@ -184,7 +185,7 @@ public partial class App : Application
         e.Handled = _started && e.Exception is not OutOfMemoryException;
     }
 
-    // A place of Notiland changed (dragged, set in Settings, reset): the default one is IslandX / IslandY, the others are kept by
+    // A place of NotiLand changed (dragged, set in Settings, reset): the default one is IslandX / IslandY, the others are kept by
     // situation. The options are applied again so it is where it now belongs.
     private void SaveIslandPlace(string scene, ScreenPoint? place)
     {
@@ -206,8 +207,8 @@ public partial class App : Application
         _island?.Apply(IslandOptions.From(config));
     }
 
-    // Settings asked to set the place of a situation: every window goes down so the desktop shows (Notiland is placed on a
-    // clear screen), Notiland waits to be dragged, and the windows come back when it is done.
+    // Settings asked to set the place of a situation: every window goes down so the desktop shows (NotiLand is placed on a
+    // clear screen), NotiLand waits to be dragged, and the windows come back when it is done.
     private void EditIslandPlace(string scene, SettingsWindow? settings)
     {
         if (_island is null || !_configStore!.Config.IslandEnabled)
@@ -973,6 +974,7 @@ public partial class App : Application
         config.IslandHoverFullText = choice.HoverFullText;
         config.IslandHoverButtons = choice.HoverButtons;
         config.IslandHoverTime = choice.HoverTime;
+        config.IslandCardSections = choice.IslandCardSections;
         _island!.Apply(IslandOptions.From(config));
         _configStore.Save();
         CheckAutoBackup();

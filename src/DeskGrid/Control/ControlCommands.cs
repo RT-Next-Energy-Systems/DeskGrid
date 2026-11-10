@@ -42,7 +42,7 @@ internal interface IControlHost
     /// <summary>Runs an island action as its shortcut does: <c>timer</c>, <c>card</c> or <c>info</c>.</summary>
     void IslandAction(string action);
 
-    /// <summary>What Notiland is doing now (for status), or <see langword="null"/> when there is none.</summary>
+    /// <summary>What NotiLand is doing now (for status), or <see langword="null"/> when there is none.</summary>
     JsonObject? IslandState { get; }
 }
 
@@ -67,12 +67,12 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
         ("open [folder]", "Opens a folder's panel next to its widget, or the list of all folders."),
         ("close", "Closes the open panel."),
         ("island show <text> [seconds] [--icon name] [--color #RRGGBB] [--progress 0-100] [--open folder:NAME|URL|path]",
-            "Shows a line of text on Notiland for a few seconds (default 5, at most 60). --icon: a symbol (check, warning, error, info, download, folder, mic, camera, bluetooth, timer, battery, system) or one character; --color: the symbol and bar; --progress: a bar under the text; --open: what a click does. Needs the island turned on in Settings."),
-        ("island hide", "Takes away what Notiland shows."),
-        ("island timer", "Starts Notiland's timer (the minutes set in Settings), or stops it if it runs."),
-        ("island card", "Opens Notiland's card (players, usage, folders, shelf), or closes it."),
-        ("island info", "Shows Notiland's info (usage, system, players) for the seconds set in Settings."),
-        ("island place <default|desktop|window|maximized|fullScreen>", "Lets you set where Notiland is in that situation: every window goes down, drag Notiland, Enter keeps the place, Esc keeps the old one."),
+            "Shows a line of text on NotiLand for a few seconds (default 5, at most 60). --icon: a symbol (check, warning, error, info, download, folder, mic, camera, bluetooth, timer, battery, system) or one character; --color: the symbol and bar; --progress: a bar under the text; --open: what a click does. Needs the island turned on in Settings."),
+        ("island hide", "Takes away what NotiLand shows."),
+        ("island timer", "Starts NotiLand's timer (the minutes set in Settings), or stops it if it runs."),
+        ("island card", "Opens NotiLand's card (players, usage, folders, shelf), or closes it."),
+        ("island info", "Shows NotiLand's info (usage, system, players) for the seconds set in Settings."),
+        ("island place <default|desktop|window|maximized|fullScreen>", "Lets you set where NotiLand is in that situation: every window goes down, drag NotiLand, Enter keeps the place, Esc keeps the old one."),
     ];
 
     public ControlResponse Execute(ControlRequest request)
@@ -278,7 +278,7 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
     {
         if (!host.Config.IslandEnabled)
         {
-            return ControlResponse.Failure("Notiland is turned off. Turn on \"Show Notiland\" in DeskGrid's Settings.");
+            return ControlResponse.Failure("NotiLand is turned off. Turn on \"Show NotiLand\" in DeskGrid's Settings.");
         }
 
         var text = rest[0].Trim();
@@ -363,7 +363,7 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
     {
         if (!host.Config.IslandEnabled)
         {
-            return ControlResponse.Failure("Notiland is turned off. Turn on \"Show Notiland\" in DeskGrid's Settings.");
+            return ControlResponse.Failure("NotiLand is turned off. Turn on \"Show NotiLand\" in DeskGrid's Settings.");
         }
 
         host.IslandAction(action);

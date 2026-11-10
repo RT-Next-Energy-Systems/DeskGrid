@@ -32,7 +32,7 @@ internal enum UsageLevel
 /// One reading: the tokens of the session block that is running now (0 when none is), when that block ends, and the most
 /// tokens any earlier block used (the limit when the user set none).
 /// </summary>
-internal sealed record UsageReading(long Tokens, DateTimeOffset? Resets, long HighestEarlier)
+internal sealed record UsageReading(long Tokens, DateTimeOffset? Resets, long HighestEarlier, PlanUsage? Plan = null, IReadOnlyList<ToolUsage>? Others = null)
 {
     public static readonly UsageReading None = new(0, null, 0);
 
@@ -44,7 +44,8 @@ internal static class UsageRules
 {
     public static double Percent(long tokens, long limit) => limit <= 0 ? 0 : 100.0 * tokens / limit;
 
-    public static double Percent(UsageReading reading, UsageOptions options) => Percent(reading.Tokens, reading.LimitFor(options));
+    /// <summary>Claude's own percentage when it reported one, else the tokens against the limit.</summary>
+    public static double Percent(UsageReading reading, UsageOptions options) => reading.Plan?.FivePercent ?? Percent(reading.Tokens, reading.LimitFor(options));
 
     public static UsageLevel LevelOf(UsageReading reading, UsageOptions options)
     {
@@ -427,9 +428,15 @@ internal sealed class UsageMonitor : IDisposable
     private bool _reading;
     private bool _disposed;
 
-    public UsageMonitor(UsageOptions options, IReadOnlyList<string>? folders = null)
+    private readonly string _limitsFile;
+    private readonly string? _home; // The user profile when the real computer is read; null in tests.
+
+    public UsageMonitor(UsageOptions options, IReadOnlyList<string>? folders = null, string? limitsFile = null)
     {
         _options = options;
+        // With folders given (tests) the real saved limits are not read.
+        _home = folders is null ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) : null;
+        _limitsFile = limitsFile ?? (folders is null ? ClaudeLimits.FilePath(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)) : "");
         _folders = folders ?? ClaudeData.ProjectFolders(Environment.GetEnvironmentVariable, Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
         _timer.Tick += (_, _) => Check();
         _timer.Start();
@@ -474,7 +481,22 @@ internal sealed class UsageMonitor : IDisposable
 
         _reading = true;
         var length = TimeSpan.FromHours(Math.Max(1, _options.Hours));
-        _ = Task.Run(() => _reader.Read(_folders, length, DateTimeOffset.UtcNow)).ContinueWith(task =>
+        _ = Task.Run(() =>
+        {
+            var now = DateTimeOffset.UtcNow;
+            var reading = _reader.Read(_folders, length, now);
+
+            // What Claude Code reports about the plan wins over what the logs add up to, when DeskGrid is connected to it.
+            if (ClaudeLimits.Read(_limitsFile, now) is { } plan)
+            {
+                reading = reading with { Resets = plan.FiveResets, Plan = plan };
+            }
+
+            // The other tools that keep their plan usage on disk (Codex), when this is the real computer and not a test.
+            return _home is not null && CodexLimits.Read(_home, now) is { } codex
+                ? reading with { Others = [new ToolUsage(new AiTool(AiTools.CodexId, "Codex", true), codex)] }
+                : reading;
+        }).ContinueWith(task =>
         {
             _reading = false;
             if (_disposed)

@@ -50,6 +50,7 @@ internal sealed record SettingsChoice(
     bool HoverFullText = true,
     bool HoverButtons = true,
     bool HoverTime = true,
+    string? IslandCardSections = null,
     bool AutoBackupEnabled = false,
     int AutoBackupHour = AppConfig.DefaultAutoBackupHour,
     int AutoBackupDays = AppConfig.DefaultAutoBackupDays);
@@ -142,6 +143,8 @@ internal partial class SettingsWindow : Window
         HoverFullTextBox.IsChecked = config.IslandHoverFullText;
         HoverButtonsBox.IsChecked = config.IslandHoverButtons;
         HoverTimeBox.IsChecked = config.IslandHoverTime;
+        _cardParts = [.. CardSections.ForEditing(config.IslandCardSections)];
+        BuildCardParts();
         UpdateIslandEnabled();
         MusicRadioFor(config.IslandMusic).IsChecked = true;
         Pages.SelectedItem = PageGeneralItem;
@@ -167,7 +170,7 @@ internal partial class SettingsWindow : Window
         choice.IslandShowSeconds, choice.IslandUsage, choice.UsageLimitMillions, choice.UsageHours, choice.UsageWarnPercent,
         choice.IslandPrivacy, choice.IslandBluetooth, choice.IslandDownloads, choice.IslandSystem, choice.IslandTimerMinutes, choice.IslandFollowPointer,
         choice.IslandQuietFrom, choice.IslandQuietTo, choice.IslandHideInApps, choice.IslandShowOverApps,
-        choice.IslandScale, choice.HoverExpand, choice.HoverFullText, choice.HoverButtons, choice.HoverTime,
+        choice.IslandScale, choice.HoverExpand, choice.HoverFullText, choice.HoverButtons, choice.HoverTime, choice.IslandCardSections,
         choice.AutoBackupEnabled, choice.AutoBackupHour, choice.AutoBackupDays,
         choice.PanelBackground.Style, choice.PanelBackground.CustomColor, choice.PanelBackground.CustomOpacity,
         choice.PanelBackground.Opacity, choice.PanelBackground.GlassShade);
@@ -253,6 +256,103 @@ internal partial class SettingsWindow : Window
         HoverOptions.IsEnabled = HoverExpandBox.IsChecked == true;
     }
 
+    // ---- What the card shows ----
+
+    private List<(string Id, bool Shown)> _cardParts = [];
+
+    internal static string CardPartName(string id) => id switch
+    {
+        CardSections.Players => Strings.CardPartPlayers,
+        CardSections.Usage => Strings.CardPartUsage,
+        CardSections.System => Strings.CardPartSystem,
+        CardSections.Folders => Strings.CardPartFolders,
+        _ => Strings.CardPartShelf,
+    };
+
+    // One row per part: a tick to show it, and arrows to move it. The shown parts keep the order they have here.
+    private void BuildCardParts()
+    {
+        CardSectionsPanel.Children.Clear();
+        for (var i = 0; i < _cardParts.Count; i++)
+        {
+            var index = i;
+            var (id, shown) = _cardParts[i];
+            var row = new Grid { Margin = new Thickness(0, 1, 0, 1) };
+            row.ColumnDefinitions.Add(new ColumnDefinition());
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            var box = new CheckBox { Content = CardPartName(id), IsChecked = shown, MinWidth = 0, VerticalAlignment = VerticalAlignment.Center };
+            box.Click += (_, _) => _cardParts[index] = (id, box.IsChecked == true);
+            row.Children.Add(box);
+            var up = CardMoveButton("", Strings.SettingsMoveUp, index > 0, () => MoveCardPart(index, -1));
+            var down = CardMoveButton("", Strings.SettingsMoveDown, index < _cardParts.Count - 1, () => MoveCardPart(index, 1));
+            Grid.SetColumn(up, 1);
+            Grid.SetColumn(down, 2);
+            row.Children.Add(up);
+            row.Children.Add(down);
+            CardSectionsPanel.Children.Add(row);
+        }
+    }
+
+    private static Button CardMoveButton(string glyph, string tip, bool enabled, Action click)
+    {
+        var button = new Button
+        {
+            Content = new TextBlock { Text = glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 11 },
+            Padding = new Thickness(8, 4, 8, 4), Margin = new Thickness(4, 0, 0, 0), ToolTip = tip, IsEnabled = enabled,
+        };
+        button.Click += (_, _) => click();
+        return button;
+    }
+
+    private void MoveCardPart(int index, int by)
+    {
+        var other = index + by;
+        if (other < 0 || other >= _cardParts.Count)
+        {
+            return;
+        }
+
+        (_cardParts[index], _cardParts[other]) = (_cardParts[other], _cardParts[index]);
+        BuildCardParts();
+    }
+
+    private static string Home => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+    // Whether Claude Code's status line feeds DeskGrid: then the usage is Claude's own number.
+    private void RefreshUsageConnection()
+    {
+        var connected = ClaudeStatusLine.IsConnected(Home);
+        UsageConnectButton.Content = connected ? Strings.SettingsUsageDisconnect : Strings.SettingsUsageConnect;
+        UsageConnectStatus.Text = connected ? Strings.SettingsUsageConnected : Strings.SettingsUsageNotConnected;
+        var tools = AiTools.Detect();
+        UsageFoundText.Text = tools.Count == 0
+            ? Strings.SettingsUsageFoundNone
+            : string.Format(Strings.SettingsUsageFound, string.Join(", ", tools.Select(t => t.ReportsUsage ? t.Name : string.Format(Strings.SettingsUsageNoData, t.Name))));
+    }
+
+    private void OnUsageConnect(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (ClaudeStatusLine.IsConnected(Home))
+            {
+                ClaudeStatusLine.Disconnect(Home);
+            }
+            else if (MessageBox.Show(this, Strings.SettingsUsageConnectAsk, Strings.AppName, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
+            {
+                ClaudeStatusLine.Connect(Home);
+                MessageBox.Show(this, Strings.SettingsUsageConnectDone, Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or InvalidDataException)
+        {
+            MessageBox.Show(this, string.Format(Strings.SettingsUsageFailed, exception.Message), Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+
+        RefreshUsageConnection();
+    }
+
     private void OnHoverSwitched(object sender, RoutedEventArgs e) => UpdateIslandEnabled();
 
     private void OnIslandSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -263,7 +363,7 @@ internal partial class SettingsWindow : Window
         }
     }
 
-    /// <summary>Sets the place of a situation (the app shows the desktop and lets the user drag Notiland).</summary>
+    /// <summary>Sets the place of a situation (the app shows the desktop and lets the user drag NotiLand).</summary>
     public Action<string>? EditIslandPlace { get; set; }
 
     /// <summary>Gives a situation back the default place.</summary>
@@ -528,6 +628,8 @@ internal partial class SettingsWindow : Window
         HoverFullTextBox.Content = Strings.SettingsHoverFullText;
         HoverButtonsBox.Content = Strings.SettingsHoverButtons;
         HoverTimeBox.Content = Strings.SettingsHoverTime;
+        IslandCardContents.Text = Strings.SettingsIslandCardContents;
+        BuildCardParts();
         RefreshPlaces();
         IslandHint.Text = Strings.SettingsIslandHint;
         IslandMusicLabel.Text = Strings.SettingsIslandMusic;
@@ -538,6 +640,7 @@ internal partial class SettingsWindow : Window
         IslandBatteryBox.Content = Strings.SettingsIslandBattery;
         IslandUsageBox.Content = Strings.SettingsIslandUsage;
         IslandUsageHint.Text = Strings.SettingsIslandUsageHint;
+        RefreshUsageConnection();
         UsageLimitLabel.Text = Strings.SettingsUsageLimit;
         UsageHoursLabel.Text = Strings.SettingsUsageHours;
         UsageWarnLabel.Text = Strings.SettingsUsageWarn;
@@ -695,6 +798,7 @@ internal partial class SettingsWindow : Window
         HoverFullTextBox.IsChecked == true,
         HoverButtonsBox.IsChecked == true,
         HoverTimeBox.IsChecked == true,
+        CardSections.Store(_cardParts.Where(p => p.Shown).Select(p => p.Id)),
         AutoBackupBox.IsChecked == true,
         AutoBackupHourBox.SelectedValue as int? ?? _config.AutoBackupHour,
         AutoBackupDaysBox.SelectedItem as int? ?? _config.AutoBackupDays);
