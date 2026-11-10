@@ -207,65 +207,115 @@
           </Border>
         </StackPanel>
       </ScrollViewer>
-
-      <!-- The island: what it shows, when it stays away, where it is. -->
+      <!-- The island, in cards: the switch, what it shows, AI usage, shortcuts and timer, when it stays away, its place.
+           Everything below the switch is dimmed while the island is off; the usage numbers while usage is off. -->
       <ScrollViewer x:Name="PageIsland" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
         <StackPanel Margin="0,0,4,0">
           <Border Style="{StaticResource Card}">
             <StackPanel>
-              <CheckBox x:Name="IslandBox" MinWidth="0" />
+              <CheckBox x:Name="IslandBox" MinWidth="0" FontWeight="SemiBold" Checked="OnIslandSwitched" Unchecked="OnIslandSwitched" />
               <TextBlock x:Name="IslandHint" Margin="0,6,0,0" TextWrapping="Wrap" Opacity="0.7" />
-              <TextBlock x:Name="IslandMusicLabel" Style="{StaticResource CardTitle}" Margin="0,12,0,0" TextWrapping="Wrap" />
-              <StackPanel>
-                <RadioButton MinWidth="0" x:Name="MusicOff" GroupName="IslandMusic" />
-                <RadioButton MinWidth="0" x:Name="MusicOnChange" GroupName="IslandMusic" />
-                <RadioButton MinWidth="0" x:Name="MusicWhilePlaying" GroupName="IslandMusic" />
-              </StackPanel>
-              <CheckBox x:Name="IslandFoldersBox" Margin="0,12,0,0" MinWidth="0" />
-              <CheckBox x:Name="IslandBatteryBox" Margin="0,6,0,0" MinWidth="0" />
-              <CheckBox x:Name="IslandUsageBox" Margin="0,6,0,0" MinWidth="0" />
-              <TextBlock x:Name="IslandUsageHint" Margin="24,2,0,0" TextWrapping="Wrap" Opacity="0.7" />
-              <StackPanel Orientation="Horizontal" Margin="24,6,0,0">
-                <TextBox x:Name="UsageLimitBox" Width="64" />
-                <TextBlock x:Name="UsageLimitLabel" Margin="8,0,0,0" VerticalAlignment="Center" />
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="24,6,0,0">
-                <TextBox x:Name="UsageHoursBox" Width="64" />
-                <TextBlock x:Name="UsageHoursLabel" Margin="8,0,0,0" VerticalAlignment="Center" />
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="24,6,0,0">
-                <TextBox x:Name="UsageWarnBox" Width="64" />
-                <TextBlock x:Name="UsageWarnLabel" Margin="8,0,0,0" VerticalAlignment="Center" />
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                <TextBox x:Name="IslandSecondsBox" Width="64" />
-                <TextBlock x:Name="IslandSecondsLabel" Margin="8,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
-              </StackPanel>
-              <CheckBox x:Name="IslandPrivacyBox" Margin="0,6,0,0" MinWidth="0" />
-              <CheckBox x:Name="IslandBluetoothBox" Margin="0,6,0,0" MinWidth="0" />
-              <CheckBox x:Name="IslandDownloadsBox" Margin="0,6,0,0" MinWidth="0" />
-              <CheckBox x:Name="IslandSystemBox" Margin="0,6,0,0" MinWidth="0" />
-              <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                <TextBox x:Name="IslandTimerBox" Width="64" />
-                <TextBlock x:Name="IslandTimerLabel" Margin="8,0,0,0" VerticalAlignment="Center" />
-              </StackPanel>
-              <CheckBox x:Name="IslandFollowBox" Margin="0,12,0,0" MinWidth="0" />
-              <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                <TextBox x:Name="IslandQuietFromBox" Width="64" />
-                <TextBlock x:Name="IslandQuietFromLabel" Margin="8,0,0,0" VerticalAlignment="Center" />
-              </StackPanel>
-              <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                <TextBox x:Name="IslandQuietToBox" Width="64" />
-                <TextBlock x:Name="IslandQuietToLabel" Margin="8,0,0,0" VerticalAlignment="Center" />
-              </StackPanel>
-              <TextBlock x:Name="IslandHideAppsLabel" Margin="0,12,0,4" TextWrapping="Wrap" />
-              <TextBox x:Name="IslandHideAppsBox" />
-              <TextBlock x:Name="IslandShowOverLabel" Margin="0,12,0,4" TextWrapping="Wrap" />
-              <TextBox x:Name="IslandShowOverBox" />
-              <Button x:Name="IslandResetButton" Margin="0,12,0,0" Padding="12,5" HorizontalAlignment="Left" Click="OnResetIsland" />
             </StackPanel>
           </Border>
 
+          <StackPanel x:Name="IslandOptions">
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock x:Name="IslandCardShow" Style="{StaticResource CardTitle}" />
+                <TextBlock x:Name="IslandMusicLabel" Margin="0,2,0,2" TextWrapping="Wrap" Opacity="0.75" />
+                <StackPanel Margin="0,0,0,8">
+                  <RadioButton MinWidth="0" x:Name="MusicOff" GroupName="IslandMusic" />
+                  <RadioButton MinWidth="0" x:Name="MusicOnChange" GroupName="IslandMusic" />
+                  <RadioButton MinWidth="0" x:Name="MusicWhilePlaying" GroupName="IslandMusic" />
+                </StackPanel>
+                <CheckBox x:Name="IslandBatteryBox" Margin="0,2,0,0" MinWidth="0" />
+                <CheckBox x:Name="IslandPrivacyBox" Margin="0,2,0,0" MinWidth="0" />
+                <CheckBox x:Name="IslandBluetoothBox" Margin="0,2,0,0" MinWidth="0" />
+                <CheckBox x:Name="IslandDownloadsBox" Margin="0,2,0,0" MinWidth="0" />
+                <CheckBox x:Name="IslandSystemBox" Margin="0,2,0,0" MinWidth="0" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <CheckBox x:Name="IslandUsageBox" MinWidth="0" FontWeight="SemiBold" Checked="OnUsageSwitched" Unchecked="OnUsageSwitched" />
+                <TextBlock x:Name="IslandUsageHint" Margin="0,4,0,8" TextWrapping="Wrap" Opacity="0.7" />
+                <Grid x:Name="UsageFields">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <TextBlock x:Name="UsageLimitLabel" Grid.Row="0" VerticalAlignment="Center" Margin="0,3,12,3" TextWrapping="Wrap" />
+                  <TextBox x:Name="UsageLimitBox" Grid.Row="0" Grid.Column="1" Width="90" Margin="0,3,0,3" />
+                  <TextBlock x:Name="UsageHoursLabel" Grid.Row="1" VerticalAlignment="Center" Margin="0,3,12,3" TextWrapping="Wrap" />
+                  <TextBox x:Name="UsageHoursBox" Grid.Row="1" Grid.Column="1" Width="90" Margin="0,3,0,3" />
+                  <TextBlock x:Name="UsageWarnLabel" Grid.Row="2" VerticalAlignment="Center" Margin="0,3,12,3" TextWrapping="Wrap" />
+                  <TextBox x:Name="UsageWarnBox" Grid.Row="2" Grid.Column="1" Width="90" Margin="0,3,0,3" />
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <DockPanel>
+                  <Button x:Name="IslandShortcutsButton" DockPanel.Dock="Right" Padding="12,5" Click="OnIslandShortcuts" />
+                  <TextBlock x:Name="IslandCardShortcuts" Style="{StaticResource CardTitle}" VerticalAlignment="Center" />
+                </DockPanel>
+                <Grid Margin="0,8,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <TextBlock x:Name="IslandSecondsLabel" Grid.Row="0" VerticalAlignment="Center" Margin="0,3,12,3" TextWrapping="Wrap" />
+                  <TextBox x:Name="IslandSecondsBox" Grid.Row="0" Grid.Column="1" Width="90" Margin="0,3,0,3" />
+                  <TextBlock x:Name="IslandTimerLabel" Grid.Row="1" VerticalAlignment="Center" Margin="0,3,12,3" TextWrapping="Wrap" />
+                  <TextBox x:Name="IslandTimerBox" Grid.Row="1" Grid.Column="1" Width="90" Margin="0,3,0,3" />
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock x:Name="IslandCardAway" Style="{StaticResource CardTitle}" />
+                <Grid Margin="0,6,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                  </Grid.RowDefinitions>
+                  <TextBlock x:Name="IslandQuietFromLabel" Grid.Row="0" VerticalAlignment="Center" Margin="0,3,12,3" TextWrapping="Wrap" />
+                  <TextBox x:Name="IslandQuietFromBox" Grid.Row="0" Grid.Column="1" Width="90" Margin="0,3,0,3" />
+                  <TextBlock x:Name="IslandQuietToLabel" Grid.Row="1" VerticalAlignment="Center" Margin="0,3,12,3" TextWrapping="Wrap" />
+                  <TextBox x:Name="IslandQuietToBox" Grid.Row="1" Grid.Column="1" Width="90" Margin="0,3,0,3" />
+                </Grid>
+                <TextBlock x:Name="IslandHideAppsLabel" Margin="0,10,0,4" TextWrapping="Wrap" />
+                <TextBox x:Name="IslandHideAppsBox" />
+                <TextBlock x:Name="IslandShowOverLabel" Margin="0,10,0,4" TextWrapping="Wrap" />
+                <TextBox x:Name="IslandShowOverBox" />
+              </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+              <StackPanel>
+                <TextBlock x:Name="IslandCardPlace" Style="{StaticResource CardTitle}" />
+                <CheckBox x:Name="IslandFoldersBox" Margin="0,6,0,0" MinWidth="0" />
+                <CheckBox x:Name="IslandFollowBox" Margin="0,2,0,0" MinWidth="0" />
+                <Button x:Name="IslandResetButton" Margin="0,10,0,0" Padding="12,5" HorizontalAlignment="Left" Click="OnResetIsland" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
         </StackPanel>
       </ScrollViewer>
 

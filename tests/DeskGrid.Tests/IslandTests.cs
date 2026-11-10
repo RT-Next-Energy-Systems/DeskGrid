@@ -382,6 +382,37 @@ public sealed class IslandWindowTests : IDisposable
     }
 
     [Fact]
+    public async Task Escape_ClosesTheCard_ThenOneLineAtATime_ThenTheTimersDisplay_ThenTheInfo()
+    {
+        var steps = await _ui.InvokeAsync(() =>
+        {
+            TestApplication.Ensure();
+            using var host = new IslandHost();
+            host.Apply(new IslandOptions(true, IslandMusicMode.Off, false));
+            var log = new List<string?>();
+            host.Show("a", TimeSpan.FromSeconds(30));
+            host.Show("b", TimeSpan.FromSeconds(30));
+            log.Add(host.CurrentLine);
+            host.Dismiss();
+            log.Add(host.CurrentLine); // The next line.
+            host.Dismiss();
+            log.Add(host.CurrentLine); // Nothing left.
+
+            host.ToggleTimer();
+            host.ShowInfo();
+            host.Dismiss(); // The timer's display goes first (it keeps running) ...
+            log.Add($"{host.TimerRunning}/{host.TimerHidden}/{host.InfoUp}");
+            host.Dismiss(); // ... then the info.
+            log.Add($"{host.TimerRunning}/{host.TimerHidden}/{host.InfoUp}");
+            return log;
+        });
+
+        Assert.Equal(["a", "b", null], steps.Take(3));
+        Assert.Equal("True/True/True", steps[3]);
+        Assert.Equal("True/True/False", steps[4]);
+    }
+
+    [Fact]
     public async Task TheHost_StaysAwayWhileOff_AndHidesTheWindowWhenTurnedOff()
     {
         var (whileOff, whileOn, afterwards) = await _ui.InvokeAsync(() =>

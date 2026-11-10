@@ -116,6 +116,7 @@ internal partial class SettingsWindow : Window
         IslandQuietToBox.Text = config.IslandQuietTo ?? "";
         IslandHideAppsBox.Text = config.IslandHideInApps ?? "";
         IslandShowOverBox.Text = config.IslandShowOverApps ?? "";
+        UpdateIslandEnabled();
         MusicRadioFor(config.IslandMusic).IsChecked = true;
         Pages.SelectedItem = PageGeneralItem;
 
@@ -197,6 +198,23 @@ internal partial class SettingsWindow : Window
     public Action? ResetIslandPosition { get; set; }
 
     private void OnResetIsland(object sender, RoutedEventArgs e) => ResetIslandPosition?.Invoke();
+
+    // What the island does is dimmed while it is off, the usage numbers while usage is off.
+    private void OnIslandSwitched(object sender, RoutedEventArgs e) => UpdateIslandEnabled();
+
+    private void OnUsageSwitched(object sender, RoutedEventArgs e) => UpdateIslandEnabled();
+
+    private void UpdateIslandEnabled()
+    {
+        IslandOptions.IsEnabled = IslandBox.IsChecked == true;
+        UsageFields.IsEnabled = IslandUsageBox.IsChecked == true;
+    }
+
+    private void OnIslandShortcuts(object sender, RoutedEventArgs e)
+    {
+        EditHotkeys?.Invoke();
+        ShowHotkeysHint();
+    }
 
     private void OnExport(object sender, RoutedEventArgs e) => ExportSettings?.Invoke();
 
@@ -330,6 +348,11 @@ internal partial class SettingsWindow : Window
         AllowControlBox.Content = Strings.SettingsAllowControl;
         AllowControlHint.Text = Strings.SettingsAllowControlHint;
         IslandBox.Content = Strings.SettingsIsland;
+        IslandCardShow.Text = Strings.SettingsIslandCardShow;
+        IslandCardShortcuts.Text = Strings.SettingsIslandCardShortcuts;
+        IslandCardAway.Text = Strings.SettingsIslandCardAway;
+        IslandCardPlace.Text = Strings.SettingsIslandCardPlace;
+        IslandShortcutsButton.Content = Strings.SettingsIslandShortcuts;
         IslandHint.Text = Strings.SettingsIslandHint;
         IslandMusicLabel.Text = Strings.SettingsIslandMusic;
         MusicOff.Content = Strings.SettingsIslandMusicOff;

@@ -235,7 +235,7 @@ Cancel: ask again next time.</value>
     <value>Show the island at the top of the screen</value>
   </data>
   <data name="SettingsIslandHint" xml:space="preserve">
-    <value>A small pill that shows short messages, for example from scripts through "DeskGrid.exe --ctl island", and the music and video that are playing. It hides while a full-screen app runs.</value>
+    <value>A small pill that shows short messages, for example from scripts through "DeskGrid.exe --ctl island", and the music and video that are playing. Press Esc to close what it shows; drag it to move it. It hides while a full-screen app runs.</value>
   </data>
   <data name="SettingsIslandMusic" xml:space="preserve">
     <value>Music and video</value>
@@ -383,6 +383,21 @@ Cancel: ask again next time.</value>
   </data>
   <data name="SettingsIslandFollow" xml:space="preserve">
     <value>Appear on the screen the pointer is on</value>
+  </data>
+  <data name="SettingsIslandCardShow" xml:space="preserve">
+    <value>What it shows</value>
+  </data>
+  <data name="SettingsIslandCardShortcuts" xml:space="preserve">
+    <value>Shortcuts and timer</value>
+  </data>
+  <data name="SettingsIslandCardAway" xml:space="preserve">
+    <value>When it stays away</value>
+  </data>
+  <data name="SettingsIslandCardPlace" xml:space="preserve">
+    <value>Place and behavior</value>
+  </data>
+  <data name="SettingsIslandShortcuts" xml:space="preserve">
+    <value>Shortcuts…</value>
   </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>Privacy</value>
