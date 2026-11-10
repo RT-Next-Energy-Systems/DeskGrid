@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using DeskGrid.Config;
 using DeskGrid.Control;
 using DeskGrid.Folders;
+using DeskGrid.Island;
 using DeskGrid.Threading;
 
 namespace DeskGrid.Tests;
@@ -292,6 +293,63 @@ public sealed class ControlCommandsTests : IDisposable
         Assert.True(Run("status").Ok);
     }
 
+    [Fact]
+    public void IslandShow_PassesTheTextAndTime_AndHideClearsIt()
+    {
+        _host.Config.IslandEnabled = true;
+
+        var shown = Run("island", "show", "Build done", "7.5");
+        var plain = Run("island", "show", "Next");
+
+        Assert.True(shown.Ok, shown.Error);
+        Assert.Equal(7.5, shown.Result!["seconds"]!.GetValue<double>());
+        Assert.True(plain.Ok);
+        Assert.Equal([("Build done", TimeSpan.FromSeconds(7.5)), ("Next", IslandActivity.DefaultDuration)], _host.IslandLines);
+        Assert.True(Run("island", "hide").Ok);
+        Assert.Empty(_host.IslandLines);
+    }
+
+    [Fact]
+    public void IslandShow_WhileTheIslandIsOff_SaysHowToTurnItOn()
+    {
+        var response = Run("island", "show", "Hello");
+
+        Assert.False(response.Ok);
+        Assert.Contains("Settings", response.Error);
+        Assert.Empty(_host.IslandLines);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void IslandShow_RefusesEmptyText(string text)
+    {
+        _host.Config.IslandEnabled = true;
+
+        Assert.False(Run("island", "show", text).Ok);
+    }
+
+    [Fact]
+    public void IslandShow_RefusesTextThatIsTooLong_AndBadSeconds()
+    {
+        _host.Config.IslandEnabled = true;
+
+        Assert.False(Run("island", "show", new string('x', IslandActivity.MaxTextLength + 1)).Ok);
+        Assert.False(Run("island", "show", "Hi", "0").Ok);
+        Assert.False(Run("island", "show", "Hi", "61").Ok);
+        Assert.False(Run("island", "show", "Hi", "soon").Ok);
+        Assert.Empty(_host.IslandLines);
+    }
+
+    [Fact]
+    public void Island_WrongArguments_ListsBothUsages()
+    {
+        var error = Run("island", "flash").Error;
+
+        Assert.Contains("island show <text> [seconds]", error);
+        Assert.Contains("island hide", error);
+    }
+
     private ControlResponse Run(string command, params string[] args) => _commands.Execute(new ControlRequest(command, args));
 
     /// <summary>Folders read straight from disk, items in name order unless moved.</summary>
@@ -345,5 +403,11 @@ public sealed class ControlCommandsTests : IDisposable
         public void OpenList() => OpenPanel = ControlCommands.AllFolders;
 
         public void ClosePanel() => OpenPanel = null;
+
+        public List<(string Text, TimeSpan Duration)> IslandLines { get; } = [];
+
+        public void ShowOnIsland(string text, TimeSpan duration) => IslandLines.Add((text, duration));
+
+        public void HideIsland() => IslandLines.Clear();
     }
 }

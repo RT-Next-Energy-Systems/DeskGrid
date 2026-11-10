@@ -49,7 +49,7 @@ context/                  session context docs（decisions 與本摘要在版控
 ```
 
 ## Core Modules
-DesktopHost（`Desktop/`）、ConfigStore（`Config/`）、FolderScanner + WidgetCatalog（`Folders/`）、IconService（`Icons/`）、FolderWidget + WidgetBoard（`Widgets/`）、PopupPanel + PanelController（`Panel/`）、TrayIcon + AutoStart（`Tray/`）、設定（`Settings/`）、拖放（`Folders/ItemImporter`）、鍵盤快速鍵（`Hotkeys/`）。其餘模組見 `CLAUDE.md`「架構」。
+DesktopHost（`Desktop/`）、ConfigStore（`Config/`）、FolderScanner + WidgetCatalog（`Folders/`）、IconService（`Icons/`）、FolderWidget + WidgetBoard（`Widgets/`）、PopupPanel + PanelController（`Panel/`）、TrayIcon + AutoStart（`Tray/`）、設定（`Settings/`）、拖放（`Folders/ItemImporter`）、鍵盤快速鍵（`Hotkeys/`）、提示島（`Island/`）。其餘模組見 `CLAUDE.md`「架構」。
 
 ## Coding Rules
 見 `AGENTS.md`.

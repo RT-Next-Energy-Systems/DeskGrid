@@ -23,7 +23,8 @@ internal sealed record SettingsChoice(
     PanelOpenMode PanelOpenMode,
     AppLanguage Language,
     bool CheckForUpdatesAtStartup,
-    bool AllowControl);
+    bool AllowControl,
+    bool IslandEnabled);
 
 /// <summary>One line of the language list: the language and the name it is shown under.</summary>
 internal sealed record LanguageOption(AppLanguage Language, string Label);
@@ -78,6 +79,7 @@ internal partial class SettingsWindow : Window
 
         CheckAtStartupBox.IsChecked = config.CheckForUpdatesAtStartup;
         AllowControlBox.IsChecked = config.AllowControl;
+        IslandBox.IsChecked = config.IslandEnabled;
         Pages.SelectedItem = PageGeneralItem;
 
         // Wired after the values are set, so filling the controls does not draw the preview again and again.
@@ -97,7 +99,7 @@ internal partial class SettingsWindow : Window
     // PanelBackground has no value equality, so what the window holds is compared as text.
     private static string Key(SettingsChoice choice) => string.Join('|',
         choice.RootPath, choice.PanelColumns, choice.DropMode, choice.DeleteMode, choice.PanelOpenMode, choice.Language,
-        choice.CheckForUpdatesAtStartup, choice.AllowControl,
+        choice.CheckForUpdatesAtStartup, choice.AllowControl, choice.IslandEnabled,
         choice.PanelBackground.Style, choice.PanelBackground.CustomColor, choice.PanelBackground.CustomOpacity,
         choice.PanelBackground.Opacity, choice.PanelBackground.GlassShade);
 
@@ -280,6 +282,8 @@ internal partial class SettingsWindow : Window
         ShowHotkeysHint();
         AllowControlBox.Content = Strings.SettingsAllowControl;
         AllowControlHint.Text = Strings.SettingsAllowControlHint;
+        IslandBox.Content = Strings.SettingsIsland;
+        IslandHint.Text = Strings.SettingsIslandHint;
         GitHubLabel.Text = Strings.SettingsGitHub;
 
         // Only owner/name: the label already says GitHub, and the whole address would not fit beside the button.
@@ -396,7 +400,8 @@ internal partial class SettingsWindow : Window
         OpenCentered.IsChecked == true ? PanelOpenMode.Centered : PanelOpenMode.Nearby,
         LanguageBox.SelectedValue as AppLanguage? ?? _config.Language,
         CheckAtStartupBox.IsChecked == true,
-        AllowControlBox.IsChecked == true);
+        AllowControlBox.IsChecked == true,
+        IslandBox.IsChecked == true);
 
     /// <summary>Checks what the controls hold and hands it to <see cref="Applied"/>; false (with the reason shown) if it is not valid.</summary>
     private bool Apply()

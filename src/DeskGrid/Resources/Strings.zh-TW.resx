@@ -225,6 +225,12 @@
   <data name="SettingsAllowControlHint" xml:space="preserve">
     <value>透過「DeskGrid.exe --ctl」，僅限本帳戶。無法刪除任何東西。</value>
   </data>
+  <data name="SettingsIsland" xml:space="preserve">
+    <value>在螢幕頂端顯示提示島</value>
+  </data>
+  <data name="SettingsIslandHint" xml:space="preserve">
+    <value>顯示簡短訊息的小膠囊，例如腳本透過「DeskGrid.exe --ctl island」送來的訊息。全螢幕程式執行時會自動隱藏。</value>
+  </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>隱私</value>
   </data>

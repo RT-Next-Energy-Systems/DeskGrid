@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json.Nodes;
 using DeskGrid.Config;
 using DeskGrid.Folders;
+using DeskGrid.Island;
 using DeskGrid.Updates;
 
 namespace DeskGrid.Control;
@@ -31,6 +32,12 @@ internal interface IControlHost
     void OpenList();
 
     void ClosePanel();
+
+    /// <summary>Shows a line on the island for a while, after the ones already waiting.</summary>
+    void ShowOnIsland(string text, TimeSpan duration);
+
+    /// <summary>Takes away what the island shows and what waits.</summary>
+    void HideIsland();
 }
 
 /// <summary>
@@ -53,6 +60,8 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
         ("move <folder> <item> <index>", "Puts an item at a position (0 = first) in its folder's order."),
         ("open [folder]", "Opens a folder's panel next to its widget, or the list of all folders."),
         ("close", "Closes the open panel."),
+        ("island show <text> [seconds]", "Shows a line of text on the island for a few seconds (default 5, at most 60). Needs the island turned on in Settings."),
+        ("island hide", "Takes away what the island shows."),
     ];
 
     public ControlResponse Execute(ControlRequest request)
@@ -74,11 +83,16 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
             "move" when args.Count == 3 => Move(args[0], args[1], args[2]),
             "open" when args.Count <= 1 => Open(args.Count == 1 ? args[0] : null),
             "close" when args.Count == 0 => Close(),
-            var command when Usage.Any(u => u.Usage.Split(' ')[0] == command) =>
-                ControlResponse.Failure($"Wrong arguments. Usage: {Usage.First(u => u.Usage.Split(' ')[0] == command).Usage}"),
-            var command => ControlResponse.Failure($"Unknown command \"{command}\". Commands: {string.Join(", ", Usage.Select(u => u.Usage.Split(' ')[0]))}."),
+            "island" when args is ["show", var text] => IslandShow(text, null),
+            "island" when args is ["show", var text, var seconds] => IslandShow(text, seconds),
+            "island" when args is ["hide"] => IslandHide(),
+            var command when Usage.Where(u => NameOf(u) == command).ToList() is { Count: > 0 } own =>
+                ControlResponse.Failure($"Wrong arguments. Usage: {string.Join(" or ", own.Select(u => u.Usage))}"),
+            var command => ControlResponse.Failure($"Unknown command \"{command}\". Commands: {string.Join(", ", Usage.Select(NameOf).Distinct())}."),
         };
     }
+
+    private static string NameOf((string Usage, string Description) usage) => usage.Usage.Split(' ')[0];
 
     private static JsonObject Describe(WidgetFolder folder) => new()
     {
@@ -242,6 +256,41 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
     private ControlResponse Close()
     {
         host.ClosePanel();
+        return ControlResponse.Success();
+    }
+
+    private ControlResponse IslandShow(string text, string? seconds)
+    {
+        if (!host.Config.IslandEnabled)
+        {
+            return ControlResponse.Failure("The island is turned off. Turn on \"Show the island at the top of the screen\" in DeskGrid's Settings.");
+        }
+
+        text = text.Trim();
+        if (text.Length == 0 || text.Length > IslandActivity.MaxTextLength)
+        {
+            return ControlResponse.Failure($"The text must be 1 to {IslandActivity.MaxTextLength} characters.");
+        }
+
+        var duration = IslandActivity.DefaultDuration;
+        if (seconds is not null)
+        {
+            if (!double.TryParse(seconds, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)
+                || value < 1 || value > IslandActivity.MaxDuration.TotalSeconds)
+            {
+                return ControlResponse.Failure($"\"{seconds}\" is not a number of seconds from 1 to {IslandActivity.MaxDuration.TotalSeconds:0}.");
+            }
+
+            duration = TimeSpan.FromSeconds(value);
+        }
+
+        host.ShowOnIsland(text, duration);
+        return ControlResponse.Success(new JsonObject { ["seconds"] = duration.TotalSeconds });
+    }
+
+    private ControlResponse IslandHide()
+    {
+        host.HideIsland();
         return ControlResponse.Success();
     }
 

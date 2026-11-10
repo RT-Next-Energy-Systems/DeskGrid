@@ -43,7 +43,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 模組 | 資料夾 | 職責 |
 |---|---|---|
 | DesktopHost | `Desktop/` | 把 widget 視窗掛在桌面圖示層（所有一般視窗後方）；相容舊版與 Win11 24H2+ 桌面階層；Explorer 重啟後自動重新掛載 |
-| ConfigStore | `Config/` | `%APPDATA%\DeskGrid\config.json`，只存 widget 位置、面板欄數、項目排序、根目錄路徑、拖入模式，以及面板背景（2026-10-24 使用者同意新增）、刪除資料夾時項目的處理方式（`deleteMode`）、是否問過開機自啟（`autoStartAsked`，2026-10-30）、啟動時是否檢查更新（`checkForUpdatesAtStartup`，預設開，2026-10-30）、面板展開位置（`panelOpenMode`：`nearby` / `centered`，2026-11-03）、介面語言（`language`：`system` / `english` / `traditionalChinese`，2026-11-03）、是否允許腳本與 AI agent 控制（`allowControl`，預設關，2026-11-08）、鍵盤快速鍵（一般動作存在 `hotkeys`，資料夾自己的存在它的 widget 項目裡的 `hotkey`，2026-11-08） |
+| ConfigStore | `Config/` | `%APPDATA%\DeskGrid\config.json`，只存 widget 位置、面板欄數、項目排序、根目錄路徑、拖入模式，以及面板背景（2026-10-24 使用者同意新增）、刪除資料夾時項目的處理方式（`deleteMode`）、是否問過開機自啟（`autoStartAsked`，2026-10-30）、啟動時是否檢查更新（`checkForUpdatesAtStartup`，預設開，2026-10-30）、面板展開位置（`panelOpenMode`：`nearby` / `centered`，2026-11-03）、介面語言（`language`：`system` / `english` / `traditionalChinese`，2026-11-03）、是否允許腳本與 AI agent 控制（`allowControl`，預設關，2026-11-08）、鍵盤快速鍵（一般動作存在 `hotkeys`，資料夾自己的存在它的 widget 項目裡的 `hotkey`，2026-11-08），以及提示島是否存在（`islandEnabled`，預設關，2026-11-10） |
 | FolderScanner | `Folders/` | 根目錄預設 `%USERPROFILE%\DeskGrid\`，每個子資料夾 = 一個 widget；FileSystemWatcher 監聽 Created/Deleted/Renamed/Changed，300ms debounce；Renamed 要轉移 config 中的位置與排序；根目錄位於使用者桌面時拒絕並提示 |
 | IconService | `Icons/` | IShellItemImageFactory 取 256px 圖示；依排序取前 4 個合成 2×2 預覽；快取，資料夾變動才重建 |
 | FolderWidget | `Widgets/` | 桌面上的資料夾圖示 + 名稱，可拖動並存位置（`FolderWidget` 視圖、`WidgetBoard` 同步與擺放、`WidgetGrid` 格線） |
@@ -55,6 +55,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 工作列釘選 | `Taskbar/` | widget 右鍵「釘選到工作列」：建 `--open "資料夾"` 捷徑讓使用者自己釘；設定視窗「工作列」卡片的「把所有資料夾釘選到工作列…」建 `--all` 捷徑（面板列出所有資料夾）；點下去由命名管線（`InstanceChannel`）通知執行中的 DeskGrid 在游標處開面板；捷徑各帶 AppUserModelID，工作列才不會合併 |
 | 控制管道 | `Control/` | 腳本 / AI agent 操作執行中的程式：`DeskGrid.exe --ctl <指令>`（`ControlCli`）經 named pipe `DeskGrid.Control.<使用者>`（`ControlChannel`）送出一行 JSON，印出 JSON 回覆；`ControlCommands` 透過 `IControlHost`（App 的 `ControlHost`）在 UI 執行緒執行。需使用者開啟：config `allowControl`，預設關（2026-11-08） |
 | 鍵盤快速鍵 | `Hotkeys/`、`Settings/` | 系統層級快速鍵：`Hotkey`（解析 / 寫出 `Ctrl+M`）、`HotkeyBindings`（哪個動作用哪組快速鍵，從 config 讀寫）、`HotkeyService`（在隱藏視窗上 `RegisterHotKey`，回報 Windows 拒絕的組合）；`Settings/` 的 `HotkeysWindow` + `HotkeyBox` 負責錄製（2026-11-08） |
+| 提示島 | `Island/` | 主螢幕頂端正中央的一顆黑色小膠囊，顯示一行字幾秒鐘：`IslandHost`（App 用的入口；擁有佇列、只在有訊息時才跑的半秒計時器，以及視窗）、`ActivityQueue`（純邏輯：目前的訊息、排隊中的、游標在上面或全螢幕程式執行時暫停的倒數）、`IslandWindow`（最上層、不搶焦點、分層視窗）、`FullscreenGuard`（`SHQueryUserNotificationState`）。訊息來自 `--ctl island show`。需使用者開啟：config `islandEnabled`，預設關（2026-11-10） |
 | 版本檢查 | `Updates/` | 啟動後 8 秒與設定視窗的「檢查更新」按鈕：查 GitHub 最新 release，有新版本彈出「更新 / 維持 / 取消」；更新 = 下載 exe、驗 SHA256、由 PowerShell 小腳本在程式結束後換檔並重啟 |
 | 液態玻璃 | `Glass/`、`Panel/PanelGlass` | 「液態玻璃」面板背景：`LiquidGlass.Render` 依螢幕畫面畫出一片圓角玻璃（模糊、邊緣折射、亮邊）；`PanelGlass` 擷取螢幕並交給面板（2026-11-09） |
 | （輔助）Shell | `Shell/` | Shell 互通：`ShellImage`（圖示）、`ShellItem`（ShellExecute 開啟、顯示名稱）、`ShortcutFile`（建 .lnk）、`ShellContextMenu`（Explorer 對檔案的右鍵選單）、`RecycleBin` |
@@ -217,6 +218,18 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **已在真機驗證**（2026-11-08，dev build 用 explorer.exe 啟動；用 PowerShell 的 `keybd_event` 注入按鍵、UI Automation 讀視窗、`--ctl status` 讀面板狀態）：config 裡的快速鍵（Ctrl+Q，是使用者自己在視窗裡設的）能開出列表且 DeskGrid 拿到前景，再按一次收合、前景還回去；資料夾快速鍵（Ctrl+Alt+1）、設定（Ctrl+Alt+S）、新增資料夾（Ctrl+Alt+N）都有效；新增資料夾對話框開著時再按一次不會疊出第二個；資料夾改名後 Ctrl+Alt+1 仍能開它（透過 `--ctl`，見下）；用鍵盤在視窗裡錄製（組合被佔用、單純字母會被拒絕並說明原因、重複會指出哪個動作已有、Backspace 清除、錄到 Alt+F1），按「確定」即時生效（新快速鍵馬上能用，暫停的舊快速鍵恢復）。未驗證：按「確定」時別的程式佔用組合的訊息、Win 鍵組合（Windows 保留很多）、預設的單純 Ctrl+M 本身（使用者的 config 用的是 Ctrl+Q）。
 - **改名與控制管道**（測試時發現）：`--ctl rename` 在搬完資料夾後立刻 `Rescan()`，這時監看器的改名事件還沒到，`Reconcile` 把舊資料夾的設定當成消失的資料夾丟掉（位置、項目順序、快速鍵全沒了）。現在 `App.RenameFolder` 在搬完後立刻呼叫 `WidgetCatalog.MoveSettings(舊, 新)`；監看器稍後的事件就沒有東西可搬（`WidgetCatalogTests.RescanRightAfterRenamingAFolder_KeepsItsSettings`）。
 
+## 提示島（2026-11-10）
+
+- **內容**（使用者想要類似 Mac 靈動島的功能；經過可行性討論、查看現有專案與其授權後，選了「P1 骨架」）：主螢幕**主要**顯示器頂端正中央的一顆黑色膠囊，顯示一行字幾秒鐘。「Dynamic Island」是 Apple 的商標，App 與文件都不用這個名字。讀過 BrimDeck（Apache-2.0，C# / WPF）取得想法，**沒有複製任何程式碼**，所以不需要為它加第三方聲明。它做了而 DeskGrid 不會做的事：修改其他程式的 `libcef.dll`、載入核心驅動讀 CPU 感測器、讀其他工具的登入資料；這些都不適合 DeskGrid。
+- **視窗**（`IslandWindow`）：無邊框分層 WPF 視窗（`AllowsTransparency`），`WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW` 加最上層，420 × 120 DIP，在主要顯示器工作區頂端下方 8 DIP、水平置中；它是一塊固定的透明空間，所以**只有膠囊吃滑鼠**（分層視窗完全透明的像素會讓點擊穿透）。膠囊（`Border`，黑色，圓角為高度的一半）從圓形長到文字的大小並淡入（`QuinticEase`，280 ms）；離開時縮小並淡出（180 ms）。文字平常一行（最寬 280 DIP，超出以 … 截斷）；游標在上面時膠囊展開成最多 3 行（400 DIP），倒數暫停。點一下就關掉該行。DPI 處理和面板一樣（用 `SetWindowPos` 以實體像素定位，`WM_DPICHANGED` 時重新定位）。共用的緩動函式必須**凍結**：沒凍結的 static `Freezable` 屬於建立它的執行緒（測試用了好幾個 UI 執行緒）。
+- **佇列**（`ActivityQueue`，純邏輯，時間由呼叫端傳入）：一則目前的訊息、最多 10 則排隊（超過就丟掉最舊的）、`Hold`（游標在膠囊上或全螢幕程式執行時）停止倒數並保留剩餘時間、`Dismiss`、`Clear`。`IslandHost` 的 `DispatcherTimer`（500 ms）**只在有目前訊息時才跑**；沒東西可顯示時沒有計時器，島關閉時沒有視窗。
+- **全螢幕**（`FullscreenGuard`）：`SHQueryUserNotificationState` 為 `BUSY`、`RUNNING_D3D_FULL_SCREEN` 或 `PRESENTATION_MODE` → 視窗不帶動畫直接隱藏、倒數暫停；狀態結束後再顯示該行。勿擾時間（專注輔助）不會隱藏它。限制：只看 Shell 回報什麼（無邊框全螢幕遊戲通常會被回報，但不保證）；沒有逐 App 的例外規則（BrimDeck 有；有人要再加）。
+- **控制**（`ControlCommands`）：`island show <文字> [秒數]`（文字 1–200 字，秒數 1–60，預設 5；`islandEnabled` 關閉時回覆錯誤，說明如何開啟）和 `island hide`。`Usage` 現在有兩項以 `island` 開頭；「參數錯誤」的回覆會列出該指令的所有用法，「未知指令」的清單已去除重複。`IControlHost` 新增 `ShowOnIsland` / `HideIsland`。
+- **設定**：快速鍵頁上多一張卡片，內有勾選框（`IslandBox`、`SettingsChoice.IslandEnabled`）；`App.ApplySettings` 與匯入會設定 `IslandHost.Enabled`。中英文字串都有（`SettingsIsland`、`SettingsIslandHint`）。
+- **刻意沒做**（計畫的後續步驟）：正在播放（SMTC）、電池、把資料夾面板當成島的展開畫面、快速鍵、選擇螢幕、其他外觀、逐 App 的全螢幕規則、通知鏡像。
+- **已在真機驗證**（以 explorer.exe 啟動 dev build，真實 config 的 `islandEnabled` 由 explorer 執行的腳本開啟；2880 × 1800，縮放 200 %）：`--ctl island show` 讓膠囊出現在頂端正中央（讀回視窗矩形與延伸樣式：最上層、工具視窗、不啟用、分層），短句與長句（以 … 截斷）截圖看起來正確，`island hide` 會收起，第二則會排隊，錯誤回覆（秒數超出範圍、參數錯誤）正確。**未驗證**：游標在上面時的展開狀態（要用滑鼠；注入輸入前要先問使用者）、全螢幕遊戲或影片、第二個螢幕或其他 DPI、島顯示中切換語言。
+- **擷取畫面的方法**（下次用）：從 Claude App 啟動的 PowerShell 是 DPI 不感知的，只看到虛擬化的 1440 × 900；先呼叫 `SetProcessDPIAware`，再用 `SRCCOPY | CAPTUREBLT` 的 `BitBlt`（`Graphics.CopyFromScreen` 不接受這個旗標組合，`PrintWindow` 則會把視窗裁成虛擬化的大小）。由 explorer.exe 啟動的程序**不管 `%APPDATA%` 怎麼設都讀真實的 config**（`GetFolderPath` 不看環境變數），所以測試用的副本要用另一個使用者或另一個 exe 資料夾，不能靠改環境變數。
+
 ## 發布與 CI（階段 7）
 
 - **GitHub**：公開 repo `RT-Next-Energy-Systems/DeskGrid`（2026 年 11 月由 `Ryan970714/DeskGrid` 搬過來；GitHub 會把舊位址轉址，0.4.1 以前的版本檢查更新仍用舊位址），預設分支 `main`，MIT（著作權人 Ryan Kuo）。README 英文（`README.md`）+ 繁中（`README.zh-TW.md`），內容需保持一致。其中的截圖在 `docs/images/`（`NAME.png` + `NAME.zh-TW.png`），由真正的 UI 類別配上 Windows 內建 App 繪製，不是從桌面截取（做法見 `context/decisions.md` 2026-11-06（二））；視窗改了就要重畫。
@@ -255,6 +268,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 11 | 讓腳本與 AI agent 控制（`--ctl` CLI + 控制 pipe，需在設定開啟） | 完成 2026-11-08（建置 / 345 測試通過）；每個指令都從 Bash 與 PowerShell 對真機 dev build 執行過，面板開啟有在畫面上確認；等待使用者驗證 |
 | 12 | 鍵盤快速鍵（系統層級，每個動作與每個資料夾都能自訂） | 完成 2026-11-08（建置 / 374 測試通過）；已在真實桌面按下快速鍵並使用快速鍵視窗（見「鍵盤快速鍵」）；與階段 11 一起定為 0.5.0（tag 由專案擁有者推） |
 | 13 | 桌面的東西改為搬進資料夾而不是建捷徑（資料夾可當項目）、設定預覽改在背景繪製、介面文字縮短 | 完成 2026-11-10（建置 / 446 測試通過）；從桌面拖入已在真實桌面以注入的滑鼠輸入實際操作；預覽修正與新文字尚未在真實桌面上看過 |
+| 14 | 提示島第一步：頂端正中央的膠囊顯示用 `--ctl island` 送來的訊息，全螢幕程式執行時隱藏，預設關閉 | 完成 2026-11-10（建置 / 471 測試通過）；已在真實桌面顯示並以截圖檢查；游標在上面時的展開狀態沒試過（要用滑鼠）；BrimDeck 的其他功能是計畫中的後續步驟，尚未開始 |
 
 # 工作方式
 

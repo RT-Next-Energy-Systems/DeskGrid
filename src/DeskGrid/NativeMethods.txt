@@ -117,6 +117,7 @@ MUI_LANGUAGE_NAME
 GetStdHandle
 AttachConsole
 ATTACH_PARENT_PROCESS
+SHQueryUserNotificationState
 RegisterHotKey
 UnregisterHotKey
 WM_HOTKEY

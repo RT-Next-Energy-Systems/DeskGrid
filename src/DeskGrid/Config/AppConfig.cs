@@ -39,6 +39,9 @@ internal sealed class AppConfig
     /// </summary>
     public bool AllowControl { get; set; }
 
+    /// <summary>Whether the island (a small pill at the top of the screen that shows short messages) exists. Off until the user turns it on.</summary>
+    public bool IslandEnabled { get; set; }
+
     /// <summary>
     /// Keyboard shortcuts of the general actions (see <see cref="HotkeyBindings"/>), written like <c>Ctrl+M</c>. Starts with the
     /// defaults; an entry in the file replaces its default, and an empty text means the user cleared it.
@@ -80,6 +83,7 @@ internal sealed class AppConfig
         Language = other.Language;
         CheckForUpdatesAtStartup = other.CheckForUpdatesAtStartup;
         AllowControl = other.AllowControl;
+        IslandEnabled = other.IslandEnabled;
         FolderOrder = other.FolderOrder;
         Hotkeys.Clear();
         foreach (var (action, key) in other.Hotkeys)

@@ -189,6 +189,8 @@ DeskGrid.exe --ctl <command> [arguments]
 | `move <folder> <item> <index>` | Puts an item at a position (0 = first) in its folder. |
 | `open [folder]` | Opens a folder's panel next to it, or the list of all folders. |
 | `close` | Closes the open panel. |
+| `island show <text> [seconds]` | Shows a line on the island for a few seconds (default 5, at most 60). The island must be turned on. |
+| `island hide` | Takes away what the island shows. |
 
 Each command prints one line of JSON, `{"ok":true,"result":…}` or `{"ok":false,"error":"…"}`, with characters outside
 ASCII written as `\uXXXX`, and exits with 0 (done), 1 (the command failed), 2 (DeskGrid is not running) or 3 (wrong
@@ -198,6 +200,18 @@ commands. Nothing can be deleted this way.
 DeskGrid is a windowed program, so a command prompt doesn't wait for it: read its output through a pipe, e.g.
 `DeskGrid.exe --ctl list | Out-String` in PowerShell. Under the hood it is a named pipe, `\\.\pipe\DeskGrid.Control.<user name>`,
 taking one line of JSON per connection (`{"command":"list","args":["Work"]}`), which other programs can use directly.
+
+### The island
+
+A small black pill at the top centre of the primary screen that shows short messages. Tick **Show the island at the top
+of the screen** in Settings → Shortcuts (it is off by default), and a script or an AI agent can put a line on it with
+`DeskGrid.exe --ctl island show "Build finished" 10` (it also needs **Allow control from scripts and AI agents**).
+
+- A line stays for 5 seconds unless you give another time (up to 60); more lines wait their turn.
+- Point at the pill and it opens to show all of the text and waits while you read; click it to dismiss it.
+- It never takes the keyboard focus, and it hides while a full-screen game, video or presentation is up.
+- It covers whatever is under it at the top centre of the screen while a line is shown. It reads nothing and goes
+  nowhere online: the lines come only from `--ctl`.
 
 ### Files
 

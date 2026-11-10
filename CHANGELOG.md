@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **The island**: a small black pill at the top centre of the screen that shows a line of text for a few seconds and
+  then goes. Scripts and AI agents send it lines with `DeskGrid.exe --ctl island show`. Several lines wait their turn.
+  Point at it and it opens to show all of the text (and waits while you read); it hides while a full-screen game or
+  video is up. It is off until you turn it on.
+
+### How to use
+
+- Settings → **Shortcuts** → tick **Show the island at the top of the screen**. To send it lines, also tick **Allow control from scripts and AI agents**.
+- Send a line: `DeskGrid.exe --ctl island show "Build finished" 10` (the number is how many seconds, 5 if left out).
+  `DeskGrid.exe --ctl island hide` takes it away.
+- Point at the pill to read all of the text; click it to dismiss it.
+
 ## 0.6.2
 
 ### Changed

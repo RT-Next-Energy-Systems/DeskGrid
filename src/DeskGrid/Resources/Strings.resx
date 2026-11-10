@@ -231,6 +231,12 @@ Cancel: ask again next time.</value>
   <data name="SettingsAllowControlHint" xml:space="preserve">
     <value>Through "DeskGrid.exe --ctl", this account only. Nothing can be deleted.</value>
   </data>
+  <data name="SettingsIsland" xml:space="preserve">
+    <value>Show the island at the top of the screen</value>
+  </data>
+  <data name="SettingsIslandHint" xml:space="preserve">
+    <value>A small pill that shows short messages, for example from scripts through "DeskGrid.exe --ctl island". It hides while a full-screen app runs.</value>
+  </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>Privacy</value>
   </data>

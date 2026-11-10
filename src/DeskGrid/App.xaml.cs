@@ -8,6 +8,7 @@ using DeskGrid.Diagnostics;
 using DeskGrid.Folders;
 using DeskGrid.Hotkeys;
 using DeskGrid.Icons;
+using DeskGrid.Island;
 using DeskGrid.Panel;
 using DeskGrid.Resources;
 using DeskGrid.Settings;
@@ -44,6 +45,7 @@ public partial class App : Application
     private InstanceChannel? _instanceChannel;
     private ControlChannel? _controlChannel;
     private HotkeyService? _hotkeys;
+    private IslandHost? _island;
     private OpenMessage? _pendingOpen;
     private bool _checkingUpdates;
     private bool _runningHotkey;
@@ -111,6 +113,7 @@ public partial class App : Application
         _panels.DeleteRequested += (_, folder) => DeleteFolder(folder);
         _panels.FolderRenamer = RenameFolder;
         _tray = new TrayIcon(Strings.AppName, TrayMenu);
+        _island = new IslandHost { Enabled = _configStore.Config.IslandEnabled };
         _hotkeys = new HotkeyService();
         _hotkeys.Pressed += (_, id) => RunHotkey(id);
         ApplyHotkeys(report: false);
@@ -130,6 +133,7 @@ public partial class App : Application
         _instanceChannel?.Dispose();
         _controlChannel?.Dispose();
         _hotkeys?.Dispose();
+        _island?.Dispose();
         StopWidgets();
         _tray?.Dispose();
         _icons?.Dispose();
@@ -742,6 +746,7 @@ public partial class App : Application
         config.ReplaceWith(imported);
         UiLanguage.Apply(config.Language);
         _configStore.Save();
+        _island!.Enabled = config.IslandEnabled;
         StartWidgets();
         ApplyHotkeys(report: true);
         owner.CloseDiscarding(); // It shows the settings that were just replaced.
@@ -771,6 +776,8 @@ public partial class App : Application
         UiLanguage.Apply(config.Language);
         config.CheckForUpdatesAtStartup = choice.CheckForUpdatesAtStartup;
         config.AllowControl = choice.AllowControl;
+        config.IslandEnabled = choice.IslandEnabled;
+        _island!.Enabled = choice.IslandEnabled;
         _configStore.Save();
 
         if (rootChanged)
@@ -816,6 +823,10 @@ public partial class App : Application
         }
 
         public void ClosePanel() => app._panels?.Close();
+
+        public void ShowOnIsland(string text, TimeSpan duration) => app._island?.Show(text, duration);
+
+        public void HideIsland() => app._island?.Hide();
 
         private static ScreenRect AtCursor()
         {
