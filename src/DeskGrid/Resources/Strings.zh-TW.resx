@@ -306,6 +306,78 @@
   <data name="HotkeyIslandHide" xml:space="preserve">
     <value>隱藏提示島</value>
   </data>
+  <data name="CardFolders" xml:space="preserve">
+    <value>資料夾</value>
+  </data>
+  <data name="CardShelf" xml:space="preserve">
+    <value>暫存區</value>
+  </data>
+  <data name="CardShelfHint" xml:space="preserve">
+    <value>把檔案拖到這裡暫放，之後再拖進資料夾。</value>
+  </data>
+  <data name="IslandCameraInUse" xml:space="preserve">
+    <value>相機使用中 · {0}</value>
+  </data>
+  <data name="IslandMicInUse" xml:space="preserve">
+    <value>麥克風使用中 · {0}</value>
+  </data>
+  <data name="IslandBluetooth" xml:space="preserve">
+    <value>{0} 已連線</value>
+  </data>
+  <data name="IslandBluetoothBattery" xml:space="preserve">
+    <value>{0} 已連線 · {1}%</value>
+  </data>
+  <data name="IslandDownloaded" xml:space="preserve">
+    <value>下載完成 · {0}</value>
+  </data>
+  <data name="IslandTimerDone" xml:space="preserve">
+    <value>計時結束</value>
+  </data>
+  <data name="IslandTimerLeft" xml:space="preserve">
+    <value>計時 {0}</value>
+  </data>
+  <data name="IslandAdded" xml:space="preserve">
+    <value>已加入 {0} 個項目到 {1}</value>
+  </data>
+  <data name="HotkeyIslandTimer" xml:space="preserve">
+    <value>開始／停止提示島計時器</value>
+  </data>
+  <data name="HotkeyIslandCard" xml:space="preserve">
+    <value>開啟／關閉提示島卡片</value>
+  </data>
+  <data name="SettingsPageIsland" xml:space="preserve">
+    <value>提示島</value>
+  </data>
+  <data name="SettingsIslandPrivacy" xml:space="preserve">
+    <value>有程式開始使用麥克風或相機時提示</value>
+  </data>
+  <data name="SettingsIslandBluetooth" xml:space="preserve">
+    <value>藍牙裝置連線時提示</value>
+  </data>
+  <data name="SettingsIslandDownloads" xml:space="preserve">
+    <value>「下載」資料夾中的檔案下載完成時提示</value>
+  </data>
+  <data name="SettingsIslandSystem" xml:space="preserve">
+    <value>在資訊與卡片中顯示處理器、記憶體與網路速度</value>
+  </data>
+  <data name="SettingsIslandTimer" xml:space="preserve">
+    <value>計時器長度（分鐘）</value>
+  </data>
+  <data name="SettingsIslandQuietFrom" xml:space="preserve">
+    <value>勿擾時段開始（HH:mm，留空 = 不啟用）</value>
+  </data>
+  <data name="SettingsIslandQuietTo" xml:space="preserve">
+    <value>勿擾時段結束（HH:mm）</value>
+  </data>
+  <data name="SettingsIslandHideApps" xml:space="preserve">
+    <value>這些程式在最上層時隱藏（程式名稱，以逗號分隔）</value>
+  </data>
+  <data name="SettingsIslandShowOver" xml:space="preserve">
+    <value>這些程式即使全螢幕也照常顯示（程式名稱）</value>
+  </data>
+  <data name="SettingsIslandFollow" xml:space="preserve">
+    <value>出現在游標所在的螢幕</value>
+  </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>隱私</value>
   </data>

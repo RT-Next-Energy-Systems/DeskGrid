@@ -116,6 +116,8 @@ public partial class App : Application
         _tray = new TrayIcon(Strings.AppName, TrayMenu);
         _island = new IslandHost();
         _island.OpenFoldersRequested += (_, _) => OpenFoldersFromIsland();
+        _island.ActionRequested += RunIslandAction;
+        _island.FolderNames = () => _catalog?.Widgets.Select(w => w.Name).ToList() ?? [];
         _island.PositionChanged += (x, y) =>
         {
             _configStore.Config.IslandX = x;
@@ -316,6 +318,7 @@ public partial class App : Application
             board.Show(catalog.Widgets);
             _panels!.Refresh(catalog.Widgets);
             ApplyHotkeys(report: false); // A renamed folder keeps its shortcut under the new name; a deleted one loses it.
+            TellOfNewItems(catalog.Widgets);
 
             if (_pendingOpen is { } request)
             {
@@ -367,6 +370,46 @@ public partial class App : Application
             // A button pinned for a folder that has been deleted: show the folders there are instead of doing nothing.
             Log.Info($"Taskbar asked for \"{request.Name}\", which is not a widget folder; showing all folders.");
             _panels!.ToggleList(catalog.Widgets, at);
+        }
+    }
+
+    // The counts of the folders at the last look; a folder that holds more now got something, which the island tells of.
+    private Dictionary<string, int>? _itemCounts;
+
+    private void TellOfNewItems(IReadOnlyList<WidgetFolder> widgets)
+    {
+        var counts = widgets.ToDictionary(w => w.Name, w => w.Items.Count, StringComparer.OrdinalIgnoreCase);
+        if (_itemCounts is { } before)
+        {
+            foreach (var (name, count) in counts)
+            {
+                if (before.TryGetValue(name, out var was) && count > was)
+                {
+                    _island?.Show(string.Format(Strings.IslandAdded, count - was, name), TimeSpan.FromSeconds(4),
+                        new IslandLook("folder", "#4CC38A", null, IslandAction.FolderPrefix + name));
+                }
+            }
+        }
+
+        _itemCounts = counts;
+    }
+
+    // A click on an island line (or a folder on its card): open the folder next to the cursor, an address, or a file.
+    private void RunIslandAction(string target)
+    {
+        if (IslandAction.FolderOf(target) is { } folder)
+        {
+            OpenPanel(OpenMessageAtCursor(folder));
+            return;
+        }
+
+        try
+        {
+            ShellItem.Open(target);
+        }
+        catch (Exception exception) when (exception is IOException or System.ComponentModel.Win32Exception)
+        {
+            Log.Error("A click on the island could not open its target", exception);
         }
     }
 
@@ -655,6 +698,14 @@ public partial class App : Application
                     _island?.Hide();
                     break;
 
+                case HotkeyBindings.IslandTimer:
+                    _island?.ToggleTimer();
+                    break;
+
+                case HotkeyBindings.IslandCard:
+                    _island?.ToggleCard();
+                    break;
+
                 case HotkeyBindings.Island:
                     if (_panels?.OpenPanelName == ControlCommands.AllFolders)
                     {
@@ -840,6 +891,16 @@ public partial class App : Application
         config.UsageLimitMillions = choice.UsageLimitMillions;
         config.UsageHours = choice.UsageHours;
         config.UsageWarnPercent = choice.UsageWarnPercent;
+        config.IslandPrivacy = choice.IslandPrivacy;
+        config.IslandBluetooth = choice.IslandBluetooth;
+        config.IslandDownloads = choice.IslandDownloads;
+        config.IslandSystem = choice.IslandSystem;
+        config.IslandTimerMinutes = choice.IslandTimerMinutes;
+        config.IslandFollowPointer = choice.IslandFollowPointer;
+        config.IslandQuietFrom = choice.IslandQuietFrom.Length == 0 ? null : choice.IslandQuietFrom;
+        config.IslandQuietTo = choice.IslandQuietTo.Length == 0 ? null : choice.IslandQuietTo;
+        config.IslandHideInApps = choice.IslandHideInApps.Length == 0 ? null : choice.IslandHideInApps;
+        config.IslandShowOverApps = choice.IslandShowOverApps.Length == 0 ? null : choice.IslandShowOverApps;
         _island!.Apply(IslandOptions.From(config));
         _configStore.Save();
 
@@ -887,9 +948,19 @@ public partial class App : Application
 
         public void ClosePanel() => app._panels?.Close();
 
-        public void ShowOnIsland(string text, TimeSpan duration) => app._island?.Show(text, duration);
+        public void ShowOnIsland(string text, TimeSpan duration, IslandLook? look = null) => app._island?.Show(text, duration, look);
 
         public void HideIsland() => app._island?.Hide();
+
+        public void IslandAction(string action)
+        {
+            switch (action)
+            {
+                case "timer": app._island?.ToggleTimer(); break;
+                case "card": app._island?.ToggleCard(); break;
+                default: app._island?.ShowInfo(); break;
+            }
+        }
 
         private static ScreenRect AtCursor()
         {

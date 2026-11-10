@@ -34,10 +34,13 @@ internal interface IControlHost
     void ClosePanel();
 
     /// <summary>Shows a line on the island for a while, after the ones already waiting.</summary>
-    void ShowOnIsland(string text, TimeSpan duration);
+    void ShowOnIsland(string text, TimeSpan duration, IslandLook? look = null);
 
     /// <summary>Takes away what the island shows and what waits.</summary>
     void HideIsland();
+
+    /// <summary>Runs an island action as its shortcut does: <c>timer</c>, <c>card</c> or <c>info</c>.</summary>
+    void IslandAction(string action);
 }
 
 /// <summary>
@@ -60,8 +63,12 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
         ("move <folder> <item> <index>", "Puts an item at a position (0 = first) in its folder's order."),
         ("open [folder]", "Opens a folder's panel next to its widget, or the list of all folders."),
         ("close", "Closes the open panel."),
-        ("island show <text> [seconds]", "Shows a line of text on the island for a few seconds (default 5, at most 60). Needs the island turned on in Settings."),
+        ("island show <text> [seconds] [--icon name] [--color #RRGGBB] [--progress 0-100] [--open folder:NAME|URL|path]",
+            "Shows a line of text on the island for a few seconds (default 5, at most 60). --icon: a symbol (check, warning, error, info, download, folder, mic, camera, bluetooth, timer, battery, system) or one character; --color: the symbol and bar; --progress: a bar under the text; --open: what a click does. Needs the island turned on in Settings."),
         ("island hide", "Takes away what the island shows."),
+        ("island timer", "Starts the island's timer (the minutes set in Settings), or stops it if it runs."),
+        ("island card", "Opens the island's card (players, usage, folders, shelf), or closes it."),
+        ("island info", "Shows the island's info (usage, system, players) for the seconds set in Settings."),
     ];
 
     public ControlResponse Execute(ControlRequest request)
@@ -83,9 +90,9 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
             "move" when args.Count == 3 => Move(args[0], args[1], args[2]),
             "open" when args.Count <= 1 => Open(args.Count == 1 ? args[0] : null),
             "close" when args.Count == 0 => Close(),
-            "island" when args is ["show", var text] => IslandShow(text, null),
-            "island" when args is ["show", var text, var seconds] => IslandShow(text, seconds),
+            "island" when args is ["show", _, ..] => IslandShow(args.Skip(1).ToList()),
             "island" when args is ["hide"] => IslandHide(),
+            "island" when args is ["timer" or "card" or "info"] => IslandRun(args[0]),
             var command when Usage.Where(u => NameOf(u) == command).ToList() is { Count: > 0 } own =>
                 ControlResponse.Failure($"Wrong arguments. Usage: {string.Join(" or ", own.Select(u => u.Usage))}"),
             var command => ControlResponse.Failure($"Unknown command \"{command}\". Commands: {string.Join(", ", Usage.Select(NameOf).Distinct())}."),
@@ -259,17 +266,47 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
         return ControlResponse.Success();
     }
 
-    private ControlResponse IslandShow(string text, string? seconds)
+    // rest: the text, then optionally the seconds, then options (--icon, --color, --progress, --open) in any order.
+    private ControlResponse IslandShow(IReadOnlyList<string> rest)
     {
         if (!host.Config.IslandEnabled)
         {
             return ControlResponse.Failure("The island is turned off. Turn on \"Show the island at the top of the screen\" in DeskGrid's Settings.");
         }
 
-        text = text.Trim();
+        var text = rest[0].Trim();
         if (text.Length == 0 || text.Length > IslandActivity.MaxTextLength)
         {
             return ControlResponse.Failure($"The text must be 1 to {IslandActivity.MaxTextLength} characters.");
+        }
+
+        string? seconds = null, icon = null, color = null, progress = null, open = null;
+        for (var i = 1; i < rest.Count; i++)
+        {
+            switch (rest[i])
+            {
+                case "--icon" or "--color" or "--progress" or "--open" when i + 1 < rest.Count:
+                    var value = rest[++i];
+                    switch (rest[i - 1])
+                    {
+                        case "--icon": icon = value; break;
+                        case "--color": color = value; break;
+                        case "--progress": progress = value; break;
+                        default: open = value; break;
+                    }
+
+                    break;
+
+                case var option when option.StartsWith("--", StringComparison.Ordinal):
+                    return ControlResponse.Failure($"\"{option}\" needs a value (or is not an option of island show).");
+
+                case var number when seconds is null:
+                    seconds = number;
+                    break;
+
+                default:
+                    return ControlResponse.Failure($"Unexpected \"{rest[i]}\". Usage: {Usage.First(u => u.Usage.StartsWith("island show", StringComparison.Ordinal)).Usage}");
+            }
         }
 
         var duration = IslandActivity.DefaultDuration;
@@ -284,8 +321,46 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
             duration = TimeSpan.FromSeconds(value);
         }
 
-        host.ShowOnIsland(text, duration);
+        if (icon is not null && IslandLook.ResolveGlyph(icon) is null)
+        {
+            return ControlResponse.Failure($"\"{icon}\" is not an icon. Use one of {string.Join(", ", IslandLook.GlyphNames.Distinct())}, or a single character.");
+        }
+
+        if (color is not null && IslandLook.ResolveColor(color) is null)
+        {
+            return ControlResponse.Failure($"\"{color}\" is not a color. Use #RRGGBB or a color name.");
+        }
+
+        double? fraction = null;
+        if (progress is not null)
+        {
+            if (!double.TryParse(progress, NumberStyles.Float, CultureInfo.InvariantCulture, out var percent) || percent < 0 || percent > 100)
+            {
+                return ControlResponse.Failure($"\"{progress}\" is not a progress from 0 to 100.");
+            }
+
+            fraction = percent / 100;
+        }
+
+        if (open is not null && !IslandAction.IsAllowed(open))
+        {
+            return ControlResponse.Failure($"\"{open}\" cannot be opened by a click. Use folder:NAME, an http(s) address, or the path of a file or folder that exists.");
+        }
+
+        var look = icon is null && color is null && fraction is null && open is null ? null : new IslandLook(icon, color, fraction, open);
+        host.ShowOnIsland(text, duration, look);
         return ControlResponse.Success(new JsonObject { ["seconds"] = duration.TotalSeconds });
+    }
+
+    private ControlResponse IslandRun(string action)
+    {
+        if (!host.Config.IslandEnabled)
+        {
+            return ControlResponse.Failure("The island is turned off. Turn on \"Show the island at the top of the screen\" in DeskGrid's Settings.");
+        }
+
+        host.IslandAction(action);
+        return ControlResponse.Success();
     }
 
     private ControlResponse IslandHide()

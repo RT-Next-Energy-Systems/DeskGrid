@@ -294,7 +294,7 @@ public sealed class SettingsWindowTests : IDisposable
             EnsureApplication();
             var window = new SettingsWindow(new AppConfig { RootPath = _root.Path });
             window.Show();
-            var all = new FrameworkElement[] { window.PageGeneral, window.PagePanel, window.PageShortcuts, window.PageAbout };
+            var all = new FrameworkElement[] { window.PageGeneral, window.PagePanel, window.PageShortcuts, window.PageIsland, window.PageAbout };
             var result = new List<(SettingsWindow.Page Page, int Visible, bool Right)>();
             foreach (var page in Enum.GetValues<SettingsWindow.Page>())
             {

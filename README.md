@@ -189,8 +189,9 @@ DeskGrid.exe --ctl <command> [arguments]
 | `move <folder> <item> <index>` | Puts an item at a position (0 = first) in its folder. |
 | `open [folder]` | Opens a folder's panel next to it, or the list of all folders. |
 | `close` | Closes the open panel. |
-| `island show <text> [seconds]` | Shows a line on the island for a few seconds (default 5, at most 60). The island must be turned on. |
+| `island show <text> [seconds] [--icon name] [--color #RRGGBB] [--progress 0-100] [--open target]` | Shows a line on the island for a few seconds (default 5, at most 60), optionally with a symbol, a color, a progress bar and what a click opens (`folder:NAME`, an http(s) address or an existing path). The island must be turned on. |
 | `island hide` | Takes away what the island shows. |
+| `island timer` / `island card` / `island info` | Starts or stops the island timer; opens or closes the card; shows the info (usage, system, players). |
 
 Each command prints one line of JSON, `{"ok":true,"result":…}` or `{"ok":false,"error":"…"}`, with characters outside
 ASCII written as `\uXXXX`, and exits with 0 (done), 1 (the command failed), 2 (DeskGrid is not running) or 3 (wrong

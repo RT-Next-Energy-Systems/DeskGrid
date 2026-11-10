@@ -312,6 +312,78 @@ Cancel: ask again next time.</value>
   <data name="HotkeyIslandHide" xml:space="preserve">
     <value>Hide the island</value>
   </data>
+  <data name="CardFolders" xml:space="preserve">
+    <value>Folders</value>
+  </data>
+  <data name="CardShelf" xml:space="preserve">
+    <value>Shelf</value>
+  </data>
+  <data name="CardShelfHint" xml:space="preserve">
+    <value>Drop files here to park them. Drag them out later to a folder.</value>
+  </data>
+  <data name="IslandCameraInUse" xml:space="preserve">
+    <value>Camera in use · {0}</value>
+  </data>
+  <data name="IslandMicInUse" xml:space="preserve">
+    <value>Microphone in use · {0}</value>
+  </data>
+  <data name="IslandBluetooth" xml:space="preserve">
+    <value>{0} connected</value>
+  </data>
+  <data name="IslandBluetoothBattery" xml:space="preserve">
+    <value>{0} connected · {1}%</value>
+  </data>
+  <data name="IslandDownloaded" xml:space="preserve">
+    <value>Downloaded · {0}</value>
+  </data>
+  <data name="IslandTimerDone" xml:space="preserve">
+    <value>Timer done</value>
+  </data>
+  <data name="IslandTimerLeft" xml:space="preserve">
+    <value>Timer {0}</value>
+  </data>
+  <data name="IslandAdded" xml:space="preserve">
+    <value>Added {0} item(s) to {1}</value>
+  </data>
+  <data name="HotkeyIslandTimer" xml:space="preserve">
+    <value>Start or stop the island timer</value>
+  </data>
+  <data name="HotkeyIslandCard" xml:space="preserve">
+    <value>Open or close the island card</value>
+  </data>
+  <data name="SettingsPageIsland" xml:space="preserve">
+    <value>Island</value>
+  </data>
+  <data name="SettingsIslandPrivacy" xml:space="preserve">
+    <value>Tell when a program starts using the microphone or camera</value>
+  </data>
+  <data name="SettingsIslandBluetooth" xml:space="preserve">
+    <value>Tell when a Bluetooth device connects</value>
+  </data>
+  <data name="SettingsIslandDownloads" xml:space="preserve">
+    <value>Tell when a download in the Downloads folder is finished</value>
+  </data>
+  <data name="SettingsIslandSystem" xml:space="preserve">
+    <value>Show processor, memory and network speed in the info and on the card</value>
+  </data>
+  <data name="SettingsIslandTimer" xml:space="preserve">
+    <value>Timer length (minutes)</value>
+  </data>
+  <data name="SettingsIslandQuietFrom" xml:space="preserve">
+    <value>Quiet hours start (HH:mm, empty = none)</value>
+  </data>
+  <data name="SettingsIslandQuietTo" xml:space="preserve">
+    <value>Quiet hours end (HH:mm)</value>
+  </data>
+  <data name="SettingsIslandHideApps" xml:space="preserve">
+    <value>Hide while these programs are in front (names, comma separated)</value>
+  </data>
+  <data name="SettingsIslandShowOver" xml:space="preserve">
+    <value>Show over these programs even when they are full screen (names)</value>
+  </data>
+  <data name="SettingsIslandFollow" xml:space="preserve">
+    <value>Appear on the screen the pointer is on</value>
+  </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>Privacy</value>
   </data>

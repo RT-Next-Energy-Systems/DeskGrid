@@ -54,6 +54,13 @@ internal sealed class IslandWindow : Window
     private readonly Image _cover;
     private readonly TextBlock _text;
     private readonly Border _textBox;
+    private readonly TextBlock _symbol;
+    private readonly StackPanel _content;
+    private readonly Border _barTrack;
+    private readonly Border _barFill;
+    private IslandLook? _look;
+    private bool _live; // The pill shows a line that changes (a timer, the system's state): a click opens the card.
+    private double _progress;
     private readonly TranslateTransform _scroll = new();
     private readonly StackPanel _buttons;
     private readonly TextBlock _playGlyph;
@@ -64,6 +71,9 @@ internal sealed class IslandWindow : Window
     private ScreenPoint? _anchor; // Where the user put the island: the middle of its top edge, in screen pixels.
     private (int X, int Y, int AnchorX, int Top)? _drag; // The pointer and the island when a press began.
     private bool _dragged;
+
+    /// <summary>Whether the island, at its default place, appears on the screen the pointer is on (not always the primary one).</summary>
+    public bool FollowPointer { get; set; }
 
     public IslandWindow()
     {
@@ -102,6 +112,9 @@ internal sealed class IslandWindow : Window
         };
         // Shows as much of the text as fits; a longer line scrolls inside it (see RestartMarquee).
         _textBox = new Border { ClipToBounds = true, Child = _text, VerticalAlignment = VerticalAlignment.Center };
+        _symbol = Glyph("");
+        _symbol.Margin = new Thickness(0, 0, 8, 0);
+        _symbol.Visibility = Visibility.Collapsed;
         _playGlyph = Glyph(PlayGlyph);
         _buttons = new StackPanel
         {
@@ -120,8 +133,20 @@ internal sealed class IslandWindow : Window
         {
             Orientation = Orientation.Horizontal,
             HorizontalAlignment = HorizontalAlignment.Center,
-            Children = { _coverBox, _textBox, _buttons },
+            Children = { _symbol, _coverBox, _textBox, _buttons },
         };
+        _barFill = new Border { Background = Brushes.White, CornerRadius = new CornerRadius(1.5), HorizontalAlignment = HorizontalAlignment.Left, Width = 0 };
+        _barTrack = new Border
+        {
+            Height = 3,
+            Margin = new Thickness(0, 6, 0, 0),
+            CornerRadius = new CornerRadius(1.5),
+            Background = new SolidColorBrush(Color.FromArgb(70, 255, 255, 255)),
+            Visibility = Visibility.Collapsed,
+            Child = _barFill,
+        };
+        _barTrack.SizeChanged += (_, _) => FillBar();
+        _content = new StackPanel { Children = { _row, _barTrack } };
         _pill = new Border
         {
             Background = Brushes.Black,
@@ -131,7 +156,16 @@ internal sealed class IslandWindow : Window
             VerticalAlignment = VerticalAlignment.Top,
             ClipToBounds = true, // While the pill is still small, the content is cut at its edge, not drawn outside it.
             Opacity = 0,
-            Child = _row,
+            Child = _content,
+            AllowDrop = true,
+        };
+        _pill.DragEnter += (_, e) =>
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effects = DragDropEffects.Copy;
+                FilesHovered?.Invoke(this, EventArgs.Empty);
+            }
         };
         _pill.MouseEnter += (_, _) => SetOpen(true);
         _pill.MouseLeave += (_, _) => SetOpen(false);
@@ -212,9 +246,18 @@ internal sealed class IslandWindow : Window
             Reposition(); // The size of the screen it landed on.
             PositionChanged?.Invoke(_anchor.Value.X, _anchor.Value.Y);
         }
-        else if (_music is null)
+        else if (_look?.Action is { } action)
         {
-            Clicked?.Invoke(this, EventArgs.Empty); // A song has its buttons; a line is dismissed by a click.
+            ActionRequested?.Invoke(action);
+            Clicked?.Invoke(this, EventArgs.Empty);
+        }
+        else if (_music is null && !_live)
+        {
+            Clicked?.Invoke(this, EventArgs.Empty); // A line is dismissed by a click.
+        }
+        else
+        {
+            ExpandRequested?.Invoke(this, EventArgs.Empty); // A song (or a timer, the state of the system): the card.
         }
     }
 
@@ -259,6 +302,48 @@ internal sealed class IslandWindow : Window
     /// <summary>Raised when a line (not a song) was clicked.</summary>
     public event EventHandler? Clicked;
 
+    /// <summary>Raised when a line with an action (<see cref="IslandLook.Action"/>) was clicked.</summary>
+    public event Action<string>? ActionRequested;
+
+    /// <summary>Raised when a song or other line without an action was clicked: the card is wanted.</summary>
+    public event EventHandler? ExpandRequested;
+
+    /// <summary>Raised when files are dragged over the pill.</summary>
+    public event EventHandler? FilesHovered;
+
+    /// <summary>
+    /// Fills the bar under the text to <paramref name="fraction"/> (0 to 1); <see langword="null"/> takes the bar away.
+    /// </summary>
+    public void MarkLive(bool live) => _live = live;
+
+    public void SetProgress(double? fraction)
+    {
+        var shown = fraction is not null;
+        var visibility = shown ? Visibility.Visible : Visibility.Collapsed;
+        var changedShape = _barTrack.Visibility != visibility;
+        _barTrack.Visibility = visibility;
+        _progress = Math.Clamp(fraction ?? 0, 0, 1);
+        FillBar();
+        if (changedShape && IsVisible && _present)
+        {
+            Resize();
+        }
+    }
+
+    private void FillBar() => _barFill.Width = _barTrack.ActualWidth * _progress;
+
+    /// <summary>Changes the text of the line that is up, in place (a timer ticking), and its bar.</summary>
+    public void Update(string text, double? progress)
+    {
+        if (_text.Text != text)
+        {
+            _text.Text = text;
+            Resize();
+        }
+
+        SetProgress(progress);
+    }
+
     /// <summary>Whether the play / pause button shows "pause" (the song plays) or "play".</summary>
     public void SetPlaying(bool playing) => _playGlyph.Text = playing ? PauseGlyph : PlayGlyph;
 
@@ -266,9 +351,19 @@ internal sealed class IslandWindow : Window
     /// Shows this: the pill appears (or, if it is up already, changes to fit it). A song comes with its cover (if it has
     /// one) and the actions of the buttons that show while the pointer is over the pill.
     /// </summary>
-    public void Display(string text, ImageSource? cover = null, MusicActions? music = null, string source = "")
+    public void Display(string text, ImageSource? cover = null, MusicActions? music = null, string source = "", IslandLook? look = null)
     {
         _source = source;
+        _look = look;
+        _live = false;
+        var glyph = IslandLook.ResolveGlyph(look?.Glyph);
+        var accent = IslandLook.ResolveColor(look?.Accent);
+        _symbol.Text = glyph ?? "";
+        _symbol.Visibility = glyph is null ? Visibility.Collapsed : Visibility.Visible;
+        var brush = accent is { } color ? new SolidColorBrush(color) : Brushes.White;
+        _symbol.Foreground = accent is null ? Brushes.White : brush;
+        _barFill.Background = brush;
+        SetProgress(look?.Progress);
         _text.Text = text;
         _cover.Source = cover;
         _coverBox.Visibility = cover is null ? Visibility.Collapsed : Visibility.Visible;
@@ -323,6 +418,11 @@ internal sealed class IslandWindow : Window
         TopEdge.Prepare(this, RoomWidth, RoomHeight, TopGap, () => { if (_drag is null) { Reposition(); } });
     }
 
+    private ScreenPoint? Near() => FollowPointer && _anchor is null && PInvoke.GetCursorPos(out var cursor) ? new ScreenPoint(cursor.X, cursor.Y) : null;
+
+    /// <summary>The middle of the top edge of the island: where the user put it, or its default place.</summary>
+    public ScreenPoint HomePoint() => _anchor ?? TopEdge.DefaultAnchor(TopGap, Near());
+
     /// <summary>Lifts the island above the taskbar, which comes back on top whenever it is used.</summary>
     public void RaiseAboveTaskbar()
     {
@@ -343,7 +443,7 @@ internal sealed class IslandWindow : Window
         }
         else
         {
-            TopEdge.Place(window, RoomWidth, RoomHeight, TopGap);
+            TopEdge.Place(window, RoomWidth, RoomHeight, TopGap, Near());
         }
     }
 
@@ -378,8 +478,8 @@ internal sealed class IslandWindow : Window
         _text.Width = natural; // Fixed while the pill grows, so the text does not wrap again on the way.
         _textBox.Width = wraps ? natural : Math.Min(natural, room);
         _overflow = wraps ? 0 : Math.Max(0, natural - room);
-        _row.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        var content = _row.DesiredSize;
+        _content.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        var content = _content.DesiredSize;
         return new Size(Math.Max(content.Width + 2 * PadX, PillHeight), Math.Max(content.Height + 2 * PadY, PillHeight));
     }
 

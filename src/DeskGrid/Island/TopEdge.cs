@@ -59,11 +59,11 @@ internal static class TopEdge
     }
 
     /// <summary>Moves the window to the top centre of the primary screen, topmost, in that screen's pixels; sizes are in DIPs.</summary>
-    public static void Place(HWND window, double width, double height, double gap)
+    public static void Place(HWND window, double width, double height, double gap, ScreenPoint? near = null)
     {
-        var monitor = MonitorArea.Primary;
+        var monitor = near is { } point ? MonitorArea.At(point) : MonitorArea.Primary;
         var pixels = monitor.ToPixels(width);
-        var position = Center(Screen(), pixels, monitor.ToPixels(gap));
+        var position = Center(near is { } p ? BoundsAt(p) : Screen(), pixels, monitor.ToPixels(gap));
         PInvoke.SetWindowPos(window, Topmost, position.X, position.Y, pixels, monitor.ToPixels(height), SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
     }
 
@@ -78,6 +78,14 @@ internal static class TopEdge
         var (pixels, heightPixels) = (monitor.ToPixels(width), monitor.ToPixels(height));
         anchor = Clamp(anchor, 0, monitor.ToPixels(PillRoom), BoundsAt(anchor));
         PInvoke.SetWindowPos(window, Topmost, anchor.X - pixels / 2, anchor.Y, pixels, heightPixels, SET_WINDOW_POS_FLAGS.SWP_NOACTIVATE);
+    }
+
+    /// <summary>The middle of the top edge of the island at its default place: on the primary screen, or the one that has <paramref name="near"/>.</summary>
+    public static ScreenPoint DefaultAnchor(double gap, ScreenPoint? near = null)
+    {
+        var monitor = near is { } point ? MonitorArea.At(point) : MonitorArea.Primary;
+        var screen = near is { } p ? BoundsAt(p) : Screen();
+        return new ScreenPoint(screen.Left + screen.Width / 2, screen.Top + monitor.ToPixels(gap));
     }
 
     // The whole primary screen, not its work area: the island sits over the taskbar when that is at the top.

@@ -68,6 +68,35 @@ internal sealed class AppConfig
     /// <summary>The percentage of the limit at which the island warns.</summary>
     public int UsageWarnPercent { get; set; } = 80;
 
+    /// <summary>Whether the island says when a program starts using the microphone or camera.</summary>
+    public bool IslandPrivacy { get; set; }
+
+    /// <summary>Whether the island says when a Bluetooth device connects.</summary>
+    public bool IslandBluetooth { get; set; }
+
+    /// <summary>Whether the island says when a download to the Downloads folder is finished.</summary>
+    public bool IslandDownloads { get; set; }
+
+    /// <summary>Whether the state of the system (processor, memory, network) is part of the island's info and card.</summary>
+    public bool IslandSystem { get; set; }
+
+    /// <summary>The minutes the island's timer runs.</summary>
+    public int IslandTimerMinutes { get; set; } = 25;
+
+    /// <summary>Quiet hours as "HH:mm" (they may span midnight): the island stays away. Empty = none.</summary>
+    public string? IslandQuietFrom { get; set; }
+
+    public string? IslandQuietTo { get; set; }
+
+    /// <summary>Programs (names, comma separated) that hide the island while they are in front.</summary>
+    public string? IslandHideInApps { get; set; }
+
+    /// <summary>Programs the island shows over even when they are full screen.</summary>
+    public string? IslandShowOverApps { get; set; }
+
+    /// <summary>Whether the island, at its default place, appears on the screen the pointer is on.</summary>
+    public bool IslandFollowPointer { get; set; }
+
     /// <summary>Whether holding the pointer at the top centre of the screen for a moment opens the list of all folders.</summary>
     public bool IslandFolders { get; set; } = true;
 
@@ -123,6 +152,16 @@ internal sealed class AppConfig
         UsageLimitMillions = other.UsageLimitMillions;
         UsageHours = other.UsageHours;
         UsageWarnPercent = other.UsageWarnPercent;
+        IslandPrivacy = other.IslandPrivacy;
+        IslandBluetooth = other.IslandBluetooth;
+        IslandDownloads = other.IslandDownloads;
+        IslandSystem = other.IslandSystem;
+        IslandTimerMinutes = other.IslandTimerMinutes;
+        IslandQuietFrom = other.IslandQuietFrom;
+        IslandQuietTo = other.IslandQuietTo;
+        IslandHideInApps = other.IslandHideInApps;
+        IslandShowOverApps = other.IslandShowOverApps;
+        IslandFollowPointer = other.IslandFollowPointer;
         FolderOrder = other.FolderOrder;
         Hotkeys.Clear();
         foreach (var (action, key) in other.Hotkeys)

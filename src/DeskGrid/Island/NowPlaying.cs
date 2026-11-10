@@ -131,6 +131,7 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
                 _entries[id] = entry;
                 session.MediaPropertiesChanged += OnSessionChanged;
                 session.PlaybackInfoChanged += OnSessionChanged;
+                session.TimelinePropertiesChanged += OnSessionChanged;
             }
         }
 
@@ -156,13 +157,16 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
         {
             var properties = await entry.Session.TryGetMediaPropertiesAsync();
             var playing = entry.Session.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
+            var line = entry.Session.GetTimelineProperties();
+            var duration = line is null ? TimeSpan.Zero : line.EndTime - line.StartTime;
+            var timeline = line is null || duration <= TimeSpan.Zero ? null : new MediaTimeline(duration, line.Position - line.StartTime, line.LastUpdatedTime);
             if (properties is not null && (properties.Title.Length > 0 || properties.Artist.Length > 0))
             {
                 var cover = entry.Cover is { } known && known.Title == properties.Title && known.Artist == properties.Artist
                     ? known.Image
                     : await ReadCoverAsync(properties.Thumbnail);
                 entry.Cover = (properties.Title, properties.Artist, cover);
-                track = new MediaTrack(properties.Title, properties.Artist, playing, cover, entry.Id);
+                track = new MediaTrack(properties.Title, properties.Artist, playing, cover, entry.Id, timeline);
             }
         }
         catch (Exception exception)
@@ -240,5 +244,6 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
     {
         entry.Session.MediaPropertiesChanged -= OnSessionChanged;
         entry.Session.PlaybackInfoChanged -= OnSessionChanged;
+        entry.Session.TimelinePropertiesChanged -= OnSessionChanged;
     }
 }

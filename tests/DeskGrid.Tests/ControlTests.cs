@@ -406,8 +406,12 @@ public sealed class ControlCommandsTests : IDisposable
 
         public List<(string Text, TimeSpan Duration)> IslandLines { get; } = [];
 
-        public void ShowOnIsland(string text, TimeSpan duration) => IslandLines.Add((text, duration));
+        public void ShowOnIsland(string text, TimeSpan duration, IslandLook? look = null) => IslandLines.Add((text, duration));
 
         public void HideIsland() => IslandLines.Clear();
+
+        public List<string> IslandActions { get; } = [];
+
+        public void IslandAction(string action) => IslandActions.Add(action);
     }
 }

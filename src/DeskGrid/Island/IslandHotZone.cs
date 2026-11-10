@@ -33,7 +33,16 @@ internal sealed class IslandHotZone : Window
         ShowActivated = false;
         Topmost = true;
         Focusable = false;
+        AllowDrop = true;
         (Width, Height) = (ZoneWidth, ZoneHeight);
+        DragEnter += (_, e) =>
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effects = DragDropEffects.Copy;
+                FilesHovered?.Invoke(this, EventArgs.Empty);
+            }
+        };
 
         _dwell.Tick += (_, _) =>
         {
@@ -57,6 +66,9 @@ internal sealed class IslandHotZone : Window
         MouseEnter += (_, _) => _dwell.Start();
         MouseLeave += (_, _) => _dwell.Stop();
     }
+
+    /// <summary>Raised when files are dragged to the strip.</summary>
+    public event EventHandler? FilesHovered;
 
     /// <summary>Raised when the pointer has stayed on the strip for <see cref="Delay"/>.</summary>
     public event EventHandler? Dwelled;

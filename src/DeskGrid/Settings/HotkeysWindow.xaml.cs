@@ -48,6 +48,8 @@ internal partial class HotkeysWindow : Window
         HotkeyBindings.IslandShow => Strings.HotkeyIslandShow,
         HotkeyBindings.IslandToggle => Strings.HotkeyIslandToggle,
         HotkeyBindings.IslandHide => Strings.HotkeyIslandHide,
+        HotkeyBindings.IslandTimer => Strings.HotkeyIslandTimer,
+        HotkeyBindings.IslandCard => Strings.HotkeyIslandCard,
         HotkeyBindings.NewFolder => Strings.HotkeyNewFolder,
         _ => Strings.HotkeySettings,
     };

@@ -5,6 +5,7 @@ using System.Windows.Media;
 using DeskGrid.Config;
 using DeskGrid.Folders;
 using DeskGrid.Hotkeys;
+using DeskGrid.Island;
 using DeskGrid.Panel;
 using DeskGrid.Resources;
 using DeskGrid.Shell;
@@ -32,7 +33,17 @@ internal sealed record SettingsChoice(
     bool IslandUsage = false,
     double UsageLimitMillions = 5,
     int UsageHours = 5,
-    int UsageWarnPercent = 80);
+    int UsageWarnPercent = 80,
+    bool IslandPrivacy = false,
+    bool IslandBluetooth = false,
+    bool IslandDownloads = false,
+    bool IslandSystem = false,
+    int IslandTimerMinutes = 25,
+    bool IslandFollowPointer = false,
+    string IslandQuietFrom = "",
+    string IslandQuietTo = "",
+    string IslandHideInApps = "",
+    string IslandShowOverApps = "");
 
 /// <summary>One line of the language list: the language and the name it is shown under.</summary>
 internal sealed record LanguageOption(AppLanguage Language, string Label);
@@ -95,6 +106,16 @@ internal partial class SettingsWindow : Window
         UsageHoursBox.Text = config.UsageHours.ToString(System.Globalization.CultureInfo.InvariantCulture);
         UsageWarnBox.Text = config.UsageWarnPercent.ToString(System.Globalization.CultureInfo.InvariantCulture);
         IslandSecondsBox.Text = config.IslandShowSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        IslandPrivacyBox.IsChecked = config.IslandPrivacy;
+        IslandBluetoothBox.IsChecked = config.IslandBluetooth;
+        IslandDownloadsBox.IsChecked = config.IslandDownloads;
+        IslandSystemBox.IsChecked = config.IslandSystem;
+        IslandTimerBox.Text = config.IslandTimerMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        IslandFollowBox.IsChecked = config.IslandFollowPointer;
+        IslandQuietFromBox.Text = config.IslandQuietFrom ?? "";
+        IslandQuietToBox.Text = config.IslandQuietTo ?? "";
+        IslandHideAppsBox.Text = config.IslandHideInApps ?? "";
+        IslandShowOverBox.Text = config.IslandShowOverApps ?? "";
         MusicRadioFor(config.IslandMusic).IsChecked = true;
         Pages.SelectedItem = PageGeneralItem;
 
@@ -117,6 +138,8 @@ internal partial class SettingsWindow : Window
         choice.RootPath, choice.PanelColumns, choice.DropMode, choice.DeleteMode, choice.PanelOpenMode, choice.Language,
         choice.CheckForUpdatesAtStartup, choice.AllowControl, choice.IslandEnabled, choice.IslandMusic, choice.IslandFolders, choice.IslandBattery,
         choice.IslandShowSeconds, choice.IslandUsage, choice.UsageLimitMillions, choice.UsageHours, choice.UsageWarnPercent,
+        choice.IslandPrivacy, choice.IslandBluetooth, choice.IslandDownloads, choice.IslandSystem, choice.IslandTimerMinutes, choice.IslandFollowPointer,
+        choice.IslandQuietFrom, choice.IslandQuietTo, choice.IslandHideInApps, choice.IslandShowOverApps,
         choice.PanelBackground.Style, choice.PanelBackground.CustomColor, choice.PanelBackground.CustomOpacity,
         choice.PanelBackground.Opacity, choice.PanelBackground.GlassShade);
 
@@ -126,6 +149,7 @@ internal partial class SettingsWindow : Window
         General,
         Panel,
         Shortcuts,
+        Island,
         About,
     }
 
@@ -140,6 +164,7 @@ internal partial class SettingsWindow : Window
         (PageGeneralItem, PageGeneral),
         (PagePanelItem, PagePanel),
         (PageShortcutsItem, PageShortcuts),
+        (PageIslandItem, PageIsland),
         (PageAboutItem, PageAbout),
     ];
 
@@ -319,6 +344,16 @@ internal partial class SettingsWindow : Window
         UsageWarnLabel.Text = Strings.SettingsUsageWarn;
         IslandSecondsLabel.Text = Strings.SettingsIslandSeconds;
         IslandResetButton.Content = Strings.SettingsIslandReset;
+        IslandPrivacyBox.Content = Strings.SettingsIslandPrivacy;
+        IslandBluetoothBox.Content = Strings.SettingsIslandBluetooth;
+        IslandDownloadsBox.Content = Strings.SettingsIslandDownloads;
+        IslandSystemBox.Content = Strings.SettingsIslandSystem;
+        IslandTimerLabel.Text = Strings.SettingsIslandTimer;
+        IslandFollowBox.Content = Strings.SettingsIslandFollow;
+        IslandQuietFromLabel.Text = Strings.SettingsIslandQuietFrom;
+        IslandQuietToLabel.Text = Strings.SettingsIslandQuietTo;
+        IslandHideAppsLabel.Text = Strings.SettingsIslandHideApps;
+        IslandShowOverLabel.Text = Strings.SettingsIslandShowOver;
         GitHubLabel.Text = Strings.SettingsGitHub;
 
         // Only owner/name: the label already says GitHub, and the whole address would not fit beside the button.
@@ -350,6 +385,7 @@ internal partial class SettingsWindow : Window
         PageGeneralText.Text = Strings.SettingsPageGeneral;
         PagePanelText.Text = Strings.SettingsPagePanel;
         PageShortcutsText.Text = Strings.SettingsPageShortcuts;
+        PageIslandText.Text = Strings.SettingsPageIsland;
         PageAboutText.Text = Strings.SettingsPageAbout;
         VersionLabel.Text = Strings.SettingsVersion;
         VersionText.Text = UpdateChecker.CurrentVersion.ToString(3);
@@ -444,7 +480,20 @@ internal partial class SettingsWindow : Window
         IslandUsageBox.IsChecked == true,
         Math.Clamp(double.TryParse(UsageLimitBox.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var limit) ? limit : _config.UsageLimitMillions, 0.01, 100000),
         Number(UsageHoursBox, _config.UsageHours, 1, 720),
-        Number(UsageWarnBox, _config.UsageWarnPercent, 1, 100));
+        Number(UsageWarnBox, _config.UsageWarnPercent, 1, 100),
+        IslandPrivacyBox.IsChecked == true,
+        IslandBluetoothBox.IsChecked == true,
+        IslandDownloadsBox.IsChecked == true,
+        IslandSystemBox.IsChecked == true,
+        Number(IslandTimerBox, _config.IslandTimerMinutes, 1, 600),
+        IslandFollowBox.IsChecked == true,
+        Time(IslandQuietFromBox),
+        Time(IslandQuietToBox),
+        IslandHideAppsBox.Text.Trim(),
+        IslandShowOverBox.Text.Trim());
+
+    // "HH:mm" as typed, or empty when it is not a time.
+    private static string Time(TextBox box) => IslandRules.Parse(box.Text) is { } time ? time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) : "";
 
     // A whole number typed in a box; what it held before when the text is not one, kept within the range.
     private static int Number(TextBox box, int fallback, int min, int max) =>
