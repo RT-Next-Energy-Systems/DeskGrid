@@ -823,3 +823,14 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: None.
 **Consequences**: Fixes with no test that fails without them, checked by reading only: the `PrivacyWatcher` and `BluetoothWatcher` after-dispose guards, the hot-zone dwell stop, the atomic export, the `MediaJumper` catch, the panel's `_resize` stop. The brush freezing was shown by `IslandWindowTests` failing before it.
 **Author**: Claude (Opus 5.5)
+
+---
+
+### 2026-11-11 (7) — App and Settings read through: restore asks first
+**Decision**:
+1. **Restoring a dated backup asks first** (`App.ShowSettings`: `RestoreBackup` calls `RestoreFromFile(..., confirm: true)`). It passed `confirm: false`, so one click on a date in the Restore menu replaced every setting at once, with nothing kept of the settings it replaced; `CLAUDE.md` already described this path as asking for confirmation. If the owner wants the restore without the question, it is this one argument.
+2. **`StopWidgets` forgets the item counts** (`_itemCounts`), so after the root folder changes a folder of the new root that has the name of an old one is not announced on NotiLand as "added N items".
+**Reason**: Last two large files not read line by line in this sweep: `App.xaml.cs` and `SettingsWindow.xaml.cs`.
+**Alternatives**: Writing a backup of the current settings before every restore (more than the documented design).
+**Consequences**: 613 tests pass. Not tested by a test: the question is a `MessageBox` on the UI thread.
+**Author**: Claude (Opus 5.5)

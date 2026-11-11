@@ -399,6 +399,7 @@ public partial class App : Application
         _catalog?.Dispose();
         _board?.Dispose();
         (_board, _catalog) = (null, null);
+        _itemCounts = null; // Counts of another root's folders: a same-named folder there would be told of as "added to".
     }
 
     // The cursor is read at once: it is where the user clicked the taskbar button, not where it is a second later.
@@ -833,7 +834,7 @@ public partial class App : Application
         settings.EditHotkeys = () => EditHotkeys(settings);
         settings.ExportSettings = () => ExportSettings(settings);
         settings.ImportSettings = () => ImportSettings(settings);
-        settings.RestoreBackup = path => RestoreFromFile(settings, path, confirm: false);
+        settings.RestoreBackup = path => RestoreFromFile(settings, path, confirm: true); // One click on a date must not replace every setting unasked.
         settings.Closed += (_, _) => _settings = null;
         _settings = settings;
         settings.Show();

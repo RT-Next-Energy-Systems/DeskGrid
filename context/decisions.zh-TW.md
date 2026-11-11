@@ -825,3 +825,14 @@
 **Alternatives**：無。
 **Consequences**：沒有「沒修正就失敗」測試、只靠閱讀確認的修正：`PrivacyWatcher` 與 `BluetoothWatcher` 的 Dispose 後防護、頂端條停留計時器、匯出改原子寫入、`MediaJumper` 的例外捕捉、面板 `_resize` 停止。筆刷凍結由凍結前 `IslandWindowTests` 失敗證明。
 **Author**：Claude（Opus 5.5）
+
+---
+
+### 2026-11-11（七）— 讀完 App 與設定視窗：還原會先詢問
+**Decision**：
+1. **還原某天的備份會先詢問**（`App.ShowSettings`：`RestoreBackup` 改呼叫 `RestoreFromFile(..., confirm: true)`）。原本傳 `confirm: false`，在還原選單點一下日期就立刻取代全部設定，被取代的設定也沒有留下；`CLAUDE.md` 本來就寫這條路徑會先確認。若擁有者想要不詢問，只要改回這個參數。
+2. **`StopWidgets` 清空項目數**（`_itemCounts`），換根目錄後，新根目錄裡和舊的同名的資料夾不會被 NotiLand 報成「已加入 N 個項目」。
+**Reason**：這次排查中最後兩個沒逐行讀的大檔：`App.xaml.cs` 與 `SettingsWindow.xaml.cs`。
+**Alternatives**：每次還原前先備份目前設定（超出文件記載的設計）。
+**Consequences**：613 測試通過。沒有測試涵蓋：詢問是 UI 執行緒上的 `MessageBox`。
+**Author**：Claude（Opus 5.5）
