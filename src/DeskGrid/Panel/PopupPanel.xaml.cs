@@ -1090,9 +1090,18 @@ internal partial class PopupPanel : Window
         var origin = SlotCenter(index);
         PInvoke.GetCursorPos(out var cursor);
         _grab = (origin.X - cursor.X, origin.Y - cursor.Y);
-        _ghost = new DragGhost(item.Icon, origin, item.IsFolder ? (Brush)Resources["TileBrush"] : null);
-        _ghost.Show();
-        _ghost.Lift();
+        try
+        {
+            _ghost = new DragGhost(item.Icon, origin, item.IsFolder ? (Brush)Resources["TileBrush"] : null);
+            _ghost.Show();
+            _ghost.Lift();
+        }
+        catch (System.ComponentModel.Win32Exception exception)
+        {
+            // No window for the flying icon (out of resources): the drag goes on without it.
+            Diagnostics.Log.Error("The drag ghost could not be made", exception);
+            _ghost = null;
+        }
         _away.Reset();
         _watch.Start();
         if (ContainerAt(index) is { } container)
@@ -1171,6 +1180,10 @@ internal partial class PopupPanel : Window
                 _settlingItem = null;
                 RestoreItems();
             });
+        }
+        else
+        {
+            RestoreItems(); // No flying icon to wait for: the item shows in its slot again at once.
         }
 
         if (reorder is not null)

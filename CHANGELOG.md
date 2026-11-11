@@ -46,6 +46,7 @@
 - A song hidden because its page is in front comes back reliably when you leave that page, and a song announcement hidden that way still ends on time.
 - On the card, letting go of a song's bar after the song changed no longer leaves the bar holding the mouse, and moving one song's bar no longer freezes the other players' bars for a moment.
 - The mouse wheel over a list inside a Settings page scrolls that list instead of the page; the usage line shows "1h 00m" instead of "60m"; a few rare crashes in NotiLand's player lookup and microphone/camera watcher are gone.
+- When Windows is out of drawing resources, dragging an item in a folder no longer crashes DeskGrid: the item is dragged without its flying icon and shows in its slot again afterwards.
 - Picking a day under Settings → General → **Restore** now asks before it replaces your settings (a slip used to replace them at once); after changing the root folder, NotiLand no longer says items were added to a folder of the new root that only has the same name as one of the old.
 - Moving a folder that holds a junction or folder link to another drive (dragging it in from the desktop, or deleting a folder to the desktop) no longer deletes the files of the folder that link points to.
 - Turning NotiLand off while you set one of its places gives back the windows that were minimized for it.

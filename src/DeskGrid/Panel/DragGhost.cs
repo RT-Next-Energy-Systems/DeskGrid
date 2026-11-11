@@ -113,6 +113,20 @@ internal sealed unsafe class DragGhost
         void* bits;
         _memory = PInvoke.CreateCompatibleDC(HDC.Null);
         _bitmap = PInvoke.CreateDIBSection(_memory, &info, DIB_USAGE.DIB_RGB_COLORS, &bits, HANDLE.Null, 0);
+        if (_bitmap.IsNull || bits is null)
+        {
+            // Out of GDI resources: drawing into a null bitmap would bring the whole process down, so give up here.
+            var error = new Win32Exception();
+            if (!_bitmap.IsNull)
+            {
+                PInvoke.DeleteObject(_bitmap);
+            }
+
+            PInvoke.DeleteDC(_memory);
+            PInvoke.DestroyWindow(_window);
+            throw error;
+        }
+
         _pixels = (byte*)bits;
         _previousBitmap = PInvoke.SelectObject(_memory, _bitmap);
     }

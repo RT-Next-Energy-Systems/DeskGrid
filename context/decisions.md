@@ -834,3 +834,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Writing a backup of the current settings before every restore (more than the documented design).
 **Consequences**: 613 tests pass. Not tested by a test: the question is a `MessageBox` on the UI thread.
 **Author**: Claude (Opus 5.5)
+
+---
+
+### 2026-11-11 (8) — The files this sweep had not read line by line: one crash fixed
+**Decision**: `DragGhost` checks `CreateDIBSection`: when it fails (no GDI resources left) it cleans up and throws `Win32Exception`, as the failed `CreateWindowEx` already did; it used to keep a null pixel pointer that `CopyPixels` wrote into, an access violation no handler can catch, which ends the process. `PopupPanel.BeginItemDrag` catches the failure and drags without the ghost, and `FinishDrag` shows the item in its slot again when there is no ghost to land (it stayed invisible).
+**Reason**: Read the remaining files line by line: `IconMerger`, `DesktopHost`, `IconService`, `FolderWidget`, `LiquidGlass`, `ShellContextMenu`, `DragGhost`. Only `DragGhost` had a defect.
+**Alternatives**: Leaving it to the dispatcher's unhandled-exception handler (an access violation never reaches it).
+**Consequences**: 614 tests pass. Not testable: GDI exhaustion cannot be brought about in a test.
+**Author**: Claude (Opus 5.5)

@@ -836,3 +836,12 @@
 **Alternatives**：每次還原前先備份目前設定（超出文件記載的設計）。
 **Consequences**：613 測試通過。沒有測試涵蓋：詢問是 UI 執行緒上的 `MessageBox`。
 **Author**：Claude（Opus 5.5）
+
+---
+
+### 2026-11-11（八）— 這次排查沒逐行讀過的檔案：修一個當機
+**Decision**：`DragGhost` 檢查 `CreateDIBSection`：失敗時（GDI 資源用盡）清理後丟 `Win32Exception`，和 `CreateWindowEx` 失敗時一樣；以前會留下 null 的像素指標，`CopyPixels` 寫入它就是沒有處理器能接住的存取違規，整個程序結束。`PopupPanel.BeginItemDrag` 接住失敗、沒有 ghost 也照樣拖，`FinishDrag` 沒有 ghost 可落地時直接讓項目回到原格顯示（以前會一直隱形）。
+**Reason**：逐行讀完剩下的檔案：`IconMerger`、`DesktopHost`、`IconService`、`FolderWidget`、`LiquidGlass`、`ShellContextMenu`、`DragGhost`。只有 `DragGhost` 有缺陷。
+**Alternatives**：交給 dispatcher 的未處理例外處理器（存取違規根本到不了那裡）。
+**Consequences**：614 測試通過。無法測試：測試中無法造成 GDI 資源用盡。
+**Author**：Claude（Opus 5.5）
