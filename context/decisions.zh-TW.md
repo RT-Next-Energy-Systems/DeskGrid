@@ -807,3 +807,12 @@
 **Alternatives**：注入真實滑鼠輸入（等擁有者決定）。
 **Consequences**：611 測試通過，連跑兩次。仍只能在真實桌面驗證：暫存區放回（OLE 拖曳無法在程序內觸發）、離開播放頁後歌曲回來。
 **Author**：使用者要求；Claude（Opus 5.5）
+
+---
+
+### 2026-11-11（五）— 最後兩項 UI 修正也在測試程序內驗證
+**Decision**：`IslandHost` 加上不改變 App 行為的測試接縫：`UseSystemMedia`（測試跳過系統媒體控制）、`Foreground`（前景視窗查詢，預設 `PlayerInFront.Foreground`）、`SetTracksForTests` 與 `Refreshing`。`PlayerInFrontTests.ASongHiddenBecauseItsPageIsInFront_ComesBackWhenThePageLeaves` 用它們驗證：播放器在前時歌曲隱藏、refresh 在跑、換成別的程式在前後歌曲回到膠囊。`IslandCardTests.AFileFromTheShelf_LetGoOverTheCard_IsAnsweredNone_SoTheShelfKeepsIt` 觸發拖放系統會送來的 WPF `Drop`（用反射建立 `DragEventArgs`），檢查暫存區的檔案被回 `None`（暫存區保留），其他來源的檔案仍會收下。兩者在拿掉修正時失敗、有修正時通過。
+**Reason**：這是剩下要在真實桌面驗證的兩項；擁有者還沒回覆能否注入滑鼠。
+**Alternatives**：等擁有者回覆再驗證。
+**Consequences**：2026-11-11 排查的每項修正，除了只防例外或 Dispose 競態的（有呼叫它們的測試），都有一個沒修正就會失敗的測試。613 測試通過，連跑兩次。程序內沒涵蓋：OLE 本身對 `None` 回覆的處理（它回傳放置目標的效果，即測試所檢查的）。
+**Author**：使用者要求；Claude（Opus 5.5）

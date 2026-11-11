@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -68,5 +69,99 @@ public sealed class IslandCardTests : IDisposable
         Assert.True(capturedWhileDown);
         Assert.False(capturedAfter); // Used to keep the mouse until something else took it.
         Assert.Equal(0, seeks); // Nothing to seek in.
+    }
+
+    // What the drag system hands the window a file is let go over (its constructor is not public).
+    private static DragEventArgs DropOf(IDataObject data, DependencyObject target)
+    {
+        var args = (DragEventArgs)Activator.CreateInstance(
+            typeof(DragEventArgs), System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic, null,
+            [data, DragDropKeyStates.None, DragDropEffects.Copy | DragDropEffects.Link, target, new Point(10, 10)], null)!;
+        args.RoutedEvent = UIElement.DropEvent;
+        args.Effects = DragDropEffects.Copy;
+        return args;
+    }
+
+    [Fact]
+    public async Task AFileFromTheShelf_LetGoOverTheCard_IsAnsweredNone_SoTheShelfKeepsIt()
+    {
+        var file = Path.GetTempFileName();
+        try
+        {
+            var (shelfEffect, shelfAdds, otherEffect, otherAdds) = await _ui.InvokeAsync(() =>
+            {
+                TestApplication.Ensure();
+                var card = new IslandCard(new MusicActions(_ => { }, _ => { }, _ => { }));
+                var adds = 0;
+                card.ShelfDropped += _ => adds++;
+                try
+                {
+                    var work = MonitorArea.Primary.WorkArea;
+                    card.Open(() => new CardModel([], null, null, null, [], [file], [CardSections.Shelf]), new ScreenPoint((work.Left + work.Right) / 2, work.Top + 8), 36);
+                    card.UpdateLayout();
+
+                    var fromShelf = new DataObject(DataFormats.FileDrop, new[] { file });
+                    fromShelf.SetData(IslandCard.ShelfFormat, true);
+                    var back = DropOf(fromShelf, card);
+                    card.RaiseEvent(back);
+                    var afterShelf = adds;
+
+                    var brought = DropOf(new DataObject(DataFormats.FileDrop, new[] { file }), card);
+                    card.RaiseEvent(brought);
+                    return (back.Effects, afterShelf, brought.Effects, adds - afterShelf);
+                }
+                finally
+                {
+                    card.Close();
+                }
+            });
+
+            Assert.Equal(DragDropEffects.None, shelfEffect); // Copy told the shelf the file went somewhere, and it dropped it.
+            Assert.Equal(0, shelfAdds);
+            Assert.NotEqual(DragDropEffects.None, otherEffect); // A file brought from elsewhere is still taken.
+            Assert.Equal(1, otherAdds);
+        }
+        finally
+        {
+            File.Delete(file);
+        }
+    }
+}
+
+[Collection(nameof(ShellCollection))]
+public sealed class PlayerInFrontTests : IDisposable
+{
+    private readonly DispatcherThread _ui = new("Player UI");
+
+    public void Dispose() => _ui.Dispose();
+
+    [Fact]
+    public async Task ASongHiddenBecauseItsPageIsInFront_ComesBackWhenThePageLeaves()
+    {
+        IslandHost? host = null;
+        var front = ("spotify", "Spotify Premium");
+        var (hiddenLine, refreshingWhileHidden) = await _ui.InvokeAsync(() =>
+        {
+            TestApplication.Ensure();
+            host = new IslandHost { UseSystemMedia = false, Foreground = () => front };
+            host.Apply(new IslandOptions(true, Config.IslandMusicMode.WhilePlaying, false));
+            host.SetTracksForTests([new MediaTrack("Song", "Artist", true, null, "Spotify.exe")]);
+            return (host.State()["line"]?.GetValue<string>(), host.Refreshing);
+        });
+
+        try
+        {
+            await _ui.InvokeAsync(() => front = ("notepad", "Untitled - Notepad")); // The user leaves the player.
+            await Task.Delay(TimeSpan.FromSeconds(1.5), TestContext.Current.CancellationToken); // Three refreshes' worth.
+            var backLine = await _ui.InvokeAsync(() => host!.State()["line"]?.GetValue<string>());
+
+            Assert.Null(hiddenLine); // Its page is in front: NotiLand says nothing of it.
+            Assert.True(refreshingWhileHidden); // Used to stay stopped, so the song never came back.
+            Assert.Equal("Song — Artist", backLine);
+        }
+        finally
+        {
+            await _ui.InvokeAsync(() => host?.Dispose());
+        }
     }
 }

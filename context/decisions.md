@@ -805,3 +805,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Injecting real mouse input (waits for the owner).
 **Consequences**: 611 tests pass, twice in a row. Still only on a real desktop: the shelf drop-back (an OLE drag cannot be raised in-process) and the song coming back after its page leaves the front.
 **Author**: The user asked; Claude (Opus 5.5)
+
+---
+
+### 2026-11-11 (5) — The last two UI fixes checked in-process too
+**Decision**: `IslandHost` gets test seams that do not change what the app does: `UseSystemMedia` (tests skip the system media controls), `Foreground` (the window-in-front query, `PlayerInFront.Foreground` by default), `SetTracksForTests` and `Refreshing`. With them `PlayerInFrontTests.ASongHiddenBecauseItsPageIsInFront_ComesBackWhenThePageLeaves` shows the song hidden while its player is in front, the refresh running, and the song back on the pill once another program is in front. `IslandCardTests.AFileFromTheShelf_LetGoOverTheCard_IsAnsweredNone_SoTheShelfKeepsIt` raises the WPF `Drop` the drag system would deliver (a `DragEventArgs` made by reflection) and checks a shelf file is answered `None` (so the shelf keeps it) while a file from elsewhere is still taken. Both fail when the fix is taken out and pass with it.
+**Reason**: These were the two fixes left for the real desktop; the owner has not yet said whether mouse input may be injected there.
+**Alternatives**: Waiting for the owner's answer before checking anything more.
+**Consequences**: Every fix of the 2026-11-11 sweep now has a test that fails without it, except the ones that only guard against exceptions or disposal races (covered by tests that call them). 613 tests pass, twice in a row. Not covered in-process: OLE's own handling of the `None` answer (it returns the drop target's effect, which is what the test checks).
+**Author**: The user asked; Claude (Opus 5.5)

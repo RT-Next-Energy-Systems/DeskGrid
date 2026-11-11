@@ -666,13 +666,30 @@ internal sealed class IslandHost : IDisposable
 
     // ---- Music ----
 
+    /// <summary>Whether the system media controls are read; tests turn it off and give the tracks with <see cref="SetTracksForTests"/>.</summary>
+    internal bool UseSystemMedia { get; set; } = true;
+
+    /// <summary>What window is in front (its program and title); tests replace it.</summary>
+    internal Func<(string Process, string Title)> Foreground { get; set; } = PlayerInFront.Foreground;
+
+    /// <summary>Whether the half-second refresh runs; for the tests.</summary>
+    internal bool Refreshing => _timer.IsEnabled;
+
+    /// <summary>Stands in for the players' reports; for the tests.</summary>
+    internal void SetTracksForTests(IReadOnlyList<MediaTrack> tracks)
+    {
+        _tracks = tracks;
+        AnnounceIfNew();
+        Refresh();
+    }
+
     private void ApplyMusic()
     {
         if (_options.Music == IslandMusicMode.Off)
         {
             StopMusic();
         }
-        else if (_music is null)
+        else if (_music is null && UseSystemMedia)
         {
             var music = new NowPlaying(_dispatcher);
             _music = music;
@@ -902,7 +919,7 @@ internal sealed class IslandHost : IDisposable
         // The page of a song that plays is in front (a music app, a video tab): the user is looking at it, so NotiLand does
         // not tell about that song.
         var hiddenByFront = false;
-        var (frontProcess, frontTitle) = _tracks.Count > 0 ? PlayerInFront.Foreground() : ("", "");
+        var (frontProcess, frontTitle) = _tracks.Count > 0 ? Foreground() : ("", "");
         bool InFront(string source) =>
             _tracks.FirstOrDefault(t => t.Source == source) is { } song && PlayerInFront.Shows(song.Source, song.Title, frontProcess, frontTitle);
         if (wanted is IslandActivity { IsMusic: true } announced && InFront(announced.Source))
