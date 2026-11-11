@@ -190,6 +190,31 @@ public sealed class IslandWatcherHelperTests
             Directory.Delete(dir, recursive: true);
         }
     }
+
+    [Fact]
+    public async Task ADownloadFinishingAfterTheWatcherWasTurnedOff_IsNotTold()
+    {
+        var dir = Directory.CreateTempSubdirectory("dl").FullName;
+        try
+        {
+            using var ui = new DeskGrid.Threading.DispatcherThread("Download UI");
+            var told = 0;
+            await ui.InvokeAsync(() =>
+            {
+                var watcher = new DownloadWatcher(dir);
+                watcher.Finished += _ => told++;
+                File.WriteAllText(Path.Combine(dir, "late.zip"), "data"); // Its event is on its way...
+                watcher.Dispose(); // ...when the option is turned off.
+            });
+
+            await Task.Delay(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken); // Two checks' worth.
+            Assert.Equal(0, await ui.InvokeAsync(() => told));
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
+    }
 }
 
 public sealed class MediaTimelineTests

@@ -49,7 +49,8 @@ internal sealed class BluetoothWatcher : IDisposable
 
     private void OnAdded(DeviceInformation device)
     {
-        if (!_ready || string.IsNullOrWhiteSpace(device.Name))
+        // _watcher is null once disposed: a device that was on its way when the option was turned off is not told of.
+        if (!_ready || _watcher is null || string.IsNullOrWhiteSpace(device.Name))
         {
             return;
         }

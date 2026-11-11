@@ -767,3 +767,18 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Catching every exception in the usage task (would hide real problems); a custom scroll handler per list (more code than fixing the lookup).
 **Consequences**: New tests in `ClaudeLimitsTests`, `AiToolsTests`, `IslandTests`, `CardSectionsTests` (605 pass). Not tried on the real desktop: the shelf drop-back, the scrub release, the wheel over a list, the player-in-front return.
 **Author**: The user asked; Claude (Opus 5.5) found and fixed
+
+---
+
+### 2026-11-11 (2) — Second pass: the rest of NotiLand and the backup (6 fixes)
+**Decision**:
+1. **`IslandHost.Stop`** calls the place-edit `ended` callback it clears, so turning the island off (or exiting) mid-edit runs `UndoMinimizeALL`.
+2. **`ConfigPorter.Export`** writes `<path>.tmp` and moves it into place: a cut-off write no longer counts as today's automatic backup or appears under Restore.
+3. **`DownloadWatcher`**: no events after `Dispose`; `DirectoryNotFoundException` forgets the file (it used to count as "busy" forever); a file still locked after 30 minutes is no longer watched, so the 2-second check stops.
+4. **`BluetoothWatcher`**: a device reported after `Dispose` is not told of.
+5. **`IslandHotZone`**: the dwell timer stops when the strip closes, so a dwell under way does not open the folder list after the top edge was turned off.
+6. **Docs**: `CLAUDE.md` named the automatic backup `DeskGrid_auto_…` in `backups\` and checked every 15 minutes; the code writes `DeskGrid_yyyy_MM_dd.json` in `Backups\` and checks every minute. The docs now say what the code does.
+**Reason**: Second pass of the /goal "check for all bugs and fix them": every Island file not read in the first pass, the Config backup code, and greps over the whole source for `First()` / `Single()` / `Max()` on possibly empty sequences (all guarded). Panels, widgets and folders were swept on 2026-11-02, 11-06 and 11-10 and were not changed since.
+**Alternatives**: Re-reading the panel and widget code a fourth time (no changes since the last sweep).
+**Consequences**: Tests `TurningTheIslandOff_WhileAPlaceIsBeingSet_EndsTheSetting`, `ADownloadFinishingAfterTheWatcherWasTurnedOff_IsNotTold`, and a no-`.tmp` check in `ExportThenImport_GivesBackTheSameSettings` (607 pass).
+**Author**: The user asked; Claude (Opus 5.5) found and fixed

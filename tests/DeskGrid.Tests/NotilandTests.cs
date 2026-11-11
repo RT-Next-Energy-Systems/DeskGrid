@@ -178,6 +178,25 @@ public sealed class NotilandWindowTests : IDisposable
         Assert.Equal(0, saved);
         Assert.Equal(2, ended);
     }
+
+    [Fact]
+    public async Task TurningTheIslandOff_WhileAPlaceIsBeingSet_EndsTheSetting()
+    {
+        // The ending is what gives the user the windows back that were minimized for the setting.
+        var (ended, editing) = await _ui.InvokeAsync(() =>
+        {
+            TestApplication.Ensure();
+            using var host = new IslandHost();
+            host.Apply(new IslandOptions(true, IslandMusicMode.Off, false));
+            var endings = 0;
+            host.BeginPlaceEdit(IslandScene.Desktop, () => endings++);
+            host.Apply(new IslandOptions(false, IslandMusicMode.Off, false));
+            return (endings, host.EditingPlace);
+        });
+
+        Assert.Equal(1, ended);
+        Assert.False(editing);
+    }
 }
 
 [Collection(nameof(ShellCollection))]

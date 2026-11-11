@@ -34,9 +34,18 @@ internal sealed class DownloadWatcher : IDisposable
 
     public void Dispose()
     {
+        _disposed = true;
         _timer.Stop();
         _watcher?.Dispose();
+        _pending.Clear();
     }
+
+    private bool _disposed;
+
+    // A file kept open for writing this long (a log, a database) is not a download that finishes: it is no longer watched,
+    // or the 2-second check would run for as long as DeskGrid does.
+    private static readonly TimeSpan GiveUpAfter = TimeSpan.FromMinutes(30);
+    private readonly Dictionary<string, DateTime> _noted = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Whether <paramref name="path"/> is a name a browser gives a download that is not finished.</summary>
     internal static bool IsPartial(string path) => Partial.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
@@ -50,24 +59,42 @@ internal sealed class DownloadWatcher : IDisposable
 
         _dispatcher.BeginInvoke(() =>
         {
+            if (_disposed)
+            {
+                return; // An event that was on its way when the option was turned off.
+            }
+
             _pending[path] = -1;
+            _noted.TryAdd(path, DateTime.UtcNow);
             _timer.Start();
         });
+    }
+
+    private void Forget(string path)
+    {
+        _pending.Remove(path);
+        _noted.Remove(path);
     }
 
     private void CheckPending()
     {
         foreach (var (path, before) in _pending.ToList())
         {
+            if (_noted.TryGetValue(path, out var since) && DateTime.UtcNow - since > GiveUpAfter)
+            {
+                Forget(path);
+                continue;
+            }
+
             long size;
             try
             {
                 size = new FileInfo(path).Length;
                 using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None); // Still being written: it cannot be opened exclusively.
             }
-            catch (FileNotFoundException)
+            catch (Exception exception) when (exception is FileNotFoundException or DirectoryNotFoundException)
             {
-                _pending.Remove(path);
+                Forget(path); // Gone (or its folder is): a directory-not-found used to count as "still busy" forever.
                 continue;
             }
             catch (IOException)
@@ -77,13 +104,13 @@ internal sealed class DownloadWatcher : IDisposable
             }
             catch (UnauthorizedAccessException)
             {
-                _pending.Remove(path);
+                Forget(path);
                 continue;
             }
 
             if (size == before && size > 0)
             {
-                _pending.Remove(path);
+                Forget(path);
                 Finished?.Invoke(path);
             }
             else

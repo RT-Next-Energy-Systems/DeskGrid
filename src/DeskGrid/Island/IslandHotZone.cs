@@ -62,7 +62,11 @@ internal sealed class IslandHotZone : Window
             }
         };
         lift.Start();
-        Closed += (_, _) => lift.Stop();
+        Closed += (_, _) =>
+        {
+            lift.Stop();
+            _dwell.Stop(); // A dwell under way when the strip goes (turned off) must not open the folders afterwards.
+        };
         MouseEnter += (_, _) => _dwell.Start();
         MouseLeave += (_, _) => _dwell.Stop();
     }

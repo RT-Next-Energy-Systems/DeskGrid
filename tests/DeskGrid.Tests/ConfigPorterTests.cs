@@ -29,6 +29,7 @@ public sealed class ConfigPorterTests : IDisposable
         ConfigPorter.Export(config, path);
         var imported = ConfigPorter.TryImport(path, out _);
 
+        Assert.False(File.Exists(path + ".tmp")); // Written beside and moved into place: nothing left over.
         Assert.NotNull(imported);
         Assert.Equal(5, imported.PanelColumns);
         Assert.Equal(AppLanguage.TraditionalChinese, imported.Language);

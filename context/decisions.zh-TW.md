@@ -769,3 +769,18 @@
 **Alternatives**：用量工作接住所有例外（會藏住真正的問題）；每個清單自己寫捲動處理（比修正查找多很多程式）。
 **Consequences**：`ClaudeLimitsTests`、`AiToolsTests`、`IslandTests`、`CardSectionsTests` 新增測試（605 通過）。未在真實桌面試：暫存區放回、進度條放開、清單上滾輪、離開播放頁面後歌曲回來。
 **Author**：使用者要求；Claude（Opus 5.5）找出並修正
+
+---
+
+### 2026-11-11（二）— 第二輪：其餘 NotiLand 與備份（6 項修正）
+**Decision**：
+1. **`IslandHost.Stop`** 清掉位置編輯時會呼叫 `ended`，所以編輯中關掉提示島（或結束程式）會執行 `UndoMinimizeALL`。
+2. **`ConfigPorter.Export`** 先寫 `<path>.tmp` 再改名：寫到一半中斷的檔案不再被當成當天的自動備份，也不會出現在「還原」。
+3. **`DownloadWatcher`**：`Dispose` 後不再觸發；`DirectoryNotFoundException` 會放棄該檔（以前一直當成「忙碌中」）；30 分鐘後仍被鎖住的檔案不再監看，每 2 秒的檢查會停下。
+4. **`BluetoothWatcher`**：`Dispose` 後才回報的裝置不再通知。
+5. **`IslandHotZone`**：頂端條關閉時停止停留計時器，關掉頂端邊緣後不會再打開資料夾清單。
+6. **文件**：`CLAUDE.md` 寫自動備份叫 `DeskGrid_auto_…`、放 `backups\`、每 15 分鐘檢查；程式實際寫 `Backups\DeskGrid_yyyy_MM_dd.json`、每分鐘檢查。文件已改成符合程式。
+**Reason**：/goal「檢查所有 bug 並修復」的第二輪：第一輪沒讀的所有 Island 檔案、Config 備份程式，以及全部原始碼搜尋可能為空的 `First()` / `Single()` / `Max()`（都有防護）。面板、widget、資料夾已在 2026-11-02、11-06、11-10 排查過，之後沒有改動。
+**Alternatives**：第四次重讀面板與 widget 程式（上次排查後沒有改動）。
+**Consequences**：新增 `TurningTheIslandOff_WhileAPlaceIsBeingSet_EndsTheSetting`、`ADownloadFinishingAfterTheWatcherWasTurnedOff_IsNotTold`，以及 `ExportThenImport_GivesBackTheSameSettings` 檢查不留 `.tmp`（607 通過）。
+**Author**：使用者要求；Claude（Opus 5.5）找出並修正

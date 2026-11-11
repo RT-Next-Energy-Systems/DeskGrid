@@ -126,7 +126,6 @@ internal sealed class IslandHost : IDisposable
     /// <summary>Raised when the pointer has been held at the top centre of the screen: the list of all folders is wanted.</summary>
     public event EventHandler? OpenFoldersRequested;
 
-    /// <summary>Raised when the user dropped the island somewhere: the middle of its top edge, in screen pixels.</summary>
     /// <summary>Raised when a place changed (dragged, or set in Settings): the situation, and the place (null = reset).</summary>
     public event Action<string, ScreenPoint?>? PlaceChanged;
 
@@ -643,7 +642,10 @@ internal sealed class IslandHost : IDisposable
 
     private void Stop()
     {
+        // A place being set ends with the island: its caller gets the windows it minimized back.
+        var ended = _editEnded;
         (_editing, _editPlace, _editEnded) = (null, null, null);
+        ended?.Invoke();
         _timer.Stop();
         _queue.Clear();
         StopMusic();

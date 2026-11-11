@@ -12,7 +12,24 @@ internal static class ConfigPorter
     public static string SuggestedFileName(DateTime now) => $"DeskGrid_{now:yyyy_MM_dd_HH_mm}{Extension}";
 
     /// <summary>Writes <paramref name="config"/> to <paramref name="path"/>; throws <see cref="IOException"/> or <see cref="UnauthorizedAccessException"/> when it can't.</summary>
-    public static void Export(AppConfig config, string path) => File.WriteAllText(path, ConfigStore.Serialize(config));
+    public static void Export(AppConfig config, string path)
+    {
+        // Write-then-rename: a half-written file would count as today's automatic backup (none would be written again) and
+        // be offered for restore.
+        var temporary = path + ".tmp";
+        try
+        {
+            File.WriteAllText(temporary, ConfigStore.Serialize(config));
+            File.Move(temporary, path, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temporary))
+            {
+                File.Delete(temporary);
+            }
+        }
+    }
 
     /// <summary>
     /// Reads an exported file. Returns <see langword="null"/> and the reason when the file can't be read or isn't a DeskGrid
