@@ -165,3 +165,32 @@ public sealed class PlayerInFrontTests : IDisposable
         }
     }
 }
+
+[Collection(nameof(ShellCollection))]
+public sealed class IslandHotZoneTests : IDisposable
+{
+    private readonly DispatcherThread _ui = new("Hot zone UI");
+
+    public void Dispose() => _ui.Dispose();
+
+    [Fact]
+    public async Task ClosingTheStrip_WhileThePointerRestsOnIt_StopsTheDwell()
+    {
+        // A dwell under way when the top edge is turned off must not open the folder list afterwards.
+        var running = await _ui.InvokeAsync(() =>
+        {
+            TestApplication.Ensure();
+            var zone = new IslandHotZone();
+            zone.Place();
+            zone.RaiseEvent(new MouseEventArgs(Mouse.PrimaryDevice, Environment.TickCount) { RoutedEvent = Mouse.MouseEnterEvent });
+            var dwell = (System.Windows.Threading.DispatcherTimer)typeof(IslandHotZone)
+                .GetField("_dwell", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!.GetValue(zone)!;
+            var started = dwell.IsEnabled;
+            zone.Close();
+            return (started, dwell.IsEnabled);
+        });
+
+        Assert.True(running.started);
+        Assert.False(running.Item2);
+    }
+}
