@@ -70,7 +70,18 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
             return;
         }
 
-        Control(source, session => session.TryChangePlaybackPositionAsync(target));
+        var to = position < TimeSpan.Zero ? TimeSpan.Zero : position;
+        Control(source, session => session.TryChangePlaybackPositionAsync(target), accepted: () =>
+        {
+            // Some players (Media Player) move but tell nothing of it: without this the bar and the time would go on from
+            // where the song was before, until the player's next report.
+            entry.SeekedTo = (to, DateTimeOffset.UtcNow);
+            if (entry.Track is { Timeline: { } line } track)
+            {
+                entry.Track = track with { Timeline = new MediaTimeline(line.Duration, to, DateTimeOffset.UtcNow) };
+                Publish();
+            }
+        });
     }
 
     public void Dispose()
@@ -90,7 +101,8 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
         _manager = null;
     }
 
-    private void Control(string source, Func<GlobalSystemMediaTransportControlsSession, Windows.Foundation.IAsyncOperation<bool>> command)
+    // accepted runs on the dispatcher thread when the player says it did it (and the player is still the same one).
+    private void Control(string source, Func<GlobalSystemMediaTransportControlsSession, Windows.Foundation.IAsyncOperation<bool>> command, Action? accepted = null)
     {
         if (!_entries.TryGetValue(source, out var entry))
         {
@@ -106,6 +118,16 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
             {
                 var done = await command(session);
                 Log.Info($"A media command for '{source}' was answered with {done}.");
+                if (done && accepted is not null)
+                {
+                    _ = dispatcher.BeginInvoke(() =>
+                    {
+                        if (!_disposed && _entries.TryGetValue(source, out var current) && ReferenceEquals(current, entry))
+                        {
+                            accepted();
+                        }
+                    });
+                }
             }
             catch (Exception exception)
             {
@@ -181,6 +203,12 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
             var line = entry.Session.GetTimelineProperties();
             var duration = line is null ? TimeSpan.Zero : line.EndTime - line.StartTime;
             var timeline = line is null || duration <= TimeSpan.Zero ? null : new MediaTimeline(duration, line.Position - line.StartTime, line.LastUpdatedTime);
+            timeline = MediaTimeline.AfterSeek(timeline, entry.SeekedTo);
+            if (timeline is null || entry.SeekedTo is { } seeked && timeline.At > seeked.At)
+            {
+                entry.SeekedTo = null; // The player has told where it is since: its word from now on.
+            }
+
             if (properties is not null && (properties.Title.Length > 0 || properties.Artist.Length > 0))
             {
                 (System.Windows.Media.ImageSource? cover, System.Windows.Media.Color? accent) = entry.Cover is { } known && known.Title == properties.Title && known.Artist == properties.Artist
@@ -257,6 +285,8 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
         public MediaTrack? Track { get; set; }
 
         public int Generation { get; set; } // Counts the readings, so the answer of an older one is dropped.
+
+        public (TimeSpan Position, DateTimeOffset At)? SeekedTo { get; set; } // Where the user moved the song, until the player tells newer.
 
         public (string Title, string Artist, System.Windows.Media.ImageSource? Image, System.Windows.Media.Color? Accent)? Cover { get; set; }
     }

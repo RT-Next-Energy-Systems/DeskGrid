@@ -139,7 +139,7 @@ public sealed class PlayerInFrontTests : IDisposable
     public async Task ASongHiddenBecauseItsPageIsInFront_ComesBackWhenThePageLeaves()
     {
         IslandHost? host = null;
-        var front = ("spotify", "Spotify Premium");
+        var front = new FrontWindow("spotify", "Spotify Premium");
         var (hiddenLine, refreshingWhileHidden) = await _ui.InvokeAsync(() =>
         {
             TestApplication.Ensure();
@@ -151,7 +151,7 @@ public sealed class PlayerInFrontTests : IDisposable
 
         try
         {
-            await _ui.InvokeAsync(() => front = ("notepad", "Untitled - Notepad")); // The user leaves the player.
+            await _ui.InvokeAsync(() => front = new FrontWindow("notepad", "Untitled - Notepad")); // The user leaves the player.
             await Task.Delay(TimeSpan.FromSeconds(1.5), TestContext.Current.CancellationToken); // Three refreshes' worth.
             var backLine = await _ui.InvokeAsync(() => host!.State()["line"]?.GetValue<string>());
 

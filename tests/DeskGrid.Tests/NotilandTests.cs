@@ -94,7 +94,14 @@ public sealed class IslandPlacesTests
     [InlineData("308046B0AF4A39CB", "Song", "firefox", "Song - YouTube", true)] // A browser id that does not name the browser.
     [InlineData("Chrome", "Song", "", "", false)]
     public void ThePageOfASong_IsInFront_OnlyWhenItsWindowIs(string source, string song, string process, string title, bool expected) =>
-        Assert.Equal(expected, PlayerInFront.Shows(source, song, process, title));
+        Assert.Equal(expected, PlayerInFront.Shows(source, song, new FrontWindow(process, title)));
+
+    [Theory]
+    [InlineData("Microsoft.ZuneMusic_8wekyb3d8bbwe!Microsoft.ZuneMusic", "microsoft.media.player", "Microsoft.ZuneMusic_8wekyb3d8bbwe", true)] // Media Player: no name in common, the package tells.
+    [InlineData("Microsoft.ZuneMusic_8wekyb3d8bbwe!Microsoft.ZuneMusic", "notepad", "Microsoft.WindowsNotepad_8wekyb3d8bbwe", false)]
+    [InlineData("Microsoft.ZuneMusic_8wekyb3d8bbwe!Microsoft.ZuneMusic", "microsoft.media.player", "", false)] // Without the package it used to stay shown.
+    public void APackagedPlayerInFront_IsToldByItsPackage(string source, string process, string package, bool expected) =>
+        Assert.Equal(expected, PlayerInFront.Shows(source, "dg-test-song", new FrontWindow(process, "Media Player", package)));
 
     [Fact]
     public void TheSituationInFront_CanBeAsked() => Assert.Contains(IslandScene.Detect(IslandScene.Default), IslandScene.All);

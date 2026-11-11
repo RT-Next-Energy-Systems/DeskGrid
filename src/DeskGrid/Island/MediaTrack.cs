@@ -112,6 +112,13 @@ internal sealed record MediaTimeline(TimeSpan Duration, TimeSpan Position, DateT
     public TimeSpan SeekTarget(double fraction) =>
         Duration <= TimeSpan.Zero ? TimeSpan.Zero : TimeSpan.FromTicks((long)Math.Round(Duration.Ticks * Math.Clamp(fraction, 0, 1)));
 
+    /// <summary>
+    /// The timeline to go by after the user moved the song to <paramref name="seeked"/>: that position from the moment it was
+    /// moved, unless the player's own <paramref name="reported"/> one is newer (some players move and report nothing).
+    /// </summary>
+    public static MediaTimeline? AfterSeek(MediaTimeline? reported, (TimeSpan Position, DateTimeOffset At)? seeked) =>
+        reported is not null && seeked is { } moved && reported.At <= moved.At ? reported with { Position = moved.Position, At = moved.At } : reported;
+
     /// <summary>"1:05" or "1:02:03".</summary>
     public static string Format(TimeSpan time)
     {

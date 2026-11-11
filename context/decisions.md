@@ -843,3 +843,16 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Leaving it to the dispatcher's unhandled-exception handler (an access violation never reaches it).
 **Consequences**: 614 tests pass. Not testable: GDI exhaustion cannot be brought about in a test.
 **Author**: Claude (Opus 5.5)
+
+---
+
+### 2026-11-11 (9) — Real-desktop test with the owner's consent: two more defects found and fixed
+**Decision**: The owner allowed injected mouse input. Done on the real desktop (dev build via explorer.exe, PowerShell `SetCursorPos` / `mouse_event`, UI Automation to read the windows, `--ctl` for state; nothing let go outside a DeskGrid window):
+- **Shelf drop-back** — a file dragged from an Explorer window onto the card went on the shelf; taken off the shelf and let go over the card, it stayed on the shelf and in its folder. Passed.
+- **Wheel** — over the 17-item "Test" panel one notch scrolled 16.67 % and a quarter notch 4.17 % (4 : 1, about 48 DIP per notch). Passed. (Settings has no list inside a page today; that case stays covered by the in-process test.)
+- **Player in front** — a silent WAV opened in Windows' Media Player through `IApplicationActivationManager.ActivateForFile`. **Failed before the fix**: with Media Player in front the pill still showed the song (screenshot). The foreground window is `ApplicationFrameHost` and the player's id is `Microsoft.ZuneMusic_…!Microsoft.ZuneMusic`, which no process name matches. Fix: `PlayerInFront.Foreground` returns a `FrontWindow` (process, title, package family name); for `ApplicationFrameHost` it takes the hosted `Windows.UI.Core.CoreWindow`'s process, and `Shows` matches a source whose id starts with `<package family>!` (`GetPackageFamilyName`, `FindWindowEx` added to `NativeMethods.txt`). After the fix: hidden with Media Player in front, `dg-test-song` on the pill with another window in front. Passed.
+- **Scrub** — dragged the card's bar from the start to the middle: the card showed 1:30 while dragging; Media Player did move (its own bar read 1:57 about 27 s later), but the card showed 0:39 three seconds after, because Media Player reports no new timeline after a seek and the card went on from the old report. Fix: when a player accepts a seek, `NowPlaying` keeps the moved position (`Entry.SeekedTo`) and `MediaTimeline.AfterSeek` uses it until the player reports a newer timeline. Covered by `AfterASeek_TheMovedPositionCounts_UntilThePlayerReportsNewer`. Not re-run on the desktop: the owner started DeskGrid from the taskbar during the session, so no more input was injected (`AGENTS.md`).
+**Reason**: The last open item of the /goal sweep.
+**Alternatives**: Matching Media Player by name (one app only; the package match covers every Store player).
+**Consequences**: 618 tests pass. Test files, the Explorer window and the Media Player instance opened for the test were removed.
+**Author**: The owner allowed the test; Claude (Opus 5.5) ran it and fixed what it found

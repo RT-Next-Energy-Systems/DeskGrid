@@ -223,6 +223,21 @@ public sealed class MediaTimelineTests
     private static readonly DateTimeOffset At = new(2026, 11, 10, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
+    public void AfterASeek_TheMovedPositionCounts_UntilThePlayerReportsNewer()
+    {
+        // Media Player moved to 1:30 when asked but kept reporting its old timeline (0:33 at the last report): the card
+        // showed 0:39 a few seconds later while the song was at 1:36.
+        var stale = new MediaTimeline(TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(33), At);
+        var seeked = (TimeSpan.FromSeconds(90), At.AddSeconds(10));
+        var line = MediaTimeline.AfterSeek(stale, seeked)!;
+        Assert.Equal(TimeSpan.FromSeconds(96), line.PositionAt(At.AddSeconds(16), playing: true));
+
+        var fresh = new MediaTimeline(TimeSpan.FromMinutes(3), TimeSpan.FromSeconds(100), At.AddSeconds(12));
+        Assert.Same(fresh, MediaTimeline.AfterSeek(fresh, seeked)); // The player's newer word wins.
+        Assert.Null(MediaTimeline.AfterSeek(null, seeked));
+    }
+
+    [Fact]
     public void ThePosition_RunsOnWithTheClock_WhilePlaying_AndStaysWhenPaused()
     {
         var line = new MediaTimeline(TimeSpan.FromMinutes(4), TimeSpan.FromSeconds(30), At);

@@ -845,3 +845,16 @@
 **Alternatives**：交給 dispatcher 的未處理例外處理器（存取違規根本到不了那裡）。
 **Consequences**：614 測試通過。無法測試：測試中無法造成 GDI 資源用盡。
 **Author**：Claude（Opus 5.5）
+
+---
+
+### 2026-11-11（九）— 經擁有者同意的真實桌面測試：再找到並修正兩個缺陷
+**Decision**：擁有者同意注入滑鼠。在真實桌面執行（dev build 由 explorer.exe 啟動；PowerShell `SetCursorPos` / `mouse_event`、UI Automation 讀視窗、`--ctl` 讀狀態；只在 DeskGrid 視窗上放開）：
+- **暫存區放回**——從 Explorer 拖檔案到卡片後進入暫存區；從暫存區拖出再放回卡片，仍在暫存區、原檔也在原資料夾。通過。
+- **滾輪**——在 17 個項目的「Test」面板上，一格捲 16.67%、四分之一格捲 4.17%（4:1，約每格 48 DIP）。通過。（設定目前沒有頁中清單；那個情況由程序內測試涵蓋。）
+- **播放頁在前**——用 `IApplicationActivationManager.ActivateForFile` 在 Windows 媒體播放器開一個無聲 WAV。**修正前失敗**：媒體播放器在最前面時膠囊仍顯示歌曲（有截圖）。前景視窗是 `ApplicationFrameHost`，播放器 id 是 `Microsoft.ZuneMusic_…!Microsoft.ZuneMusic`，沒有程式名稱比得上。修正：`PlayerInFront.Foreground` 回傳 `FrontWindow`（程式、標題、套件家族名稱）；遇到 `ApplicationFrameHost` 時取其中 `Windows.UI.Core.CoreWindow` 的程序；`Shows` 對 id 以「套件家族名稱!」開頭的來源判為相符（`NativeMethods.txt` 加 `GetPackageFamilyName`、`FindWindowEx`）。修正後：媒體播放器在前時隱藏，換別的視窗在前時膠囊顯示 `dg-test-song`。通過。
+- **拖動進度**——把卡片的進度條從頭拖到中間：拖動時卡片顯示 1:30；媒體播放器確實跳了（約 27 秒後它自己的進度是 1:57），但 3 秒後卡片顯示 0:39，因為媒體播放器跳轉後不回報新的時間軸，卡片從舊回報繼續推算。修正：播放器接受跳轉時，`NowPlaying` 記下新位置（`Entry.SeekedTo`），`MediaTimeline.AfterSeek` 在播放器回報更新的時間軸前都用它。由 `AfterASeek_TheMovedPositionCounts_UntilThePlayerReportsNewer` 涵蓋。沒有在桌面重跑：測試期間擁有者從工作列啟動了 DeskGrid，依 `AGENTS.md` 不再注入輸入。
+**Reason**：/goal 排查最後一個未完成項目。
+**Alternatives**：用名稱比對媒體播放器（只適用一個 App；套件比對涵蓋所有市集播放器）。
+**Consequences**：618 測試通過。為測試開的測試檔、Explorer 視窗與媒體播放器都已移除。
+**Author**：擁有者同意測試；Claude（Opus 5.5）執行並修正所發現的問題

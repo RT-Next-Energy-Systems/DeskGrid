@@ -138,3 +138,5 @@ keybd_event
 GetWindowText
 GetWindowTextLength
 SwitchToThisWindow
+FindWindowEx
+GetPackageFamilyName
