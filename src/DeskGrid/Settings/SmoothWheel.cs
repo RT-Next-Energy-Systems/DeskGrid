@@ -16,7 +16,7 @@ internal static class SmoothWheel
 
     private static int _installed;
 
-    /// <summary>Hooks every scroll viewer of the process; once only (a second handler would scroll each wheel step twice).</summary>
+    /// <summary>Hooks every scroll viewer of the process, once (a second handler would only find the wheel handled already).</summary>
     public static void Install()
     {
         if (Interlocked.Exchange(ref _installed, 1) == 0)

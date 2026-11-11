@@ -816,3 +816,12 @@
 **Alternatives**：等擁有者回覆再驗證。
 **Consequences**：2026-11-11 排查的每項修正，除了只防例外或 Dispose 競態的（有呼叫它們的測試），都有一個沒修正就會失敗的測試。613 測試通過，連跑兩次。程序內沒涵蓋：OLE 本身對 `None` 回覆的處理（它回傳放置目標的效果，即測試所檢查的）。
 **Author**：使用者要求；Claude（Opus 5.5）
+
+---
+
+### 2026-11-11（六）— 每項修正對修正前的程式試過；一項更正
+**Decision**：把 2026-11-11 各修正的測試在放回舊程式後跑過（之後還原）：六個用量 / 狀態列測試、關閉提示島時結束位置編輯、junction、滾輪、進度條、暫存區放回、播放頁在前等測試，沒有修正都失敗、有修正都通過。Dispose 後下載的測試原本沒失敗（Dispose 時監看器的事件還沒排入佇列）；現在先讓 UI 執行緒停 500 ms 讓事件排入，沒有修正就會失敗。**更正（四）第 2 點**：第二個 `SmoothWheel` class handler 不會捲兩次——`OnWheel` 遇到已處理的滾輪就返回——所以只註冊一次是清理，不是修 bug。
+**Reason**：證明每個測試抓得到它名稱所說的問題。
+**Alternatives**：無。
+**Consequences**：沒有「沒修正就失敗」測試、只靠閱讀確認的修正：`PrivacyWatcher` 與 `BluetoothWatcher` 的 Dispose 後防護、頂端條停留計時器、匯出改原子寫入、`MediaJumper` 的例外捕捉、面板 `_resize` 停止。筆刷凍結由凍結前 `IslandWindowTests` 失敗證明。
+**Author**：Claude（Opus 5.5）

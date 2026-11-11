@@ -814,3 +814,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Waiting for the owner's answer before checking anything more.
 **Consequences**: Every fix of the 2026-11-11 sweep now has a test that fails without it, except the ones that only guard against exceptions or disposal races (covered by tests that call them). 613 tests pass, twice in a row. Not covered in-process: OLE's own handling of the `None` answer (it returns the drop target's effect, which is what the test checks).
 **Author**: The user asked; Claude (Opus 5.5)
+
+---
+
+### 2026-11-11 (6) — Each fix tried against the code before it; one correction
+**Decision**: The tests of the 2026-11-11 fixes were run with the earlier code put back (then restored): the six usage / status-line tests, the island-off place-edit test, the junction test, the wheel, scrub, shelf-drop and player-in-front tests all fail without their fix and pass with it. The download-after-dispose test did not (the watcher's event had not been queued yet when it disposed); it now blocks the UI thread for 500 ms first, so the event is queued, and fails without the fix. **Correction to (4) item 2**: a second `SmoothWheel` class handler would not scroll twice — `OnWheel` returns when the wheel is already handled — so installing once is a cleanup, not a bug fix.
+**Reason**: Show that every test catches what it is named after.
+**Alternatives**: None.
+**Consequences**: Fixes with no test that fails without them, checked by reading only: the `PrivacyWatcher` and `BluetoothWatcher` after-dispose guards, the hot-zone dwell stop, the atomic export, the `MediaJumper` catch, the panel's `_resize` stop. The brush freezing was shown by `IslandWindowTests` failing before it.
+**Author**: Claude (Opus 5.5)

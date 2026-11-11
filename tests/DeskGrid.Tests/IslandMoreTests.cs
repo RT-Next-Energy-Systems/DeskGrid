@@ -203,8 +203,9 @@ public sealed class IslandWatcherHelperTests
             {
                 var watcher = new DownloadWatcher(dir);
                 watcher.Finished += _ => told++;
-                File.WriteAllText(Path.Combine(dir, "late.zip"), "data"); // Its event is on its way...
-                watcher.Dispose(); // ...when the option is turned off.
+                File.WriteAllText(Path.Combine(dir, "late.zip"), "data");
+                Thread.Sleep(500); // The watcher's event is queued for this (blocked) thread meanwhile...
+                watcher.Dispose(); // ...and the option is turned off before it is handled.
             });
 
             await Task.Delay(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken); // Two checks' worth.

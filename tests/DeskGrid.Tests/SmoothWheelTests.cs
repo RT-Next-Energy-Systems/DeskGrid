@@ -92,7 +92,7 @@ public sealed class SmoothWheelTests : IDisposable
             }
         });
 
-        Assert.Equal(48, notch, 1); // One handler: a second one would make it 96.
+        Assert.Equal(48, notch, 1);
         Assert.Equal(12, small, 1);
     }
 }
