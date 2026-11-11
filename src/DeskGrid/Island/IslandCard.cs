@@ -517,7 +517,8 @@ internal sealed class IslandCard : Window
 
     private const double KnobSize = 12;
 
-    private static readonly Brush Dim = new SolidColorBrush(Color.FromArgb(170, 255, 255, 255));
+    // Frozen: shared by every card, and a card may be made on another UI thread (an unfrozen brush belongs to its first thread).
+    private static readonly Brush Dim = (Brush)new SolidColorBrush(Color.FromArgb(170, 255, 255, 255)).GetAsFrozen();
 
     private static Brush UsageBrush(double percent) =>
         new SolidColorBrush(percent >= 100 ? Color.FromRgb(0xE8, 0x4D, 0x4D) : percent >= 80 ? Color.FromRgb(0xF0, 0xA0, 0x30) : Color.FromRgb(0x4C, 0xC3, 0x8A));

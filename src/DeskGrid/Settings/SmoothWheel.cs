@@ -14,8 +14,16 @@ internal static class SmoothWheel
     private const double PixelsPerNotch = 48;
     private const double NotchDelta = 120;
 
-    public static void Install() =>
-        EventManager.RegisterClassHandler(typeof(ScrollViewer), UIElement.PreviewMouseWheelEvent, new MouseWheelEventHandler(OnWheel));
+    private static int _installed;
+
+    /// <summary>Hooks every scroll viewer of the process; once only (a second handler would scroll each wheel step twice).</summary>
+    public static void Install()
+    {
+        if (Interlocked.Exchange(ref _installed, 1) == 0)
+        {
+            EventManager.RegisterClassHandler(typeof(ScrollViewer), UIElement.PreviewMouseWheelEvent, new MouseWheelEventHandler(OnWheel));
+        }
+    }
 
     private static ScrollViewer? Innermost(DependencyObject? from)
     {

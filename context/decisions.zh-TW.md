@@ -795,3 +795,15 @@
 **Alternatives**：拒絕搬移含連結的資料夾（連結會不見）；複製連結本身（需要符號連結權限）。
 **Consequences**：搬到另一個磁碟機的資料夾裡的 junction 會變成它指向內容的複本，原本的目標不受影響。608 測試通過。
 **Author**：使用者要求；Claude（Opus 5.5）找出並修正
+
+---
+
+### 2026-11-11（四）— 在測試程序內驗證 UI 修正；兩個共用筆刷凍結；SmoothWheel 只註冊一次
+**Decision**：
+1. **在測試程序內驅動 WPF 事件驗證 UI 修正**（不用系統滑鼠、不碰使用者桌面）：`SmoothWheelTests`（頁面裡的清單會自己捲；一格 = 48 px，觸控板小幅移動成比例變少）與 `IslandCardTests`（歌曲失去 timeline 後放開進度條會釋放滑鼠、不跳轉）。兩者都對舊程式跑過並失敗（頁面捲了 48 px；進度條仍抓住滑鼠）。
+2. **`SmoothWheel.Install` 只註冊一次 class handler**：第二次呼叫會讓每格滾輪捲兩次。
+3. **凍結 `IslandCard.Dim` 與 `PinShortcut.TileBrush`**：未凍結的靜態筆刷屬於第一個用它的執行緒；新的卡片測試在第二條 UI 執行緒建立卡片後，`IslandWindowTests` 失敗（「不可使用屬於與其父 Freezable 不同執行緒的 DependencyObject」）。專案規則（共用 Freezable 要凍結）現在對所有靜態筆刷都成立。
+**Reason**：/goal 要求檢查所有 bug；在真實桌面注入滑鼠需要擁有者同意（`AGENTS.md`），所以先把能在測試程序內驅動的做完。
+**Alternatives**：注入真實滑鼠輸入（等擁有者決定）。
+**Consequences**：611 測試通過，連跑兩次。仍只能在真實桌面驗證：暫存區放回（OLE 拖曳無法在程序內觸發）、離開播放頁後歌曲回來。
+**Author**：使用者要求；Claude（Opus 5.5）

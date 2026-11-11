@@ -793,3 +793,15 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Refusing to move a folder that holds a link (the link would be lost); copying the link itself (needs the symlink privilege).
 **Consequences**: A junction inside a folder moved to another drive arrives as a copy of what it pointed to, and the original target is untouched. 608 tests pass.
 **Author**: The user asked; Claude (Opus 5.5) found and fixed
+
+---
+
+### 2026-11-11 (4) — In-process checks of the UI fixes; two shared brushes frozen; SmoothWheel installs once
+**Decision**:
+1. **UI fixes checked by driving WPF events in the test process** (no system mouse, nothing on the user's desktop): `SmoothWheelTests` (a list inside a page scrolls itself; one notch = 48 px, a small touchpad step proportionally less) and `IslandCardTests` (letting go of a song's bar after the song lost its timeline releases the mouse and seeks nothing). Both were run against the old code and fail there (the page scrolled 48 px; the bar kept the capture).
+2. **`SmoothWheel.Install` registers its class handler once**: a second call would have scrolled every wheel step twice.
+3. **`IslandCard.Dim` and `PinShortcut.TileBrush` are frozen**: unfrozen static brushes belong to the first thread that uses them; the new card test made one on a second UI thread and `IslandWindowTests` then failed with "a DependencyObject that belongs to a different thread than its parent Freezable". The project rule (shared Freezables are frozen) now holds for every static brush.
+**Reason**: The /goal asked for every bug to be checked; mouse injection on the real desktop needs the owner's yes (`AGENTS.md`), so what could be driven inside the test process was.
+**Alternatives**: Injecting real mouse input (waits for the owner).
+**Consequences**: 611 tests pass, twice in a row. Still only on a real desktop: the shelf drop-back (an OLE drag cannot be raised in-process) and the song coming back after its page leaves the front.
+**Author**: The user asked; Claude (Opus 5.5)

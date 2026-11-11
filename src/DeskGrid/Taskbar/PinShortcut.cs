@@ -24,7 +24,8 @@ internal static class PinShortcut
     // the old one was.
     private const string AllFoldersAppId = AppIdPrefix + "AllFolders";
 
-    private static readonly Brush TileBrush = new SolidColorBrush(Color.FromArgb(0xB0, 0x40, 0x40, 0x40));
+    // Frozen: an unfrozen static brush belongs to the first thread that used it, and the tile may be drawn on another.
+    private static readonly Brush TileBrush = (Brush)new SolidColorBrush(Color.FromArgb(0xB0, 0x40, 0x40, 0x40)).GetAsFrozen();
 
     public static string FolderPath { get; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DeskGrid", "Pins");
