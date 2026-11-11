@@ -380,6 +380,11 @@ internal sealed class IslandHost : IDisposable
             return;
         }
 
+        if (((PInvoke.GetAsyncKeyState(0x01) | PInvoke.GetAsyncKeyState(0x02)) & 0x8000) != 0)
+        {
+            return; // An Esc during a drag cancels the drag (a file on its way to the shelf), not NotiLand.
+        }
+
         if (CardOpen)
         {
             _card!.CloseSmoothly();
@@ -478,8 +483,16 @@ internal sealed class IslandHost : IDisposable
         }
 
         _shelf.Prune();
-        var card = new IslandCard(_musicActions);
+        var card = new IslandCard(_musicActions) { KeepOpen = () => _window?.IsHovered == true };
         _card = card;
+        card.Leaving += (_, _) =>
+        {
+            if (ReferenceEquals(_card, card) && _window is not null)
+            {
+                _window.PinOpen = false; // The pill goes back with the card.
+                RefreshSoon();
+            }
+        };
         card.Closed += (_, _) =>
         {
             if (ReferenceEquals(_card, card))
@@ -506,6 +519,7 @@ internal sealed class IslandHost : IDisposable
         };
         var (home, pillHeight) = Window().PillOnScreen();
         card.Open(CardModelNow, home, pillHeight, Window().PillRect()?.Width ?? 0);
+        Window().PinOpen = true; // The pill is medium (open) as long as its card is up, not its smallest.
         UpdateEscapeWatch();
     }
 
@@ -882,6 +896,18 @@ internal sealed class IslandHost : IDisposable
         }
 
         object? wanted = _editing is { } editing ? new LiveLine("place", string.Format(Strings.IslandPlaceEditing, SceneName(editing)), new IslandLook("move", "#4CC3FF")) : _queue.Current;
+
+        // The page of a song that plays is in front (a music app, a video tab): the user is looking at it, so NotiLand does
+        // not tell about that song.
+        var hiddenByFront = false;
+        var (frontProcess, frontTitle) = _tracks.Count > 0 ? PlayerInFront.Foreground() : ("", "");
+        bool InFront(string source) =>
+            _tracks.FirstOrDefault(t => t.Source == source) is { } song && PlayerInFront.Shows(song.Source, song.Title, frontProcess, frontTitle);
+        if (wanted is IslandActivity { IsMusic: true } announced && InFront(announced.Source))
+        {
+            wanted = null;
+        }
+
         if (wanted is null && _countdown.Running)
         {
             wanted = new LiveLine("timer", string.Format(Strings.IslandTimerLeft, IslandTimer.Format(_countdown.Left(now))),
@@ -900,7 +926,9 @@ internal sealed class IslandHost : IDisposable
         if (wanted is null)
         {
             // Everything that plays, music or video, takes turns on the pill.
-            var playing = MusicPolicy.PlayingToShow(_options.Music, _tracks);
+            var all = MusicPolicy.PlayingToShow(_options.Music, _tracks);
+            var playing = all.Where(t => !InFront(t.Source)).ToList();
+            hiddenByFront = playing.Count < all.Count;
 
             // Under the pointer the pill stays with its player, so the buttons act on what the user is looking at.
             wanted = _window?.IsHovered == true && _shown is MediaTrack current && playing.FirstOrDefault(t => t.Source == current.Source) is { } held
@@ -908,9 +936,19 @@ internal sealed class IslandHost : IDisposable
                 : MusicPolicy.Rotate(playing, now, Turn);
         }
 
+        if (wanted is null && CardOpen && _shown is not null)
+        {
+            wanted = _shown; // The card is up: its pill stays (a line that ended does not take the pill away from it).
+        }
+
         if (wanted is null)
         {
-            _timer.Stop();
+            if (!hiddenByFront)
+            {
+                _timer.Stop();
+            }
+
+            // Otherwise the timer runs on: it is what brings the song back when the user leaves its page.
             Withdraw(animated: true);
             UpdateEscapeWatch();
             return;
@@ -1037,9 +1075,26 @@ internal sealed class IslandHost : IDisposable
             _window.PositionChanged += (x, y) => OnDragged(new ScreenPoint(x, y));
             _window.DoubleClicked += (_, _) => EndPlaceEdit(save: true);
             _window.HoverChanged += (_, _) => RefreshSoon();
-            _window.Clicked += (_, _) => _queue.Dismiss(Now);
+            _window.Clicked += (_, _) =>
+            {
+                // A line of the info (the usage, rotating with the others) is not one to dismiss: it is another way to the card.
+                if (_info is not null && _queue.Current is null)
+                {
+                    ToggleCard();
+                }
+                else
+                {
+                    _queue.Dismiss(Now);
+                }
+            };
             _window.ActionRequested += target => ActionRequested?.Invoke(target);
-            _window.ExpandRequested += (_, _) => ToggleCard();
+            _window.ExpandRequested += (_, _) =>
+            {
+                if (_editing is null)
+                {
+                    ToggleCard(); // While a place is being set the clicks are for the island, not for the card.
+                }
+            };
             _window.FilesHovered += (_, _) => OpenCard();
         }
 

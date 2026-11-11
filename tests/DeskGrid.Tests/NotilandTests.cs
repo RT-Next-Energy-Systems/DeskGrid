@@ -86,6 +86,16 @@ public sealed class IslandPlacesTests
     public void TheScreenSnipAndStart_AreOverlaysItStaysUnder(string app, bool overlay) =>
         Assert.Equal(overlay, IslandScene.IsOverlay(app));
 
+    [Theory]
+    [InlineData("AppleInc.AppleMusicWin_abc!App", "Song", "applemusic", "Apple Music", true)] // A music app: its window is the page.
+    [InlineData("Spotify.exe", "Song", "chrome", "Other tab - Google Chrome", false)]
+    [InlineData("Chrome", "Song - Artist", "chrome", "Song - YouTube - Google Chrome", true)] // A browser: the tab in front carries the song.
+    [InlineData("Chrome", "Song - Artist", "chrome", "Mail - Google Chrome", false)]
+    [InlineData("308046B0AF4A39CB", "Song", "firefox", "Song - YouTube", true)] // A browser id that does not name the browser.
+    [InlineData("Chrome", "Song", "", "", false)]
+    public void ThePageOfASong_IsInFront_OnlyWhenItsWindowIs(string source, string song, string process, string title, bool expected) =>
+        Assert.Equal(expected, PlayerInFront.Shows(source, song, process, title));
+
     [Fact]
     public void TheSituationInFront_CanBeAsked() => Assert.Contains(IslandScene.Detect(IslandScene.Default), IslandScene.All);
 }
@@ -117,6 +127,28 @@ public sealed class NotilandWindowTests : IDisposable
         Assert.True(room > 100 && room < 280, $"room {room}");
         Assert.True(overflow > 100, $"overflow {overflow}");
         Assert.Equal(overflow, again);
+    }
+
+    [Fact]
+    public async Task PinnedOpen_MakesThePillMedium_WithoutThePointer_AndBackAgain()
+    {
+        var (closed, pinned, unpinned) = await _ui.InvokeAsync(() =>
+        {
+            TestApplication.Ensure();
+            var window = new IslandWindow();
+            window.Display(new string('x', 60));
+            var small = window.PillTarget;
+            window.PinOpen = true;
+            var medium = window.PillTarget;
+            window.PinOpen = false;
+            var back = window.PillTarget;
+            window.Withdraw(animated: false);
+            window.Close();
+            return (small, medium, back);
+        });
+
+        Assert.True(pinned.Width > closed.Width || pinned.Height > closed.Height, $"{closed} -> {pinned}");
+        Assert.Equal(closed, unpinned);
     }
 
     [Fact]

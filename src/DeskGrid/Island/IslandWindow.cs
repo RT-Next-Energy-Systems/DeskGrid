@@ -51,8 +51,15 @@ internal sealed class IslandWindow : Window
     // iOS-like curve: leaves quickly but arrives softly, with no hard stop at the end (a quintic ease-out jumped most of the way
     // in the first frames and then crept).
     private static readonly KeySpline Spline = FrozenSpline();
-    private static readonly Duration Grow = new(TimeSpan.FromMilliseconds(360));
-    private static readonly Duration Leave = new(TimeSpan.FromMilliseconds(220));
+    // Short on purpose: the pill opens and closes under the pointer all the time, and a long animation reads as lag. The fade is
+    // shorter still, because a transparent pixel of a layered window lets clicks through (a pill still fading in cannot be clicked).
+    private static readonly Duration Grow = new(TimeSpan.FromMilliseconds(260));
+    private static readonly Duration Leave = new(TimeSpan.FromMilliseconds(160));
+    private static readonly Duration Fade = new(TimeSpan.FromMilliseconds(120));
+
+    // A press that moves less than this (DIPs, and never less than the system's drag distance) is a click, not a drag: the
+    // system's 4 pixels are 2 DIPs at 200 % scaling, which a hand on a trackpad passes without meaning to.
+    private const double DragSlop = 8;
 
     // The pointer must have stayed away this long before the pill closes again: grazing the edge while it resizes, or the
     // trip from the pill to the card, does not make it flutter.
@@ -332,8 +339,9 @@ internal sealed class IslandWindow : Window
 
         if (e.ClickCount == 2)
         {
+            // Only setting a place cares about it. The press goes on as a normal one: the second click of two quick ones used
+            // to be swallowed here, so the card (or a dismiss) did not answer it.
             DoubleClicked?.Invoke(this, EventArgs.Empty);
-            return;
         }
 
         PInvoke.GetCursorPos(out var cursor);
@@ -352,7 +360,10 @@ internal sealed class IslandWindow : Window
 
         PInvoke.GetCursorPos(out var cursor);
         var (dx, dy) = (cursor.X - start.X, cursor.Y - start.Y);
-        if (!_dragged && Math.Abs(dx) < PInvoke.GetSystemMetrics(SYSTEM_METRICS_INDEX.SM_CXDRAG) && Math.Abs(dy) < PInvoke.GetSystemMetrics(SYSTEM_METRICS_INDEX.SM_CYDRAG))
+        var slop = (int)Math.Round(DragSlop * VisualTreeHelper.GetDpi(this).DpiScaleX);
+        if (!_dragged
+            && Math.Abs(dx) < Math.Max(slop, PInvoke.GetSystemMetrics(SYSTEM_METRICS_INDEX.SM_CXDRAG))
+            && Math.Abs(dy) < Math.Max(slop, PInvoke.GetSystemMetrics(SYSTEM_METRICS_INDEX.SM_CYDRAG)))
         {
             return;
         }
@@ -533,6 +544,7 @@ internal sealed class IslandWindow : Window
         }
 
         _music = music;
+        var fresh = !_present || !IsVisible; // Appearing (or coming back while it leaves), not changing what an up pill shows.
         _present = true;
         if (!IsVisible)
         {
@@ -547,8 +559,13 @@ internal sealed class IslandWindow : Window
             Show(); // Not activated: ShowActivated is off.
         }
 
-        Resize(force: true); // Also starts the scrolling of a long line.
-        Animate(OpacityProperty, 1, Grow);
+        // A line that replaces another one only changes size if it needs to (nothing animates for the same size), and an
+        // opaque pill is not faded again.
+        Resize(force: fresh); // Also starts the scrolling of a long line.
+        if (fresh || _pill.Opacity < 0.999)
+        {
+            Animate(OpacityProperty, 1, Fade);
+        }
     }
 
     /// <summary>Takes the pill away: it shrinks and fades first, or is gone at once.</summary>
@@ -570,7 +587,7 @@ internal sealed class IslandWindow : Window
 
         Animate(WidthProperty, PillHeight, Leave);
         Animate(HeightProperty, PillHeight, Leave);
-        Animate(OpacityProperty, 0, Leave, (_, _) =>
+        Animate(OpacityProperty, 0, Fade, (_, _) =>
         {
             if (!_present)
             {
@@ -655,7 +672,31 @@ internal sealed class IslandWindow : Window
     /// <summary>Collapses the pill back to its compact size.</summary>
     public void Collapse() => SetOpen(false);
 
-    private bool IsOpen => IsHovered && _hover.Expand && !IsDragging;
+    private bool IsOpen => (IsHovered || _pinnedOpen) && _hover.Expand && !IsDragging;
+
+    private bool _pinnedOpen;
+
+    /// <summary>
+    /// Keeps the pill open (medium size, as under the pointer) without the pointer: while the card is up the pill it belongs
+    /// to must not shrink back to its smallest.
+    /// </summary>
+    public bool PinOpen
+    {
+        get => _pinnedOpen;
+        set
+        {
+            if (_pinnedOpen == value)
+            {
+                return;
+            }
+
+            _pinnedOpen = value;
+            if (IsVisible && _present)
+            {
+                Resize();
+            }
+        }
+    }
 
     private void SetOpen(bool open)
     {
@@ -716,13 +757,23 @@ internal sealed class IslandWindow : Window
     private void Resize(bool force = false)
     {
         var size = PillSize();
-        var unchanged = !force && Math.Abs(size.Width - _pillSize.Width) < 0.5 && Math.Abs(size.Height - _pillSize.Height) < 0.5;
+        // Only what changed moves: a line that wraps changes the height alone, one that scrolls nothing at all.
+        var widthChanged = force || Math.Abs(size.Width - _pillSize.Width) >= 0.5;
+        var heightChanged = force || Math.Abs(size.Height - _pillSize.Height) >= 0.5;
         _pillSize = size;
-        if (!unchanged)
+        if (widthChanged || heightChanged)
         {
             // A fresh animation per change, so a pointer that goes in and out mid-way turns the pill around smoothly.
-            Animate(WidthProperty, _pillSize.Width, Grow);
-            Animate(HeightProperty, _pillSize.Height, Grow);
+            if (widthChanged)
+            {
+                Animate(WidthProperty, _pillSize.Width, Grow);
+            }
+
+            if (heightChanged)
+            {
+                Animate(HeightProperty, _pillSize.Height, Grow);
+            }
+
             if (!IsDragging && new WindowInteropHelper(this).Handle != 0)
             {
                 Place(Handle); // Near an edge, the open pill stays on the screen.
@@ -755,6 +806,7 @@ internal sealed class IslandWindow : Window
         var scrolled = Marquee.Rest + TimeSpan.FromSeconds(_overflow / Marquee.Speed);
         var atEnd = scrolled + Marquee.Rest;
         var animation = new DoubleAnimationUsingKeyFrames { RepeatBehavior = RepeatBehavior.Forever };
+        Timeline.SetDesiredFrameRate(animation, 30); // A slow scroll of text does not need 60 frames, and it runs for as long as the line is up.
         animation.KeyFrames.Add(new LinearDoubleKeyFrame(0, TimeSpan.Zero));
         animation.KeyFrames.Add(new LinearDoubleKeyFrame(0, Marquee.Rest));
         animation.KeyFrames.Add(new LinearDoubleKeyFrame(-_overflow, scrolled));

@@ -28,9 +28,15 @@
 - Settings → NotiLand → **What the card shows**: tick the parts the card opens with (music and video, AI usage, system, folders, shelf) and move them up or down.
 - AI usage can show Claude's own numbers (the 5-hour and weekly percentages and when they reset) instead of a guess counted from logs: Settings → NotiLand → AI usage → **Connect to Claude Code…**. It needs a Claude.ai Pro, Max or Ultra plan, and the numbers appear after Claude Code's next response.
 - DeskGrid now finds which AI tools are on the computer (Claude Code, Codex, Antigravity, Gemini CLI, Cursor, GitHub Copilot) and lists them under Settings → NotiLand → AI usage. Tools that keep their plan usage on disk (Claude Code, Codex) get their own bar on the card; the others are listed as found.
+- NotiLand's animations are shorter and lighter: the pill and the card open and close faster, only the side of the pill that changes is animated, a new line is not faded in again when the pill is already up, and a scrolling line runs at 30 frames a second.
 
 ### Fixed
 
+- The song's progress bar on the card now has a dot at the current position: take it and drag to move the song (dragging anywhere on the bar works too).
+- NotiLand does not tell about a song while its page is in front: a music app such as Apple Music, or the browser tab that plays it (YouTube and the like). It comes back when you leave that page.
+- The card no longer closes while a file is being carried to the shelf (from Explorer, or out of the shelf), however long the trip takes, and an Esc that cancels such a drag does not close it either.
+- While the card is up, its pill stays at medium size (as under the pointer) instead of shrinking to the smallest, and a line that ended does not take the pill away from it.
+- Clicking NotiLand opens the card more reliably: a click that moves a few pixels is no longer taken for a drag, the second of two quick clicks is no longer ignored, and a click on a rotating info line (such as AI usage) opens the card instead of dismissing the line.
 - Clicking a file's remove button on the shelf removes it without opening it.
 - Folder deletion across drives handles read-only files cleanly.
 - Automatic backup date parsing strictly matches backup file names, and the backup days dropdown stops at 30 days.

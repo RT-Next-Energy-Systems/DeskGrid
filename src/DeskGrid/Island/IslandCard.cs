@@ -34,8 +34,10 @@ internal sealed class IslandCard : Window
     private const double Pad = 14;
     private const double Gap = 8; // DIPs between the pill and the card.
     private static readonly TimeSpan IdleClose = TimeSpan.FromSeconds(8);
-    private static readonly Duration EnterDuration = new(TimeSpan.FromMilliseconds(380));
-    private static readonly Duration LeaveDuration = new(TimeSpan.FromMilliseconds(200));
+    private static readonly Duration EnterDuration = new(TimeSpan.FromMilliseconds(280));
+    private static readonly Duration LeaveDuration = new(TimeSpan.FromMilliseconds(140));
+    private static readonly Duration FadeInDuration = new(TimeSpan.FromMilliseconds(120));
+    private const double EnterFromY = 0.6; // How tall the card is when it starts to open (the less it travels, the less it jumps).
     private static readonly KeySpline Spline = FrozenSpline();
 
     private readonly StackPanel _body = new();
@@ -153,7 +155,7 @@ internal sealed class IslandCard : Window
             var fromX = pillWidth > 0 ? Math.Clamp(pillWidth / (double)MonitorArea.At(_home).ToPixels(CardWidth), 0.3, 0.97) : 0.9;
             _frame.RenderTransformOrigin = new Point(0.5, _opensAbove ? 1.0 : 0.0);
             _frame.Opacity = 0;
-            (_scale.ScaleX, _scale.ScaleY) = (fromX, 0.45);
+            (_scale.ScaleX, _scale.ScaleY) = (fromX, EnterFromY);
             // Drawn once and moved as a picture while it animates: re-drawing every control on every frame is what made the
             // opening stutter. Dropped when it ends, so the text is sharp again.
             _frame.CacheMode = new BitmapCache(VisualTreeHelper.GetDpi(this).DpiScaleX);
@@ -170,8 +172,8 @@ internal sealed class IslandCard : Window
                 var done = Spring(1, EnterDuration, from);
                 done.Completed += (_, _) => _frame.CacheMode = null;
                 _scale.BeginAnimation(ScaleTransform.ScaleXProperty, done);
-                _scale.BeginAnimation(ScaleTransform.ScaleYProperty, Spring(1, EnterDuration, 0.45));
-                _frame.BeginAnimation(OpacityProperty, Spring(1, new Duration(TimeSpan.FromMilliseconds(160)), 0));
+                _scale.BeginAnimation(ScaleTransform.ScaleYProperty, Spring(1, EnterDuration, EnterFromY));
+                _frame.BeginAnimation(OpacityProperty, Spring(1, FadeInDuration, 0));
             }, DispatcherPriority.Loaded);
         }
 
@@ -179,6 +181,16 @@ internal sealed class IslandCard : Window
         _idle = TimeSpan.Zero;
         _tick.Start();
     }
+
+    /// <summary>Raised when the card starts to leave.</summary>
+    public event EventHandler? Leaving;
+
+    /// <summary>Tells that something other than the pointer over the card keeps it open (the pointer is on the pill).</summary>
+    public Func<bool>? KeepOpen { get; set; }
+
+    // A mouse button held down anywhere is a drag in progress (a file brought from Explorer, one taken from the shelf): the
+    // trip to the card can be long (another folder opened on the way) and must not run its time out.
+    private static bool ButtonDown() => ((PInvoke.GetAsyncKeyState(0x01) | PInvoke.GetAsyncKeyState(0x02)) & 0x8000) != 0;
 
     /// <summary>Whether the card is on its way out (it ends a moment later).</summary>
     public bool IsClosing { get; private set; }
@@ -198,6 +210,7 @@ internal sealed class IslandCard : Window
         }
 
         IsClosing = true;
+        Leaving?.Invoke(this, EventArgs.Empty);
         _tick.Stop();
         _frame.CacheMode = new BitmapCache(VisualTreeHelper.GetDpi(this).DpiScaleX);
         var fade = Spring(0, LeaveDuration);
@@ -238,7 +251,7 @@ internal sealed class IslandCard : Window
     private void OnTick()
     {
         Refresh();
-        _idle = IsMouseOver ? TimeSpan.Zero : _idle + _tick.Interval;
+        _idle = IsMouseOver || ButtonDown() || KeepOpen?.Invoke() == true ? TimeSpan.Zero : _idle + _tick.Interval;
         if (!IslandScene.SystemOverlayInFront())
         {
             TopEdge.RaiseAboveTaskbar(new HWND(new WindowInteropHelper(this).Handle));
@@ -412,6 +425,14 @@ internal sealed class IslandCard : Window
 
         var accent = track.Accent is { } color ? new SolidColorBrush(color) : Brushes.White;
         var (barTrack, fill) = Bar(0, accent);
+
+        // The dot on the bar: it shows where the song is and is what the user takes and moves (a drag anywhere on the bar works too).
+        var knob = new System.Windows.Shapes.Ellipse
+        {
+            Width = KnobSize, Height = KnobSize, Fill = Brushes.White, HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Center, IsHitTestVisible = false,
+        };
+        barTrack.Tag = knob;
         var time = new TextBlock { Foreground = Dim, FontSize = 11, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Thickness(0, 2, 0, 0) };
         _bars[track.Source] = (track, fill, barTrack, time);
         UpdateBar(track);
@@ -421,7 +442,8 @@ internal sealed class IslandCard : Window
             Margin = new Thickness(0, 4, 0, 0),
             Padding = new Thickness(0, 4, 0, 4),
             Background = Brushes.Transparent,
-            Child = barTrack,
+            Cursor = Cursors.Hand,
+            Child = new Grid { Children = { barTrack, knob } },
         };
         // Press and drag along the bar to scrub: the bar and the time follow the pointer, and the song jumps there on release.
         double? scrubFraction = null;
@@ -481,6 +503,8 @@ internal sealed class IslandCard : Window
         return row;
     }
 
+    private const double KnobSize = 12;
+
     private static readonly Brush Dim = new SolidColorBrush(Color.FromArgb(170, 255, 255, 255));
 
     private static Brush UsageBrush(double percent) =>
@@ -513,7 +537,15 @@ internal sealed class IslandCard : Window
         bar.Time.Text = MediaTimeline.Format(line.SeekTarget(fraction)) + " / " + MediaTimeline.Format(line.Duration);
     }
 
-    private static void Fill(Border track, Border fill) => fill.Width = track.ActualWidth * Math.Clamp(fill.Tag is double f ? f : 0, 0, 1);
+    private static void Fill(Border track, Border fill)
+    {
+        var width = track.ActualWidth * Math.Clamp(fill.Tag is double f ? f : 0, 0, 1);
+        fill.Width = width;
+        if (track.Tag is FrameworkElement knob)
+        {
+            knob.Margin = new Thickness(width - knob.Width / 2, 0, 0, 0); // The dot sits on the end of the fill.
+        }
+    }
 
     private void UpdateProgress(CardModel model)
     {

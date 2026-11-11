@@ -46,6 +46,10 @@ internal static class MediaJumper
         return id.Contains(name, StringComparison.Ordinal) || (name.Length >= 4 && name.StartsWith(id.Replace(".exe", ""), StringComparison.Ordinal) && id.Length >= 4);
     }
 
+    /// <summary>Whether a program called <paramref name="processName"/> is a web browser.</summary>
+    internal static bool IsBrowser(string processName) =>
+        Browsers.Any(b => processName.Contains(b, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>The part of a title worth looking for in a window or tab name (the song, not the artist or a suffix).</summary>
     internal static string Needle(string title)
     {
