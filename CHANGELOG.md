@@ -46,6 +46,7 @@
 - A song hidden because its page is in front comes back reliably when you leave that page, and a song announcement hidden that way still ends on time.
 - On the card, letting go of a song's bar after the song changed no longer leaves the bar holding the mouse, and moving one song's bar no longer freezes the other players' bars for a moment.
 - The mouse wheel over a list inside a Settings page scrolls that list instead of the page; the usage line shows "1h 00m" instead of "60m"; a few rare crashes in NotiLand's player lookup and microphone/camera watcher are gone.
+- Moving a folder that holds a junction or folder link to another drive (dragging it in from the desktop, or deleting a folder to the desktop) no longer deletes the files of the folder that link points to.
 - Turning NotiLand off while you set one of its places gives back the windows that were minimized for it.
 - An automatic backup that was cut off while being written no longer stops that day's backup or shows up under Restore; a file kept open in Downloads no longer keeps NotiLand checking it forever; turning off downloads, Bluetooth or the top edge no longer lets one last line or folder list through.
 

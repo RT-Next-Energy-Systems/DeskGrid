@@ -66,6 +66,26 @@ public sealed class FolderDeleterTests : IDisposable
     }
 
     [Fact]
+    public void CopyThenDelete_AFolderHoldingAJunction_LeavesTheFolderItPointsToAlone()
+    {
+        // The deletion after the copy used to go into the junction and delete the files of the folder it points to.
+        _temp.CreateFile(@"elsewhere\precious.txt");
+        var source = Path.Combine(Folder, "Notes");
+        var link = Path.Combine(source, "Linked");
+        using (var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", $"/c mklink /J \"{link}\" \"{_temp.Combine("elsewhere")}\"") { CreateNoWindow = true, UseShellExecute = false })!)
+        {
+            mklink.WaitForExit();
+        }
+
+        Assert.True(File.GetAttributes(link).HasFlag(FileAttributes.ReparsePoint));
+
+        FolderDeleter.CopyThenDelete(source, Path.Combine(Desktop, "Notes"));
+
+        Assert.False(Directory.Exists(source));
+        Assert.True(File.Exists(_temp.Combine(@"elsewhere\precious.txt")));
+    }
+
+    [Fact]
     public void CopyThenDelete_WithReadOnlyFiles_DeletesSuccessfully()
     {
         _temp.CreateFile(@"root\Dev\Notes\readonly.txt", FileAttributes.ReadOnly);

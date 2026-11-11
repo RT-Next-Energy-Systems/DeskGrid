@@ -784,3 +784,14 @@
 **Alternatives**：第四次重讀面板與 widget 程式（上次排查後沒有改動）。
 **Consequences**：新增 `TurningTheIslandOff_WhileAPlaceIsBeingSet_EndsTheSetting`、`ADownloadFinishingAfterTheWatcherWasTurnedOff_IsNotTold`，以及 `ExportThenImport_GivesBackTheSameSettings` 檢查不留 `.tmp`（607 通過）。
 **Author**：使用者要求；Claude（Opus 5.5）找出並修正
+
+---
+
+### 2026-11-11（三）— 第三輪：之前排查過的模組（1 項資料遺失修正、1 項清理）
+**Decision**：
+1. **`FolderDeleter.DeleteDirectoryRecursively` 不再跟進重新分析點**：junction 或目錄符號連結只刪連結本身（`Directory.Delete(path, false)`）。2026-11-10 為唯讀檔加的手寫遞迴會走進 junction，把它指向的資料夾裡的檔案刪掉；發生在跨磁碟機搬移（`CopyThenDelete`：從桌面拖進來的資料夾，或刪除資料夾時把項目移到桌面）。.NET 自己的 `Directory.Delete(recursive)` 不會這樣。`CopyThenDelete_AFolderHoldingAJunction_LeavesTheFolderItPointsToAlone` 在沒修正時失敗（目標檔案不見）、修正後通過。
+2. **`PopupPanel`**：面板關閉時停止長大動畫的計時器（`_resize`）。
+**Reason**：/goal 的第三輪：重讀 Folders、Shell、Widgets、Desktop、Panel、Updates、Hotkeys、Taskbar、Tray 與更新紀錄解析（2026-11-02、11-06、11-10 已排查過）；這些地方沒有找到其他缺陷。
+**Alternatives**：拒絕搬移含連結的資料夾（連結會不見）；複製連結本身（需要符號連結權限）。
+**Consequences**：搬到另一個磁碟機的資料夾裡的 junction 會變成它指向內容的複本，原本的目標不受影響。608 測試通過。
+**Author**：使用者要求；Claude（Opus 5.5）找出並修正

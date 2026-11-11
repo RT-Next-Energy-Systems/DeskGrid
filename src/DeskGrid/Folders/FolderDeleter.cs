@@ -139,6 +139,14 @@ internal static class FolderDeleter
             return;
         }
 
+        // A junction or symbolic link: only the link goes. Going into it would delete the files of the folder it points to,
+        // which are not part of what is being moved.
+        if (File.GetAttributes(path).HasFlag(FileAttributes.ReparsePoint))
+        {
+            Directory.Delete(path, recursive: false);
+            return;
+        }
+
         foreach (var file in Directory.EnumerateFiles(path, "*", AllEntries))
         {
             File.SetAttributes(file, FileAttributes.Normal);

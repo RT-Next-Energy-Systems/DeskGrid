@@ -782,3 +782,14 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Re-reading the panel and widget code a fourth time (no changes since the last sweep).
 **Consequences**: Tests `TurningTheIslandOff_WhileAPlaceIsBeingSet_EndsTheSetting`, `ADownloadFinishingAfterTheWatcherWasTurnedOff_IsNotTold`, and a no-`.tmp` check in `ExportThenImport_GivesBackTheSameSettings` (607 pass).
 **Author**: The user asked; Claude (Opus 5.5) found and fixed
+
+---
+
+### 2026-11-11 (3) — Third pass: the modules swept before (1 data-loss fix, 1 cleanup)
+**Decision**:
+1. **`FolderDeleter.DeleteDirectoryRecursively` no longer follows reparse points**: a junction or directory symlink is removed as a link (`Directory.Delete(path, false)`). The hand-written recursion (added 2026-11-10 for read-only files) went into a junction and deleted the files of the folder it pointed to, during a cross-drive move (`CopyThenDelete`: a desktop folder dragged in, or a folder's items moved to the desktop on delete). `.NET`'s own `Directory.Delete(recursive)` never did this. Shown by `CopyThenDelete_AFolderHoldingAJunction_LeavesTheFolderItPointsToAlone`, which fails without the fix (the target file is gone) and passes with it.
+2. **`PopupPanel`**: the growth animation timer (`_resize`) is stopped when the panel closes.
+**Reason**: Third pass of the /goal: Folders, Shell, Widgets, Desktop, Panel, Updates, Hotkeys, Taskbar, Tray and the change log reader were read again (they had been swept on 2026-11-02, 11-06 and 11-10); no other defect was found there.
+**Alternatives**: Refusing to move a folder that holds a link (the link would be lost); copying the link itself (needs the symlink privilege).
+**Consequences**: A junction inside a folder moved to another drive arrives as a copy of what it pointed to, and the original target is untouched. 608 tests pass.
+**Author**: The user asked; Claude (Opus 5.5) found and fixed

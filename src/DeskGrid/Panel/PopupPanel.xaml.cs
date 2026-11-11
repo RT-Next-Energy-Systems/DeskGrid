@@ -123,6 +123,7 @@ internal partial class PopupPanel : Window
         Closed += (_, _) =>
         {
             _watch.Stop();
+            _resize?.Stop(); // A growth animation still running would keep resizing a window that is gone.
             _capture?.Dispose();
             _glass?.Dispose();
         };
