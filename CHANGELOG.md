@@ -41,6 +41,11 @@
 - Folder deletion across drives handles read-only files cleanly.
 - Automatic backup date parsing strictly matches backup file names, and the backup days dropdown stops at 30 days.
 - Folder item hover and focus highlight corner radius matches the folder panel frame (8 px).
+- A file dragged off the shelf and let go over the card again stays on the shelf (it used to vanish from it).
+- A broken time in Codex's or Claude Code's usage data no longer stops the whole AI usage reading; connecting to Claude Code keeps the status line's other settings (such as padding) and no longer fails on an unusual settings file.
+- A song hidden because its page is in front comes back reliably when you leave that page, and a song announcement hidden that way still ends on time.
+- On the card, letting go of a song's bar after the song changed no longer leaves the bar holding the mouse, and moving one song's bar no longer freezes the other players' bars for a moment.
+- The mouse wheel over a list inside a Settings page scrolls that list instead of the page; the usage line shows "1h 00m" instead of "60m"; a few rare crashes in NotiLand's player lookup and microphone/camera watcher are gone.
 
 ## 0.6.2
 

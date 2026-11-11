@@ -87,12 +87,18 @@ internal sealed class IslandCard : Window
         DragOver += (_, e) =>
         {
             _idle = TimeSpan.Zero;
-            e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
+            e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) && !IsFromShelf(e.Data) ? DragDropEffects.Copy : DragDropEffects.None;
             e.Handled = true;
         };
         Drop += (_, e) =>
         {
-            if (e.Data.GetData(DataFormats.FileDrop) is string[] paths)
+            // A file taken from the shelf and let go over the card again stays on the shelf: answering Copy would tell the
+            // drag that it went somewhere, and the shelf would drop it.
+            if (IsFromShelf(e.Data))
+            {
+                e.Effects = DragDropEffects.None;
+            }
+            else if (e.Data.GetData(DataFormats.FileDrop) is string[] paths)
             {
                 ShelfDropped?.Invoke(paths);
             }
@@ -470,14 +476,20 @@ internal sealed class IslandCard : Window
         };
         hitBar.MouseLeftButtonUp += (_, e) =>
         {
-            if (scrubFraction is { } fraction && _bars.TryGetValue(track.Source, out var state) && state.Song.Timeline is { } line)
+            if (scrubFraction is not { } fraction)
             {
-                scrubFraction = null;
-                hitBar.ReleaseMouseCapture();
+                return;
+            }
+
+            // The drag ends here whatever happened to the song meanwhile, or the bar would keep the mouse.
+            scrubFraction = null;
+            _scrubbing = null;
+            hitBar.ReleaseMouseCapture();
+            e.Handled = true;
+            if (_bars.TryGetValue(track.Source, out var state) && state.Song.Timeline is { } line)
+            {
                 _music.Seek?.Invoke(track.Source, line.SeekTarget(fraction));
-                _scrubHoldUntil = DateTime.UtcNow.AddMilliseconds(1500); // The player reports the new position a moment later.
-                _scrubbing = null;
-                e.Handled = true;
+                _scrubHeld = (track.Source, DateTime.UtcNow.AddMilliseconds(1500)); // The player reports the new position a moment later.
             }
         };
         hitBar.LostMouseCapture += (_, _) =>
@@ -522,7 +534,7 @@ internal sealed class IslandCard : Window
     }
 
     private string? _scrubbing; // The player whose bar is being dragged.
-    private DateTime _scrubHoldUntil;
+    private (string Source, DateTime Until) _scrubHeld = ("", DateTime.MinValue); // Only the bar that was moved waits for its player.
 
     // Shows where a drag along a song's bar would take it: the bar and the time.
     private void ShowScrub(string source, double fraction)
@@ -572,7 +584,7 @@ internal sealed class IslandCard : Window
 
         var (_, fill, barTrack, time) = bar;
         _bars[track.Source] = (track, fill, barTrack, time);
-        if (_scrubbing == track.Source || DateTime.UtcNow < _scrubHoldUntil)
+        if (_scrubbing == track.Source || (_scrubHeld.Source == track.Source && DateTime.UtcNow < _scrubHeld.Until))
         {
             return; // The user is moving (or has just moved) this bar: the player's report would pull it back.
         }
@@ -684,6 +696,11 @@ internal sealed class IslandCard : Window
         return chip;
     }
 
+    // Marks a drag that started on the shelf.
+    internal const string ShelfFormat = "DeskGrid.ShelfItem";
+
+    internal static bool IsFromShelf(IDataObject data) => data.GetDataPresent(ShelfFormat);
+
     private void WireShelfDrag(Border chip, string[] paths, Action? onClick)
     {
         chip.MouseLeftButtonDown += (_, e) =>
@@ -708,6 +725,7 @@ internal sealed class IslandCard : Window
             _pressedPaths = null;
             chip.ReleaseMouseCapture();
             var data = new DataObject(DataFormats.FileDrop, paths);
+            data.SetData(ShelfFormat, true);
             var effect = DragDrop.DoDragDrop(chip, data, DragDropEffects.Copy | DragDropEffects.Link);
             if (effect != DragDropEffects.None)
             {

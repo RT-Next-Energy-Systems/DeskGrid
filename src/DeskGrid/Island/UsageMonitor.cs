@@ -70,7 +70,9 @@ internal static class UsageRules
             left = TimeSpan.Zero;
         }
 
-        return left.TotalHours >= 1 ? $"{(int)left.TotalHours}h {left.Minutes:00}m" : $"{(int)Math.Ceiling(left.TotalMinutes)}m";
+        // Under an hour the minutes round up, so 59 minutes and a half is "1h 00m", not "60m".
+        var minutes = (int)Math.Ceiling(left.TotalMinutes);
+        return left.TotalHours >= 1 ? $"{(int)left.TotalHours}h {left.Minutes:00}m" : minutes >= 60 ? "1h 00m" : $"{minutes}m";
     }
 }
 

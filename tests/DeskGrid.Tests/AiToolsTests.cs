@@ -50,6 +50,15 @@ public class AiToolsTests : IDisposable
     }
 
     [Fact]
+    public void CodexParseLine_TimesOutOfRange_AreNothing_NotAnException()
+    {
+        // A broken log used to throw out of ParseLine and fail the whole usage reading, Claude Code's included.
+        Assert.Null(CodexLimits.ParseLine("""{"payload":{"rate_limits":{"primary":{"used_percent":5,"resets_at":99999999999999999}}}}""", Now));
+        Assert.Null(CodexLimits.ParseLine("""{"timestamp":"2027-01-15T08:00:00Z","payload":{"rate_limits":{"primary":{"used_percent":5,"resets_in_seconds":9223372036854775807}}}}""", Now));
+        Assert.Equal(5, CodexLimits.ParseLine("""{"payload":{"rate_limits":{"primary":{"used_percent":5,"resets_at":1800003600.5}}}}""", Now)!.FivePercent);
+    }
+
+    [Fact]
     public void CodexRead_TakesTheLastEventOfTheNewestLog()
     {
         var day = Path.Combine(_root, ".codex", "sessions", "2027", "01", "15");

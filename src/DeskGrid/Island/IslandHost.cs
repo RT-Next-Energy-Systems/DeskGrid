@@ -906,6 +906,7 @@ internal sealed class IslandHost : IDisposable
         if (wanted is IslandActivity { IsMusic: true } announced && InFront(announced.Source))
         {
             wanted = null;
+            hiddenByFront = true; // Its time still runs out (the queue needs the ticks to end it).
         }
 
         if (wanted is null && _countdown.Running)
@@ -928,7 +929,7 @@ internal sealed class IslandHost : IDisposable
             // Everything that plays, music or video, takes turns on the pill.
             var all = MusicPolicy.PlayingToShow(_options.Music, _tracks);
             var playing = all.Where(t => !InFront(t.Source)).ToList();
-            hiddenByFront = playing.Count < all.Count;
+            hiddenByFront |= playing.Count < all.Count;
 
             // Under the pointer the pill stays with its player, so the buttons act on what the user is looking at.
             wanted = _window?.IsHovered == true && _shown is MediaTrack current && playing.FirstOrDefault(t => t.Source == current.Source) is { } held
@@ -943,12 +944,17 @@ internal sealed class IslandHost : IDisposable
 
         if (wanted is null)
         {
-            if (!hiddenByFront)
+            // A song hidden because its page is in front: the timer must run (started here if it was not), as it is what brings
+            // the song back when the user leaves that page.
+            if (hiddenByFront)
+            {
+                _timer.Start();
+            }
+            else
             {
                 _timer.Stop();
             }
 
-            // Otherwise the timer runs on: it is what brings the song back when the user leaves its page.
             Withdraw(animated: true);
             UpdateEscapeWatch();
             return;

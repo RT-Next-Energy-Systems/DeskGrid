@@ -751,3 +751,21 @@
 **Alternatives**: 將資料夾外框圓角縮小為 4（使用者已明確要求「dg圓角勿動」）。
 **Consequences**: 開啟資料夾後，App 的懸停/聚焦反白框與資料夾視窗的圓角完全協調一致。由 `ItemHighlight_CornerRadius_MatchesPanelFrame` 單元測試驗證。
 **Author**: 使用者要求；Antigravity 實作
+
+---
+
+### 2026-11-11 — 上次排查後 NotiLand 新程式的 bug 排查（9 項修正）
+**Decision**：
+1. **暫存區拖出又放回卡片（`IslandCard`）**：從暫存區開始的拖曳帶 `DeskGrid.ShelfItem` 格式；卡片對它回 `None`，拖曳端就不會以為檔案已送到別處，暫存區保留該檔（以前回 `Copy`，檔案從暫存區消失）。
+2. **用量資料的 Unix 時間（`ClaudeLimits.UnixTime`、`CodexLimits`）**：`resets_at` 可以是小數；超出 `DateTimeOffset` 範圍的值（或極大的 `resets_in_seconds`）視為「沒有視窗」，不再丟 `ArgumentOutOfRangeException` 讓整個用量工作失敗、連 Claude Code 的讀數一起丟掉。
+3. **Claude 狀態列（`ClaudeStatusLine`）**：`command` 不是 JSON 字串時不再丟 `InvalidOperationException`（設定視窗沒有接）；連接 / 中斷只替換既有 `statusLine` 物件的 `type` 與 `command`，保留使用者的其他鍵（`padding`）；沒有 `.claude` 資料夾時中斷什麼都不做。
+4. **播放器在最前面（`IslandHost.Refresh`）**：歌曲因頁面在前面而隱藏時，會啟動 refresh 計時器（以前只是「不停止」，計時器已停時收到曲目事件，歌曲就再也不回來）；被隱藏的換歌通知也保持計時器，倒數才會結束。
+5. **卡片拖動進度（`IslandCard`）**：放開進度條一律結束拖曳並釋放捕捉，即使歌曲剛好失去 timeline；1.5 秒「等播放器回報」只套用在被拖動的那條。
+6. **滾輪（`SmoothWheel.Innermost`）**：取最內層可捲動的任何 ScrollViewer，頁面裡以項目捲動的清單會自己捲，不再捲整頁。
+7. **`MediaJumper.TopLevelWindows`**：列舉中程序結束（`InvalidOperationException` / `Win32Exception`）不再穿出原生 `EnumWindows` callback。
+8. **`PrivacyWatcher`**：`Dispose` 後不再觸發 `Started`（關掉提示島時還在讀登錄）；`async void` 檢查多接 `ArgumentException`。
+9. **`UsageRules.Left`**：59.5 分鐘顯示「1h 00m」而不是「60m」。
+**Reason**：使用者要求（/goal）檢查所有 bug 並修復；逐行審查 2026-11-10（五）排查之後的三個 NotiLand commit。
+**Alternatives**：用量工作接住所有例外（會藏住真正的問題）；每個清單自己寫捲動處理（比修正查找多很多程式）。
+**Consequences**：`ClaudeLimitsTests`、`AiToolsTests`、`IslandTests`、`CardSectionsTests` 新增測試（605 通過）。未在真實桌面試：暫存區放回、進度條放開、清單上滾輪、離開播放頁面後歌曲回來。
+**Author**：使用者要求；Claude（Opus 5.5）找出並修正

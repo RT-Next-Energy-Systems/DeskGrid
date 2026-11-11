@@ -61,13 +61,28 @@ internal static class ClaudeLimits
     {
         if (!limits.TryGetProperty(name, out var window) || window.ValueKind != JsonValueKind.Object
             || !window.TryGetProperty("used_percentage", out var percent) || percent.ValueKind != JsonValueKind.Number || !percent.TryGetDouble(out var used)
-            || !window.TryGetProperty("resets_at", out var resets) || resets.ValueKind != JsonValueKind.Number || !resets.TryGetInt64(out var seconds))
+            || !window.TryGetProperty("resets_at", out var resets) || UnixTime(resets) is not { } end)
         {
             return null;
         }
 
-        var end = DateTimeOffset.FromUnixTimeSeconds(seconds);
         return end > now ? (Math.Clamp(used, 0, 100), end) : null;
+    }
+
+    /// <summary>
+    /// A time given as Unix seconds (a whole or a fractional number), or <see langword="null"/> when it is not a number or lies
+    /// outside what a date can hold: one broken value must not throw and take the rest of the reading with it.
+    /// </summary>
+    internal static DateTimeOffset? UnixTime(JsonElement value)
+    {
+        if (value.ValueKind != JsonValueKind.Number || !value.TryGetDouble(out var seconds) || !double.IsFinite(seconds))
+        {
+            return null;
+        }
+
+        return seconds >= DateTimeOffset.MinValue.ToUnixTimeSeconds() && seconds <= DateTimeOffset.MaxValue.ToUnixTimeSeconds()
+            ? DateTimeOffset.FromUnixTimeSeconds((long)seconds)
+            : null;
     }
 }
 
@@ -136,18 +151,17 @@ internal static class ClaudeStatusLine
             File.Copy(file, file + ".deskgrid-backup", overwrite: true);
         }
 
-        var old = (root["statusLine"] as JsonObject)?["command"]?.GetValue<string>();
+        // The user's own status line keeps its other settings (padding and the like); only its command is swapped.
+        var line = StatusLineOf(root);
+        var old = TextOf(line["command"]);
         if (old is not null && !old.Contains(ScriptName, StringComparison.OrdinalIgnoreCase))
         {
             File.WriteAllText(Path.Combine(folder, OriginalName), old, new UTF8Encoding(false));
         }
 
         File.WriteAllText(Path.Combine(folder, ScriptName), Script, new UTF8Encoding(true)); // A BOM: Windows PowerShell reads the file as UTF-8.
-        root["statusLine"] = new JsonObject
-        {
-            ["type"] = "command",
-            ["command"] = $"powershell -NoProfile -ExecutionPolicy Bypass -File \"{Path.Combine(folder, ScriptName)}\"",
-        };
+        line["type"] = "command";
+        line["command"] = $"powershell -NoProfile -ExecutionPolicy Bypass -File \"{Path.Combine(folder, ScriptName)}\"";
         WriteJson(file, root);
     }
 
@@ -161,7 +175,9 @@ internal static class ClaudeStatusLine
             var original = Path.Combine(folder, OriginalName);
             if (File.Exists(original) && File.ReadAllText(original).Trim() is { Length: > 0 } command)
             {
-                root["statusLine"] = new JsonObject { ["type"] = "command", ["command"] = command };
+                var line = StatusLineOf(root);
+                line["type"] = "command";
+                line["command"] = command;
             }
             else
             {
@@ -171,6 +187,11 @@ internal static class ClaudeStatusLine
             WriteJson(file, root);
         }
 
+        if (!Directory.Exists(folder))
+        {
+            return; // Nothing of DeskGrid's is left to delete (File.Delete throws for a missing folder).
+        }
+
         foreach (var name in new[] { ScriptName, OriginalName, LimitsName })
         {
             File.Delete(Path.Combine(folder, name));
@@ -178,7 +199,24 @@ internal static class ClaudeStatusLine
     }
 
     private static string? CommandOf(string json) =>
-        (JsonNode.Parse(json) as JsonObject)?["statusLine"] is JsonObject line && line["command"] is JsonNode command ? command.GetValue<string>() : null;
+        (JsonNode.Parse(json) as JsonObject)?["statusLine"] is JsonObject line ? TextOf(line["command"]) : null;
+
+    // The settings' status line object, made (and attached) when there is none or it is not an object.
+    private static JsonObject StatusLineOf(JsonObject root)
+    {
+        if (root["statusLine"] is JsonObject line)
+        {
+            return line;
+        }
+
+        line = [];
+        root["statusLine"] = line;
+        return line;
+    }
+
+    // A JSON string's text; null for anything else (a hand-edited settings file may hold a number or an object there).
+    private static string? TextOf(JsonNode? node) =>
+        node is JsonValue value && value.TryGetValue(out string? text) ? text : null;
 
     private static void WriteJson(string file, JsonObject root)
     {

@@ -21,7 +21,9 @@ internal static class SmoothWheel
     {
         for (var node = from; node is not null; node = node is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D ? System.Windows.Media.VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
         {
-            if (node is ScrollViewer { CanContentScroll: false, ScrollableHeight: > 0 } viewer)
+            // The first viewer that can scroll, whatever kind: a list that scrolls by item (inside a page) is the one under the
+            // pointer and must get the wheel, not the page around it.
+            if (node is ScrollViewer { ScrollableHeight: > 0 } viewer)
             {
                 return viewer;
             }

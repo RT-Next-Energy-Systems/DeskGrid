@@ -61,4 +61,46 @@ public class ClaudeLimitsTests : IDisposable
         Assert.Contains("opus", text);
         Assert.False(File.Exists(Path.Combine(_home, ".claude", "deskgrid-statusline.ps1")));
     }
+
+    [Fact]
+    public void Parse_AFractionalOrOutOfRangeReset_DoesNotThrow()
+    {
+        Assert.Equal(Now.AddHours(1), ClaudeLimits.Parse("""{"rate_limits":{"five_hour":{"used_percentage":10,"resets_at":1800003600.7}}}""", Now)!.FiveResets);
+        Assert.Null(ClaudeLimits.Parse("""{"rate_limits":{"five_hour":{"used_percentage":10,"resets_at":1e300}}}""", Now));
+    }
+
+    [Fact]
+    public void ConnectAndDisconnect_KeepTheStatusLinesOwnSettings()
+    {
+        var settings = Path.Combine(_home, ".claude", "settings.json");
+        File.WriteAllText(settings, """{"statusLine":{"type":"command","command":"echo hi","padding":2}}""");
+
+        ClaudeStatusLine.Connect(_home);
+        Assert.Contains("\"padding\": 2", File.ReadAllText(settings));
+
+        ClaudeStatusLine.Disconnect(_home);
+        var text = File.ReadAllText(settings);
+        Assert.Contains("\"padding\": 2", text);
+        Assert.Contains("echo hi", text);
+    }
+
+    [Fact]
+    public void ACommandThatIsNotText_IsNotConnected_AndConnectingReplacesIt()
+    {
+        var settings = Path.Combine(_home, ".claude", "settings.json");
+        File.WriteAllText(settings, """{"statusLine":{"type":"command","command":42}}""");
+
+        Assert.False(ClaudeStatusLine.IsConnected(_home)); // Used to throw InvalidOperationException.
+        ClaudeStatusLine.Connect(_home);
+        Assert.True(ClaudeStatusLine.IsConnected(_home));
+        Assert.False(File.Exists(Path.Combine(_home, ".claude", "deskgrid-statusline-original.txt")));
+    }
+
+    [Fact]
+    public void Disconnect_WithoutClaudesFolder_DoesNothing()
+    {
+        var empty = Path.Combine(_home, "nobody");
+        ClaudeStatusLine.Disconnect(empty); // Used to throw DirectoryNotFoundException.
+        Assert.False(Directory.Exists(empty));
+    }
 }

@@ -749,3 +749,21 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Changing the folder frame's corner radius down to 4 (explicitly rejected by the user: "dg圓角勿動").
 **Consequences**: The hover/selection highlight of apps inside the folder now matches the folder window's rounded corners cleanly. Covered by `ItemHighlight_CornerRadius_MatchesPanelFrame` test.
 **Author**: User requested; Antigravity implemented
+
+---
+
+### 2026-11-11 — Bug sweep of the NotiLand work since the last sweep (9 fixes)
+**Decision**:
+1. **Shelf drag dropped back on the card (`IslandCard`)**: a drag from the shelf carries the format `DeskGrid.ShelfItem`; the card answers `None` to it, so the drag does not think the file went somewhere and the shelf keeps it (it used to answer `Copy` and the file left the shelf).
+2. **Unix times in usage data (`ClaudeLimits.UnixTime`, `CodexLimits`)**: `resets_at` may be fractional; a value outside what `DateTimeOffset` holds (or a huge `resets_in_seconds`) is "no window" instead of an `ArgumentOutOfRangeException`, which faulted the whole usage task and lost Claude Code's reading too.
+3. **Claude status line (`ClaudeStatusLine`)**: a `command` that is not a JSON string no longer throws `InvalidOperationException` (not caught by Settings); Connect / Disconnect swap only `type` and `command` of the existing `statusLine` object, keeping the user's other keys (`padding`); Disconnect without a `.claude` folder does nothing.
+4. **Player in front (`IslandHost.Refresh`)**: when a song is hidden because its page is in front, the refresh timer is started (it used to be only left running, so after a track event with the timer stopped the song never came back); a hidden song announcement also keeps the timer, so its countdown ends.
+5. **Card scrub (`IslandCard`)**: releasing the bar always ends the drag and releases the capture, even when the song lost its timeline meanwhile; the 1.5 s "wait for the player" hold applies only to the bar that was moved.
+6. **Wheel (`SmoothWheel.Innermost`)**: the innermost scrollable viewer of any kind wins, so a list that scrolls by item inside a page scrolls itself, not the page.
+7. **`MediaJumper.TopLevelWindows`**: a process that exits during the enumeration (`InvalidOperationException` / `Win32Exception`) no longer escapes through the native `EnumWindows` callback.
+8. **`PrivacyWatcher`**: no `Started` after `Dispose` (a read still running when the island is turned off); `ArgumentException` caught in the `async void` check.
+9. **`UsageRules.Left`**: 59.5 minutes reads "1h 00m", not "60m".
+**Reason**: The user asked (/goal) to check for all bugs and fix them; the three NotiLand commits after the 2026-11-10 (5) sweep were reviewed line by line.
+**Alternatives**: Catching every exception in the usage task (would hide real problems); a custom scroll handler per list (more code than fixing the lookup).
+**Consequences**: New tests in `ClaudeLimitsTests`, `AiToolsTests`, `IslandTests`, `CardSectionsTests` (605 pass). Not tried on the real desktop: the shelf drop-back, the scrub release, the wheel over a list, the player-in-front return.
+**Author**: The user asked; Claude (Opus 5.5) found and fixed

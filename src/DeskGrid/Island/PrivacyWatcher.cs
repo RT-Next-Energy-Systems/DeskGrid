@@ -30,7 +30,13 @@ internal sealed class PrivacyWatcher : IDisposable
     /// <summary>Everything in use now.</summary>
     public IReadOnlyCollection<SensorUse> InUse => _inUse;
 
-    public void Dispose() => _timer.Stop();
+    public void Dispose()
+    {
+        _disposed = true;
+        _timer.Stop();
+    }
+
+    private bool _disposed;
 
     internal static IEnumerable<SensorUse> Read()
     {
@@ -102,6 +108,11 @@ internal sealed class PrivacyWatcher : IDisposable
         try
         {
             var now = await Task.Run(() => Read().ToHashSet());
+            if (_disposed)
+            {
+                return; // Turned off while the registry was read: nothing more to tell.
+            }
+
             foreach (var use in now.Where(u => !_inUse.Contains(u)))
             {
                 Started?.Invoke(use);
@@ -109,8 +120,9 @@ internal sealed class PrivacyWatcher : IDisposable
 
             _inUse = now;
         }
-        catch (Exception exception) when (exception is System.Security.SecurityException or IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is System.Security.SecurityException or IOException or UnauthorizedAccessException or ArgumentException)
         {
+            // An async void method: whatever escapes here would reach the dispatcher's unhandled-exception handler.
             Diagnostics.Log.Error("Reading who uses the microphone or camera failed", exception);
         }
         finally

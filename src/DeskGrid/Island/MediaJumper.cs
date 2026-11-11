@@ -236,9 +236,9 @@ internal static class MediaJumper
                     using var process = Process.GetProcessById((int)processId);
                     name = process.ProcessName;
                 }
-                catch (ArgumentException)
+                catch (Exception exception) when (exception is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception)
                 {
-                    name = "";
+                    name = ""; // Ended meanwhile (or not ours to look at); nothing may escape into the native callback.
                 }
 
                 names[processId] = name;

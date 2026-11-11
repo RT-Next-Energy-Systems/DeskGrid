@@ -32,4 +32,14 @@ public class CardSectionsTests
         Assert.Equal([("shelf", true), ("players", true)], rows.Take(2));
         Assert.All(rows.Skip(2), row => Assert.False(row.Shown));
     }
+
+    [Fact]
+    public void AFileDraggedFromTheShelf_IsToldApartFromOneBroughtIn()
+    {
+        // The card refuses its own shelf's files, so letting one go over the card does not take it off the shelf.
+        var fromShelf = new System.Windows.DataObject(System.Windows.DataFormats.FileDrop, new[] { @"C:\a.txt" });
+        fromShelf.SetData(IslandCard.ShelfFormat, true);
+        Assert.True(IslandCard.IsFromShelf(fromShelf));
+        Assert.False(IslandCard.IsFromShelf(new System.Windows.DataObject(System.Windows.DataFormats.FileDrop, new[] { @"C:\a.txt" })));
+    }
 }

@@ -337,6 +337,7 @@ public sealed class UsageTests
         Assert.Equal("950", UsageRules.Short(950));
         Assert.Equal("2h 05m", UsageRules.Left(T.AddMinutes(125), T));
         Assert.Equal("45m", UsageRules.Left(T.AddMinutes(45), T));
+        Assert.Equal("1h 00m", UsageRules.Left(T.AddMinutes(59.5), T)); // Rounded up, never "60m".
     }
 
     [Fact]

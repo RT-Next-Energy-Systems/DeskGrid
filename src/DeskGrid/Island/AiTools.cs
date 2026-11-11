@@ -56,6 +56,7 @@ internal static class AiTools
 internal static class CodexLimits
 {
     private const int TailBytes = 1 << 20;
+    private const double MaxSecondsLeft = 400L * 24 * 3600; // More than any plan window: a bigger number is a broken value.
 
     public static PlanUsage? Read(string home, DateTimeOffset now)
     {
@@ -165,11 +166,12 @@ internal static class CodexLimits
         }
 
         DateTimeOffset end;
-        if (window.TryGetProperty("resets_at", out var at) && at.ValueKind == JsonValueKind.Number && at.TryGetInt64(out var seconds))
+        if (window.TryGetProperty("resets_at", out var at) && ClaudeLimits.UnixTime(at) is { } resets)
         {
-            end = DateTimeOffset.FromUnixTimeSeconds(seconds);
+            end = resets;
         }
-        else if (window.TryGetProperty("resets_in_seconds", out var inSeconds) && inSeconds.ValueKind == JsonValueKind.Number && inSeconds.TryGetInt64(out var left))
+        else if (window.TryGetProperty("resets_in_seconds", out var inSeconds) && inSeconds.ValueKind == JsonValueKind.Number
+            && inSeconds.TryGetDouble(out var left) && Math.Abs(left) <= MaxSecondsLeft)
         {
             end = stamp.AddSeconds(left); // Older logs: the time left when the event was written.
         }
