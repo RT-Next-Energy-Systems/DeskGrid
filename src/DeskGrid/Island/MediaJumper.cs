@@ -133,6 +133,57 @@ internal static class MediaJumper
         }
     });
 
+    private static readonly string[] NextNames = ["next", "skip forward", "下一首", "下一個", "下一曲"];
+    private static readonly string[] PreviousNames = ["previous", "skip back", "上一首", "上一個", "上一曲"];
+
+    /// <summary>
+    /// Presses the player's own next / previous button through UI Automation, for players whose system media controls refuse
+    /// it. Not tried in browsers (their page tree is huge, and a page that offers no next song has no button either).
+    /// Slow, so call it off the UI thread. Returns whether a button was pressed.
+    /// </summary>
+    public static bool PressTransportButton(string source, bool next)
+    {
+        try
+        {
+            var names = next ? NextNames : PreviousNames;
+            foreach (var window in TopLevelWindows().Where(w => Matches(source, w.Process) && !IsBrowser(w.Process)))
+            {
+                var buttons = AutomationElement.FromHandle(window.Handle)
+                    .FindAll(TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button));
+                foreach (AutomationElement button in buttons)
+                {
+                    var label = button.Current.Name;
+                    if (label.Length > 0 && button.Current.IsEnabled && names.Any(n => label.Contains(n, StringComparison.OrdinalIgnoreCase))
+                        && button.TryGetCurrentPattern(InvokePattern.Pattern, out var pattern))
+                    {
+                        ((InvokePattern)pattern).Invoke();
+                        Log.Info($"Pressed '{label}' of '{source}' through UI Automation.");
+                        return true;
+                    }
+                }
+            }
+
+            Log.Info($"No {(next ? "next" : "previous")} button found for '{source}'.");
+        }
+        catch (Exception exception) when (exception is ElementNotAvailableException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            Log.Error("Pressing the player's button failed", exception);
+        }
+
+        return false;
+    }
+
+    /// <summary>Sends the keyboard's next / previous track key; Windows gives it to the player it considers current.</summary>
+    public static void SendMediaKey(bool next)
+    {
+        const byte nextTrack = 0xB0, previousTrack = 0xB1;
+        var key = next ? nextTrack : previousTrack;
+        var extended = Windows.Win32.UI.Input.KeyboardAndMouse.KEYBD_EVENT_FLAGS.KEYEVENTF_EXTENDEDKEY;
+        PInvoke.keybd_event(key, 0, extended, 0);
+        PInvoke.keybd_event(key, 0, extended | Windows.Win32.UI.Input.KeyboardAndMouse.KEYBD_EVENT_FLAGS.KEYEVENTF_KEYUP, 0);
+        Log.Info($"Sent the media key for the {(next ? "next" : "previous")} song.");
+    }
+
     private static bool SelectTab(HWND window, string needle)
     {
         try

@@ -47,7 +47,7 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
         }
     }
 
-    public void Previous(string source) => Control(source, session => session.TrySkipPreviousAsync());
+    public void Previous(string source) => Skip(source, next: false);
 
     // Pauses a player that plays and plays one that does not, by the state it has at the moment of the click (a "toggle" sent
     // on a stale view would do the opposite of what the button shows). Logged: it is the only thing here that stops a song.
@@ -58,7 +58,47 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
         return playing ? session.TryPauseAsync() : session.TryPlayAsync();
     });
 
-    public void Next(string source) => Control(source, session => session.TrySkipNextAsync());
+    public void Next(string source) => Skip(source, next: true);
+
+    // Asks the player through the system media controls. Some players say the button is off (Apple Music) or answer false
+    // without doing it; then the player's own button is pressed through UI Automation, and as the last resort the media key
+    // is sent, which Windows hands to the player it considers current (so only when that is this one).
+    private void Skip(string source, bool next)
+    {
+        if (!_entries.TryGetValue(source, out var entry))
+        {
+            return;
+        }
+
+        var session = entry.Session;
+        var name = next ? "next" : "previous";
+        var controls = session.GetPlaybackInfo()?.Controls;
+        var enabled = next ? controls?.IsNextEnabled : controls?.IsPreviousEnabled;
+        var isCurrent = _manager?.GetCurrentSession()?.SourceAppUserModelId == source;
+        Log.Info($"Skip {name} for '{source}': enabled = {enabled}, current session = {isCurrent}.");
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var done = enabled != false && await (next ? session.TrySkipNextAsync() : session.TrySkipPreviousAsync());
+                Log.Info($"Skip {name} for '{source}' was answered with {done}.");
+                if (done)
+                {
+                    return;
+                }
+
+                if (!MediaJumper.PressTransportButton(source, next) && isCurrent)
+                {
+                    MediaJumper.SendMediaKey(next);
+                }
+            }
+            catch (Exception exception)
+            {
+                Log.Error($"Skipping to the {name} song failed", exception);
+            }
+        });
+    }
 
     public void Seek(string source, TimeSpan position)
     {
