@@ -211,12 +211,12 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
 
             if (properties is not null && (properties.Title.Length > 0 || properties.Artist.Length > 0))
             {
-                // A cover that was not there yet (Chrome sends the picture after the title) is read again, not kept as "none".
-                (System.Windows.Media.ImageSource? cover, System.Windows.Media.Color? accent) = entry.Cover is { Image: not null } known && known.Title == properties.Title && known.Artist == properties.Artist
-                    ? (known.Image, known.Accent)
-                    : await ReadCoverAsync(properties.Thumbnail);
-                entry.Cover = (properties.Title, properties.Artist, cover, accent);
-                track = new MediaTrack(properties.Title, properties.Artist, playing, cover, entry.Id, timeline, accent);
+                // The picture is looked at on every reading, not kept by title and artist: Chrome first hands out its own logo
+                // and the video's picture only afterwards, under the same title. The bytes are small; the picture is decoded
+                // again only when they differ from the last ones.
+                var cover = await ReadCoverAsync(properties.Thumbnail, entry.Cover);
+                entry.Cover = cover;
+                track = new MediaTrack(properties.Title, properties.Artist, playing, cover.Image, entry.Id, timeline, cover.Accent);
             }
         }
         catch (Exception exception)
@@ -246,11 +246,12 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
         }
     }
 
-    private static async Task<(System.Windows.Media.ImageSource? Image, System.Windows.Media.Color? Accent)> ReadCoverAsync(IRandomAccessStreamReference? thumbnail)
+    // The picture a player offers now. With the same bytes as <paramref name="last"/> the decoded picture is reused.
+    private static async Task<CoverPicture> ReadCoverAsync(IRandomAccessStreamReference? thumbnail, CoverPicture? last)
     {
         if (thumbnail is null)
         {
-            return (null, null);
+            return CoverPicture.None;
         }
 
         try
@@ -259,6 +260,12 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
             using var stream = source.AsStreamForRead();
             var bytes = new MemoryStream();
             await stream.CopyToAsync(bytes);
+            var hash = System.Security.Cryptography.SHA256.HashData(bytes.GetBuffer().AsSpan(0, (int)bytes.Length));
+            if (last is { Image: not null } known && known.Hash.AsSpan().SequenceEqual(hash))
+            {
+                return known;
+            }
+
             bytes.Position = 0;
             var image = new BitmapImage();
             image.BeginInit();
@@ -267,13 +274,19 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
             image.StreamSource = bytes;
             image.EndInit();
             image.Freeze();
-            return (image, MediaTrack.DominantColor(image));
+            return new CoverPicture(hash, image, MediaTrack.DominantColor(image));
         }
         catch (Exception exception)
         {
             Log.Error("The cover of a song could not be read; it is shown without", exception);
-            return (null, null);
+            return CoverPicture.None;
         }
+    }
+
+    /// <summary>A decoded cover with the hash of the bytes it came from, so an unchanged picture is not decoded again.</summary>
+    private sealed record CoverPicture(byte[] Hash, System.Windows.Media.ImageSource? Image, System.Windows.Media.Color? Accent)
+    {
+        public static readonly CoverPicture None = new([], null, null);
     }
 
     // One player: its session, what it said last, and the cover of that (playing and pausing do not fetch it again).
@@ -289,7 +302,7 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
 
         public (TimeSpan Position, DateTimeOffset At)? SeekedTo { get; set; } // Where the user moved the song, until the player tells newer.
 
-        public (string Title, string Artist, System.Windows.Media.ImageSource? Image, System.Windows.Media.Color? Accent)? Cover { get; set; }
+        public CoverPicture? Cover { get; set; }
     }
 
     private void Detach(Entry entry)
