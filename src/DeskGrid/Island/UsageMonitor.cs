@@ -83,7 +83,8 @@ internal readonly record struct UsageEntry(DateTimeOffset Time, long Tokens);
 /// Turns the lines of Claude Code's session logs (one JSON object per line) into counted responses, each once. Claude Code
 /// writes a line per content block, all with the response's <c>message.id</c> and <c>requestId</c>; a sub-agent
 /// ("sidechain") may replay a parent's message. Of the copies of one response the main-thread one wins, else the one with the
-/// most tokens. Tokens are input + output + cache creation + cache reads, as ccusage counts them.
+/// most tokens. Tokens are input + output + cache creation; cache reads are not counted (ccusage counts them, but they dwarf
+/// everything else and a limit set in tokens would never fit).
 /// </summary>
 internal sealed class UsageDeduper
 {
@@ -179,7 +180,10 @@ internal sealed class UsageDeduper
                 creation = Number(detail, "ephemeral_5m_input_tokens") + Number(detail, "ephemeral_1h_input_tokens");
             }
 
-            var tokens = Number(usage, "input_tokens") + Number(usage, "output_tokens") + creation + Number(usage, "cache_read_input_tokens");
+            // Cache reads are left out: re-reading a long conversation's cache on every turn makes them 10-20 times the rest
+            // (80 M against 5 M in one block) and they barely weigh on a plan's limit, so counting them made every
+            // user-set limit read as hundreds of percent.
+            var tokens = Number(usage, "input_tokens") + Number(usage, "output_tokens") + creation;
             return new Item(
                 time, tokens,
                 Text(message, "id"), Text(root, "requestId"), Text(root, "sessionId") ?? fileSession,

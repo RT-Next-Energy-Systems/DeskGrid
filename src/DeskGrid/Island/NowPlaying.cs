@@ -211,7 +211,8 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
 
             if (properties is not null && (properties.Title.Length > 0 || properties.Artist.Length > 0))
             {
-                (System.Windows.Media.ImageSource? cover, System.Windows.Media.Color? accent) = entry.Cover is { } known && known.Title == properties.Title && known.Artist == properties.Artist
+                // A cover that was not there yet (Chrome sends the picture after the title) is read again, not kept as "none".
+                (System.Windows.Media.ImageSource? cover, System.Windows.Media.Color? accent) = entry.Cover is { Image: not null } known && known.Title == properties.Title && known.Artist == properties.Artist
                     ? (known.Image, known.Accent)
                     : await ReadCoverAsync(properties.Thumbnail);
                 entry.Cover = (properties.Title, properties.Artist, cover, accent);

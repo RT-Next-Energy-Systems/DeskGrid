@@ -332,7 +332,7 @@ are MIT-licensed and were re-written for the CPU in C#. Their notice and license
 
 NotiLand's **AI usage** (`src/DeskGrid/Island/UsageMonitor.cs`) reads Claude Code's logs the way
 [ryoppippi/ccusage](https://github.com/ryoppippi/ccusage) does: the folders it looks in (`CLAUDE_CONFIG_DIR`,
-`~/.config/claude`, `~/.claude`), counting each response once (also when a sub-agent replays it), the four kinds of tokens,
+`~/.config/claude`, `~/.claude`), counting each response once (also when a sub-agent replays it), the tokens of input, output and cache creation (cache reads are left out: they dwarf the rest),
 and Claude's 5-hour session blocks. That logic was ported to C# from ccusage's Rust sources (MIT); its copyright line is
 listed above with the same license text.
 

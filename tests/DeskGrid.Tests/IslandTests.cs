@@ -261,8 +261,8 @@ public sealed class UsageTests
     }
 
     [Fact]
-    public void AllFourKindsOfTokens_Count() =>
-        Assert.Equal(100 + 5 + 10 + 1000, Total(Line("msg_a", 100, 5, "2026-11-10T09:00:00Z", cacheRead: 1000)));
+    public void InputOutputAndCacheCreation_Count_CacheReads_DoNot() =>
+        Assert.Equal(100 + 5 + 10, Total(Line("msg_a", 100, 5, "2026-11-10T09:00:00Z", cacheRead: 80_000_000)));
 
     [Fact]
     public void OneResponse_WrittenOncePerContentBlock_CountsOnce_AtItsLargest() =>

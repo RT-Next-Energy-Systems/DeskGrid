@@ -302,7 +302,7 @@ dotnet publish src/DeskGrid/DeskGrid.csproj -p:PublishProfile=win-x64   # -> art
 
 NotiLand 的 **AI 用量**（`src/DeskGrid/Island/UsageMonitor.cs`）依
 [ryoppippi/ccusage](https://github.com/ryoppippi/ccusage) 的方式讀取 Claude Code 的記錄：要找的資料夾（`CLAUDE_CONFIG_DIR`、
-`~/.config/claude`、`~/.claude`）、每個回應只算一次（子代理重播的也一樣）、四種 token，以及 Claude 的 5 小時工作階段區塊。
+`~/.config/claude`、`~/.claude`）、每個回應只算一次（子代理重播的也一樣）、輸入、輸出與快取建立的 token（不算快取讀取：它遠大於其他部分），以及 Claude 的 5 小時工作階段區塊。
 這段邏輯由 ccusage 的 Rust 原始碼（MIT）改寫為 C#，其著作權聲明列在上方，授權條文相同。
 
 NotiLand 在 Windows 上的提示島概念與互動設計靈感啟發自
