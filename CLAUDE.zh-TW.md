@@ -100,7 +100,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 
 ## Widgets 實作要點（階段 4）
 
-- **外觀**（使用者選定）：48 DIP 淺色半透明圓角方塊（白 30%、圓角 22.37%）內放預覽，下方名稱用系統圖示字型、白字陰影、最多 2 行；滑鼠移上時整格淡白高亮（像原生圖示）。
+- **外觀**（使用者選定）：48 DIP 淺色半透明圓角方塊（白 30%、圓角 22.37%）內放預覽，下方名稱用系統圖示字型、白字陰影、最多 2 行；滑鼠移上時整格淡白高亮（像原生圖示）。**與旁邊的桌面圖示對齊**（2026-11-12，使用者回報 widget 與桌面圖示沒對齊）：方塊上方不留 padding、方塊與名稱之間不留空隙。實機量測（200%）：格子從 y=2 起，桌面圖示的圖片在 5..91 px、名稱緊接其下；原本方塊低 8 px、名稱低 16 px，widget 比旁邊的圖示低約 12 px；現在方塊中心與圖示相差約 2 px、名稱約 7 px。改完後已在實機桌面截圖看過（與「本機」圖示並排）。
 - **格子**：一格 = 桌面原生圖示格（`DesktopIconGrid` 對 Explorer 的 `SysListView32` 送 `LVM_GETITEMSPACING` / `LVM_GETITEMPOSITION`，位置要跨行程讀取，所以用 `VirtualAllocEx` + `ReadProcessMemory`）；widget 一格就是一個原生圖示格大小（不取整數倍，否則高 DPI 下 76×96 DIP 會比 150×182 px 的圖示格大一點而變兩倍大）。格線以第一個原生圖示的格為錨點，所以與桌面圖示對齊；每欄由上往下填、從右往左。讀不到時退回舊行為（工作區右上角起算、76×96 DIP）。每個 widget 都在格子上，且一格一個。
 - **避開原生圖示**：與原生圖示格重疊超過 1/4 的格不使用（`WidgetGrid` 的 obstacles / `Covers`），除非已無其他格。擺放 / 放開拖曳 widget 時由 widget 避開。挑選順序（`WidgetGrid.Candidates`，2026-11-06 修正）：沒有 widget 也沒有圖示的格 → 沒有 widget 的格（圖示底下）→ 任何格；只要還有沒有 widget 的格，就不會和別的 widget 共用一格。
 - **圖示讓開**（使用者選定，2026-10-28）：之後若有原生圖示落到 widget 格上（Explorer 把新捷徑放進它以為的空格、使用者把圖示拖過去），`WidgetBoard.ClearIconsOffWidgets` 把該圖示移到最近的空格（`LVM_SETITEMPOSITION`，座標放在 lParam，不必寫入 Explorer 記憶體）。桌面開了「自動排列圖示」（list view 有 `LVS_AUTOARRANGE`）時圖示移不動，改由 widget 讓開。
