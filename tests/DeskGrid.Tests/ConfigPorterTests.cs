@@ -152,7 +152,7 @@ public sealed class ConfigPorterTests : IDisposable
             IslandHoverButtons = false,
             IslandHoverTime = false,
             IslandCardSections = "shelf,players",
-            IslandFolders = false,
+            IslandFolders = true,
             FolderOrder = ["Work", "Games"],
         };
         custom.IslandPlaces["desktop"] = new IslandPlace { X = 300, Y = 10 };

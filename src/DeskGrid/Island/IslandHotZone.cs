@@ -3,6 +3,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using DeskGrid.Resources;
+using Windows.Win32;
 using Windows.Win32.Foundation;
 using System.Windows.Interop;
 
@@ -16,9 +17,12 @@ namespace DeskGrid.Island;
 internal sealed class IslandHotZone : Window
 {
     internal const double ZoneWidth = 240; // DIPs.
-    // As tall as the gap above the pill, so pushing the pointer up from the pill reaches it without aiming at a few pixels.
-    internal const double ZoneHeight = IslandWindow.TopGap;
-    internal static readonly TimeSpan Delay = TimeSpan.FromMilliseconds(500);
+    // Only the very edge: the pointer stops at the screen's top, so pushing it up reaches the strip, while a pointer on its
+    // way to a tab or a title bar a few pixels lower does not. (It was as tall as the gap above the pill, 8 DIP, which
+    // caught the top of every window at the centre.)
+    internal const double ZoneHeight = 2;
+    // The pointer has to rest this long: passing over, or a click on a tab at the top, must not open anything.
+    internal static readonly TimeSpan Delay = TimeSpan.FromMilliseconds(1000);
 
     private readonly DispatcherTimer _dwell = new() { Interval = Delay };
 
@@ -47,7 +51,8 @@ internal sealed class IslandHotZone : Window
         _dwell.Tick += (_, _) =>
         {
             _dwell.Stop();
-            if (IsMouseOver)
+            // Not while a button is down: a window being dragged by its title bar or a click on a tab is not a rest.
+            if (IsMouseOver && !ButtonDown())
             {
                 Dwelled?.Invoke(this, EventArgs.Empty);
             }
@@ -69,7 +74,20 @@ internal sealed class IslandHotZone : Window
         };
         MouseEnter += (_, _) => _dwell.Start();
         MouseLeave += (_, _) => _dwell.Stop();
+        // Resting means keeping still: a move on the strip starts the wait again.
+        MouseMove += (_, _) =>
+        {
+            if (_dwell.IsEnabled)
+            {
+                _dwell.Stop();
+                _dwell.Start();
+            }
+        };
+        PreviewMouseDown += (_, _) => _dwell.Stop();
     }
+
+    private static bool ButtonDown() =>
+        (PInvoke.GetAsyncKeyState(0x01) & 0x8000) != 0 || (PInvoke.GetAsyncKeyState(0x02) & 0x8000) != 0; // Left, right.
 
     /// <summary>Raised when files are dragged to the strip.</summary>
     public event EventHandler? FilesHovered;

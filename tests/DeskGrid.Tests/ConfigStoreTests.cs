@@ -28,6 +28,21 @@ public sealed class ConfigStoreTests : IDisposable
         Assert.Empty(config.Widgets);
     }
 
+    // The top-edge strip opened the folders by accident, so it is off unless chosen; a file from before holds the old
+    // default under the old name and must not turn it back on.
+    [Fact]
+    public void TopEdgeFolders_IsOffByDefault_AndAnOldFilesValueIsIgnored()
+    {
+        File.WriteAllText(ConfigPath, """{ "islandFolders": true }""");
+        Assert.False(ConfigStore.Open(ConfigPath).Config.IslandFolders);
+
+        var store = ConfigStore.Open(_temp.Combine("new.json"));
+        store.Config.IslandFolders = true;
+        store.Save();
+        Assert.Contains("islandFoldersAtEdge", File.ReadAllText(_temp.Combine("new.json")));
+        Assert.True(ConfigStore.Open(_temp.Combine("new.json")).Config.IslandFolders);
+    }
+
     // A virus scanner or sync client holding the file for a moment must not make the settings come back as defaults.
     [Fact]
     public async Task Open_FileLockedBriefly_WaitsAndReadsTheSavedSettings()

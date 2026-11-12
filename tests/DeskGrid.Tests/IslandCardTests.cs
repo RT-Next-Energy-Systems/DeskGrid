@@ -174,6 +174,13 @@ public sealed class IslandHotZoneTests : IDisposable
     public void Dispose() => _ui.Dispose();
 
     [Fact]
+    public void TheStrip_IsOnlyTheVeryEdge_AndNeedsASecondOfRest()
+    {
+        Assert.True(IslandHotZone.ZoneHeight <= 3);
+        Assert.True(IslandHotZone.Delay >= TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
     public async Task ClosingTheStrip_WhileThePointerRestsOnIt_StopsTheDwell()
     {
         // A dwell under way when the top edge is turned off must not open the folder list afterwards.

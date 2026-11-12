@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- The top-edge trigger (resting the pointer at the top centre of the screen opens the list of all folders) is **off by default** now, and everyone starts with it off again. It opened the folders by accident when the pointer went to a browser's tabs or a window's title bar at the top centre. Turn it on in Settings → NotiLand → *Open the folders when the pointer rests at the top edge*. When on, it only reacts to the very edge of the screen (2 DIP instead of 8), needs the pointer to rest still for a full second (it was half a second), and ignores a pointer with a mouse button held.
+
+### Fixed
+
+- Widgets line up with the desktop icons beside them: the tile and the name sat about 12 px and 23 px lower than an icon's picture and name.
+
 ## 0.7.1
 
 ### Added

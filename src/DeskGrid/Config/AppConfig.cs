@@ -144,8 +144,13 @@ internal sealed class AppConfig
     [JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
     public Dictionary<string, IslandPlace> IslandPlaces { get; } = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Whether holding the pointer at the top centre of the screen for a moment opens the list of all folders.</summary>
-    public bool IslandFolders { get; set; } = true;
+    /// <summary>
+    /// Whether holding the pointer at the very top centre of the screen for a second opens the list of all folders. Off by
+    /// default (it was on, and opened the folders by accident when the pointer went to a browser's tabs). The file name of the
+    /// setting changed with it, so a settings file from before, which holds the old default, is not taken for a choice.
+    /// </summary>
+    [JsonPropertyName("islandFoldersAtEdge")]
+    public bool IslandFolders { get; set; }
 
     /// <summary>
     /// Keyboard shortcuts of the general actions (see <see cref="HotkeyBindings"/>), written like <c>Ctrl+M</c>. Starts with the
