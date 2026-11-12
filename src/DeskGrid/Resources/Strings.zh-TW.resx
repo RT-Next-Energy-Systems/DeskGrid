@@ -510,6 +510,9 @@
   <data name="SettingsPlaceUnset" xml:space="preserve">
     <value>同預設</value>
   </data>
+  <data name="SettingsPlaceOff" xml:space="preserve">
+    <value>關閉</value>
+  </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>隱私</value>
   </data>

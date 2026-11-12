@@ -234,7 +234,7 @@ internal sealed class AppConfig
         IslandPlaces.Clear();
         foreach (var (scene, place) in other.IslandPlaces)
         {
-            IslandPlaces[scene] = place;
+            IslandPlaces[scene] = new IslandPlace { X = place.X, Y = place.Y, Off = place.Off };
         }
 
         FolderOrder = [.. other.FolderOrder];
@@ -253,6 +253,65 @@ internal sealed class AppConfig
                 ItemOrder = [.. widget.ItemOrder],
                 Hotkey = widget.Hotkey,
             };
+        }
+    }
+
+    /// <summary>Whether <paramref name="scene"/> has a custom position of its own.</summary>
+    public bool HasIslandPlace(string scene) =>
+        string.Equals(scene, Island.IslandScene.Default, StringComparison.OrdinalIgnoreCase)
+            ? IslandX is not null && IslandY is not null
+            : IslandPlaces.TryGetValue(scene, out var place) && place.X is not null && place.Y is not null;
+
+    /// <summary>Whether NotiLand is turned off in <paramref name="scene"/>.</summary>
+    public bool IsIslandPlaceOff(string scene) =>
+        IslandPlaces.TryGetValue(scene, out var place) && place.Off;
+
+    /// <summary>Sets or resets the position for <paramref name="scene"/> (resetting also clears <see cref="IslandPlace.Off"/>).</summary>
+    public void SetIslandPlace(string scene, ScreenPoint? place)
+    {
+        if (string.Equals(scene, Island.IslandScene.Default, StringComparison.OrdinalIgnoreCase))
+        {
+            (IslandX, IslandY) = (place?.X, place?.Y);
+            if (place is null)
+            {
+                IslandPlaces.Remove(Island.IslandScene.Default);
+            }
+        }
+        else if (place is { } point)
+        {
+            IslandPlaces[scene] = new IslandPlace { X = point.X, Y = point.Y, Off = IsIslandPlaceOff(scene) };
+        }
+        else
+        {
+            IslandPlaces.Remove(scene);
+        }
+    }
+
+    /// <summary>Turns NotiLand off or back on for <paramref name="scene"/>, keeping any position already set for it.</summary>
+    public void SetIslandPlaceOff(string scene, bool off)
+    {
+        if (off)
+        {
+            if (IslandPlaces.TryGetValue(scene, out var existing))
+            {
+                existing.Off = true;
+            }
+            else
+            {
+                IslandPlaces[scene] = new IslandPlace { Off = true };
+            }
+        }
+        else if (IslandPlaces.TryGetValue(scene, out var existing))
+        {
+            if (!string.Equals(scene, Island.IslandScene.Default, StringComparison.OrdinalIgnoreCase)
+                && existing.X is not null && existing.Y is not null)
+            {
+                existing.Off = false;
+            }
+            else
+            {
+                IslandPlaces.Remove(scene);
+            }
         }
     }
 }
@@ -321,13 +380,17 @@ internal enum PanelOpenMode
     Centered,
 }
 
-/// <summary>What the island shows of the music that is playing.</summary>
-/// <summary>Where NotiLand is in one situation: the middle of its top edge, in screen pixels.</summary>
+/// <summary>Where NotiLand is in one situation: the middle of its top edge, in screen pixels, or whether it is turned off there.</summary>
 internal sealed class IslandPlace
 {
-    public int X { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? X { get; set; }
 
-    public int Y { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Y { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Off { get; set; }
 }
 
 internal enum IslandMusicMode

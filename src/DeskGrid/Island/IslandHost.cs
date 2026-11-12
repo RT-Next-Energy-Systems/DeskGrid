@@ -12,7 +12,7 @@ namespace DeskGrid.Island;
 internal sealed record IslandExtras(
     bool Privacy = false, bool Bluetooth = false, bool Downloads = false, bool System = false, int TimerMinutes = 25, IslandRules? Rules = null,
     double Scale = 1, IslandHover? Hover = null, IReadOnlyDictionary<string, ScreenPoint>? Places = null,
-    IReadOnlyList<string>? CardSections = null)
+    IReadOnlyList<string>? CardSections = null, IReadOnlySet<string>? OffScenes = null)
 {
     public IslandRules RulesOrDefault => Rules ?? new IslandRules();
 
@@ -21,6 +21,11 @@ internal sealed record IslandExtras(
     /// <summary>The place set for <paramref name="scene"/>, else the default place, else none (the top centre).</summary>
     public ScreenPoint? PlaceFor(string scene) =>
         Places is null ? null : Places.TryGetValue(scene, out var place) ? place : Places.TryGetValue(IslandScene.Default, out var home) ? home : null;
+
+    /// <summary>Whether NotiLand is turned off for <paramref name="scene"/> (or for <see cref="IslandScene.Default"/> when <paramref name="scene"/> has no place of its own).</summary>
+    public bool IsSceneOff(string scene) =>
+        OffScenes is not null && (OffScenes.Contains(scene)
+            || (OffScenes.Contains(IslandScene.Default) && (Places is null || !Places.ContainsKey(scene))));
 }
 
 /// <summary>What the island is set to do.</summary>
@@ -42,13 +47,22 @@ internal sealed record IslandOptions(
             config.IslandScale,
             new IslandHover(config.IslandHoverExpand, config.IslandHoverFullText, config.IslandHoverButtons, config.IslandHoverTime),
             PlacesOf(config),
-            Island.CardSections.Parse(config.IslandCardSections)));
+            Island.CardSections.Parse(config.IslandCardSections),
+            OffScenesOf(config)));
 
     /// <summary>Every place the user set: the default one and each situation's.</summary>
     public static Dictionary<string, ScreenPoint> PlacesOf(AppConfig config)
     {
-        var places = config.IslandPlaces.ToDictionary(p => p.Key, p => new ScreenPoint(p.Value.X, p.Value.Y), StringComparer.OrdinalIgnoreCase);
-        places.Remove(IslandScene.Default);
+        var places = new Dictionary<string, ScreenPoint>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (scene, place) in config.IslandPlaces)
+        {
+            if (!string.Equals(scene, IslandScene.Default, StringComparison.OrdinalIgnoreCase)
+                && place.X is { } px && place.Y is { } py)
+            {
+                places[scene] = new ScreenPoint(px, py);
+            }
+        }
+
         if (config.IslandX is { } x && config.IslandY is { } y)
         {
             places[IslandScene.Default] = new ScreenPoint(x, y);
@@ -56,6 +70,10 @@ internal sealed record IslandOptions(
 
         return places;
     }
+
+    /// <summary>Every situation in which the user turned NotiLand off.</summary>
+    public static HashSet<string> OffScenesOf(AppConfig config) =>
+        config.IslandPlaces.Where(p => p.Value.Off).Select(p => p.Key).ToHashSet(StringComparer.OrdinalIgnoreCase);
 }
 
 /// <summary>
@@ -533,6 +551,19 @@ internal sealed class IslandHost : IDisposable
         UpdateEscapeWatch();
     }
 
+    // Copying can take a while (a big file from a USB stick), so the card stays usable meanwhile and shows the file when it is there.
+    private async Task AddToShelfAsync(string[] paths)
+    {
+        try
+        {
+            await _shelf.AddAsync(paths);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            Diagnostics.Log.Error("Files could not be put on the shelf", exception);
+        }
+    }
+
     private CardModel CardModelNow()
     {
         var reading = _usage?.Reading;
@@ -551,19 +582,6 @@ internal sealed class IslandHost : IDisposable
         var items = new List<object>();
         if (_usage?.Reading is { } reading)
         {
-    // Copying can take a while (a big file from a USB stick), so the card stays usable meanwhile and shows the file when it is there.
-    private async Task AddToShelfAsync(string[] paths)
-    {
-        try
-        {
-            await _shelf.AddAsync(paths);
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
-        {
-            Diagnostics.Log.Error("Files could not be put on the shelf", exception);
-        }
-    }
-
             items.Add(new IslandActivity(UsageLine(reading), TimeSpan.Zero, Look: UsageLook(reading)));
             foreach (var other in reading.Others ?? [])
             {
@@ -869,23 +887,35 @@ internal sealed class IslandHost : IDisposable
             _hotZone = new IslandHotZone();
             _hotZone.Dwelled += (_, _) =>
             {
-                if (!FullscreenGuard.IsActive()) // Not over a game.
+                if (!Concealed()) // Not over a game or when turned off for this situation.
                 {
                     OpenFoldersRequested?.Invoke(this, EventArgs.Empty);
                 }
             };
-            _hotZone.FilesHovered += (_, _) => OpenCard(); // Files dragged to the top edge: the shelf is where they go.
+            _hotZone.FilesHovered += (_, _) =>
+            {
+                if (!Concealed())
+                {
+                    OpenCard(); // Files dragged to the top edge: the shelf is where they go.
+                }
+            };
             _hotZone.Place();
         }
     }
 
     // ---- What is on screen ----
 
-    // Whether the island has to stay out of the way now: quiet hours, a program that hides it, or a full-screen app (unless
-    // the program is one it shows over).
+    // Whether the island has to stay out of the way now: turned off for the situation in front, quiet hours, a program that
+    // hides it, or a full-screen app (unless the program is one it shows over).
     private bool Concealed()
     {
-        var rules = _options.Extras.RulesOrDefault;
+        var extras = _options.Extras;
+        if (extras.IsSceneOff(_scene))
+        {
+            return true;
+        }
+
+        var rules = extras.RulesOrDefault;
         if (rules.Quiet(DateTime.Now))
         {
             return true;

@@ -516,6 +516,9 @@ Cancel: ask again next time.</value>
   <data name="SettingsPlaceUnset" xml:space="preserve">
     <value>Same as default</value>
   </data>
+  <data name="SettingsPlaceOff" xml:space="preserve">
+    <value>Off</value>
+  </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>Privacy</value>
   </data>
