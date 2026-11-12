@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.7.1
+
+### Added
+
+- **Plan usage from Anthropic** (off by default): Settings → NotiLand → AI usage → **Read plan usage from Anthropic**. DeskGrid reads the sign-in Claude Code keeps on this computer and asks Anthropic every few minutes for your plan's 5-hour and weekly usage, the numbers Claude's own usage page shows. The README's Privacy section lists it.
+
+### How to use
+
+- Settings → **NotiLand** → tick **AI usage**, then **Read plan usage from Anthropic**. It needs Claude Code signed in on this computer (run `claude` in a terminal and sign in once). Without it the usage stays an estimate, shown with `≈`.
+
+### Changed
+
+- The AI usage line says `≈` while it is only an estimate counted from Claude Code's logs. Cache reads are no longer counted (they were 10 to 20 times the rest, so a limit you set in tokens read as hundreds of percent).
+
+### Fixed
+
+- NotiLand no longer jumps to another place when the foreground flickers (Alt+Tab, the task view, a window closing). A new situation (desktop, window, maximized, full screen) counts only after it has stayed for about a second, and not while the pointer is on NotiLand, its card is open or it is being dragged.
+- A button on the pill acts only on a click that began and ended on it. Releasing on Play/Pause after pressing elsewhere (or while the buttons slid under the pointer as the pill opened) no longer pauses the song, and Play/Pause now sends pause or play by what the player is doing at that moment.
+- Clicking NotiLand opens the card even when the pill changes under the pointer between the press and the release.
+- The cover of a song follows the player when it changes under the same title: browsers first offer their own logo and the video's picture a moment later, and the logo used to stay.
 ## 0.7.0
 
 ### Added
