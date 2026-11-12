@@ -216,7 +216,7 @@ NotiLand（DeskGrid 的「提示島」，正式名稱）是一顆黑色小膠囊
 DeskGrid 不蒐集任何資料：沒有遙測、沒有分析、不需要帳號。它存的東西（設定、資料夾位置、log）都留在你的電腦上，
 位置見[檔案位置](#檔案位置)。
 
-它只為了一件事使用網路：到 GitHub 查有沒有新版本。
+預設它只為了一件事使用網路：到 GitHub 查有沒有新版本。
 
 - 啟動幾秒後，以及你在設定裡按 **檢查更新** 時，會向 `api.github.com` 查詢本專案最新的 Release。GitHub 看得到任何
   網路請求都會帶的資訊（你的 IP 位址與 `DeskGrid/<版本>` 的 User-Agent），DeskGrid 不會多送其他東西。
@@ -228,6 +228,12 @@ DeskGrid 不蒐集任何資料：沒有遙測、沒有分析、不需要帳號�
 
 **允許腳本與 AI agent 控制**（預設關閉）只會在這台電腦上監聽一條 named pipe，而且只有以你自己的 Windows 帳戶執行的程式能開啟；
 不使用網路。
+
+**向 Anthropic 讀取方案用量**（NotiLand 的 AI 用量；預設關閉）是唯一另一個使用網路的地方。開啟後，DeskGrid 會讀取
+Claude Code 存在 `~/.claude/.credentials.json` 的存取 token，每隔幾分鐘把它送到 `api.anthropic.com`
+（`/api/oauth/usage`），取得你方案的 5 小時與每週用量，也就是 Claude 自己的用量頁面顯示的數字。token 只用在這個請求：
+不儲存、不寫入 log、不送到別處，也不會送出任何檔案或工作階段的內容。token 過期時 DeskGrid 不會幫你更新（Claude Code 執行時會做）。
+這個端點沒有公開文件，可能改變；失敗時用量會回到依記錄的估算（以 `≈` 表示）。
 
 ## 程式碼簽章政策
 

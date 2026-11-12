@@ -249,7 +249,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
   - **位置亂跑**：情境（`IslandScene.Detect`）在前景一閃就立刻換位置（Alt+Tab、工作檢視、`ForegroundStaging`）。現在 `SceneSettler`（純邏輯，有測試）要新情境持續 900 ms 才算，指標在膠囊上、卡片開著或拖曳時不換，膠囊隱藏時立刻換；切換用的視窗（`ForegroundStaging`、`MultitaskingViewFrame`、`TaskSwitcherWnd` 等）沿用原本的情境。真實設定裡還有一筆在頂端中間的 `desktop` 位置，是先前在螢幕上測「編輯位置」留下的：已移除（情境的位置只該在使用者自己設定時存在）。
   - **膠囊按鈕**只對「按下與放開都在按鈕上」的點擊動作（以前只有放開、按下卻在膠囊上，或膠囊展開時按鈕滑到指標下，也會觸發「暫停」）。`NowPlaying.PlayPause` 依點擊當下播放器的狀態送暫停或播放，不再用切換，並寫入記錄：DeskGrid 裡只有這裡會讓歌停下來（真實記錄裡沒有別的暫停）。「自己暫停」沒有重現；再發生時記錄會說明是不是 DeskGrid 送的。
   - **點擊展開卡片**：按下後滑鼠捕捉在放開前遺失（膠囊在指標下變了），只要指標還在膠囊上、按下不到 1.5 秒，仍算一次點擊。
-  - **用量**沒有狀態列的數字時只是估算（記錄裡沒有網頁版聊天，也沒有方案真正的上限）：那一行現在寫 `≈`。狀態列腳本本身可用（用範例測過），但這台電腦上 Claude Code 沒給它 `rate_limits`（從沒寫出 `deskgrid-limits.json`），所以這裡拿不到 Claude 自己的百分比；另一個來源是用使用者的登入呼叫 Anthropic 的用量端點，需要使用者同意（見 `context/decisions.md`）。
+  - **用量**沒有狀態列的數字時只是估算（記錄裡沒有網頁版聊天，也沒有方案真正的上限）：那一行現在寫 `≈`。狀態列腳本本身可用（用範例測過），但這台電腦上 Claude Code 沒給它 `rate_limits`（從沒寫出 `deskgrid-limits.json`），所以這裡拿不到 Claude 自己的百分比；另一個來源是 **`UsageOnline`**（設定 `usageOnline`，預設關閉，擁有者 2026-11-12 同意；設定 → NotiLand → AI 用量 →「向 Anthropic 讀取方案用量」）：`AnthropicUsage` / `OnlineUsage` 讀取 `~/.claude/.credentials.json` 的存取 token，每 3 分鐘（失敗後每 10 分鐘）向 `api.anthropic.com/api/oauth/usage` 查詢，結果優先於狀態列；token 過期或為空就不查。**這台電腦上該檔的 token 是空的（CLI 沒登入，Claude Desktop 另有自己的登入），所以從沒對真正的端點試過**：測試用的是假伺服器，解析依該端點已知的形狀（`five_hour` / `seven_day` 內的 `utilization` 與 `resets_at`）。README「隱私」有列出。
 
 ## 發布與 CI（階段 7）
 

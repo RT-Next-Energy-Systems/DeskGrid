@@ -867,3 +867,5 @@
 **Alternatives**：用 Claude Code 的登入（`.credentials.json`）呼叫 Anthropic 的用量端點可得到方案真正的百分比；它會讀取已儲存的 token 並連網，所以**在擁有者同意前不做**（需要選用的設定、README「隱私」條目，且端點沒有公開文件、可能改變）。依模型價格加權 token 也沒做：最新模型的權重不明。
 **Consequences**：623 測試通過。「自己暫停」沒有重現；新的記錄行會顯示是不是 DeskGrid 送出暫停。
 **Author**：Claude（Sonnet 5.5），依擁有者的回報
+
+**補充（同一天）**：擁有者選擇加入選用的「向 Anthropic 讀取方案用量」（`usageOnline`，預設關閉）。以 `AnthropicUsage` / `OnlineUsage` 實作；結果優先於狀態列；README「隱私」已列出。這台電腦的憑證檔裡 token 是空的，所以沒有對真正的端點測過（只有假伺服器的測試）。

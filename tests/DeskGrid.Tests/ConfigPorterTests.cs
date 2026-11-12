@@ -134,6 +134,7 @@ public sealed class ConfigPorterTests : IDisposable
             IslandUsage = true,
             UsageLimitMillions = 12.5,
             UsageHours = 8,
+            UsageOnline = true,
             UsageWarnPercent = 75,
             IslandPrivacy = true,
             IslandBluetooth = true,

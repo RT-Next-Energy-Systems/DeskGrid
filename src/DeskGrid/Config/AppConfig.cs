@@ -80,6 +80,12 @@ internal sealed class AppConfig
     /// <summary>The length of a session block in hours (Claude's is 5).</summary>
     public int UsageHours { get; set; } = 5;
 
+    /// <summary>
+    /// Whether the usage asks Anthropic for the plan's own percentage, with the sign-in Claude Code keeps on this computer
+    /// (goes online; off by default).
+    /// </summary>
+    public bool UsageOnline { get; set; }
+
     /// <summary>The percentage of the limit at which the island warns.</summary>
     public int UsageWarnPercent { get; set; } = 80;
 
@@ -202,6 +208,7 @@ internal sealed class AppConfig
         IslandUsage = other.IslandUsage;
         UsageLimitMillions = other.UsageLimitMillions;
         UsageHours = other.UsageHours;
+        UsageOnline = other.UsageOnline;
         UsageWarnPercent = other.UsageWarnPercent;
         IslandPrivacy = other.IslandPrivacy;
         IslandBluetooth = other.IslandBluetooth;

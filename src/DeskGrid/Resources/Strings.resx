@@ -261,6 +261,9 @@ Cancel: ask again next time.</value>
   <data name="SettingsUsageLimit" xml:space="preserve">
     <value>Limit (million tokens, 0 = highest before)</value>
   </data>
+  <data name="SettingsUsageOnline" xml:space="preserve">
+    <value>Read plan usage from Anthropic</value>
+  </data>
   <data name="SettingsUsageHours" xml:space="preserve">
     <value>Session length (hours; Claude's is 5)</value>
   </data>

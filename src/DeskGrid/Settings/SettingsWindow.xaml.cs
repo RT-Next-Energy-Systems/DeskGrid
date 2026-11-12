@@ -53,7 +53,8 @@ internal sealed record SettingsChoice(
     string? IslandCardSections = null,
     bool AutoBackupEnabled = false,
     int AutoBackupHour = AppConfig.DefaultAutoBackupHour,
-    int AutoBackupDays = AppConfig.DefaultAutoBackupDays);
+    int AutoBackupDays = AppConfig.DefaultAutoBackupDays,
+    bool UsageOnline = false);
 
 /// <summary>One line of the language list: the language and the name it is shown under.</summary>
 internal sealed record LanguageOption(AppLanguage Language, string Label);
@@ -124,6 +125,7 @@ internal partial class SettingsWindow : Window
         IslandBatteryBox.IsChecked = config.IslandBattery;
         IslandUsageBox.IsChecked = config.IslandUsage;
         UsageLimitBox.Text = config.UsageLimitMillions.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        UsageOnlineBox.IsChecked = config.UsageOnline;
         UsageHoursBox.Text = config.UsageHours.ToString(System.Globalization.CultureInfo.InvariantCulture);
         UsageWarnBox.Text = config.UsageWarnPercent.ToString(System.Globalization.CultureInfo.InvariantCulture);
         IslandSecondsBox.Text = config.IslandShowSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
@@ -170,7 +172,7 @@ internal partial class SettingsWindow : Window
         choice.IslandPrivacy, choice.IslandBluetooth, choice.IslandDownloads, choice.IslandSystem, choice.IslandTimerMinutes, choice.IslandFollowPointer,
         choice.IslandQuietFrom, choice.IslandQuietTo, choice.IslandHideInApps, choice.IslandShowOverApps,
         choice.IslandScale, choice.HoverExpand, choice.HoverFullText, choice.HoverButtons, choice.HoverTime, choice.IslandCardSections,
-        choice.AutoBackupEnabled, choice.AutoBackupHour, choice.AutoBackupDays,
+        choice.AutoBackupEnabled, choice.AutoBackupHour, choice.AutoBackupDays, choice.UsageOnline,
         choice.PanelBackground.Style, choice.PanelBackground.CustomColor, choice.PanelBackground.CustomOpacity,
         choice.PanelBackground.Opacity, choice.PanelBackground.GlassShade);
 
@@ -252,6 +254,7 @@ internal partial class SettingsWindow : Window
     {
         IslandOptions.IsEnabled = IslandBox.IsChecked == true;
         UsageFields.IsEnabled = IslandUsageBox.IsChecked == true;
+        UsageOnlineBox.IsEnabled = IslandUsageBox.IsChecked == true;
         HoverOptions.IsEnabled = HoverExpandBox.IsChecked == true;
     }
 
@@ -624,6 +627,7 @@ internal partial class SettingsWindow : Window
         IslandFoldersBox.Content = Strings.SettingsIslandFolders;
         IslandBatteryBox.Content = Strings.SettingsIslandBattery;
         IslandUsageBox.Content = Strings.SettingsIslandUsage;
+        UsageOnlineBox.Content = Strings.SettingsUsageOnline;
         RefreshUsageConnection();
         UsageLimitLabel.Text = Strings.SettingsUsageLimit;
         UsageHoursLabel.Text = Strings.SettingsUsageHours;
@@ -785,7 +789,8 @@ internal partial class SettingsWindow : Window
         CardSections.Store(_cardParts.Where(p => p.Shown).Select(p => p.Id)),
         AutoBackupBox.IsChecked == true,
         AutoBackupHourBox.SelectedValue as int? ?? _config.AutoBackupHour,
-        AutoBackupDaysBox.SelectedItem as int? ?? _config.AutoBackupDays);
+        AutoBackupDaysBox.SelectedItem as int? ?? _config.AutoBackupDays,
+        UsageOnlineBox.IsChecked == true);
 
     // "HH:mm" as chosen in the scrollable menu, or empty when off.
     private static string Time(ComboBox box) => box.SelectedValue as string ?? "";

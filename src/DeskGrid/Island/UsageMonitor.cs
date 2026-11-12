@@ -13,9 +13,9 @@ namespace DeskGrid.Island;
 
 /// <summary>
 /// The user's usage settings: the limit (millions of tokens in one session block; 0 = the highest earlier block, as ccusage's
-/// "max"), the length of a session block in hours (Claude's is 5), and where the warning starts.
+/// "max"), the length of a session block in hours (Claude's is 5), where the warning starts, and whether to ask Anthropic for the plan usage.
 /// </summary>
-internal sealed record UsageOptions(double LimitMillions, int Hours, int WarnPercent)
+internal sealed record UsageOptions(double LimitMillions, int Hours, int WarnPercent, bool Online = false)
 {
     public long LimitTokens => (long)(LimitMillions * 1_000_000);
 }
@@ -436,10 +436,21 @@ internal sealed class UsageMonitor : IDisposable
 
     private readonly string _limitsFile;
     private readonly string? _home; // The user profile when the real computer is read; null in tests.
+    private readonly OnlineUsage? _online; // Anthropic's own numbers, asked only when the user turned that on.
 
-    public UsageMonitor(UsageOptions options, IReadOnlyList<string>? folders = null, string? limitsFile = null)
+    private static readonly Lazy<System.Net.Http.HttpClient> Http = new(() =>
+    {
+        var client = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+        client.DefaultRequestHeaders.UserAgent.Add(new System.Net.Http.Headers.ProductInfoHeaderValue("DeskGrid", Updates.UpdateChecker.CurrentVersion.ToString(3)));
+        return client;
+    });
+
+    public UsageMonitor(UsageOptions options, IReadOnlyList<string>? folders = null, string? limitsFile = null, OnlineUsage? online = null)
     {
         _options = options;
+        _online = online ?? (folders is null
+            ? new OnlineUsage(AnthropicUsage.CredentialsFile(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)), () => Http.Value)
+            : null);
         // With folders given (tests) the real saved limits are not read.
         _home = folders is null ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) : null;
         _limitsFile = limitsFile ?? (folders is null ? ClaudeLimits.FilePath(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)) : "");
@@ -459,7 +470,7 @@ internal sealed class UsageMonitor : IDisposable
 
     public void Configure(UsageOptions options)
     {
-        var lengthChanged = options.Hours != _options.Hours;
+        var lengthChanged = options.Hours != _options.Hours || options.Online != _options.Online;
         _options = options;
         if (Reading is { } reading)
         {
@@ -487,13 +498,17 @@ internal sealed class UsageMonitor : IDisposable
 
         _reading = true;
         var length = TimeSpan.FromHours(Math.Max(1, _options.Hours));
-        _ = Task.Run(() =>
+        var online = _options.Online ? _online : null;
+        _ = Task.Run(async () =>
         {
             var now = DateTimeOffset.UtcNow;
             var reading = _reader.Read(_folders, length, now);
 
-            // What Claude Code reports about the plan wins over what the logs add up to, when DeskGrid is connected to it.
-            if (ClaudeLimits.Read(_limitsFile, now) is { } plan)
+            // What the plan itself reports wins over what the logs add up to: first Anthropic's answer (when the user allowed
+            // asking), then what Claude Code's status line saved (when DeskGrid is connected to it).
+            var plan = online is not null ? await online.ReadAsync(now).ConfigureAwait(false) : null;
+            plan ??= ClaudeLimits.Read(_limitsFile, now);
+            if (plan is not null)
             {
                 reading = reading with { Resets = plan.FiveResets, Plan = plan };
             }

@@ -234,7 +234,7 @@ never touched.
 DeskGrid collects nothing: no telemetry, no analytics, no account. Everything it stores (settings, folder positions,
 the log) stays on your PC, in the files listed under [Files](#files).
 
-It uses the network for one thing, looking for a newer version on GitHub:
+By default it uses the network for one thing, looking for a newer version on GitHub:
 
 - A few seconds after it starts, and whenever you press **Check for updates** in Settings, it asks `api.github.com`
   for the latest release of this project. GitHub sees what any web request shows (your IP address and a
@@ -249,6 +249,14 @@ for removing everything else.
 
 **Allow control from scripts and AI agents** (off by default) only listens on a named pipe on this PC, which only
 programs running under your own Windows account can open; it uses no network.
+
+**Read plan usage from Anthropic** (NotiLand's AI usage; off by default) is the one other network use. When you turn it
+on, DeskGrid reads the access token that Claude Code keeps in `~/.claude/.credentials.json` and, every few minutes, sends
+it to `api.anthropic.com` (`/api/oauth/usage`) to get your plan's 5-hour and weekly usage, the numbers Claude's own usage
+page shows. The token is used for that request only: it is not stored, logged or sent anywhere else, and nothing about
+your files or sessions is sent. An expired token is not renewed by DeskGrid (Claude Code does that when it runs). The
+endpoint is not publicly documented and may change; when it fails, the usage falls back to the estimate from the logs
+(shown with `≈`).
 
 ## Code signing policy
 

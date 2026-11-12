@@ -32,7 +32,7 @@ internal sealed record IslandOptions(
 
     public static IslandOptions From(AppConfig config) => new(
         config.IslandEnabled, config.IslandMusic, config.IslandFolders, config.IslandBattery,
-        config.IslandUsage ? new UsageOptions(config.UsageLimitMillions, config.UsageHours, config.UsageWarnPercent) : null,
+        config.IslandUsage ? new UsageOptions(config.UsageLimitMillions, config.UsageHours, config.UsageWarnPercent, config.UsageOnline) : null,
         config.IslandX, config.IslandY, config.IslandShowSeconds,
         new IslandExtras(
             config.IslandPrivacy, config.IslandBluetooth, config.IslandDownloads, config.IslandSystem, config.IslandTimerMinutes,

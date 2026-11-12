@@ -351,6 +351,28 @@ public sealed class SettingsWindowTests : IDisposable
         Assert.Equal(!initial, applied);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task UsageOnline_ShowsTheSetting_AndApplyReportsItFlipped(bool initial)
+    {
+        var (shown, applied) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path, IslandUsage = true, UsageOnline = initial });
+            SettingsChoice? choice = null;
+            window.Applied += (_, c) => choice = c;
+            window.Show();
+            var shown = window.UsageOnlineBox.IsChecked == true;
+            window.UsageOnlineBox.IsChecked = !initial;
+            window.ApplyButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            return (shown, choice?.UsageOnline);
+        });
+
+        Assert.Equal(initial, shown);
+        Assert.Equal(!initial, applied);
+    }
+
     // Apply keeps the window open and counts as saved; changing a control again makes it "changed" again.
     [Fact]
     public async Task Apply_KeepsTheWindowOpen_AndClearsTheUnsavedState()

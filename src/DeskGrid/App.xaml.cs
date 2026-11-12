@@ -959,6 +959,7 @@ public partial class App : Application
         config.IslandUsage = choice.IslandUsage;
         config.UsageLimitMillions = choice.UsageLimitMillions;
         config.UsageHours = choice.UsageHours;
+        config.UsageOnline = choice.UsageOnline;
         config.UsageWarnPercent = choice.UsageWarnPercent;
         config.IslandPrivacy = choice.IslandPrivacy;
         config.IslandBluetooth = choice.IslandBluetooth;

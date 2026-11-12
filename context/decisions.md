@@ -865,3 +865,5 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Reading the Anthropic usage endpoint with the Claude Code sign-in (`.credentials.json`) would give the plan's real percentage; it reads a saved token and goes online, so it is **not built until the owner agrees** (it would need an opt-in setting, a README "Privacy" entry and an undocumented endpoint that may change). Weighting tokens by model price was left out: the weights of the newest models are not known.
 **Consequences**: 623 tests pass. "Pauses by itself" was not reproduced; the new log line shows whether DeskGrid sent a pause.
 **Author**: Claude (Sonnet 5.5), on the owner's report
+
+**Addendum (same day)**: The owner chose to add the opt-in "Read plan usage from Anthropic" (`usageOnline`, off by default). Built as `AnthropicUsage` / `OnlineUsage`; the answer wins over the status line; README "Privacy" lists it. The credentials file on this computer holds empty tokens, so it is untested against the real endpoint (stub-server tests only).
