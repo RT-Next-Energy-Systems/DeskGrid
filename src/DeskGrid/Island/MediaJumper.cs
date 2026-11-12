@@ -173,6 +173,96 @@ internal static class MediaJumper
         return false;
     }
 
+    /// <summary>
+    /// For a YouTube tab that offers no next / previous song to the system media controls (a single video): brings the tab
+    /// that plays to the front, puts the focus on its page and types YouTube's own shortcut (Shift+N next, Shift+P previous),
+    /// then gives the front back to the window that had it. Slow and it takes the focus for a moment, so call it off the UI
+    /// thread. Returns whether the key was sent; whether YouTube has a song to go to is up to YouTube.
+    /// </summary>
+    public static bool SendYouTubeShortcut(string source, string title, bool next)
+    {
+        try
+        {
+            var needle = Needle(title);
+            if (needle.Length == 0)
+            {
+                return false;
+            }
+
+            var candidates = TopLevelWindows().Where(w => Matches(source, w.Process) && IsBrowser(w.Process)).ToList();
+            HWND? target = null;
+            var at = candidates.FindIndex(w => w.Title.Contains(needle, StringComparison.OrdinalIgnoreCase) && w.Title.Contains("YouTube", StringComparison.OrdinalIgnoreCase));
+            if (at >= 0)
+            {
+                target = candidates[at].Handle;
+            }
+            else
+            {
+                // The tab that plays is in the background of a window: select it.
+                foreach (var window in candidates)
+                {
+                    if (SelectTab(window.Handle, needle))
+                    {
+                        target = window.Handle;
+                        break;
+                    }
+                }
+            }
+
+            if (target is not { } page)
+            {
+                Log.Info($"No YouTube tab of '{source}' found for the {(next ? "next" : "previous")} shortcut.");
+                return false;
+            }
+
+            var before = PInvoke.GetForegroundWindow();
+            if (!Raise(page))
+            {
+                Log.Info("The tab of the player could not be brought to the front; the YouTube shortcut was not sent.");
+                return false;
+            }
+
+            FocusPage(page);
+            Thread.Sleep(150);
+            const byte shift = 0x10, keyN = 0x4E, keyP = 0x50;
+            var key = next ? keyN : keyP;
+            var up = Windows.Win32.UI.Input.KeyboardAndMouse.KEYBD_EVENT_FLAGS.KEYEVENTF_KEYUP;
+            PInvoke.keybd_event(shift, 0, 0, 0);
+            PInvoke.keybd_event(key, 0, 0, 0);
+            PInvoke.keybd_event(key, 0, up, 0);
+            PInvoke.keybd_event(shift, 0, up, 0);
+            Log.Info($"Sent YouTube's Shift+{(next ? "N" : "P")} to the tab of '{source}'.");
+
+            Thread.Sleep(300); // The page has taken the key before the front goes back.
+            if (before != default && before != page && PInvoke.IsWindow(before))
+            {
+                Raise(before);
+            }
+
+            return true;
+        }
+        catch (Exception exception) when (exception is ElementNotAvailableException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            Log.Error("Sending YouTube's shortcut failed", exception);
+            return false;
+        }
+    }
+
+    // The page itself, not the address bar, has to hold the focus for a page's shortcuts to work.
+    private static void FocusPage(HWND window)
+    {
+        try
+        {
+            AutomationElement.FromHandle(window)
+                .FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Document))
+                ?.SetFocus();
+        }
+        catch (Exception exception) when (exception is ElementNotAvailableException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            Log.Error("The page of the player could not be focused", exception);
+        }
+    }
+
     /// <summary>Sends the keyboard's next / previous track key; Windows gives it to the player it considers current.</summary>
     public static void SendMediaKey(bool next)
     {

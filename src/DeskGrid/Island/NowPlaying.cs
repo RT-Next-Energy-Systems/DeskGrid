@@ -72,6 +72,7 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
 
         var session = entry.Session;
         var name = next ? "next" : "previous";
+        var title = entry.Track?.Title ?? "";
         var controls = session.GetPlaybackInfo()?.Controls;
         var enabled = next ? controls?.IsNextEnabled : controls?.IsPreviousEnabled;
         var isCurrent = _manager?.GetCurrentSession()?.SourceAppUserModelId == source;
@@ -88,7 +89,18 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
                     return;
                 }
 
-                if (!MediaJumper.PressTransportButton(source, next) && isCurrent)
+                if (MediaJumper.PressTransportButton(source, next))
+                {
+                    return;
+                }
+
+                // A browser's single video offers no next song to the system; YouTube has its own keys for it.
+                if (MediaJumper.IsBrowser(source) && MediaJumper.SendYouTubeShortcut(source, title, next))
+                {
+                    return;
+                }
+
+                if (isCurrent)
                 {
                     MediaJumper.SendMediaKey(next);
                 }
