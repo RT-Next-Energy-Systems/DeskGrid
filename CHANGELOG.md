@@ -6,6 +6,8 @@
 
 - The top-edge trigger (resting the pointer at the top centre of the screen opens the list of all folders) is **off by default** now, and everyone starts with it off again. It opened the folders by accident when the pointer went to a browser's tabs or a window's title bar at the top centre. Turn it on in Settings → NotiLand → *Open the folders when the pointer rests at the top edge*. When on, it only reacts to the very edge of the screen (2 DIP instead of 8), needs the pointer to rest still for a full second (it was half a second), and ignores a pointer with a mouse button held.
 
+- Files put on NotiLand's shelf are **copied** into a folder of DeskGrid's own (`%LOCALAPPDATA%\DeskGrid\shelf`), wherever they come from, so a file from a USB stick or a network share is still there after the stick is pulled. A copy is deleted when it is used: once it is dragged out and taken, when removed with the cross, with `Clear`, when the shelf is full and it is the oldest, and at exit (anything left by a crash goes at the next start). Dragged onto a folder widget or a folder panel it moves in (no shortcut to a copy that is about to go); dragged to Explorer it is copied or moved, never linked. The original is left where it was.
+
 ### Fixed
 
 - Widgets line up with the desktop icons beside them: the tile and the name sat about 12 px and 23 px lower than an icon's picture and name.

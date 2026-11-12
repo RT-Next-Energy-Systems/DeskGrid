@@ -675,7 +675,7 @@ internal sealed class IslandCard : Window
     private UIElement ShelfChip(string path)
     {
         var name = Path.GetFileName(path.TrimEnd('\\', '/'));
-        var label = new TextBlock { Text = name.Length > 24 ? name[..23] + "…" : name, Foreground = Brushes.White, FontSize = 12, ToolTip = path };
+        var label = new TextBlock { Text = name.Length > 24 ? name[..23] + "…" : name, Foreground = Brushes.White, FontSize = 12, ToolTip = name };
         var cross = new TextBlock
         {
             Text = "", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 9, Foreground = Dim, Margin = new Thickness(8, 2, 0, 0),
@@ -727,7 +727,8 @@ internal sealed class IslandCard : Window
             chip.ReleaseMouseCapture();
             var data = new DataObject(DataFormats.FileDrop, paths);
             data.SetData(ShelfFormat, true);
-            var effect = DragDrop.DoDragDrop(chip, data, DragDropEffects.Copy | DragDropEffects.Link);
+            // Not Link: a shortcut to the copy would be left dead once the copy is deleted.
+            var effect = DragDrop.DoDragDrop(chip, data, DragDropEffects.Copy | DragDropEffects.Move);
             if (effect != DragDropEffects.None)
             {
                 if (paths.Length > 1)

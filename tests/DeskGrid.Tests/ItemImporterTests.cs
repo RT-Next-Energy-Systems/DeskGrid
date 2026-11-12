@@ -69,6 +69,25 @@ public sealed class ItemImporterTests : IDisposable
         Assert.Equal(ImportAction.None, ItemImporter.Plan(_temp.Combine("missing.txt"), Widget, DropMode.Move, Desktops, Root));
     }
 
+    // A copy off NotiLand's shelf is deleted once used: a shortcut to it would be left dead, so it moves in.
+    [Fact]
+    public void Plan_ACopyOffTheShelf_Moves_NotLinked()
+    {
+        var directory = Directory.CreateDirectory(Path.Combine(DeskGrid.Island.IslandShelf.DefaultFolder, "plantest-" + Guid.NewGuid().ToString("N"))).FullName;
+        try
+        {
+            var file = Path.Combine(directory, "report.pdf");
+            File.WriteAllText(file, "x");
+
+            Assert.Equal(ImportAction.Move, ItemImporter.Plan(file, Widget, DropMode.Move, Desktops, Root));
+            Assert.Equal(ImportAction.Move, ItemImporter.Plan(file, Widget, DropMode.Copy, Desktops, Root));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
     // The report that started this: a folder dragged in from the desktop was linked, so it showed in both places.
     [Fact]
     public async Task Import_FromTheDesktop_LeavesNothingOnTheDesktop()

@@ -869,3 +869,11 @@
 **Author**：Claude（Sonnet 5.5），依擁有者的回報
 
 **補充（同一天）**：擁有者選擇加入選用的「向 Anthropic 讀取方案用量」（`usageOnline`，預設關閉）。以 `AnthropicUsage` / `OnlineUsage` 實作；結果優先於狀態列；README「隱私」已列出。這台電腦的憑證檔裡 token 是空的，所以沒有對真正的端點測過（只有假伺服器的測試）。
+
+## 2026-11-12 — NotiLand 暫存區把副本存在 DeskGrid 自己的資料夾
+
+**Decision**：`IslandShelf` 把放上來的每個檔案或資料夾（不論來源）複製到 `%LOCALAPPDATA%\DeskGrid\shelf\<guid>\<name>`，不再只記路徑。副本「用掉」就刪：拖出去被接收、按叉叉、「清空」、12 格溢出（最舊的）、`Prune`、結束程式時；`App` 啟動時清掉當機殘留的。複製在 UI 執行緒外進行（`AddAsync`）。拖出提供 Copy 與 Move、不再給 Link，`ItemImporter.Plan` 對暫存資料夾內的路徑回 `Move`，所以 widget 或資料夾面板會把副本搬進去，而不是建一個副本一刪就失效的捷徑。點一下開啟檔案不算用掉。
+**Reason**：擁有者希望從隨身碟（或任何可能消失的地方）拖來的檔案也能留在暫存區，且暫存資料放在 DeskGrid 自己的資料夾、用完自動清掉。
+**Alternatives**：只對可移除或網路來源複製（否決：擁有者要求每個檔案都存，單一規則較簡單）；開啟檔案後就刪（否決：開啟它的程式可能還在讀）；暫存資料夾放在 widget 根資料夾底下（否決：那裡每個子資料夾都是一個 widget）。
+**Consequences**：大檔案在暫存區期間佔用時間與磁碟空間（沒有大小上限）；原檔從不被移動或刪除。測試：`IslandShelfTests`（複製、來源消失後仍在、同名、移除／清空／溢出、prune、清殘留）、`ItemImporterTests.Plan_ACopyOffTheShelf_Moves_NotLinked`。尚未在真實桌面用真的隨身碟或拖到檔案總管試（需要滑鼠）。
+**Author**：Claude（Sonnet 5.5），依擁有者的要求

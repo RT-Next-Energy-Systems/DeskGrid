@@ -83,47 +83,131 @@ public sealed class IslandLookTests
 
 public sealed class IslandShelfTests : IDisposable
 {
+    // The sources stand for files anywhere (a USB stick); the shelf keeps its copies in its own folder.
     private readonly string _dir = Directory.CreateTempSubdirectory("shelf").FullName;
+    private string Sources => Directory.CreateDirectory(Path.Combine(_dir, "sources")).FullName;
+    private string Staging => Path.Combine(_dir, "staging");
 
     public void Dispose() => Directory.Delete(_dir, recursive: true);
 
-    private string MakeFile(string name)
+    private IslandShelf NewShelf() => new(Staging);
+
+    private string MakeFile(string name, string content = "x")
     {
-        var path = Path.Combine(_dir, name);
-        File.WriteAllText(path, "x");
+        var path = Path.Combine(Sources, name);
+        File.WriteAllText(path, content);
         return path;
     }
 
     [Fact]
-    public void Add_KeepsExistingFilesOnce_AndTellsHowManyCameIn()
+    public async Task Add_CopiesExistingFilesOnce_AndTellsHowManyCameIn()
     {
-        var shelf = new IslandShelf();
+        var shelf = NewShelf();
         var changes = 0;
         shelf.Changed += (_, _) => changes++;
-        var a = MakeFile("a.txt");
+        var a = MakeFile("a.txt", "hello");
 
-        Assert.Equal(1, shelf.Add([a, a, Path.Combine(_dir, "missing.txt")]));
-        Assert.Equal(0, shelf.Add([a]));
-        Assert.Equal([a], shelf.Paths);
+        Assert.Equal(1, await shelf.AddAsync([a, a, Path.Combine(Sources, "missing.txt")]));
+        Assert.Equal(0, await shelf.AddAsync([a]));
+
+        var copy = Assert.Single(shelf.Paths);
+        Assert.NotEqual(a, copy);
+        Assert.StartsWith(Staging, copy);
+        Assert.Equal("a.txt", Path.GetFileName(copy));
+        Assert.Equal("hello", File.ReadAllText(copy));
+        Assert.True(File.Exists(a), "the original is left where it was");
         Assert.Equal(1, changes);
     }
 
     [Fact]
-    public void ATooFullShelf_DropsItsOldest_AndPruneDropsWhatIsGone()
+    public async Task ACopy_OutlivesItsSource_AndAFolderIsCopiedWhole()
     {
-        var shelf = new IslandShelf();
-        var files = Enumerable.Range(0, IslandShelf.MaxItems + 2).Select(i => MakeFile($"f{i}.txt")).ToList();
-        shelf.Add(files);
+        var shelf = NewShelf();
+        var file = MakeFile("gone.txt");
+        var folder = Directory.CreateDirectory(Path.Combine(Sources, "Photos", "2025")).Parent!.FullName;
+        File.WriteAllText(Path.Combine(folder, "2025", "a.jpg"), "jpg");
+
+        Assert.Equal(2, await shelf.AddAsync([file, folder]));
+        File.Delete(file); // The USB stick is pulled.
+        Directory.Delete(folder, recursive: true);
+
+        shelf.Prune();
+        Assert.Equal(2, shelf.Paths.Count);
+        Assert.True(File.Exists(shelf.Paths[0]));
+        Assert.Equal("jpg", File.ReadAllText(Path.Combine(shelf.Paths[1], "2025", "a.jpg")));
+    }
+
+    [Fact]
+    public async Task TwoFilesOfTheSameName_BothStayAsTheyAreCalled()
+    {
+        var shelf = NewShelf();
+        var first = MakeFile("report.pdf", "one");
+        var second = Path.Combine(Directory.CreateDirectory(Path.Combine(_dir, "usb")).FullName, "report.pdf");
+        File.WriteAllText(second, "two");
+
+        await shelf.AddAsync([first, second]);
+
+        Assert.Equal(["report.pdf", "report.pdf"], shelf.Paths.Select(Path.GetFileName));
+        Assert.Equal(["one", "two"], shelf.Paths.Select(File.ReadAllText));
+    }
+
+    [Fact]
+    public async Task Remove_Clear_AndAnOverflow_DeleteTheCopies()
+    {
+        var shelf = NewShelf();
+        var files = Enumerable.Range(0, IslandShelf.MaxItems + 1).Select(i => MakeFile($"f{i}.txt")).ToList();
+        await shelf.AddAsync(files);
 
         Assert.Equal(IslandShelf.MaxItems, shelf.Paths.Count);
-        Assert.Equal(files[2], shelf.Paths[0]);
+        Assert.Equal("f1.txt", Path.GetFileName(shelf.Paths[0]));
+        Assert.Equal(IslandShelf.MaxItems, Directory.GetDirectories(Staging).Length); // f0's copy went with the overflow.
 
-        File.Delete(files[2]);
+        var removed = shelf.Paths[0];
+        shelf.Remove(removed);
+        Assert.False(File.Exists(removed));
+        Assert.False(Directory.Exists(Path.GetDirectoryName(removed)));
+
+        shelf.Clear();
+        Assert.Empty(shelf.Paths);
+        Assert.Empty(Directory.GetDirectories(Staging));
+        Assert.True(files.All(File.Exists), "no original was touched");
+    }
+
+    [Fact]
+    public async Task Prune_DropsACopyThatWasMovedAway()
+    {
+        var shelf = NewShelf();
+        await shelf.AddAsync([MakeFile("a.txt"), MakeFile("b.txt")]);
+        File.Move(shelf.Paths[0], Path.Combine(_dir, "taken.txt")); // A drop target that moved it.
+
         shelf.Prune();
-        Assert.Equal(files[3], shelf.Paths[0]);
 
-        shelf.Remove(files[3]);
-        Assert.DoesNotContain(files[3], shelf.Paths);
+        Assert.Equal("b.txt", Path.GetFileName(Assert.Single(shelf.Paths)));
+        Assert.Single(Directory.GetDirectories(Staging));
+    }
+
+    [Fact]
+    public async Task AFileFromTheShelfItself_IsNotCopiedAgain()
+    {
+        var shelf = NewShelf();
+        await shelf.AddAsync([MakeFile("a.txt")]);
+
+        Assert.Equal(0, await shelf.AddAsync(shelf.Paths));
+        Assert.Single(shelf.Paths);
+    }
+
+    [Fact]
+    public async Task PurgeLeftovers_DeletesWhatAnEarlierRunLeft_ButNotWhatTheShelfHolds()
+    {
+        var shelf = NewShelf();
+        await shelf.AddAsync([MakeFile("a.txt")]);
+        var leftover = Directory.CreateDirectory(Path.Combine(Staging, "left-by-a-crash")).FullName;
+        File.WriteAllText(Path.Combine(leftover, "old.bin"), "x");
+
+        await shelf.PurgeLeftoversAsync();
+
+        Assert.False(Directory.Exists(leftover));
+        Assert.True(File.Exists(Assert.Single(shelf.Paths)));
     }
 }
 

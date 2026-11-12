@@ -867,3 +867,11 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Author**: Claude (Sonnet 5.5), on the owner's report
 
 **Addendum (same day)**: The owner chose to add the opt-in "Read plan usage from Anthropic" (`usageOnline`, off by default). Built as `AnthropicUsage` / `OnlineUsage`; the answer wins over the status line; README "Privacy" lists it. The credentials file on this computer holds empty tokens, so it is untested against the real endpoint (stub-server tests only).
+
+## 2026-11-12 — NotiLand's shelf keeps copies in a folder of DeskGrid's own
+
+**Decision**: `IslandShelf` copies every file or folder put on it (wherever it comes from) into `%LOCALAPPDATA%\DeskGrid\shelf\<guid>\<name>` instead of keeping the path. A copy is deleted when used: dragged out and taken, removed with the cross, `Clear`, overflow of the 12 places (the oldest), `Prune`, and at exit; `App` purges what a crash left at start. Copying runs off the UI thread (`AddAsync`). The drag out offers Copy and Move, no longer Link, and `ItemImporter.Plan` returns `Move` for a path inside the shelf folder, so a widget or a folder panel takes the copy in instead of making a shortcut that would be dead once the copy goes. Opening a file with a click does not count as using it.
+**Reason**: The owner wanted a file dragged from a USB stick (or any place that may go away) to stay on the shelf, and the temporary data to live in a folder of DeskGrid's own that is cleaned after use.
+**Alternatives**: A copy only for removable or network sources (rejected: the owner asked for every file, and one rule is simpler); deleting after a click that opens a file (rejected: the program that opened it may still be reading it); the staging folder under the widget root folder (rejected: every subfolder there is a widget).
+**Consequences**: Big files take time and disk space while on the shelf (no size limit); the original is never moved or deleted. Tests: `IslandShelfTests` (copies, outliving the source, same names, remove / clear / overflow, prune, purge), `ItemImporterTests.Plan_ACopyOffTheShelf_Moves_NotLinked`. Not tried on a real desktop with a real USB stick or a drag out to Explorer (needs the mouse).
+**Author**: Claude (Sonnet 5.5), on the owner's request

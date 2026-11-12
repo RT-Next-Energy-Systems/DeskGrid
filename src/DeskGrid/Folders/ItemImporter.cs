@@ -2,6 +2,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using DeskGrid.Config;
 using DeskGrid.Diagnostics;
+using DeskGrid.Island;
 using DeskGrid.Shell;
 
 namespace DeskGrid.Folders;
@@ -19,7 +20,7 @@ internal enum ImportAction
 /// file, program or folder) is moved in, so it is not seen in both places; with <see cref="DropMode.Copy"/> the
 /// desktop keeps it instead (a shortcut is copied, anything else gets a shortcut). From anywhere else, programs,
 /// files and folders get a new shortcut (they are never moved or copied from there) and shortcuts are copied.
-/// Items taken out of another widget's panel are moved.
+/// Items taken out of another widget's panel, or off NotiLand's shelf, are moved.
 /// </summary>
 internal static class ItemImporter
 {
@@ -36,6 +37,12 @@ internal static class ItemImporter
         if (!isFolder && !File.Exists(path))
         {
             return ImportAction.None;
+        }
+
+        if (FolderPaths.IsSameOrInside(path, IslandShelf.DefaultFolder))
+        {
+            // A copy taken off NotiLand's shelf, which is deleted once used: it moves in; a shortcut would be left dead.
+            return ImportAction.Move;
         }
 
         if (FolderPaths.IsSameOrInside(path, rootFolder))

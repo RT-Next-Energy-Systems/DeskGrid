@@ -513,7 +513,7 @@ internal sealed class IslandHost : IDisposable
             UpdateEscapeWatch();
         };
         card.FolderChosen += name => ActionRequested?.Invoke(IslandAction.FolderPrefix + name);
-        card.ShelfDropped += paths => _shelf.Add(paths);
+        card.ShelfDropped += paths => _ = AddToShelfAsync(paths);
         card.ShelfRemoved += _shelf.Remove;
         card.ShelfCleared += _shelf.Clear;
         card.ShelfOpened += path =>
@@ -551,6 +551,19 @@ internal sealed class IslandHost : IDisposable
         var items = new List<object>();
         if (_usage?.Reading is { } reading)
         {
+    // Copying can take a while (a big file from a USB stick), so the card stays usable meanwhile and shows the file when it is there.
+    private async Task AddToShelfAsync(string[] paths)
+    {
+        try
+        {
+            await _shelf.AddAsync(paths);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            Diagnostics.Log.Error("Files could not be put on the shelf", exception);
+        }
+    }
+
             items.Add(new IslandActivity(UsageLine(reading), TimeSpan.Zero, Look: UsageLook(reading)));
             foreach (var other in reading.Others ?? [])
             {
@@ -646,7 +659,11 @@ internal sealed class IslandHost : IDisposable
         _hotZone?.Place();
     }
 
-    public void Dispose() => Stop();
+    public void Dispose()
+    {
+        Stop();
+        _shelf.Clear(); // The copies on the shelf are not kept past the run.
+    }
 
     // A clock that does not jump when the user changes the time.
     private static TimeSpan Now => TimeSpan.FromMilliseconds(Environment.TickCount64);

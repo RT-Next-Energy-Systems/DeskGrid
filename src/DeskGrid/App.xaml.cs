@@ -122,6 +122,7 @@ public partial class App : Application
         _island.FolderNames = () => _catalog?.Widgets.Select(w => w.Name).ToList() ?? [];
         _island.PlaceChanged += SaveIslandPlace;
         _island.Apply(IslandOptions.From(_configStore.Config));
+        _ = _island.Shelf.PurgeLeftoversAsync(); // What a run that did not end cleanly left on the shelf.
         _hotkeys = new HotkeyService();
         _hotkeys.Pressed += (_, id) => RunHotkey(id);
         ApplyHotkeys(report: false);

@@ -132,7 +132,7 @@ internal static class FolderDeleter
         DeleteDirectoryRecursively(source);
     }
 
-    private static void DeleteDirectoryRecursively(string path)
+    internal static void DeleteDirectoryRecursively(string path)
     {
         if (!Directory.Exists(path))
         {
@@ -162,7 +162,7 @@ internal static class FolderDeleter
         Directory.Delete(path, recursive: false);
     }
 
-    private static void CopyDirectory(string source, string target)
+    internal static void CopyDirectory(string source, string target)
     {
         Directory.CreateDirectory(target);
         foreach (var file in Directory.EnumerateFiles(source, "*", AllEntries))
