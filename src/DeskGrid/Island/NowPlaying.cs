@@ -49,7 +49,14 @@ internal sealed class NowPlaying(Dispatcher dispatcher) : IDisposable
 
     public void Previous(string source) => Control(source, session => session.TrySkipPreviousAsync());
 
-    public void PlayPause(string source) => Control(source, session => session.TryTogglePlayPauseAsync());
+    // Pauses a player that plays and plays one that does not, by the state it has at the moment of the click (a "toggle" sent
+    // on a stale view would do the opposite of what the button shows). Logged: it is the only thing here that stops a song.
+    public void PlayPause(string source) => Control(source, session =>
+    {
+        var playing = session.GetPlaybackInfo()?.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing;
+        Log.Info($"Play/pause button for '{source}': it is {(playing ? "playing, pausing" : "not playing, playing")}.");
+        return playing ? session.TryPauseAsync() : session.TryPlayAsync();
+    });
 
     public void Next(string source) => Control(source, session => session.TrySkipNextAsync());
 

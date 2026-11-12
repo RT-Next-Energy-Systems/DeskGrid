@@ -268,7 +268,7 @@
     <value>全部重設</value>
   </data>
   <data name="IslandUsageLine" xml:space="preserve">
-    <value>AI 用量 {0}% · 已用 {1}／{2} token · {3} 後重置</value>
+    <value>AI 用量 ≈{0}% · 已用 {1}／{2} token · {3} 後重置</value>
   </data>
   <data name="IslandUsageWarn" xml:space="preserve">
     <value>AI 用量已達上限的 {0}%</value>

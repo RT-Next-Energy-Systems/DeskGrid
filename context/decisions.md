@@ -856,3 +856,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: Matching Media Player by name (one app only; the package match covers every Store player).
 **Consequences**: 618 tests pass. Test files, the Explorer window and the Media Player instance opened for the test were removed.
 **Author**: The owner allowed the test; Claude (Opus 5.5) ran it and fixed what it found
+
+---
+
+### 2026-11-12 — Four reported NotiLand faults, and the usage question left to the owner
+**Decision**: (1) A situation counts only after 900 ms (`SceneSettler`), never while the pill is handled, so a flicker of the foreground does not move NotiLand. (2) Pill buttons act only on a click that began and ended on them; play / pause is sent as Pause or Play by the player's state, and logged. (3) A press whose mouse capture was lost still opens the card if the release is on the pill within 1.5 s. (4) The usage line says `≈` when it is only an estimate from the logs; cache reads stay out of the token count (they were 80 M against a 5 M limit). The stale `desktop` place (top centre) that an earlier on-screen test of the Edit flow had written into the real config was removed (backup next to the config: `config.json.before-desktop-place-fix`).
+**Reason**: User reports: the song pauses by itself, a click sometimes does not open the card, the usage is off, the place sometimes jumps. The real log shows no pause command other than the buttons; the status line script works but Claude Code never gave it `rate_limits` here.
+**Alternatives**: Reading the Anthropic usage endpoint with the Claude Code sign-in (`.credentials.json`) would give the plan's real percentage; it reads a saved token and goes online, so it is **not built until the owner agrees** (it would need an opt-in setting, a README "Privacy" entry and an undocumented endpoint that may change). Weighting tokens by model price was left out: the weights of the newest models are not known.
+**Consequences**: 623 tests pass. "Pauses by itself" was not reproduced; the new log line shows whether DeskGrid sent a pause.
+**Author**: Claude (Sonnet 5.5), on the owner's report

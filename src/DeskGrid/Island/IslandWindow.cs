@@ -60,6 +60,7 @@ internal sealed class IslandWindow : Window
     // A press that moves less than this (DIPs, and never less than the system's drag distance) is a click, not a drag: the
     // system's 4 pixels are 2 DIPs at 200 % scaling, which a hand on a trackpad passes without meaning to.
     private const double DragSlop = 8;
+    private const long ClickWindowMs = 1500; // A press and its release this close together are one click.
 
     // The pointer must have stayed away this long before the pill closes again: grazing the edge while it resizes, or the
     // trip from the pill to the card, does not make it flutter.
@@ -348,8 +349,11 @@ internal sealed class IslandWindow : Window
         PInvoke.GetWindowRect(Handle, out var rect);
         _drag = (cursor.X, cursor.Y, (rect.left + rect.right) / 2, rect.top);
         _dragged = false;
+        _pressedAt = Environment.TickCount64;
         _pill.CaptureMouse();
     }
+
+    private long _pressedAt = long.MinValue / 2; // When the pill was last pressed (TickCount64), until that press is answered.
 
     private void OnPillMove(object sender, MouseEventArgs e)
     {
@@ -402,11 +406,14 @@ internal sealed class IslandWindow : Window
 
     private void OnPillUp(object sender, MouseButtonEventArgs e)
     {
-        if (_drag is null)
+        // A press whose capture was lost before the release (the pill changed under the pointer) is still a click on it: the
+        // release comes if the pointer is still over the pill and the press was a moment ago.
+        if (_drag is null && !(_pill.IsMouseOver && Environment.TickCount64 - _pressedAt < ClickWindowMs))
         {
             return;
         }
 
+        _pressedAt = long.MinValue / 2;
         var dragged = _dragged;
         _drag = null;
         _dragged = false;
@@ -461,11 +468,32 @@ internal sealed class IslandWindow : Window
         var button = new Border { Width = ButtonSize, Height = ButtonSize, Background = Brushes.Transparent, Opacity = 0.75, Child = glyph };
         button.MouseEnter += (_, _) => button.Opacity = 1;
         button.MouseLeave += (_, _) => button.Opacity = 0.75;
-        button.MouseLeftButtonUp += (_, e) =>
+
+        // A button acts only on a click that began on it and ends on it. A release alone (the press was on the pill, or the
+        // buttons slid under the pointer while the pill opened) must not pause the song.
+        var pressed = false;
+        button.MouseLeftButtonDown += (_, e) =>
         {
-            action();
+            pressed = true;
+            button.CaptureMouse();
             e.Handled = true;
         };
+        button.MouseLeftButtonUp += (_, e) =>
+        {
+            e.Handled = true;
+            if (!pressed)
+            {
+                return;
+            }
+
+            pressed = false;
+            button.ReleaseMouseCapture();
+            if (button.IsMouseOver)
+            {
+                action();
+            }
+        };
+        button.LostMouseCapture += (_, _) => pressed = false;
         return button;
     }
 

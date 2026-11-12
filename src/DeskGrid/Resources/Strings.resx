@@ -274,7 +274,7 @@ Cancel: ask again next time.</value>
     <value>Reset all places</value>
   </data>
   <data name="IslandUsageLine" xml:space="preserve">
-    <value>AI usage {0}% · {1} of {2} tokens · resets in {3}</value>
+    <value>AI usage ≈{0}% · {1} of {2} tokens · resets in {3}</value>
   </data>
   <data name="IslandUsageWarn" xml:space="preserve">
     <value>AI usage is at {0}% of your limit</value>

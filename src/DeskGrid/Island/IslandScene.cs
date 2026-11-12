@@ -42,7 +42,11 @@ internal static class IslandScene
             return Desktop;
         }
 
-        if (kind is "Shell_TrayWnd" or "Shell_SecondaryTrayWnd" or "NotifyIconOverflowWindow" || IsOurs(window))
+        // The taskbar, and the short-lived windows Windows puts in front while switching (Alt+Tab, the task view, the staging window
+        // a window passes through when it is activated): none of them is a situation of its own.
+        if (kind is "Shell_TrayWnd" or "Shell_SecondaryTrayWnd" or "NotifyIconOverflowWindow"
+            or "ForegroundStaging" or "MultitaskingViewFrame" or "TaskSwitcherWnd" or "TaskListThumbnailWnd" or "TaskListOverlayWnd"
+            || IsOurs(window))
         {
             return before;
         }

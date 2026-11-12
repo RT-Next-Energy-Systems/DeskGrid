@@ -245,6 +245,12 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **已在真機驗證**（以 explorer.exe 啟動 dev build，真實 config 的 `islandEnabled` 由 explorer 執行的腳本開啟；2880 × 1800，縮放 200 %）：`--ctl island show` 讓膠囊出現在頂端正中央（讀回視窗矩形與延伸樣式：最上層、工具視窗、不啟用、分層），短句與長句（以 … 截斷）截圖看起來正確，`island hide` 會收起，第二則會排隊，錯誤回覆（秒數超出範圍、參數錯誤）正確。**未驗證**：游標在上面時的展開狀態（要用滑鼠；注入輸入前要先問使用者）、全螢幕遊戲或影片、第二個螢幕或其他 DPI、島顯示中切換語言。
 - **擷取畫面的方法**（下次用）：從 Claude App 啟動的 PowerShell 是 DPI 不感知的，只看到虛擬化的 1440 × 900；先呼叫 `SetProcessDPIAware`，再用 `SRCCOPY | CAPTUREBLT` 的 `BitBlt`（`Graphics.CopyFromScreen` 不接受這個旗標組合，`PrintWindow` 則會把視窗裁成虛擬化的大小）。由 explorer.exe 啟動的程序**不管 `%APPDATA%` 怎麼設都讀真實的 config**（`GetFolderPath` 不看環境變數），所以測試用的副本要用另一個使用者或另一個 exe 資料夾，不能靠改環境變數。
 
+- **回報的問題，2026-11-12 修正**（使用者：歌會自己暫停、點擊有時不展開卡片、用量不準、位置有時亂跑）：
+  - **位置亂跑**：情境（`IslandScene.Detect`）在前景一閃就立刻換位置（Alt+Tab、工作檢視、`ForegroundStaging`）。現在 `SceneSettler`（純邏輯，有測試）要新情境持續 900 ms 才算，指標在膠囊上、卡片開著或拖曳時不換，膠囊隱藏時立刻換；切換用的視窗（`ForegroundStaging`、`MultitaskingViewFrame`、`TaskSwitcherWnd` 等）沿用原本的情境。真實設定裡還有一筆在頂端中間的 `desktop` 位置，是先前在螢幕上測「編輯位置」留下的：已移除（情境的位置只該在使用者自己設定時存在）。
+  - **膠囊按鈕**只對「按下與放開都在按鈕上」的點擊動作（以前只有放開、按下卻在膠囊上，或膠囊展開時按鈕滑到指標下，也會觸發「暫停」）。`NowPlaying.PlayPause` 依點擊當下播放器的狀態送暫停或播放，不再用切換，並寫入記錄：DeskGrid 裡只有這裡會讓歌停下來（真實記錄裡沒有別的暫停）。「自己暫停」沒有重現；再發生時記錄會說明是不是 DeskGrid 送的。
+  - **點擊展開卡片**：按下後滑鼠捕捉在放開前遺失（膠囊在指標下變了），只要指標還在膠囊上、按下不到 1.5 秒，仍算一次點擊。
+  - **用量**沒有狀態列的數字時只是估算（記錄裡沒有網頁版聊天，也沒有方案真正的上限）：那一行現在寫 `≈`。狀態列腳本本身可用（用範例測過），但這台電腦上 Claude Code 沒給它 `rate_limits`（從沒寫出 `deskgrid-limits.json`），所以這裡拿不到 Claude 自己的百分比；另一個來源是用使用者的登入呼叫 Anthropic 的用量端點，需要使用者同意（見 `context/decisions.md`）。
+
 ## 發布與 CI（階段 7）
 
 - **GitHub**：公開 repo `RT-Next-Energy-Systems/DeskGrid`（2026 年 11 月由 `Ryan970714/DeskGrid` 搬過來；GitHub 會把舊位址轉址，0.4.1 以前的版本檢查更新仍用舊位址），預設分支 `main`，MIT（著作權人 Ryan Kuo）。README 英文（`README.md`）+ 繁中（`README.zh-TW.md`），內容需保持一致。其中的截圖在 `docs/images/`（`NAME.png` + `NAME.zh-TW.png`），由真正的 UI 類別配上 Windows 內建 App 繪製，不是從桌面截取（做法見 `context/decisions.md` 2026-11-06（二））；視窗改了就要重畫。

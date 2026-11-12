@@ -243,6 +243,17 @@ internal sealed class IslandHost : IDisposable
         _window.SetAnchor(_editing is not null && _editPlace is { } dropped ? dropped : _options.Extras.PlaceFor(scene));
     }
 
+    // A situation counts only once it has been in front for a moment: the foreground flickers (Alt+Tab, the task view, a window
+    // being closed or minimized) and the island must not jump to another place and back with it. It also stays put while the user
+    // handles it (pointer on the pill, the card open, a drag), and a hidden pill takes the new place at once (nobody sees it move).
+    private string SettledScene(string detected, TimeSpan now) => _sceneSettler.Settle(
+        detected, _scene,
+        immediate: _window is { IsVisible: false } || _shown is null,
+        held: _window?.IsHovered == true || _window?.IsDragging == true || CardOpen,
+        now);
+
+    private readonly SceneSettler _sceneSettler = new(TimeSpan.FromMilliseconds(900));
+
     // Dragged by hand: while a place is being set it is that place; otherwise it is the place of the situation in front if
     // that has one, else the default place (the one the user sees).
     private void OnDragged(ScreenPoint point)
@@ -881,7 +892,7 @@ internal sealed class IslandHost : IDisposable
     {
         var now = Now;
         // The situation in front decides where NotiLand is (while it is placed in Settings, that place is shown instead).
-        var scene = _editing ?? IslandScene.Detect(_scene);
+        var scene = _editing ?? SettledScene(IslandScene.Detect(_scene), now);
         if (scene != _scene)
         {
             _scene = scene;

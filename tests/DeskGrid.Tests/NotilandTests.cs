@@ -204,6 +204,34 @@ public sealed class NotilandWindowTests : IDisposable
         Assert.Equal(1, ended);
         Assert.False(editing);
     }
+
+    [Fact]
+    public async Task AReleaseOnAButton_ThatWasNotPressedThere_DoesNothing()
+    {
+        // The press was on the pill (or the buttons slid under the pointer as it opened): releasing on "pause" must not pause.
+        var (calls, downHandled) = await _ui.InvokeAsync(() =>
+        {
+            TestApplication.Ensure();
+            var window = new IslandWindow();
+            var calls = 0;
+            window.Display("song", music: new MusicActions(_ => { }, _ => calls++, _ => { }), source: "player");
+            var field = typeof(IslandWindow).GetField("_buttons", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+            var play = (System.Windows.UIElement)((System.Windows.Controls.StackPanel)field.GetValue(window)!).Children[1];
+
+            System.Windows.Input.MouseButtonEventArgs Args(System.Windows.RoutedEvent routed) =>
+                new(System.Windows.Input.Mouse.PrimaryDevice, 0, System.Windows.Input.MouseButton.Left) { RoutedEvent = routed, Source = play };
+
+            play.RaiseEvent(Args(System.Windows.UIElement.MouseLeftButtonUpEvent)); // A release alone.
+            var down = Args(System.Windows.UIElement.MouseLeftButtonDownEvent);
+            play.RaiseEvent(down);
+            window.Withdraw(animated: false);
+            window.Close();
+            return (calls, down.Handled);
+        });
+
+        Assert.Equal(0, calls);
+        Assert.True(downHandled); // The press belongs to the button: the pill does not start a drag from it.
+    }
 }
 
 [Collection(nameof(ShellCollection))]
@@ -230,5 +258,57 @@ public sealed class NotilandSizeTests : IDisposable
         });
 
         Assert.True(shortWidth < 140, $"long {longWidth}, short {shortWidth}");
+    }
+}
+
+public sealed class SceneSettlerTests
+{
+    private static readonly TimeSpan Delay = TimeSpan.FromMilliseconds(900);
+
+    private static TimeSpan At(int milliseconds) => TimeSpan.FromMilliseconds(milliseconds);
+
+    [Fact]
+    public void ANewSituation_CountsOnlyAfterItHasStayed()
+    {
+        var settler = new SceneSettler(Delay);
+
+        Assert.Equal(IslandScene.Maximized, settler.Settle(IslandScene.Desktop, IslandScene.Maximized, false, false, At(0)));
+        Assert.Equal(IslandScene.Maximized, settler.Settle(IslandScene.Desktop, IslandScene.Maximized, false, false, At(500)));
+        Assert.Equal(IslandScene.Desktop, settler.Settle(IslandScene.Desktop, IslandScene.Maximized, false, false, At(900)));
+    }
+
+    [Fact]
+    public void AFlicker_ThatGoesBack_NeverMovesIt()
+    {
+        var settler = new SceneSettler(Delay);
+
+        // Alt+Tab: the desktop for a moment, then the same window again.
+        Assert.Equal(IslandScene.Maximized, settler.Settle(IslandScene.Desktop, IslandScene.Maximized, false, false, At(0)));
+        Assert.Equal(IslandScene.Maximized, settler.Settle(IslandScene.Maximized, IslandScene.Maximized, false, false, At(400)));
+
+        // The next flicker starts its wait anew, it does not inherit the first one's time.
+        Assert.Equal(IslandScene.Maximized, settler.Settle(IslandScene.Desktop, IslandScene.Maximized, false, false, At(1000)));
+        Assert.Equal(IslandScene.Maximized, settler.Settle(IslandScene.Desktop, IslandScene.Maximized, false, false, At(1500)));
+    }
+
+    [Fact]
+    public void ADifferentSituation_RestartsTheWait()
+    {
+        var settler = new SceneSettler(Delay);
+
+        settler.Settle(IslandScene.Desktop, IslandScene.Window, false, false, At(0));
+        Assert.Equal(IslandScene.Window, settler.Settle(IslandScene.FullScreen, IslandScene.Window, false, false, At(800)));
+        Assert.Equal(IslandScene.Window, settler.Settle(IslandScene.FullScreen, IslandScene.Window, false, false, At(1600)));
+        Assert.Equal(IslandScene.FullScreen, settler.Settle(IslandScene.FullScreen, IslandScene.Window, false, false, At(1700)));
+    }
+
+    [Fact]
+    public void WhileTheUserHandlesIt_ItStaysPut_AndAHiddenPillMovesAtOnce()
+    {
+        var settler = new SceneSettler(Delay);
+
+        Assert.Equal(IslandScene.Window, settler.Settle(IslandScene.Desktop, IslandScene.Window, false, true, At(0)));
+        Assert.Equal(IslandScene.Window, settler.Settle(IslandScene.Desktop, IslandScene.Window, false, true, At(5000)));
+        Assert.Equal(IslandScene.Desktop, settler.Settle(IslandScene.Desktop, IslandScene.Window, true, false, At(5001)));
     }
 }
