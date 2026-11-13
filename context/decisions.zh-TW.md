@@ -877,3 +877,12 @@
 **Alternatives**：只對可移除或網路來源複製（否決：擁有者要求每個檔案都存，單一規則較簡單）；開啟檔案後就刪（否決：開啟它的程式可能還在讀）；暫存資料夾放在 widget 根資料夾底下（否決：那裡每個子資料夾都是一個 widget）。
 **Consequences**：大檔案在暫存區期間佔用時間與磁碟空間（沒有大小上限）；原檔從不被移動或刪除。測試：`IslandShelfTests`（複製、來源消失後仍在、同名、移除／清空／溢出、prune、清殘留）、`ItemImporterTests.Plan_ACopyOffTheShelf_Moves_NotLinked`。尚未在真實桌面用真的隨身碟或拖到檔案總管試（需要滑鼠）。
 **Author**：Claude（Sonnet 5.5），依擁有者的要求
+
+---
+
+### 2026-11-13 — AI 用量為什麼不準，以及修了什麼
+**Decision**：追到根因是這台電腦完全沒有官方來源（沒有 Claude Code CLI 登入，`.credentials.json` 裡 token 是空的；狀態列也沒接），所以每個數字都來自 log 估算，自動上限用「歷史最高區塊」——這招只有剛破紀錄那一刻準，其餘時間都偏低（實測真實 log：目前區塊只有歷史最高的約 2%，跟方案真正的上限無關）。修正：設定 → NotiLand → AI 用量現在在**向 Anthropic 讀取方案用量**旁顯示這台電腦是否真的有可用登入（**已登入** / **沒有可用的登入**；`SettingsWindow.RefreshUsageOnlineStatus`，沿用既有的 `AnthropicUsage.ReadToken`），讓「沒登入卻打開開關」明顯看得出是沒作用，而不是悄悄沒反應；同時指向兩個已經做好、能拿到真實百分比的來源：接上 Claude Code 的狀態列（已有的 `ClaudeStatusLine`），或是跑一次 `claude` 登入讓 `.credentials.json` 拿到可用的 token。
+**Reason**：使用者要求去查官方資料與開源 repo 來修正用量不準的問題。讀了狀態列官方文件（`code.claude.com/docs/en/statusline`：`rate_limits.five_hour` / `seven_day`，`used_percentage` 0–100，`resets_at` 是 Unix 秒數，只有 Pro/Max/Ultra 且第一次 API 回應後才有）與幾個開源用量監控專案（`ryoppippi/ccusage`、`Maciek-roboblog/Claude-Code-Usage-Monitor`、`CodeZeno/Claude-Code-Usage-Monitor`）看別人怎麼算或怎麼讀；Anthropic 沒公布從原始 token 推出 5 小時上限的公式，本地 log 算出來的本來就只能是估算值。
+**Alternatives**：讀 Claude **桌面版**自己的 OAuth token 快取（Chromium 用 DPAPI 包起來的 OSCrypt 金庫，`CodeZeno/Claude-Code-Usage-Monitor` 在 Windows 上就是這樣做），這樣沒有 CLI 登入也能拿到真實百分比——**否決**：解密另一個應用程式的憑證存放區，即使是使用者自己的、即使只是讀取，也是一種憑證提取手法，被寫程式工具自己的安全機制擋下；DeskGrid 不做這件事。依模型價格加權 token 讓本地估算更準、拿掉「歷史最高區塊」這個自動上限，都先留著——使用者要求先推廣既有的官方來源。
+**Consequences**：646 測試通過（`SettingsTests.UsageOnlineStatus_MatchesWhetherThisComputerHasAUsableClaudeCodeSignIn`）。沒有改動：估算公式本身，以及自動上限這個演算法——沒接官方來源時仍然會不準。
+**Author**：Claude（Sonnet 5），依使用者回報

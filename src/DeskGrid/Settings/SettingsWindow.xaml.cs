@@ -255,6 +255,7 @@ internal partial class SettingsWindow : Window
         IslandOptions.IsEnabled = IslandBox.IsChecked == true;
         UsageFields.IsEnabled = IslandUsageBox.IsChecked == true;
         UsageOnlineBox.IsEnabled = IslandUsageBox.IsChecked == true;
+        UsageOnlineStatus.IsEnabled = IslandUsageBox.IsChecked == true;
         HoverOptions.IsEnabled = HoverExpandBox.IsChecked == true;
     }
 
@@ -331,7 +332,18 @@ internal partial class SettingsWindow : Window
         UsageFoundText.Text = tools.Count == 0
             ? Strings.SettingsUsageFoundNone
             : string.Format(Strings.SettingsUsageFound, string.Join(", ", tools.Select(t => t.ReportsUsage ? t.Name : string.Format(Strings.SettingsUsageNoData, t.Name))));
+        RefreshUsageOnlineStatus();
     }
+
+    // Whether "Read plan usage from Anthropic" actually has a usable sign-in to read (Claude Code's own CLI login,
+    // ~/.claude/.credentials.json); turning the checkbox on does nothing by itself when there is none.
+    private void RefreshUsageOnlineStatus()
+    {
+        var ready = AnthropicUsage.ReadToken(AnthropicUsage.CredentialsFile(Home), DateTimeOffset.UtcNow) is not null;
+        UsageOnlineStatus.Text = ready ? Strings.SettingsUsageOnlineReady : Strings.SettingsUsageOnlineNotReady;
+    }
+
+    private void OnUsageOnlineClicked(object sender, RoutedEventArgs e) => RefreshUsageOnlineStatus();
 
     private void OnUsageConnect(object sender, RoutedEventArgs e)
     {

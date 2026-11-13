@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Settings → NotiLand → AI usage now shows whether **Read plan usage from Anthropic** actually has a usable Claude Code sign-in on this computer (**Signed in** / **No usable sign-in**), instead of silently staying an estimate when you turn it on with no sign-in. The automatic limit (highest earlier block) and the raw token count were never meant to replace that real percentage; this makes it obvious when you are only getting the estimate and what fixes it.
+
 ## 0.7.2
 
 ### Changed

@@ -258,6 +258,12 @@
   <data name="SettingsUsageOnline" xml:space="preserve">
     <value>向 Anthropic 讀取方案用量</value>
   </data>
+  <data name="SettingsUsageOnlineReady" xml:space="preserve">
+    <value>已登入</value>
+  </data>
+  <data name="SettingsUsageOnlineNotReady" xml:space="preserve">
+    <value>沒有可用的登入</value>
+  </data>
   <data name="SettingsUsageHours" xml:space="preserve">
     <value>工作階段長度（小時；Claude 是 5）</value>
   </data>

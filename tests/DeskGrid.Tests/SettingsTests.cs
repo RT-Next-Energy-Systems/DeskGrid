@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using DeskGrid.Folders;
+using DeskGrid.Island;
 using DeskGrid.Resources;
 using DeskGrid.Tray;
 using DeskGrid.Updates;
@@ -371,6 +372,24 @@ public sealed class SettingsWindowTests : IDisposable
 
         Assert.Equal(initial, shown);
         Assert.Equal(!initial, applied);
+    }
+
+    // Turning the checkbox on reads nothing by itself when Claude Code has no usable sign-in on this computer
+    // (~/.claude/.credentials.json missing, empty or expired); the window says so instead of staying silent.
+    [Fact]
+    public async Task UsageOnlineStatus_MatchesWhetherThisComputerHasAUsableClaudeCodeSignIn()
+    {
+        var (text, ready) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path, IslandUsage = true });
+            window.Show();
+            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var ready = AnthropicUsage.ReadToken(AnthropicUsage.CredentialsFile(home), DateTimeOffset.UtcNow) is not null;
+            return (window.UsageOnlineStatus.Text, ready);
+        });
+
+        Assert.Equal(ready ? Strings.SettingsUsageOnlineReady : Strings.SettingsUsageOnlineNotReady, text);
     }
 
     // Apply keeps the window open and counts as saved; changing a control again makes it "changed" again.

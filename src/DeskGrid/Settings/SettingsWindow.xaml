@@ -254,7 +254,8 @@
                   <Button x:Name="UsageConnectButton" DockPanel.Dock="Left" Padding="12,5" Click="OnUsageConnect" />
                   <TextBlock x:Name="UsageConnectStatus" Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" Opacity="0.7" />
                 </DockPanel>
-                <CheckBox x:Name="UsageOnlineBox" MinWidth="0" Margin="0,0,0,8" />
+                <CheckBox x:Name="UsageOnlineBox" MinWidth="0" Click="OnUsageOnlineClicked" />
+                <TextBlock x:Name="UsageOnlineStatus" Margin="18,0,0,8" TextWrapping="Wrap" Opacity="0.7" />
                 <Grid x:Name="UsageFields">
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
