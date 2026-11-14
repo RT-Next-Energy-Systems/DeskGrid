@@ -640,11 +640,12 @@ public sealed class SettingsWindowTests : IDisposable
         }
     }
 
-    // After an update: the window of what's new, in the interface language, with the running version's entry and its "how to use".
+    // After an update: the window of what's new, in the interface language, with the running version's entry and, when that
+    // entry adds a feature (AGENTS.md "Change log and how to use"), its "how to use" section.
     [Theory]
-    [InlineData("en", "How to use")]
-    [InlineData("zh-TW", "使用方法")]
-    public async Task WhatsNewWindow_ShowsTheRunningVersionsEntryIncludingHowToUse(string culture, string howToUse)
+    [InlineData("en", "How to use", "Added")]
+    [InlineData("zh-TW", "使用方法", "新增")]
+    public async Task WhatsNewWindow_ShowsTheRunningVersionsEntryIncludingHowToUse(string culture, string howToUse, string added)
     {
         var before = Strings.Culture;
         try
@@ -669,7 +670,11 @@ public sealed class SettingsWindowTests : IDisposable
             });
 
             Assert.Contains(UpdateChecker.CurrentVersion.ToString(3), title);
-            Assert.Contains(howToUse, texts);
+            if (texts.Contains(added))
+            {
+                Assert.Contains(howToUse, texts);
+            }
+
             Assert.Single(texts, t => t == UpdateChecker.CurrentVersion.ToString(3)); // Only that version, not the older ones.
         }
         finally
