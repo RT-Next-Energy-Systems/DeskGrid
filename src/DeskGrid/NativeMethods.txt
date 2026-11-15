@@ -48,6 +48,7 @@ SendMessageTimeout
 SetForegroundWindow
 SetWindowLong
 SetWindowPos
+SHChangeNotify
 SHCreateItemFromIDList
 SHCreateItemFromParsingName
 STGM

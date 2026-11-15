@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- An icon that was dragged off the desktop into a folder could stay on the desktop as a ghost that cannot be deleted ("item no longer found"), because Explorer missed that the file had moved. DeskGrid now tells Explorer the desktop changed right after moving an item off it, so the ghost goes away by itself. If one is already there, press F5 on the desktop.
+
 ## 0.7.3
 
 ### Fixed

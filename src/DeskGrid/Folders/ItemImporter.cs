@@ -135,6 +135,12 @@ internal static class ItemImporter
             {
                 File.Move(path, destination);
             }
+
+            // Explorer sometimes keeps the icon of what left the desktop, and then it can't be deleted: say it changed.
+            if (Path.GetDirectoryName(path) is { } parent)
+            {
+                ShellChange.FolderChanged(parent);
+            }
         }
         catch (UnauthorizedAccessException) when (!isFolder)
         {
