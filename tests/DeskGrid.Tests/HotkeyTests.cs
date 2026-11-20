@@ -193,9 +193,12 @@ public sealed class HotkeyServiceTests : IDisposable
 [Collection(nameof(ShellCollection))]
 public sealed class HotkeysWindowTests : IDisposable
 {
-    private readonly DispatcherThread _ui = new("Test UI");
+    private readonly DispatcherThread _ui = TestApplication.Ui;
 
-    public void Dispose() => _ui.Dispose();
+    public void Dispose()
+    {
+        // TestApplication.Ui is shared by the whole run.
+    }
 
     [Fact]
     public async Task TheActions_AreGroupedAsDeskGridAndFolders_EachWithACountOfWhatIsSet()

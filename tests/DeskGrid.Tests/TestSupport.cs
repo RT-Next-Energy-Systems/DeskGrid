@@ -55,6 +55,9 @@ internal sealed class TempDirectory : IDisposable
 /// <summary>The WPF application the windows under test find their styles in.</summary>
 internal static class TestApplication
 {
+    /// <summary>The one UI thread of every test that needs the Application (and the windows hanging on its resources): the Application, and each window that merges into its resources, belongs to the thread that made it, so they must not be spread over threads.</summary>
+    public static readonly DeskGrid.Threading.DispatcherThread Ui = new("Test UI (shared)");
+
     /// <summary>Creates it on the calling (UI) thread if there is none yet. The windows take their card styles from App.xaml; the card's padding matters for what fits in a row.</summary>
     public static void Ensure()
     {

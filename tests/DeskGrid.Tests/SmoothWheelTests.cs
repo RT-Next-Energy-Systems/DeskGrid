@@ -9,9 +9,12 @@ namespace DeskGrid.Tests;
 [Collection(nameof(ShellCollection))]
 public sealed class SmoothWheelTests : IDisposable
 {
-    private readonly DispatcherThread _ui = new("Wheel UI");
+    private readonly DispatcherThread _ui = TestApplication.Ui;
 
-    public void Dispose() => _ui.Dispose();
+    public void Dispose()
+    {
+        // TestApplication.Ui is shared by the whole run.
+    }
 
     // A page (a scroll viewer that scrolls by pixel) holding a list (which scrolls by item), as a Settings page can.
     private static (Window Window, ScrollViewer Page, ListBox List, Border Filler) PageWithList()

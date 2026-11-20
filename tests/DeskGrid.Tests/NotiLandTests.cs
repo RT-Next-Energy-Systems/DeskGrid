@@ -11,9 +11,7 @@ namespace DeskGrid.Tests;
 [Collection(nameof(ShellCollection))]
 public sealed class NotiLandTests : IDisposable
 {
-    // One thread for all of them: the Application, BrimDeck's resources and the windows that hold them must not be spread over threads.
-    private static readonly DispatcherThread SharedUi = new("NotiLand test UI");
-    private readonly DispatcherThread _ui = SharedUi;
+    private readonly DispatcherThread _ui = TestApplication.Ui;
 
     public void Dispose()
     {

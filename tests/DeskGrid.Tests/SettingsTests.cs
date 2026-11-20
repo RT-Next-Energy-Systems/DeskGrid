@@ -182,12 +182,11 @@ public sealed class AutoStartTests : IDisposable
 [Collection(nameof(ShellCollection))]
 public sealed class SettingsWindowTests : IDisposable
 {
-    private readonly DispatcherThread _ui = new("Test UI");
+    private readonly DispatcherThread _ui = TestApplication.Ui;
     private readonly TempDirectory _root = new();
 
     public void Dispose()
     {
-        _ui.Dispose();
         _root.Dispose();
     }
 
