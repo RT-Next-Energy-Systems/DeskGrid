@@ -26,7 +26,7 @@ public sealed partial class SettingsPages
     private TextBlock? _priceCount;
     private TextBlock? _priceUpdated;
     // Everything on the page except the table: title, description, toolbar, search and the footer.
-    private const double PriceTableReserve = 358;
+    private const double PriceTableReserve = 300;
     private void ModelPrices()
     {
         // Sits directly under the page title, closer to it than the usual gap below a title.

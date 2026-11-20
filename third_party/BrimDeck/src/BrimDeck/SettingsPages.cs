@@ -17,7 +17,7 @@ namespace BrimDeck;
 /// BrimDeck's settings pages, one at a time, as a control the host (DeskGrid's settings window) shows in its own window:
 /// the host has the list of pages (<see cref="Pages"/>) and calls <see cref="ShowPage"/>. It was BrimDeck's own settings window.
 /// </summary>
-public sealed partial class SettingsPages : UserControl, IDeckSurface
+public sealed partial class SettingsPages : UserControl
 {
     private SettingsPalette _palette = new(false);
     private string Surface => _palette.Surface;
@@ -53,10 +53,8 @@ public sealed partial class SettingsPages : UserControl, IDeckSurface
     public SettingsPages(App app)
     {
         _app = app;
-        Resources.MergedDictionaries.Add(DeckResources.Dictionary);
         Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("/BrimDeck;component/SettingsResources.xaml", UriKind.Relative) });
         using (OwnFonts()) Fonts.Publish(Resources);
-        KeepHostThemeOut();
         ToolTipService.SetInitialShowDelay(this, 120);
         ToolTipService.SetBetweenShowDelay(this, 400);
         ToolTipService.SetShowDuration(this, 20000);
@@ -78,23 +76,6 @@ public sealed partial class SettingsPages : UserControl, IDeckSurface
         _app.Prices.Changed += PricesChanged;
         SizeChanged += (_, _) => { if (_priceTable is not null) _priceTable.Height = Math.Max(220, ActualHeight - PriceTableReserve); };
         RebuildTheme();
-    }
-
-    // The host's window may be themed (DeskGrid's settings window is Fluent): the theme's styles for the controls the pages' own
-    // templates are made of (the arrow button inside a combo box, a slider's thumb, ...) would change how those templates lay out.
-    // An empty implicit style for each type that has none of BrimDeck's own keeps the plain controls these templates were made for.
-    private void KeepHostThemeOut()
-    {
-        foreach (var type in new[]
-        {
-            typeof(System.Windows.Controls.Primitives.ToggleButton), typeof(RadioButton), typeof(System.Windows.Controls.Primitives.RepeatButton),
-            typeof(System.Windows.Controls.Primitives.Thumb), typeof(ProgressBar), typeof(ComboBox), typeof(ComboBoxItem), typeof(Separator),
-            typeof(ListBox), typeof(ListBoxItem), typeof(DataGrid), typeof(DataGridRow), typeof(DataGridCell), typeof(DataGridColumnHeader),
-            typeof(System.Windows.Controls.Primitives.Popup),
-        })
-        {
-            if (!Resources.Contains(type)) Resources[type] = new Style(type);
-        }
     }
 
     /// <summary>The pages the host lists, in order: the page number to give <see cref="ShowPage"/>, the group it sits under (empty when it starts none) and its title, in the interface language.</summary>
@@ -177,12 +158,12 @@ public sealed partial class SettingsPages : UserControl, IDeckSurface
         if (_status.Parent is Panel oldStatus) oldStatus.Children.Remove(_status);
         // The scroll area clips at its edges, so the content keeps a 4 DIP inset inside it for keyboard focus outlines
         // that extend past a control; the outer margins give those 4 DIP back and the page stays where it was.
-        var main = new DockPanel { MaxWidth = 858 };
+        var main = new DockPanel();
         _status.Margin = new Thickness(4, 4, 4, 14); _status.FontSize = 12; DockPanel.SetDock(_status, Dock.Top); main.Children.Add(_status);
         _content.Margin = new Thickness(4);
         // Only the controls inside take focus; a focusable scroll area would draw the system outline around the whole page.
         // The page's scroll bar always keeps its 16 DIP column, taken from the right margin, so no page changes width when it starts scrolling.
-        _scroll = new ScrollViewer { Style = (Style)FindResource("SettingsPageScrollViewer"), Content = _content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Padding = new Thickness(0,0,4,0), Margin = new Thickness(0,0,-16,0), Focusable = false }; main.Children.Add(_scroll);
+        _scroll = new ScrollViewer { Style = (Style)FindResource("SettingsPageScrollViewer"), Content = _content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Padding = new Thickness(0,0,12,0), Focusable = false }; main.Children.Add(_scroll);
         // Focusable only to hold focus after a click on empty space; Tab never stops on it and it draws no outline.
         var frame = new Border { Child = main, Focusable = true, FocusVisualStyle = null };
         KeyboardNavigation.SetIsTabStop(frame, false);
@@ -299,14 +280,14 @@ public sealed partial class SettingsPages : UserControl, IDeckSurface
         _scroll.ScrollChanged -= ExceptionsScrollChanged;
         _refreshSensors = null;
         _page = page; _content.Children.Clear(); _scroll.ScrollToTop();
-        // The About page is titled by the wordmark itself, so the name does not appear twice.
-        var head = new DockPanel { Margin = new Thickness(0,0,0,20) };
+        // The list on the left names the page, so there is no heading: only the button that resets it, at the right.
         if (page is < 4 or 5 or 6 or ThemePage or MonitorSettingsPage or HotkeysPage or DevicesSettingsPage or ClipboardSettingsPage or ShelfLayoutSettingsPage or MusicGesturesPage)
         {
-            // Resets every setting on the page, so it asks first (SW-09, S-03); it keeps the look of the other "restore defaults" links.
-            var reset=ActionButton(Loc.T("恢復預設", "Restore defaults"),()=>{ if(Confirm(Loc.T("恢復預設", "Restore defaults"),ResetConfirmText(page),Loc.T("恢復預設", "Restore defaults")))ResetPage(); }); reset.FontSize=11; DockPanel.SetDock(reset,Dock.Right); head.Children.Add(reset);
+            // Resets every setting on the page, so it asks first (SW-09, S-03).
+            var reset = ActionButton(Loc.T("恢復預設", "Restore defaults"), () => { if (Confirm(Loc.T("恢復預設", "Restore defaults"), ResetConfirmText(page), Loc.T("恢復預設", "Restore defaults"))) ResetPage(); });
+            reset.HorizontalAlignment = HorizontalAlignment.Right; reset.Margin = new Thickness(0, 0, 0, 8);
+            _content.Children.Add(reset);
         }
-        head.Children.Add(TextLine(_pages[page],24,TextPrimary,FontWeights.SemiBold)); _content.Children.Add(head);
         switch(page) { case 0: General(); break; case 1: Compact(); break; case 2: Expanded(); break; case 3: QuotaPages(); break; case 4: ModelPrices(); break; case 5: MusicStyle(); break; case 6: Players(); break; case ThemePage: ThemesPage(); break; case MonitorSettingsPage: MonitorSettings(); break; case SensorsPage: SensorsSettings(); break; case HotkeysPage: HotkeysSettings(); break; case DevicesSettingsPage: DevicesSettings(); break; case ClipboardSettingsPage: ClipboardSettings(); break; case TransferSettingsPage: TransferSettings(); break; case ClipboardSyncSettingsPage: ClipboardSyncSettings(); break; case ShelfLayoutSettingsPage: ShelfLayoutSettings(); break; case MusicGesturesPage: MusicGesturesSettings(); break; case ProfilesPage: ProfilesSettings(); break; }
         if (_content.Children[^1] is Border lastGroup) lastGroup.Margin = new Thickness(lastGroup.Margin.Left, lastGroup.Margin.Top, lastGroup.Margin.Right, 0);
         // Apply the offset before the frame is drawn, so the rebuilt page never shows its top for a frame.
@@ -1121,9 +1102,9 @@ public sealed partial class SettingsPages : UserControl, IDeckSurface
 
     private void SectionTitle(string title, FrameworkElement? action = null, Func<string>? help = null)
     {
-        var row = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
+        var row = new DockPanel { Margin = new Thickness(2, 12, 0, 6) };
         if (action is not null) { DockPanel.SetDock(action, Dock.Right); action.VerticalAlignment = VerticalAlignment.Center; row.Children.Add(action); }
-        var label = TextLine(title, 11, TextSecondary); label.VerticalAlignment = VerticalAlignment.Center;
+        var label = TextLine(title, 13, TextPrimary, FontWeights.SemiBold); label.VerticalAlignment = VerticalAlignment.Center;
         if (help is null) row.Children.Add(label);
         else
         {
@@ -1133,6 +1114,7 @@ public sealed partial class SettingsPages : UserControl, IDeckSurface
         Target.Children.Add(row);
     }
 
+    // A group of rows is a card, as on DeskGrid's own pages.
     private void Group(params FrameworkElement[] rows)
     {
         var panel = new StackPanel();
@@ -1141,7 +1123,10 @@ public sealed partial class SettingsPages : UserControl, IDeckSurface
             if (panel.Children.Count > 0) panel.Children.Add(new Border { Height = 1, Background = UI.Brush(_palette.RowDivider) });
             panel.Children.Add(row);
         }
-        Target.Children.Add(new Border { Child = panel, Background = Brushes.Transparent, BorderBrush = UI.Brush(Divider), BorderThickness = new Thickness(0,1,0,0), Margin = new Thickness(0, 0, 0, 28) });
+        var card = new Border { Child = panel, Margin = new Thickness(0, 0, 0, 8), Padding = new Thickness(16, 4, 16, 4), CornerRadius = new CornerRadius(8), BorderThickness = new Thickness(1) };
+        if (TryFindResource("Card") is Style style) { card.Style = style; card.Padding = new Thickness(16, 4, 16, 4); }
+        else { card.Background = UI.Brush(_palette.Inset); card.BorderBrush = UI.Brush(_palette.Border); }
+        Target.Children.Add(card);
     }
 
     // One line per setting: the label at the left, the control at the right, an optional description underneath the label.

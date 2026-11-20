@@ -84,49 +84,11 @@ public sealed partial class SettingsPages
     private readonly Dictionary<string, (double X, DateTime Pressed)> _segmentPresses = [];
 
     // The selected option's fill is one shared highlight that slides between options.
+    // A choice among a few options is a row of radio buttons, as on DeskGrid's own pages.
     private Border SegmentBorder(FrameworkElement content)
     {
-        var options = ((Panel)content).Children.OfType<RadioButton>().ToList();
-        string group = options.FirstOrDefault()?.GroupName ?? "";
-        var move = new TranslateTransform();
-        var highlight = new Border { CornerRadius = new CornerRadius(6), HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top,
-            IsHitTestVisible = false, RenderTransform = move, Visibility = Visibility.Hidden };
-        highlight.SetResourceReference(Border.BackgroundProperty, "SettingsFillSelected");
-        // The chosen option is outlined as well: its fill alone stands too close to the control's own (SW-07).
-        highlight.BorderThickness = new Thickness(1); highlight.SetResourceReference(Border.BorderBrushProperty, "SettingsInputBorder");
-        var host = new Grid(); host.Children.Add(highlight); host.Children.Add(content);
-        void Slide(double from, double to)
-        {
-            if (!Soft.Enabled || Math.Abs(from - to) < 0.5) { move.BeginAnimation(TranslateTransform.XProperty, null); move.X = to; return; }
-            var slide = new System.Windows.Media.Animation.DoubleAnimation(from, to, TimeSpan.FromMilliseconds(200))
-            { EasingFunction = Soft.Out };
-            // Hand the final position back to the property so later layout passes can move the highlight again.
-            slide.Completed += (_, _) => { if (move.X == to) { move.BeginAnimation(TranslateTransform.XProperty, null); move.X = to; } };
-            move.BeginAnimation(TranslateTransform.XProperty, slide);
-        }
-        void Place(bool changed)
-        {
-            var chosen = options.FirstOrDefault(o => o.IsChecked == true);
-            if (chosen is null || chosen.ActualWidth <= 0 || !host.IsAncestorOf(chosen)) { highlight.Visibility = Visibility.Hidden; return; }
-            var at = chosen.TranslatePoint(new Point(), host);
-            highlight.Width = chosen.ActualWidth; highlight.Height = chosen.ActualHeight; highlight.Margin = new Thickness(0, at.Y, 0, 0);
-            double from = move.X;
-            bool animate = changed && highlight.Visibility == Visibility.Visible;
-            // A freshly built control continues the slide the user started on the control it replaced.
-            if (!changed && _segmentPresses.TryGetValue(group, out var press) && DateTime.Now - press.Pressed < TimeSpan.FromMilliseconds(800))
-            { from = press.X; animate = true; _segmentPresses.Remove(group); }
-            if (animate) Slide(from, at.X); else { move.BeginAnimation(TranslateTransform.XProperty, null); move.X = at.X; }
-            highlight.Visibility = Visibility.Visible;
-        }
-        foreach (var option in options)
-        {
-            option.PreviewMouseLeftButtonDown += (_, _) => { if (highlight.Visibility == Visibility.Visible) _segmentPresses[group] = (move.X, DateTime.Now); };
-            option.Checked += (_, _) => Place(true);
-        }
-        // The first size pass places the highlight (and may start a continued slide); later passes only follow resizes.
-        host.Loaded += (_, _) => { if (highlight.Visibility != Visibility.Visible) Place(false); };
-        host.SizeChanged += (_, _) => { if (move.HasAnimatedProperties) return; Place(false); };
-        return new Border { Child = host, Background = UI.Brush(Inset), CornerRadius = new CornerRadius(7), Padding = new Thickness(3), Margin = new Thickness(0, 4, 0, 4) };
+        content.Width = double.NaN;
+        return new Border { Child = content, HorizontalAlignment = HorizontalAlignment.Right };
     }
 
     private (Slider Slider, Border Number) NumericControls(string title, double value, double min, double max, double tick, string unit, Action<double> changed)

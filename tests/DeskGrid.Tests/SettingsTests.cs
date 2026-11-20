@@ -449,7 +449,7 @@ public sealed class SettingsWindowTests : IDisposable
             EnsureApplication();
             var window = new SettingsWindow(new AppConfig { RootPath = _root.Path });
             string Glyph(System.Windows.Controls.ListBoxItem item) =>
-                ((System.Windows.Controls.TextBlock)((System.Windows.Controls.StackPanel)item.Content).Children[0]).Text;
+                ((System.Windows.Controls.TextBlock)((System.Windows.Controls.Panel)item.Content).Children[0]).Text;
             return (Glyph(window.PageIslandItem), Glyph(window.PageAboutItem));
         });
 

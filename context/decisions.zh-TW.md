@@ -913,3 +913,12 @@
 **替代方案**：把 BrimDeck 整個視窗連同它自己的清單嵌進 NotiLand 一頁（改動最小，但是兩層頁面清單；當作建議選項提出，沒被選）；只併常用的頁（不採用：擁有者要全部）。
 **後果**：BrimDeck 的程式碼改得更多（列在 `third_party/BrimDeck/DESKGRID.md`），包括擋住 DeskGrid 視窗的 Fluent 主題滲入 BrimDeck 控制項範本的處理；BrimDeck 的設定仍存在 `%LOCALAPPDATA%\BrimDeck`，不在 DeskGrid 的備份中；NotiLand 的頁面只在它執行時存在。每一頁都從真實視窗畫出（深色、zh-TW）；淺色主題與手動操作頁面未驗證。462 個測試通過。
 **作者**：Claude（Sonnet 5.5），依擁有者要求
+
+---
+
+### 2026-11-20（二）— NotiLand 設定頁改用 DeskGrid 自己的外觀；清單可摺疊
+**決定**：設定頁拿掉 BrimDeck 的樣式：在 `SettingsPages` 內，BrimDeck 的樣式名稱改成對應 Fluent 樣式（`SettingsNative.cs`），一組組的列是 DeskGrid 卡片，沒有頁面標題，色盤是 Fluent 的灰階加系統強調色，BrimDeck 的隱含樣式（`DeckResources`）不再合併進頁面。範圍由擁有者選：只有設定頁，不含島本身的面板。清單中的 `NotiLand` 項目有摺疊箭頭（也可按左／右方向鍵）把它的 17 頁收起；清單的捲軸不再蓋住選取的項目。
+**原因**：擁有者回報捲軸與選取色重疊，要求所有 UI 以原本的 DeskGrid 為主、把 Brim 風格刪掉，並要設定清單可以開合。問過範圍與「開合」的意思後，他選了「設定頁用 DeskGrid 原生樣式」和「NotiLand 子頁可摺疊」。
+**替代方案**：連島的面板也換（數千行繪製程式碼，會破壞 BrimDeck 的版面；沒選）；整個左欄可收合（沒選）；把每個 Brim 樣式換成空樣式（處理 Fluent 滲入時先試過：它連 Fluent 也一起移除，因為樣式會取代主題樣式，所以 Fluent 要當基底）。
+**後果**：BrimDeck 畫、沒有對應一般控制項的少數部分（附示意圖的選擇卡、標籤、步進器、數字框、價格表）保留自己的範本，改用中性色盤；島本身仍是 BrimDeck 的外觀。已在真實桌面用真實點擊試過（系統匣選單、各頁、摺疊箭頭、切換語言再切回、NotiLand 關閉再開啟、島的齒輪）；淺色主題沒看過。463 個測試通過。
+**作者**：Claude（Sonnet 5.5），依擁有者要求

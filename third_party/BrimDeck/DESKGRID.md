@@ -25,8 +25,13 @@ The code is BrimDeck's own. Only what the integration needs was changed:
   caption, title), calls `ShowPage` / `Leave` / `HostDeactivated` / `Refresh` and gives it back with `Release`; `App.CreateSettingsPages()`
   makes it, and `App.SettingsRequested` (the gear, the tray menu, a hotkey, a link on a page) asks the host to show it. Dialogs a page opens
   are owned by the host's window (`DialogOwner`). The pages follow the system's light or dark theme, not the Theme setting (`HostIsDark`).
-  The host's window may be Fluent-themed, whose styles would reach the controls inside BrimDeck's templates: `KeepHostThemeOut` gives the
-  types BrimDeck's resources do not style an empty implicit style. Removed because DeskGrid has them: the About page (version, update
+  The pages are drawn like DeskGrid's own (`SettingsNative.cs`): inside `SettingsPages`, BrimDeck's style names (`SettingsButton`,
+  `SettingsToggle`, `SettingsCombo`, `SettingsField`, `SettingsSlider`, `SettingsSegment` ...) stand for the Fluent styles of the system's
+  theme (`FindResource` is hidden by one that answers them from `PresentationFramework.Fluent`), a group of rows is a DeskGrid card,
+  there is no page heading, `SettingsPalette` is Fluent's greys with the system accent, and `DeckResources` (BrimDeck's implicit styles
+  for Button, TextBox, ScrollBar, ToolTip ...) is no longer merged into the pages. What BrimDeck drew itself with no ordinary control
+  (choice cards with a sketch, chips, steppers, clock tiles, the number box, the price table) keeps its template, in that palette.
+  Removed because DeskGrid has them: the About page (version, update
   check, links; `SettingsUpdates.cs` and `SettingsReleaseNotes.cs` deleted), the Start with Windows switch, the Exit row and the language
   choice (`App.StartHosted(english)` and `App.FollowLanguage` take DeskGrid's language). The caption, the brand and the window's size and
   position settings (`SettingsWindowWidth` ...) are no longer used.

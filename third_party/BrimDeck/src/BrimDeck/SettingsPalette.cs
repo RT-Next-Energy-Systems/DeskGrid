@@ -8,58 +8,55 @@ namespace BrimDeck;
 // Settings own their palette; the floating usage panel deliberately keeps its existing visual design.
 internal sealed record SettingsPalette(bool Dark)
 {
-    public string Surface => Dark ? "#141416" : "#FCFCFD";
-    public string Sidebar => Dark ? "#0D0D0F" : "#F3F3F5";
-    public string Primary => Dark ? "#F1F1F4" : "#202027";
-    public string Secondary => Dark ? "#A5A5AF" : "#62626F";
-    // At least 4.5:1 on the surface and on inset fields, where units and hints in this color sit.
-    public string Tertiary => Dark ? "#8E8E9A" : "#6B6B78";
-    public string Divider => Dark ? "#2D2D33" : "#E0E0E6";
-    public string RowDivider => Dark ? "#242429" : "#EDEDF1";
-    public string Inset => Dark ? "#25252B" : "#EFF0F4";
-    public string Input => Dark ? "#202026" : "#FFFFFF";
-    public string Popup => Dark ? "#222227" : "#FCFCFD";
-    public string Border => Dark ? "#42424B" : "#CED1DA";
-    // The edge of what takes input (text and number fields, drop-downs, a switch's off track): at least 3:1 against the surface,
-    // the inset and the input fill (WCAG 1.4.11, SW-07). Frames and dividers keep the lighter Border.
-    public string InputBorder => Dark ? "#6F6F79" : "#848997";
-    public string Accent => Dark ? "#88B0EE" : "#347BDF";
-    // Text that says something failed or is unavailable.
-    public string Negative => Dark ? "#F0A6AA" : "#B12E3A";
-    // A status dot for something set up and working: at least 3:1 against the surface (WCAG 1.4.11).
-    public string Positive => Dark ? "#5DC98C" : "#2F9E5E";
-    // A link inside running text: at least 4.5:1 against the surface, so it reads as text and stands apart from it.
-    public string Link => Dark ? "#88B0EE" : "#2374DE";
+    // DeskGrid build: the settings pages are drawn in the colours of DeskGrid's own settings window (Fluent's greys and the
+    // system's accent colour), not BrimDeck's.
+    public string Surface => Dark ? "#202020" : "#F3F3F3";
+    public string Sidebar => Dark ? "#1A1A1A" : "#EBEBEB";
+    public string Primary => Dark ? "#FFFFFF" : "#1A1A1A";
+    public string Secondary => Dark ? "#C5C5C5" : "#5C5C5C";
+    public string Tertiary => Dark ? "#A0A0A0" : "#6B6B6B";
+    public string Divider => Dark ? "#3A3A3A" : "#DADADA";
+    public string RowDivider => Dark ? "#333333" : "#E3E3E3";
+    public string Inset => Dark ? "#2D2D2D" : "#EBEBEB";
+    public string Input => Dark ? "#2D2D2D" : "#FDFDFD";
+    public string Popup => Dark ? "#2C2C2C" : "#F9F9F9";
+    public string Border => Dark ? "#454545" : "#D0D0D0";
+    public string InputBorder => Dark ? "#8A8A8A" : "#7A7A7A";
+    // The system's accent colour.
+    public string Accent => SystemAccent;
+    public string Negative => Dark ? "#FF99A4" : "#C42B1C";
+    public string Positive => Dark ? "#6CCB5F" : "#0F7B0F";
+    public string Link => SystemAccent;
+    private static string SystemAccent
+    {
+        get { var c = SystemColors.AccentColor; return $"#{c.A:X2}{c.R:X2}{c.G:X2}{c.B:X2}"; }
+    }
     public void Apply(ResourceDictionary resources)
     {
         void Brush(string key, string color) => resources[key] = UI.Brush(color);
         Brush("SettingsTextPrimary", Primary); Brush("SettingsTextSecondary", Secondary);
-        Brush("SettingsFillHover", Dark ? "#25252B" : "#E8E9EF");
-        Brush("SettingsFillPressed", Dark ? "#363640" : "#DDDFE8");
-        Brush("SettingsFillSelected", Dark ? "#41414A" : "#FFFFFF");
-        Brush("SettingsNavSelected", Dark ? "#27272D" : "#FFFFFF");
-        Brush("SettingsAccent", Dark ? "#348AEB" : "#2374DE");
+        Brush("SettingsFillHover", Dark ? "#2F2F2F" : "#E6E6E6");
+        Brush("SettingsFillPressed", Dark ? "#3A3A3A" : "#DADADA");
+        Brush("SettingsFillSelected", Dark ? "#3F3F3F" : "#FFFFFF");
+        Brush("SettingsNavSelected", Dark ? "#2D2D2D" : "#FFFFFF");
+        Brush("SettingsAccent", SystemAccent);
         // The fill of buttons with white text on the accent: at least 4.5:1 for that text, at rest and under the pointer, in both
         // modes (the dark mode's own accent is too light for it).
-        Brush("SettingsAccentFill", "#2374DE");
+        Brush("SettingsAccentFill", SystemAccent);
         // A small label that is on (a category kept): the accent's text on a pale wash of it.
-        Brush("SettingsAccentText", Accent); Brush("SettingsAccentTint", Dark ? "#24324A" : "#E4EEFC");
+        Brush("SettingsAccentText", Accent); Brush("SettingsAccentTint", Dark ? "#2A3A3C" : "#DCEEF0");
         // A deeper wash, for a part inside something already on the pale wash (the monitor sketch's memory and rates).
-        Brush("SettingsAccentTintStrong", Dark ? "#2F4A75" : "#C8DCFA");
-        Brush("SettingsAccentHover", "#1964C7");
-        Brush("SettingsSliderAccent", Accent); Brush("SettingsTrackBrush", Dark ? "#42424A" : "#D3D6DF");
+        Brush("SettingsAccentTintStrong", Dark ? "#35585C" : "#BFDDE1");
+        Brush("SettingsAccentHover", SystemAccent);
+        Brush("SettingsSliderAccent", Accent); Brush("SettingsTrackBrush", Dark ? "#4A4A4A" : "#D0D0D0");
         Brush("SettingsBorder", Border); Brush("SettingsInput", Input); Brush("SettingsPopup", Popup);
-        Brush("SettingsSwatchBorder", Dark ? "#65656F" : "#B0B3BE");
-        Brush("SettingsScrollThumb", Dark ? "#62626D" : "#C4C7D0");
-        Brush("SettingsScrollThumbHover", Dark ? "#858591" : "#A4A9B5");
-        Brush("SettingsScrollThumbPressed", Dark ? "#A5A5AF" : "#8C929F");
-        resources[SystemParameters.VerticalScrollBarWidthKey] = 12d;
-        // WPF Track uses half this metric for its minimum thumb length. Setting
-        // Thumb.MinHeight alone makes the thumb draw outside Track's allotted slot.
-        resources[SystemParameters.VerticalScrollBarButtonHeightKey] = 56d;
+        Brush("SettingsSwatchBorder", Dark ? "#6A6A6A" : "#B0B0B0");
+        Brush("SettingsScrollThumb", Dark ? "#6A6A6A" : "#B8B8B8");
+        Brush("SettingsScrollThumbHover", Dark ? "#8A8A8A" : "#989898");
+        Brush("SettingsScrollThumbPressed", Dark ? "#A5A5A5" : "#7A7A7A");
         Brush("SettingsInset", Inset); Brush("SettingsSurface", Surface);
         Brush("SettingsSwitchOff", InputBorder); Brush("SettingsInputBorder", InputBorder);
-        Brush("SettingsError", Dark ? "#F0A6AA" : "#B12E3A");
+        Brush("SettingsError", Negative);
     }
     public static bool IsDark(SettingsTheme theme)
     {

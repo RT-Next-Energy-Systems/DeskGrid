@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 using System.Windows.Media;
 using DeskGrid.Config;
 using DeskGrid.Folders;
@@ -55,6 +56,7 @@ internal partial class SettingsWindow : Window
     private NotiLandHost? _host;
     private NotiLandSettings? _noti; // NotiLand's pages while it runs.
     private readonly List<ListBoxItem> _notiItems = []; // Their entries in the list on the left (captions too).
+    private bool _notiExpanded = true; // NotiLand's pages are shown below it (else folded away).
     private int _lastIndex; // The entry that was chosen before, to step over a caption in the direction of travel.
 
     public SettingsWindow(AppConfig config)
@@ -229,12 +231,50 @@ internal partial class SettingsWindow : Window
     /// <summary>Chooses one of NotiLand's pages (a request from NotiLand itself): the one numbered, or the first.</summary>
     internal void ShowNotiLandPage(int number)
     {
+        SetNotiLandExpanded(true);
         var target = _notiItems.FirstOrDefault(item => item.Tag is NotiLandPage page && page.Number == number)
             ?? _notiItems.FirstOrDefault(item => item.Tag is NotiLandPage);
         if (target is not null)
         {
             Pages.SelectedItem = target;
         }
+    }
+
+    /// <summary>Whether NotiLand's pages are shown below it in the list.</summary>
+    internal bool NotiLandExpanded => _notiExpanded;
+
+    /// <summary>Shows NotiLand's pages below it in the list, or folds them away (the chosen one, if among them, gives way to NotiLand itself).</summary>
+    internal void SetNotiLandExpanded(bool expanded)
+    {
+        _notiExpanded = expanded;
+        NotiLandChevron.Text = expanded ? "" : "";
+        foreach (var item in _notiItems)
+        {
+            item.Visibility = expanded ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        if (!expanded && Pages.SelectedItem is ListBoxItem { Tag: NotiLandPage })
+        {
+            Pages.SelectedItem = PageIslandItem;
+        }
+    }
+
+    private void OnNotiLandChevron(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+        SetNotiLandExpanded(!_notiExpanded);
+    }
+
+    // Left folds NotiLand's pages away and Right shows them again, on the NotiLand entry.
+    private void OnPagesKeyDown(object sender, KeyEventArgs e)
+    {
+        if (Pages.SelectedItem != PageIslandItem || _noti is null || e.Key is not (System.Windows.Input.Key.Left or System.Windows.Input.Key.Right))
+        {
+            return;
+        }
+
+        e.Handled = true;
+        SetNotiLandExpanded(e.Key == System.Windows.Input.Key.Right);
     }
 
     // The entries for NotiLand's pages, each group of them under a caption, between "NotiLand" and "About".
@@ -246,6 +286,7 @@ internal partial class SettingsWindow : Window
         }
 
         _notiItems.Clear();
+        NotiLandChevron.Visibility = _noti is null ? Visibility.Collapsed : Visibility.Visible;
         if (_noti is null)
         {
             return;
@@ -276,6 +317,7 @@ internal partial class SettingsWindow : Window
 
         void Insert(ListBoxItem item)
         {
+            item.Visibility = _notiExpanded ? Visibility.Visible : Visibility.Collapsed;
             Pages.Items.Insert(at++, item);
             _notiItems.Add(item);
         }

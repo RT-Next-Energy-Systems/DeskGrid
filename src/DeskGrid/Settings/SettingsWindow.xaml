@@ -21,8 +21,9 @@
       </StackPanel>
     </StackPanel>
 
-    <ListBox x:Name="Pages" DockPanel.Dock="Left" Width="190" Margin="0,0,16,0" BorderThickness="0" Background="Transparent"
-             SelectionChanged="OnPageChanged">
+    <!-- The right padding keeps the scroll bar of a long list off the selected entry. -->
+    <ListBox x:Name="Pages" DockPanel.Dock="Left" Width="200" Margin="0,0,12,0" Padding="0,0,12,0" BorderThickness="0" Background="Transparent"
+             SelectionChanged="OnPageChanged" PreviewKeyDown="OnPagesKeyDown">
       <ListBoxItem x:Name="PageGeneralItem" Padding="10,9">
         <StackPanel Orientation="Horizontal">
           <TextBlock Width="26" FontFamily="Segoe MDL2 Assets" Text="&#xE713;" VerticalAlignment="Center" />
@@ -42,10 +43,19 @@
         </StackPanel>
       </ListBoxItem>
       <ListBoxItem x:Name="PageIslandItem" Padding="10,9">
-        <StackPanel Orientation="Horizontal">
-          <TextBlock Width="26" FontFamily="Segoe MDL2 Assets" Text="&#xEA8F;" VerticalAlignment="Center" />
-          <TextBlock x:Name="PageIslandText" VerticalAlignment="Center" />
-        </StackPanel>
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="26" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xEA8F;" VerticalAlignment="Center" />
+          <TextBlock x:Name="PageIslandText" Grid.Column="1" VerticalAlignment="Center" />
+          <!-- Folds NotiLand's pages away and back; shown while NotiLand runs and has pages. -->
+          <TextBlock x:Name="NotiLandChevron" Grid.Column="2" FontFamily="Segoe MDL2 Assets" FontSize="10" Text="&#xE70D;"
+                     VerticalAlignment="Center" Padding="8,6" Background="Transparent" Visibility="Collapsed"
+                     MouseLeftButtonDown="OnNotiLandChevron" />
+        </Grid>
       </ListBoxItem>
       <ListBoxItem x:Name="PageAboutItem" Padding="10,9">
         <StackPanel Orientation="Horizontal">

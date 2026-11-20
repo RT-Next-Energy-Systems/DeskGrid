@@ -121,4 +121,34 @@ public sealed class NotiLandTests : IDisposable
         Assert.Equal(Visibility.Collapsed, afterStop.Item3);
         Assert.Null(afterStop.Item4);
     }
+
+    // The pages below NotiLand fold away and back; the chosen one gives way to NotiLand itself, and a request from NotiLand unfolds them.
+    [Fact]
+    public async Task NotiLandPages_FoldAway_AndBack()
+    {
+        var result = await _ui.InvokeAsync(() =>
+        {
+            TestApplication.Ensure();
+            var host = new DeskGrid.NotiLand.NotiLandHost();
+            host.Apply(true);
+            var window = new SettingsWindow(new AppConfig { RootPath = Path.GetTempPath(), NotiLandEnabled = true }) { NotiLand = host };
+            window.Show();
+            IEnumerable<ListBoxItem> Entries() => window.Pages.Items.OfType<ListBoxItem>().Where(item => item.Tag is not null);
+            var shownAtStart = Entries().All(item => item.Visibility == Visibility.Visible) && window.NotiLandChevron.Visibility == Visibility.Visible;
+
+            window.Pages.SelectedItem = Entries().First(item => item.Tag is DeskGrid.NotiLand.NotiLandPage);
+            window.SetNotiLandExpanded(false);
+            var folded = (Entries().All(item => item.Visibility == Visibility.Collapsed), window.CurrentPage, window.Pages.SelectedItem == window.PageIslandItem, window.NotiLandExpanded);
+
+            window.ShowNotiLandPage(3);
+            var unfolded = (Entries().All(item => item.Visibility == Visibility.Visible), window.NotiLandExpanded, window.PageNotiLand.Visibility);
+            window.CloseDiscarding();
+            host.Dispose();
+            return (shownAtStart, folded, unfolded);
+        });
+
+        Assert.True(result.shownAtStart);
+        Assert.Equal((true, SettingsWindow.Page.Island, true, false), result.folded);
+        Assert.Equal((true, true, Visibility.Visible), result.unfolded);
+    }
 }
