@@ -63,6 +63,10 @@
   <ItemGroup>
     <!-- The release passes -p:Version for DeskGrid; BrimDeck keeps its own version (from its release notes). -->
     <ProjectReference Include="../../third_party/BrimDeck/src/BrimDeck/BrimDeck.csproj" GlobalPropertiesToRemove="Version" />
+    <!-- Also BrimDeck.Core, which BrimDeck uses: left to the transitive reference it would be built a second time with the release's Version
+         (0.9.0.0) next to BrimDeck's own build (1.0.0.0, what BrimDeck was compiled against), and the exe would not start: "File not
+         found: BrimDeck.Core, Version=1.0.0.0". -->
+    <ProjectReference Include="../../third_party/BrimDeck/src/BrimDeck.Core/BrimDeck.Core.csproj" GlobalPropertiesToRemove="Version" />
   </ItemGroup>
 
 </Project>

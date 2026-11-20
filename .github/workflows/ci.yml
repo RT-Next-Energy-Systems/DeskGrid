@@ -25,7 +25,16 @@ jobs:
         run: dotnet test DeskGrid.slnx -c Release --no-build
 
       - name: Publish single exe
-        run: dotnet publish src/DeskGrid/DeskGrid.csproj -p:PublishProfile=win-x64
+        # With a -p:Version, as a release has: that is what once left BrimDeck.Core out of step with BrimDeck (the exe did not start).
+        run: dotnet publish src/DeskGrid/DeskGrid.csproj -p:PublishProfile=win-x64 -p:Version=0.0.1
+
+      - name: Smoke test (the published exe starts and stays up)
+        shell: pwsh
+        run: |
+          $p = Start-Process artifacts/publish/DeskGrid.exe -PassThru
+          Start-Sleep -Seconds 15
+          if ($p.HasExited) { throw "The published exe exited with code $($p.ExitCode)" }
+          Stop-Process -Id $p.Id -Force
 
       - uses: actions/upload-artifact@v7
         with:

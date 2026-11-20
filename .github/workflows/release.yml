@@ -30,6 +30,14 @@ jobs:
           Move-Item artifacts/publish/DeskGrid.exe $asset
           "ASSET=$asset" >> $env:GITHUB_ENV
 
+      - name: Smoke test (the published exe starts and stays up)
+        shell: pwsh
+        run: |
+          $p = Start-Process $env:ASSET -PassThru
+          Start-Sleep -Seconds 15
+          if ($p.HasExited) { throw "The published exe exited with code $($p.ExitCode)" }
+          Stop-Process -Id $p.Id -Force
+
       - name: Create release
         shell: pwsh
         env:
