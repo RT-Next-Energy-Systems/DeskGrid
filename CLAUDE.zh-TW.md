@@ -101,7 +101,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 ## Widgets 實作要點（階段 4）
 
 - **外觀**（使用者選定）：48 DIP 淺色半透明圓角方塊（白 30%、圓角 22.37%）內放預覽，下方名稱用系統圖示字型、白字陰影、最多 2 行；滑鼠移上時整格淡白高亮（像原生圖示）。**與旁邊的桌面圖示對齊**（2026-11-12，使用者回報 widget 與桌面圖示沒對齊）：方塊上方不留 padding、方塊與名稱之間不留空隙。實機量測（200%）：格子從 y=2 起，桌面圖示的圖片在 5..91 px、名稱緊接其下；原本方塊低 8 px、名稱低 16 px，widget 比旁邊的圖示低約 12 px；現在方塊中心與圖示相差約 2 px、名稱約 7 px。改完後已在實機桌面截圖看過（與「本機」圖示並排）。
-- **圖塊跟隨桌面圖示**（2026-11-20，使用者：資料夾在筆電上完美，在桌機上卻不對；桌機的桌面圖示大小是 46、格子 100% 縮放下 76×99 px，筆電則是 200% 縮放）：圖塊以前是格子頂端固定 48 DIP 的方塊。現在由 `DesktopIconGrid.ImageWidth` / `ImageTop`（從清單檢視讀到的第一個圖示的圖片）決定大小與位置（`WidgetBoard.ApplyCellSize` 中的 `FolderWidget.SetTile`；圖片超出 16–160 DIP 或讀不到就維持標準的 48）。桌機本身已檢查過（兩個螢幕，1920×1080 與 2560×1440；圖示大小 46），但桌面被開啟的視窗蓋住看不到，所以這個修正依據的是量測，**沒在桌面上看過**。
+- **圖塊跟隨桌面圖示**（2026-11-20，使用者：資料夾在筆電上完美，在桌機上卻不對；桌機的桌面圖示大小是 46、格子 100% 縮放下 76×99 px，筆電則是 200% 縮放）：圖塊以前是格子頂端固定 48 DIP 的方塊。現在由 圖塊現在和 Explorer 的圖示大小設定一樣大（`DesktopIconSize`，登錄 `Shell\Bags\Desktop\IconSize`，這裡是 46，單位 DIP；不用清單檢視回報的圖片矩形，它和格子一樣寬、比圖片高 4 px：用它的寬度會讓圖塊變成 75 px，是看真實桌面才發現的），並像圖示圖片一樣在該矩形內垂直置中（`WidgetBoard.TileFor`、`FolderWidget.SetTile`；沒有設定就維持標準 48）。**已在真實的桌機桌面上看過**（以 explorer.exe 啟動新版、用 `Shell.Application.MinimizeAll` 最小化視窗後截圖）：圖塊現在和原生圖示圖片一樣大。
 - **格子**：一格 = 桌面原生圖示格（`DesktopIconGrid` 對 Explorer 的 `SysListView32` 送 `LVM_GETITEMSPACING` / `LVM_GETITEMPOSITION`，位置要跨行程讀取，所以用 `VirtualAllocEx` + `ReadProcessMemory`）；widget 一格就是一個原生圖示格大小（不取整數倍，否則高 DPI 下 76×96 DIP 會比 150×182 px 的圖示格大一點而變兩倍大）。格線以第一個原生圖示的格為錨點，所以與桌面圖示對齊；每欄由上往下填、從右往左。讀不到時退回舊行為（工作區右上角起算、76×96 DIP）。每個 widget 都在格子上，且一格一個。
 - **避開原生圖示**：與原生圖示格重疊超過 1/4 的格不使用（`WidgetGrid` 的 obstacles / `Covers`），除非已無其他格。擺放 / 放開拖曳 widget 時由 widget 避開。挑選順序（`WidgetGrid.Candidates`，2026-11-06 修正）：沒有 widget 也沒有圖示的格 → 沒有 widget 的格（圖示底下）→ 任何格；只要還有沒有 widget 的格，就不會和別的 widget 共用一格。
 - **圖示讓開**（使用者選定，2026-10-28）：之後若有原生圖示落到 widget 格上（Explorer 把新捷徑放進它以為的空格、使用者把圖示拖過去），`WidgetBoard.ClearIconsOffWidgets` 把該圖示移到最近的空格（`LVM_SETITEMPOSITION`，座標放在 lParam，不必寫入 Explorer 記憶體）。桌面開了「自動排列圖示」（list view 有 `LVS_AUTOARRANGE`）時圖示移不動，改由 widget 讓開。
@@ -226,7 +226,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 - **為什麼是獨立程式**：BrimDeck 的 `App` 是 WPF `Application`（它的設定、語言、系統匣圖示、快速鍵、設定檔組合、兩千多個類別都依賴它），一個程序只能有一個 `Application`；放進 DeskGrid 同一程序就得重寫它（使用者在「伴隨程式」與此之間選了伴隨程式，2026-11-20）。
 - **拿掉的部分**（使用者選了「移植核心、排除高風險」）：酷狗與網易雲音樂的完整控制修補（`LibcefPatch`、`KugouPatch`、`NeteasePatch`、`LibcefFile`、`KugouInstall`、`NeteaseInstall`：會改別的程式的 `libcef.dll`）和增強感測器服務（`SensorSetup`、`SensorClient`、`BrimDeck.Sensors`：系統管理員服務加核心驅動程式）。`Native/DisabledFeatures.cs` 保留它們的簽章並回答「不可用」；感測器設定頁不在頁面清單中。**保留**（並在 README「隱私」揭露）：BrimDeck 會讀其他 AI 工具存在這台電腦上的登入資訊來查額度（包含用 Chromium 金鑰讀 Claude 桌面版的），DeskGrid 本身永遠不會這樣做。
 - **BrimDeck 內的修改**（`App.DeskGrid.cs`，加上 `App.xaml.cs`、`StartupRegistration.cs`、`SettingsWindow.cs`、`Program.cs` 的幾行）：以 `--deskgrid <pid>` 啟動時它跟隨那個程序（程序結束它也結束）、從不自己登錄開機啟動、從不自己檢查更新（這兩件事由 DeskGrid 做）；`--quit` 會觸發事件 `Local\BrimDeck.Quit.<使用者>`，執行中的那份乾淨離開。**已在真機驗證**（開發版）：帶著父程序啟動會執行、`--quit` 會結束它、父程序被終止時它也結束。
-- **建置**（`DeskGrid.csproj`）：一般建置也會建置 BrimDeck（`BuildNotiLand`，Release 或 Debug 同 DeskGrid）並複製到 DeskGrid.exe 旁的 `NotiLand\`；發行（`win-x64.pubxml` 的 `PublishNotiLand`）則先對 BrimDeck 跑 `dotnet publish`（自含、單一檔案、照 BrimDeck 原樣用 ReadyToRun，約 94 MB），再把那個 exe 以資源 `DeskGrid.NotiLand.exe` 內嵌；`NotiLandHost` 第一次使用時解到 `%LOCALAPPDATA%\DeskGrid\NotiLand\<雜湊>\BrimDeck.exe` 並移除舊版本。**發行版 exe 約 163 MB**（原本 65 MB）。已驗證：publish 能跑並產出 exe；**未驗證**：從發行版 exe 啟動 NotiLand（解開），也沒在畫面上看設定頁。
+- **建置**（`DeskGrid.csproj`）：一般建置也會建置 BrimDeck（`BuildNotiLand`，Release 或 Debug 同 DeskGrid）並複製到 DeskGrid.exe 旁的 `NotiLand\`；發行（`win-x64.pubxml` 的 `PublishNotiLand`）則先對 BrimDeck 跑 `dotnet publish`（自含、單一檔案、照 BrimDeck 原樣用 ReadyToRun，約 94 MB），再把那個 exe 以資源 `DeskGrid.NotiLand.exe` 內嵌；`NotiLandHost` 第一次使用時解到 `%LOCALAPPDATA%\DeskGrid\NotiLand\<雜湊>\BrimDeck.exe` 並移除舊版本。**發行版 exe 約 163 MB**（原本 65 MB）。已驗證：publish 能跑並產出 exe；發行版 exe 已解開並啟動 NotiLand（真機檢查過）；設定頁已用真實視窗繪出。
 - **設定**：只留 `islandEnabled`（屬性 `NotiLandEnabled`）；舊檔中其他 `island*` / `usage*` 鍵會被忽略。BrimDeck 的設定在 `%LOCALAPPDATA%\BrimDeck`，所以 DeskGrid 的匯出 / 備份不含它。
 - **沒做**：NotiLand 的 `--ctl` 指令（BrimDeck 沒有對應介面）、BrimDeck 自己的測試（沒複製）、讓 BrimDeck 保持最新（見 `DESKGRID.md`）。
 
@@ -271,7 +271,7 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 | 12 | 鍵盤快速鍵（系統層級，每個動作與每個資料夾都能自訂） | 完成 2026-11-08（建置 / 374 測試通過）；已在真實桌面按下快速鍵並使用快速鍵視窗（見「鍵盤快速鍵」）；與階段 11 一起定為 0.5.0（tag 由專案擁有者推） |
 | 13 | 桌面的東西改為搬進資料夾而不是建捷徑（資料夾可當項目）、設定預覽改在背景繪製、介面文字縮短 | 完成 2026-11-10（建置 / 446 測試通過）；從桌面拖入已在真實桌面以注入的滑鼠輸入實際操作；預覽修正與新文字尚未在真實桌面上看過 |
 | 14 | 提示島第一步：頂端正中央的膠囊顯示用 `--ctl island` 送來的訊息，全螢幕程式執行時隱藏，預設關閉 | 完成 2026-11-10（建置 / 471 測試通過）；已在真實桌面顯示並以截圖檢查；游標在上面時的展開狀態沒試過（要用滑鼠）；BrimDeck 的其他功能是計畫中的後續步驟，尚未開始 **已被階段 15 取代：提示島程式碼換成了 BrimDeck。** |
-| 15 | NotiLand 換成 BrimDeck（伴隨程式，排除高風險功能）；資料夾圖塊的大小與位置改為跟桌面圖示一致 | 2026-11-20 完成（建置 / 457 項測試通過）；開發版的啟動 / `--quit` / 跟隨父程序已在真機試過；發行版 exe 啟動 NotiLand：未試；圖塊修正沒能在使用者的桌機桌面上看到 |
+| 15 | NotiLand 換成 BrimDeck（伴隨程式，排除高風險功能）；資料夾圖塊的大小與位置改為跟桌面圖示一致 | 2026-11-20 完成（建置 / 457 項測試通過）；開發版的啟動 / `--quit` / 跟隨父程序已在真機試過；發行版 exe 已解開並啟動 NotiLand、NotiLand 設定頁已繪出、圖塊已在桌機桌面上看過 |
 
 # 工作方式
 

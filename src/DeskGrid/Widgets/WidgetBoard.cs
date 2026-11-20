@@ -454,7 +454,21 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
         var monitor = MonitorArea.At(surface.Position);
         var (width, height) = CellSize(monitor);
         view.SetCellSize(monitor.ToDips(width), monitor.ToDips(height));
-        view.SetTile(_nativeIcons?.ImageWidth is { } image ? monitor.ToDips(image) : null, monitor.ToDips(_nativeIcons?.ImageTop ?? 0));
+        view.SetTile(TileFor(monitor));
+    }
+
+    // The tile is as big as the desktop's icon pictures (its size setting) and sits where they do: centred in the rectangle the
+    // list view reports for the picture. Without icons to measure it keeps the standard size and place.
+    private (double? Size, double Top) TileFor(MonitorArea monitor)
+    {
+        if (_nativeIcons is not { ImageHeight: { } rectangle } icons || DesktopIconSize.Read() is not { } size)
+        {
+            return (null, 0);
+        }
+
+        var sizePixels = monitor.ToPixels(size);
+        var topPixels = icons.ImageTop + Math.Max(0, (rectangle - sizePixels) / 2.0);
+        return (size, monitor.ToDips((int)Math.Round(topPixels)));
     }
 
     private HashSet<ScreenPoint> TakenCells(DesktopSurface? except) =>

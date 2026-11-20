@@ -148,6 +148,8 @@ internal partial class FolderWidget : UserControl
     /// computers (icon size setting, scaling), so the tile follows them instead of keeping one fixed size. A picture
     /// that is not known (<see langword="null"/>) leaves the tile at its standard size.
     /// </summary>
+    public void SetTile((double? Size, double Top) tile) => SetTile(tile.Size, tile.Top);
+
     public void SetTile(double? size, double top)
     {
         var side = size is { } s && s >= MinTile && s <= MaxTile ? s : StandardTile;
