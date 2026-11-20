@@ -25,7 +25,7 @@ internal sealed class PowerProvider(PdhQuery? pdh, Action stuck) : IDisposable
     private const double Awake = 8, Busy = .03;
     // Ticks without any source before the machine is taken for one without (a battery machine keeps trying: unplugged it has one).
     private const int GiveUpAfter = 5;
-    private readonly GuardedDevice _device = new(GuardedReading.PowerMeter, SensorGuard.Board, Loc.T("功率计", "Power meter"));
+    private readonly GuardedDevice _device = new(GuardedReading.PowerMeter, SensorGuard.Board, Loc.T("功率計", "Power meter"));
     private bool _added, _available, _stopped;
     private int _empty;
     private bool _everFound;
@@ -109,7 +109,7 @@ internal sealed class PowerProvider(PdhQuery? pdh, Action stuck) : IDisposable
             if (gpu.EngineUsage >= Busy) _busyAt[key] = now;
             if (!_busyAt.TryGetValue(key, out var last) || now - last > Awake)
             {
-                read.Add(new GpuPowerInput(name, Reading<double>.Unavailable(Loc.T("空闲", "idle"))));
+                read.Add(new GpuPowerInput(name, Reading<double>.Unavailable(Loc.T("空閒", "idle"))));
                 continue;
             }
             if (_smi is not null && PowerResolver.RestartDue(_smi.Ended, now, _smiStartedAt)) { _smi.Dispose(); _smi = null; }
@@ -143,7 +143,7 @@ internal sealed class NvidiaSmi : IDisposable
     {
         string? path = new[] { Environment.SystemDirectory, Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "NVIDIA Corporation", "NVSMI") }
             .Select(folder => Path.Combine(folder, "nvidia-smi.exe")).FirstOrDefault(File.Exists);
-        if (path is null) { _failure = Loc.T("无 NVIDIA 驱动工具", "no NVIDIA driver tool"); return; }
+        if (path is null) { _failure = Loc.T("無 NVIDIA 驅動工具", "no NVIDIA driver tool"); return; }
         try
         {
             var start = new ProcessStartInfo(path, "--query-gpu=pci.bus_id,name,power.draw --format=csv,noheader,nounits -l 1")
@@ -151,7 +151,7 @@ internal sealed class NvidiaSmi : IDisposable
                 UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, StandardOutputEncoding = Encoding.UTF8, WorkingDirectory = Path.GetDirectoryName(path)!
             };
             _process = Process.Start(start);
-            if (_process is null) { _failure = Loc.T("无法启动", "did not start"); return; }
+            if (_process is null) { _failure = Loc.T("無法啟動", "did not start"); return; }
             _job = CreateJobObjectW(IntPtr.Zero, null);
             if (_job != IntPtr.Zero)
             {
@@ -171,7 +171,7 @@ internal sealed class NvidiaSmi : IDisposable
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
         {
-            MonitorLog.Note("nvidia power", ex); _failure = Loc.T("无法启动", "did not start");
+            MonitorLog.Note("nvidia power", ex); _failure = Loc.T("無法啟動", "did not start");
         }
     }
 
@@ -201,13 +201,13 @@ internal sealed class NvidiaSmi : IDisposable
     public Reading<double> Read(uint? bus, string adapter, int ordinal)
     {
         if (_failure is not null) return Reading<double>.Unavailable(_failure);
-        if (_process is { HasExited: true }) return Reading<double>.Unavailable(Loc.T("读取已停止", "stopped"));
+        if (_process is { HasExited: true }) return Reading<double>.Unavailable(Loc.T("讀取已停止", "stopped"));
         List<(uint? Bus, string Name, double? Watts)> ready; long at;
         lock (_lock) { ready = _ready; at = _readyAt; }
-        if (ready.Count == 0) return Reading<double>.Unavailable(Loc.T("启动中", "starting"));
-        if ((Stopwatch.GetTimestamp() - at) * 1000 / Stopwatch.Frequency > 4000) return Reading<double>.Unavailable(Loc.T("无新读数", "stale"));
+        if (ready.Count == 0) return Reading<double>.Unavailable(Loc.T("啟動中", "starting"));
+        if ((Stopwatch.GetTimestamp() - at) * 1000 / Stopwatch.Frequency > 4000) return Reading<double>.Unavailable(Loc.T("無新讀數", "stale"));
         if (bus is not null && ready.FindIndex(line => line.Bus == bus) is var on and >= 0)
-            return ready[on].Watts is { } watts && PowerResolver.Plausible(watts) ? watts : Reading<double>.Unavailable(Loc.T("无功率数据", "no power data"));
+            return ready[on].Watts is { } watts && PowerResolver.Plausible(watts) ? watts : Reading<double>.Unavailable(Loc.T("無功率資料", "no power data"));
         return PowerResolver.PickGpu(ready.ConvertAll(line => (line.Name, line.Watts)), adapter, ordinal);
     }
 

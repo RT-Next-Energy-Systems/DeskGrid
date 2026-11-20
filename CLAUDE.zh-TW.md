@@ -276,8 +276,6 @@ Windows 10 (22H2) / 11 桌面上的「手機式資料夾」：資料夾圖示顯
 # 工作方式
 
 - **在擁有者的電腦上執行最新版**（2026-11-20，擁有者要求）：每次修改程式、建置並通過測試後，執行 `powershell -ExecutionPolicy Bypass -File tools\run-latest.ps1`（關掉執行中的 DeskGrid、發行 `artifacts\publish\DeskGrid.exe`、啟動它）。擁有者電腦上 DeskGrid 就是從這個 exe 執行，「隨 Windows 啟動」也指向它（DeskGrid 自己更新這個項目）；下載來的 `DeskGrid-0.7.3-win-x64.exe` 不再使用。回答中要說明已重新啟動。版本號在正式發行前仍是 0.7.3。
-- **在擁有者的電腦上執行最新版**（2026-11-20，擁有者要求）：每次修改程式、建置並通過測試後，執行 `powershell -ExecutionPolicy Bypass -File tools
-un-latest.ps1`（關掉執行中的 DeskGrid、發行 `artifacts\publish\DeskGrid.exe`、啟動它）。擁有者電腦上 DeskGrid 就是從這個 exe 執行，「隨 Windows 啟動」也指向它（DeskGrid 自己更新這個項目）；下載來的 `DeskGrid-0.7.3-win-x64.exe` 不再使用。回答中要說明已重新啟動。版本號在正式發行前仍是 0.7.3。
 - 使用 Git，每階段完成 commit 一次，訊息用英文 conventional commits
 - 每階段結束告訴使用者：做了什麼、如何手動測試、已知問題
 - 不確定的設計決策先問使用者，不要自行假設

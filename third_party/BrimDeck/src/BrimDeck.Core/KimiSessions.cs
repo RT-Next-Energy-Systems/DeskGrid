@@ -40,7 +40,7 @@ public sealed class KimiSessions
     {
         var root = Folder(home);
         snapshot.UsageAvailable = Directory.Exists(root);
-        if (!snapshot.UsageAvailable) { _cache.Clear(); _merged = null; snapshot.UsageNote = Loc.T("未找到本机 Kimi Code 会话记录。", "No local Kimi Code session records were found."); return; }
+        if (!snapshot.UsageAvailable) { _cache.Clear(); _merged = null; snapshot.UsageNote = Loc.T("未找到本機 Kimi Code 會話記錄。", "No local Kimi Code session records were found."); return; }
         var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint };
         var files = Directory.EnumerateFiles(root, "wire.jsonl", options)
             .Where(file => Path.GetFileName(Path.GetDirectoryName(Path.GetDirectoryName(file))) is { } agents && agents.Equals("agents", StringComparison.OrdinalIgnoreCase));
@@ -79,9 +79,9 @@ public sealed class KimiSessions
         var merged = _merged.Value;
         snapshot.Entries = merged.Entries;
         snapshot.UsageComplete = errors == 0;
-        snapshot.UsageNote = Loc.T($"本机 Kimi Code {start.LocalDateTime:yyyy-MM-dd} 起 · {merged.Sessions} 个会话 · {snapshot.Entries.Count} 次模型请求",
+        snapshot.UsageNote = Loc.T($"本機 Kimi Code {start.LocalDateTime:yyyy-MM-dd} 起 · {merged.Sessions} 個會話 · {snapshot.Entries.Count} 次模型請求",
             $"Local Kimi Code since {start.LocalDateTime:yyyy-MM-dd} · " + Loc.Count(merged.Sessions, "session", "sessions") + " · " + Loc.Count(snapshot.Entries.Count, "model request", "model requests"));
-        if (errors > 0) snapshot.UsageNote += Loc.T($" · {errors} 处记录未能读取", " · " + Loc.Count(errors, "record", "records") + " could not be read");
+        if (errors > 0) snapshot.UsageNote += Loc.T($" · {errors} 處記錄未能讀取", " · " + Loc.Count(errors, "record", "records") + " could not be read");
     }
 
     // Reads the complete lines after the remembered offset (AppendedLines); a line over the limit that held a usage record

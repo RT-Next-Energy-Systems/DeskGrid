@@ -72,7 +72,7 @@ public static class BatteryModel
         double? percent = null;
         if (shareFull > 0 && (sharable || !inputs.WindowsPercent.HasValue)) percent = shareRemaining / shareFull * 100;
         else if (inputs.WindowsPercent is { } system && double.IsFinite(system)) percent = system;
-        if (percent is not { } share) return Reading<BatterySample>.Unavailable(Loc.T("电池无电量数据", "battery reports no charge"));
+        if (percent is not { } share) return Reading<BatterySample>.Unavailable(Loc.T("電池無電量資料", "battery reports no charge"));
         share = Math.Clamp(share, 0, 100);
 
         // What the batteries do. The reports' own statuses first; the sign of the rate when they say neither; mains alone
@@ -106,7 +106,7 @@ public static class BatteryModel
         };
     }
 
-    public static string NoBattery => Loc.T("无电池", "no battery");
+    public static string NoBattery => Loc.T("無電池", "no battery");
 
     private static bool Plausible(double mwh) => double.IsFinite(mwh) && mwh >= 0 && mwh < 1e9;
     private static TimeSpan? Bounded(TimeSpan time) => time > TimeSpan.Zero && time <= LongestTime ? time : null;
@@ -115,7 +115,7 @@ public static class BatteryModel
     public static Reading<double> Discharge(BatteryInputs inputs, Reading<BatterySample> battery)
         // On mains (a charger weaker than the load) the battery covers only the shortfall, which is not what the machine draws.
         => battery.TryGet(out var sample) && sample.State == BatteryState.Discharging && sample.HasRate && inputs.AcOnline != true ? sample.Watts : Reading<double>.Unavailable(
-            Loc.T("未使用电池供电", "not on battery"));
+            Loc.T("未使用電池供電", "not on battery"));
 
     // The charge at or under which the battery is low (critical), and elevated within ten points above it.
     public const int LowPercent = 15;

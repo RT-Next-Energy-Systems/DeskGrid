@@ -78,7 +78,7 @@ public static class Temperatures
 
     // An adapter's kind by its dedicated memory, as Task Manager tells them apart: integrated adapters have little or none of
     // their own. Shown before a temperature read from an adapter other than the one shown.
-    public static string AdapterKind(ulong dedicated) => dedicated >= 512UL << 20 ? Loc.T("独显", "dGPU") : Loc.T("核显", "iGPU");
+    public static string AdapterKind(ulong dedicated) => dedicated >= 512UL << 20 ? Loc.T("獨顯", "dGPU") : Loc.T("核顯", "iGPU");
 
     // Whole degrees: "47".
     public static string Format(double celsius) => ((int)Math.Round(celsius, MidpointRounding.AwayFromZero)).ToString(CultureInfo.InvariantCulture);

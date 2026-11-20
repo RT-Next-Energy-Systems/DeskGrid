@@ -13,20 +13,20 @@ public static class ProviderScripts
     public static string Example => Loc.IsEnglish ? ExampleEnglish : ExampleChinese;
 
     private const string ExampleChinese = """
-        // 定义 fetchUsage(ctx)，返回数组（必填，至少一项）。每项是一条配额，每页两条，点击翻页。
+        // 定義 fetchUsage(ctx)，返回陣列（必填，至少一項）。每項是一條配額，每頁兩條，點選翻頁。
         async function fetchUsage(ctx) {
-          // ctx.site：站点地址，字符串，未填写时为空。
-          // ctx.secrets.key：API 密钥，字符串，未填写时为空。
-          // ctx.language：界面语言，"zh-CN" 或 "en-US"。
-          // 读取接口：const res = await ctx.http.get(地址, { headers: { ... } }); res.json() 取内容。
+          // ctx.site：站點地址，字串，未填寫時為空。
+          // ctx.secrets.key：API 金鑰，字串，未填寫時為空。
+          // ctx.language：介面語言，"zh-CN" 或 "en-US"。
+          // 讀取介面：const res = await ctx.http.get(地址, { headers: { ... } }); res.json() 取內容。
           return [
             {
-              title: "5 小时",         // 字符串，必填。显示在左上方。
-              percent: 35,             // 数字，选填，0–100。决定进度条长度；达到 70 和 90 时分别使用提示色和告警色，并触发额度提醒。不填或为空时，进度条以主题色画满。
-              value: "$12.50",         // 字符串，选填。显示在 title 下方、进度条上方；不填或为空时不显示。
-              suffix: "已用",          // 字符串，选填。显示在 value 右侧的灰色小字。
-              note: "无上限",          // 字符串，选填。与 title 同一行，靠右显示。
-              resetAt: "2 时 13 分后"  // 字符串，选填。与 value 同一行，靠右显示，位于进度条上方。
+              title: "5 小時",         // 字串，必填。顯示在左上方。
+              percent: 35,             // 數字，選填，0–100。決定進度條長度；達到 70 和 90 時分別使用提示色和告警色，並觸發額度提醒。不填或為空時，進度條以主題色畫滿。
+              value: "$12.50",         // 字串，選填。顯示在 title 下方、進度條上方；不填或為空時不顯示。
+              suffix: "已用",          // 字串，選填。顯示在 value 右側的灰色小字。
+              note: "無上限",          // 字串，選填。與 title 同一行，靠右顯示。
+              resetAt: "2 時 13 分後"  // 字串，選填。與 value 同一行，靠右顯示，位於進度條上方。
             }
           ];
         }
@@ -67,10 +67,10 @@ public static class ProviderScripts
           if (res.status !== 200) throw new Error("HTTP " + res.status);
           const body = res.json();
           if (body.success === false || (body.code != null && ![0, 200, "0", "200"].includes(body.code)))
-            throw new Error(body.msg || t("套餐查询失败，请检查凭据或套餐权限。", "The plan query failed. Check the credentials or the plan's permissions."));
+            throw new Error(body.msg || t("套餐查詢失敗，請檢查憑據或套餐許可權。", "The plan query failed. Check the credentials or the plan's permissions."));
           const data = body.data || {};
           if (!Array.isArray(data.limits)) throw new Error(t("data.limits 缺失。", "data.limits is missing."));
-          if (data.limits.length === 0) throw new Error(t("接口没有返回套餐额度，团队套餐暂不支持。", "The API returned no plan quota. Team plans are not supported yet."));
+          if (data.limits.length === 0) throw new Error(t("介面沒有返回套餐額度，團隊套餐暫不支援。", "The API returned no plan quota. Team plans are not supported yet."));
           const level = typeof data.level === "string" ? data.level.trim() : "";
           const now = Date.parse(ctx.now);
           const metrics = [];
@@ -79,12 +79,12 @@ public static class ProviderScripts
             const reset = typeof limit.nextResetTime === "number" && limit.nextResetTime > 0 ? limit.nextResetTime : null;
             if (type === "TIME_LIMIT") {
               if (typeof limit.usage === "number" && limit.usage > 0)
-                metrics.push({ id: "tools", kind: "count", label: "工具调用", used: limit.currentValue || 0, total: limit.usage, unit: "次", resetAt: reset });
+                metrics.push({ id: "tools", kind: "count", label: "工具呼叫", used: limit.currentValue || 0, total: limit.usage, unit: "次", resetAt: reset });
               return;
             }
             if (type !== "TOKENS_LIMIT" && type !== "CREDIT_LIMIT") return;
-            let label = "套餐额度", window = null;
-            if (limit.unit === 3 && limit.number > 0) { label = limit.number + " 小时"; window = limit.number * 60; }
+            let label = "套餐額度", window = null;
+            if (limit.unit === 3 && limit.number > 0) { label = limit.number + " 小時"; window = limit.number * 60; }
             else if (limit.unit === 6) { label = "每周"; window = 10080; }
             // Credit plans report exact credits; older plans report only a rounded percentage.
             const credits = type === "CREDIT_LIMIT" && limit.usage > 0 && typeof limit.currentValue === "number";
@@ -92,10 +92,10 @@ public static class ProviderScripts
             // A reset beyond the window length is not a real reset time.
             const resetAt = reset && window && reset > now + window * 60000 ? null : reset;
             const metric = { id: [type, limit.unit, limit.number, i].join(":"), label, window, resetAt };
-            metrics.push(credits ? { ...metric, kind: "count", used: limit.currentValue, total: limit.usage, unit: "积分" }
+            metrics.push(credits ? { ...metric, kind: "count", used: limit.currentValue, total: limit.usage, unit: "積分" }
               : { ...metric, kind: "percent", percent: Math.max(0, Math.min(100, limit.percentage)) });
           });
-          if (metrics.length === 0) throw new Error(t("没有可识别的套餐额度。", "No recognizable plan quota was returned."));
+          if (metrics.length === 0) throw new Error(t("沒有可識別的套餐額度。", "No recognizable plan quota was returned."));
           return { plan: level && level[0].toUpperCase() + level.slice(1), scope: "plan", metrics };
         }
         """.Replace("HOST", host);
@@ -109,24 +109,24 @@ public static class ProviderScripts
           const res = await ctx.http.get("https://api.deepseek.com/user/balance", {
             headers: { Authorization: "Bearer " + ctx.secrets.key, Accept: "application/json" }
           });
-          if (res.status === 401) throw new Error(t("DeepSeek 拒绝了这个 API 密钥，请检查密钥是否正确或已被删除。", "DeepSeek rejected this API key. Check that it is correct and has not been deleted."));
+          if (res.status === 401) throw new Error(t("DeepSeek 拒絕了這個 API 金鑰，請檢查金鑰是否正確或已被刪除。", "DeepSeek rejected this API key. Check that it is correct and has not been deleted."));
           if (res.status !== 200) throw new Error("HTTP " + res.status);
           const body = res.json();
           if (!body || !Array.isArray(body.balance_infos)) throw new Error(t("balance_infos 缺失。", "balance_infos is missing."));
           const amount = (info, field) => {
             const value = Number(info[field]);
-            if (typeof info[field] !== "string" || !Number.isFinite(value)) throw new Error(field + t(" 缺失或不是数字。", " is missing or not a number."));
+            if (typeof info[field] !== "string" || !Number.isFinite(value)) throw new Error(field + t(" 缺失或不是數字。", " is missing or not a number."));
             return value;
           };
           const metrics = [];
           for (const info of body.balance_infos) {
             const currency = info.currency;
             if (currency !== "CNY" && currency !== "USD") continue;
-            metrics.push({ id: "total:" + currency, kind: "balance", label: "账户余额", amount: amount(info, "total_balance"), currency });
-            metrics.push({ id: "granted:" + currency, kind: "balance", label: "赠送余额", amount: amount(info, "granted_balance"), currency });
+            metrics.push({ id: "total:" + currency, kind: "balance", label: "賬戶餘額", amount: amount(info, "total_balance"), currency });
+            metrics.push({ id: "granted:" + currency, kind: "balance", label: "贈送餘額", amount: amount(info, "granted_balance"), currency });
           }
-          if (metrics.length === 0) throw new Error(t("接口没有返回人民币或美元余额。", "The API returned no balance in CNY or USD."));
-          const warnings = body.is_available === false ? [t("余额不足，DeepSeek API 暂时无法调用。", "The balance is insufficient, so the DeepSeek API cannot be called for now.")] : [];
+          if (metrics.length === 0) throw new Error(t("介面沒有返回人民幣或美元餘額。", "The API returned no balance in CNY or USD."));
+          const warnings = body.is_available === false ? [t("餘額不足，DeepSeek API 暫時無法呼叫。", "The balance is insufficient, so the DeepSeek API cannot be called for now.")] : [];
           return { scope: "account", metrics, warnings };
         }
         """;
@@ -143,10 +143,10 @@ public static class ProviderScripts
           function json(res) { try { return res.json(); } catch (e) { return null; } }
           async function tryGet(url) { try { return await ctx.http.get(url, auth); } catch (e) { return null; } }
           const [res, credits] = await Promise.all([ctx.http.get("https://openrouter.ai/api/v1/key", auth), tryGet("https://openrouter.ai/api/v1/credits")]);
-          if (res.status === 401) throw new Error(t("OpenRouter 拒绝了这个 API 密钥，请检查密钥是否正确或已被删除。", "OpenRouter rejected this API key. Check that it is correct and has not been deleted."));
+          if (res.status === 401) throw new Error(t("OpenRouter 拒絕了這個 API 金鑰，請檢查金鑰是否正確或已被刪除。", "OpenRouter rejected this API key. Check that it is correct and has not been deleted."));
           if (res.status !== 200) throw new Error("HTTP " + res.status);
           const body = json(res), data = body && body.data;
-          if (!data || typeof data.usage_daily !== "number" || typeof data.usage_monthly !== "number") throw new Error(t("密钥用量字段缺失。", "The key's usage fields are missing."));
+          if (!data || typeof data.usage_daily !== "number" || typeof data.usage_monthly !== "number") throw new Error(t("金鑰用量欄位缺失。", "The key's usage fields are missing."));
           const now = new Date(ctx.now), day = 86400000;
           const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
           const nextDay = today + day, nextMonth = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1);
@@ -155,16 +155,16 @@ public static class ProviderScripts
           const metrics = [];
           const account = credits && credits.status === 200 ? json(credits) : null;
           if (account && account.data && typeof account.data.total_credits === "number" && typeof account.data.total_usage === "number")
-            metrics.push({ id: "account", kind: "balance", label: "账户余额", amount: account.data.total_credits - account.data.total_usage, currency: "USD" });
+            metrics.push({ id: "account", kind: "balance", label: "賬戶餘額", amount: account.data.total_credits - account.data.total_usage, currency: "USD" });
           const budget = data.effective_budget;
           if (budget && typeof budget.limit_usd === "number" && typeof budget.remaining_usd === "number")
-            metrics.push({ id: "budget", kind: "balance", label: budget.scope === "key_limit" ? "密钥余额" : "预算余额",
+            metrics.push({ id: "budget", kind: "balance", label: budget.scope === "key_limit" ? "金鑰餘額" : "預算餘額",
               amount: budget.remaining_usd, total: budget.limit_usd, currency: "USD", resetAt: budget.resets_at || null, expiresAt: data.expires_at || null });
           else if (typeof data.limit === "number" && typeof data.limit_remaining === "number")
-            metrics.push({ id: "key", kind: "balance", label: "密钥余额", amount: data.limit_remaining, total: data.limit, currency: "USD",
+            metrics.push({ id: "key", kind: "balance", label: "金鑰餘額", amount: data.limit_remaining, total: data.limit, currency: "USD",
               resetAt: { daily: nextDay, weekly: nextWeek, monthly: nextMonth }[data.limit_reset] || null, expiresAt: data.expires_at || null });
-          metrics.push({ id: "today", kind: "spend", label: "今日扣费", amount: Math.max(0, data.usage_daily), currency: "USD", resetAt: nextDay });
-          metrics.push({ id: "month", kind: "spend", label: "本月扣费", amount: Math.max(0, data.usage_monthly), currency: "USD", resetAt: nextMonth });
+          metrics.push({ id: "today", kind: "spend", label: "今日扣費", amount: Math.max(0, data.usage_daily), currency: "USD", resetAt: nextDay });
+          metrics.push({ id: "month", kind: "spend", label: "本月扣費", amount: Math.max(0, data.usage_monthly), currency: "USD", resetAt: nextMonth });
           return { scope: metrics[0].id === "account" ? "account" : "key", metrics };
         }
         """;
@@ -180,16 +180,16 @@ public static class ProviderScripts
           let usage = await tryGet(ctx.site + "/api/usage/token/", auth);
           if (!usage || usage.status === 404 || usage.status === 301) usage = await ctx.http.get(ctx.site + "/api/usage/token", auth);
           const body = json(usage);
-          if (usage.status === 401) throw new Error(t("密钥无效或已被禁用。", "The key is invalid or disabled."));
-          if (blocked(usage)) throw new Error(t("站点拦截了程序请求。", "The site blocked the request from this program."));
+          if (usage.status === 401) throw new Error(t("金鑰無效或已被禁用。", "The key is invalid or disabled."));
+          if (blocked(usage)) throw new Error(t("站點攔截了程式請求。", "The site blocked the request from this program."));
           if (!body || !(body.code === true || body.success === true) || !body.data) {
             const other = json(await tryGet(ctx.site + "/v1/usage", auth) || { json: () => null });
-            if (other && (typeof other.mode === "string" || typeof other.isValid === "boolean")) throw new Error(t("这个站点是 Sub2API。请把配额来源改为 Sub2API。", "This site runs Sub2API. Change the quota source to Sub2API."));
+            if (other && (typeof other.mode === "string" || typeof other.isValid === "boolean")) throw new Error(t("這個站點是 Sub2API。請把配額來源改為 Sub2API。", "This site runs Sub2API. Change the quota source to Sub2API."));
             if (body && typeof body.message === "string" && body.message) throw new Error(body.message);
-            throw new Error(usage.status === 200 ? t("站点返回的内容无法识别。", "The site's response is not recognized.") : "HTTP " + usage.status);
+            throw new Error(usage.status === 200 ? t("站點返回的內容無法識別。", "The site's response is not recognized.") : "HTTP " + usage.status);
           }
           const data = body.data;
-          if (typeof data.unlimited_quota !== "boolean" || typeof data.total_used !== "number") throw new Error(t("密钥额度字段缺失。", "The key's quota fields are missing."));
+          if (typeof data.unlimited_quota !== "boolean" || typeof data.total_used !== "number") throw new Error(t("金鑰額度欄位缺失。", "The key's quota fields are missing."));
 
           // Today is counted from local midnight, which is also what the station's web console uses.
           const day = ctx.now.slice(0, 10), midnight = Date.parse(day + "T00:00:00" + ctx.now.slice(-6)) / 1000;
@@ -208,7 +208,7 @@ public static class ProviderScripts
           if (config && display == null && typeof config.display_in_currency === "boolean") display = config.display_in_currency ? "USD" : "TOKENS";
           let perUnit = config && config.quota_per_unit;
           if (!["USD", "CNY", "TOKENS", "CUSTOM"].includes(display) || (display !== "TOKENS" && !(typeof perUnit === "number" && perUnit > 0))) {
-            display = "USD"; perUnit = 500000; warnings.push(t("站点单位未确认，按美元显示。", "The site's unit is not confirmed; amounts are shown in US dollars."));
+            display = "USD"; perUnit = 500000; warnings.push(t("站點單位未確認，按美元顯示。", "The site's unit is not confirmed; amounts are shown in US dollars."));
           }
           let exchange = 1, currency = display === "TOKENS" ? "" : display;
           if (display === "CNY") exchange = typeof config.usd_exchange_rate === "number" && config.usd_exchange_rate > 0 ? config.usd_exchange_rate : 1;
@@ -218,7 +218,7 @@ public static class ProviderScripts
           }
           const money = raw => display === "TOKENS" ? raw : raw / perUnit * exchange;
           function amount(field) {
-            if (typeof data[field] !== "number" || !Number.isFinite(data[field])) throw new Error(field + t(" 缺失或不是数字。", " is missing or not a number."));
+            if (typeof data[field] !== "number" || !Number.isFinite(data[field])) throw new Error(field + t(" 缺失或不是數字。", " is missing or not a number."));
             return money(data[field]);
           }
           const expiresAt = data.expires_at > 0 ? data.expires_at * 1000 : null;
@@ -233,11 +233,11 @@ public static class ProviderScripts
             const toBilling = raw => display === "TOKENS" ? raw : display === "CNY" ? raw / perUnit * exchange : raw / perUnit;
             const account = data.unlimited_quota ? Math.abs(sub.hard_limit_usd - 100000000) > 0.5
               : typeof data.total_granted === "number" && Math.abs(sub.hard_limit_usd - toBilling(data.total_granted)) > 0.01;
-            if (account) metrics.push({ id: "account", kind: "balance", label: "账户余额",
+            if (account) metrics.push({ id: "account", kind: "balance", label: "賬戶餘額",
               amount: (sub.hard_limit_usd - used.total_usage / 100) * (display === "CUSTOM" ? exchange : 1), currency });
           }
           if (!data.unlimited_quota)
-            metrics.push({ id: "key", kind: "balance", label: "密钥余额", amount: amount("total_available"), total: amount("total_granted"), currency, expiresAt });
+            metrics.push({ id: "key", kind: "balance", label: "金鑰餘額", amount: amount("total_available"), total: amount("total_granted"), currency, expiresAt });
 
           let remember = null, today = null;
           if (memory) { today = { raw: data.total_used - memory.base, atLeast: memory.atLeast }; remember = memory; }
@@ -257,9 +257,9 @@ public static class ProviderScripts
               remember = { day, base: data.total_used - sum, atLeast };
             }
           }
-          if (today) metrics.push({ id: "today", kind: "spend", label: "今日扣费", amount: Math.max(0, money(today.raw)), atLeast: today.atLeast, currency });
+          if (today) metrics.push({ id: "today", kind: "spend", label: "今日扣費", amount: Math.max(0, money(today.raw)), atLeast: today.atLeast, currency });
           if (data.unlimited_quota)
-            metrics.push({ id: "total", kind: "spend", label: "密钥累计", amount: amount("total_used"), unlimited: true, currency, expiresAt });
+            metrics.push({ id: "total", kind: "spend", label: "金鑰累計", amount: amount("total_used"), unlimited: true, currency, expiresAt });
           return { scope: metrics.some(m => m.id === "account") ? "account" : "key", metrics, warnings, memory: remember };
         }
         """;
@@ -272,22 +272,22 @@ public static class ProviderScripts
           const t = (zh, en) => ctx.language === "en-US" ? en : zh;
           const [res, rate] = await Promise.all([ctx.http.get(ctx.site + "/v1/usage", auth), tryGet(ctx.site + "/v1/sub2api/billing", auth)]);
           const data = json(res);
-          if (res.status === 401) throw new Error(t("密钥无效或已被禁用。", "The key is invalid or disabled."));
-          if (res.status === 403 && /^\s*</.test(res.text())) throw new Error(t("站点拦截了程序请求。", "The site blocked the request from this program."));
+          if (res.status === 401) throw new Error(t("金鑰無效或已被禁用。", "The key is invalid or disabled."));
+          if (res.status === 403 && /^\s*</.test(res.text())) throw new Error(t("站點攔截了程式請求。", "The site blocked the request from this program."));
           if (!data || (typeof data.mode !== "string" && typeof data.isValid !== "boolean")) {
             const other = await tryGet(ctx.site + "/api/usage/token/", auth);
             const token = other && json(other);
-            if (token && token.data && token.data.object === "token_usage") throw new Error(t("这个站点是 New API。请把配额来源改为 New API。", "This site runs New API. Change the quota source to New API."));
-            throw new Error(res.status === 200 ? t("站点返回的内容无法识别。", "The site's response is not recognized.") : "HTTP " + res.status);
+            if (token && token.data && token.data.object === "token_usage") throw new Error(t("這個站點是 New API。請把配額來源改為 New API。", "This site runs New API. Change the quota source to New API."));
+            throw new Error(res.status === 200 ? t("站點返回的內容無法識別。", "The site's response is not recognized.") : "HTTP " + res.status);
           }
-          if (data.isValid !== true) throw new Error(t("密钥无效或已被禁用。", "The key is invalid or disabled."));
+          if (data.isValid !== true) throw new Error(t("金鑰無效或已被禁用。", "The key is invalid or disabled."));
           function number(value, field) {
-            if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(field + t(" 缺失或不是数字。", " is missing or not a number."));
+            if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(field + t(" 缺失或不是數字。", " is missing or not a number."));
             return value;
           }
           function windowMetric(id, label, minutes, used, limit, resetAt) {
             number(used, id + ".used"); number(limit, id + ".limit");
-            if (limit <= 0) throw new Error(id + t(".limit 必须大于 0。", ".limit must be greater than 0."));
+            if (limit <= 0) throw new Error(id + t(".limit 必須大於 0。", ".limit must be greater than 0."));
             return { id, kind: "percent", label, window: minutes, percent: used / limit * 100, resetAt: resetAt || null };
           }
           // The expiry goes on the last window, where the panel shows it beside or above that window's reset time.
@@ -296,15 +296,15 @@ public static class ProviderScripts
           const multiplier = billing && typeof billing.effective_rate_multiplier === "number" ? Number(billing.effective_rate_multiplier.toFixed(2)) + "×" : "";
           const metrics = [];
           if (data.mode === "quota_limited") {
-            const periods = { "5h": ["5 小时", 300], "1d": ["每日", 1440], "7d": ["每周", 10080] };
+            const periods = { "5h": ["5 小時", 300], "1d": ["每日", 1440], "7d": ["每週", 10080] };
             const windows = (data.rate_limits || []).filter(r => periods[r.window]).sort((a, b) => periods[a.window][1] - periods[b.window][1]);
             for (const r of windows) metrics.push(windowMetric("rate:" + r.window, periods[r.window][0], periods[r.window][1], r.used, r.limit, r.reset_at));
-            if (data.quota) metrics.push({ id: "quota", kind: "balance", label: "密钥余额", amount: number(data.quota.remaining, "quota.remaining"),
+            if (data.quota) metrics.push({ id: "quota", kind: "balance", label: "金鑰餘額", amount: number(data.quota.remaining, "quota.remaining"),
               total: number(data.quota.limit, "quota.limit"), currency: data.quota.unit || "USD" });
             expire(metrics, data.expires_at);
             return { plan: multiplier, scope: "key", metrics };
           }
-          if (data.mode !== "unrestricted") throw new Error(t("无法识别站点返回的 mode。", "The mode the site returned is not recognized."));
+          if (data.mode !== "unrestricted") throw new Error(t("無法識別站點返回的 mode。", "The mode the site returned is not recognized."));
           if (data.subscription) {
             const s = data.subscription;
             for (const [key, label, minutes] of [["daily", "每日", 1440], ["weekly", "每周", 10080], ["monthly", "每月", 43200]]) {
@@ -318,9 +318,9 @@ public static class ProviderScripts
             expire(metrics, s.expires_at);
             return { plan: data.planName || "", scope: "plan", metrics };
           }
-          metrics.push({ id: "wallet", kind: "balance", label: "账户余额", amount: number(data.balance, "balance"), currency: data.unit || "USD" });
+          metrics.push({ id: "wallet", kind: "balance", label: "賬戶餘額", amount: number(data.balance, "balance"), currency: data.unit || "USD" });
           const today = data.usage && data.usage.today;
-          if (today && typeof today.actual_cost === "number") metrics.push({ id: "today", kind: "spend", label: "今日扣费", amount: today.actual_cost, currency: data.unit || "USD" });
+          if (today && typeof today.actual_cost === "number") metrics.push({ id: "today", kind: "spend", label: "今日扣費", amount: today.actual_cost, currency: data.unit || "USD" });
           return { plan: multiplier, scope: "account", metrics };
         }
         """;

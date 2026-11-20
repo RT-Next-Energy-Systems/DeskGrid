@@ -10,7 +10,7 @@ using BrimDeck.Core.ClipboardSync;
 
 namespace BrimDeck;
 
-// The "剪贴板同步" page: this device's name, then one card for each way to sync. A card says where it stands with a coloured
+// The "剪貼簿同步" page: this device's name, then one card for each way to sync. A card says where it stands with a coloured
 // dot and a few words, has the one button that connects or disconnects it and, once connected, the switch that syncs.
 public sealed partial class SettingsWindow
 {
@@ -33,8 +33,8 @@ public sealed partial class SettingsWindow
         _syncCards.Clear();
         Target.Children.Add(SyncDeviceName());
         AddSyncCard(SyncKind.Lan); AddSyncCard(SyncKind.WeType); AddSyncCard(SyncKind.Doubao);
-        var note = TextLine(Loc.T("只同步开启之后新复制的内容。", "Only what is copied after syncing is turned on is synced.") + " ", 12, TextSecondary);
-        note.Inlines.Add(InlineLink(Loc.T("使用说明 ↗", "How it works ↗"),
+        var note = TextLine(Loc.T("只同步開啟之後新複製的內容。", "Only what is copied after syncing is turned on is synced.") + " ", 12, TextSecondary);
+        note.Inlines.Add(InlineLink(Loc.T("使用說明 ↗", "How it works ↗"),
             Updates.GitHubUpdates.RepositoryUrl + Loc.T("/blob/main/docs/zh-CN/clipboard-sync.md", "/blob/main/docs/en-US/clipboard-sync.md")));
         note.Margin = new Thickness(0, 4, 0, 20); Target.Children.Add(note);
         _syncShape = SyncShape();
@@ -49,7 +49,7 @@ public sealed partial class SettingsWindow
         var service = _app.ClipboardSync;
         var box = new TextBox { Style = (Style)FindResource("SettingsField"), Height = 30, Padding = new Thickness(10, 0, 10, 0), FontSize = 12.5, Width = 240, MaxLength = 48,
             Text = service.Accounts.DeviceName, VerticalContentAlignment = VerticalAlignment.Center, IsEnabled = service.CanRename, Opacity = service.CanRename ? 1 : 0.5 };
-        AutomationProperties.SetName(box, Loc.T("本机名称", "This device's name"));
+        AutomationProperties.SetName(box, Loc.T("本機名稱", "This device's name"));
         void Commit()
         {
             string name = box.Text.Trim();
@@ -60,8 +60,8 @@ public sealed partial class SettingsWindow
         }
         box.LostKeyboardFocus += (_, _) => Commit();
         box.KeyDown += (_, e) => { if (e.Key == Key.Enter) { Commit(); Keyboard.ClearFocus(); e.Handled = true; } };
-        var row = Row(Loc.T("本机名称", "This device's name"), box, help: () => Loc.T(
-            "其他设备上显示的名称。关联微信输入法或登录豆包之后不能修改，需要先解除关联或退出登录。",
+        var row = Row(Loc.T("本機名稱", "This device's name"), box, help: () => Loc.T(
+            "其他裝置上顯示的名稱。關聯微信輸入法或登入豆包之後不能修改，需要先解除關聯或退出登入。",
             "The name other devices show. It cannot be changed while WeType is linked or Doubao is signed in; unlink or sign out first."));
         row.Margin = new Thickness(0, 0, 0, 10);
         return row;
@@ -73,15 +73,15 @@ public sealed partial class SettingsWindow
         bool connected = SyncConnected(kind);
         var (title, connect, disconnect, description, help) = kind switch
         {
-            SyncKind.Lan => (Loc.T("局域网", "Local network"), Loc.T("配对", "Pair"), Loc.T("解除配对", "Unpair"),
-                Loc.T("同一网络中两台装有 BrimDeck 的电脑直接同步文字和图片，不经过互联网。", "Two PCs with BrimDeck on the same network sync text and images directly, without the internet."),
-                Loc.T("新复制的文字和图片会发送到另一台电脑。两台电脑都要开启。", "Newly copied text and images are sent to the other PC. Turn this on on both PCs.")),
-            SyncKind.WeType => (Loc.T("微信输入法", "WeType"), Loc.T("关联设备", "Link a device"), Loc.T("解除关联", "Unlink"),
-                Loc.T("与手机或其他电脑上的微信输入法同步文字和图片。", "Syncs text and images with WeType on your phone or other PCs."),
-                Loc.T("新复制的文字和图片会发送到已关联的设备，它们复制的内容会写入本机剪贴板。", "Newly copied text and images are sent to the linked devices, and what they copy is put on this PC's clipboard.")),
-            _ => (Loc.T("豆包输入法", "Doubao IME"), Loc.T("登录", "Sign in"), Loc.T("退出登录", "Sign out"),
-                Loc.T("与登录同一豆包账号的手机或电脑同步文字和图片。", "Syncs text and images with phones and PCs signed in to the same Doubao account."),
-                Loc.T("新复制的文字和图片会发送到同一账号的设备，它们复制的内容会写入本机剪贴板。", "Newly copied text and images are sent to the account's devices, and what they copy is put on this PC's clipboard."))
+            SyncKind.Lan => (Loc.T("區域網", "Local network"), Loc.T("配對", "Pair"), Loc.T("解除配對", "Unpair"),
+                Loc.T("同一網路中兩臺裝有 BrimDeck 的電腦直接同步文字和圖片，不經過網際網路。", "Two PCs with BrimDeck on the same network sync text and images directly, without the internet."),
+                Loc.T("新複製的文字和圖片會傳送到另一臺電腦。兩臺電腦都要開啟。", "Newly copied text and images are sent to the other PC. Turn this on on both PCs.")),
+            SyncKind.WeType => (Loc.T("微信輸入法", "WeType"), Loc.T("關聯裝置", "Link a device"), Loc.T("解除關聯", "Unlink"),
+                Loc.T("與手機或其他電腦上的微信輸入法同步文字和圖片。", "Syncs text and images with WeType on your phone or other PCs."),
+                Loc.T("新複製的文字和圖片會傳送到已關聯的裝置，它們複製的內容會寫入本機剪貼簿。", "Newly copied text and images are sent to the linked devices, and what they copy is put on this PC's clipboard.")),
+            _ => (Loc.T("豆包輸入法", "Doubao IME"), Loc.T("登入", "Sign in"), Loc.T("退出登入", "Sign out"),
+                Loc.T("與登入同一豆包賬號的手機或電腦同步文字和圖片。", "Syncs text and images with phones and PCs signed in to the same Doubao account."),
+                Loc.T("新複製的文字和圖片會傳送到同一賬號的裝置，它們複製的內容會寫入本機剪貼簿。", "Newly copied text and images are sent to the account's devices, and what they copy is put on this PC's clipboard."))
         };
 
         var action = ActionButton(connected ? disconnect : connect, () => { });
@@ -91,10 +91,10 @@ public sealed partial class SettingsWindow
         {
             if (!connected) { await ConnectSyncAsync(kind); return; }
             // WeType has no way for this device to take itself off the other devices' lists; the user is told before unlinking.
-            if (kind == SyncKind.WeType && !Confirm(Loc.T("解除与微信输入法的关联？", "Unlink WeType?"),
-                Loc.T($"其他设备的列表里仍会保留本机。请在那些设备的微信输入法“跨设备 → 我的设备”中删除“{(service.Accounts.WeType.DisplayName.Length > 0 ? service.Accounts.WeType.DisplayName : service.Accounts.DeviceName)}”，否则再次关联后会出现两个本机。",
+            if (kind == SyncKind.WeType && !Confirm(Loc.T("解除與微信輸入法的關聯？", "Unlink WeType?"),
+                Loc.T($"其他裝置的列表裡仍會保留本機。請在那些裝置的微信輸入法“跨裝置 → 我的裝置”中刪除“{(service.Accounts.WeType.DisplayName.Length > 0 ? service.Accounts.WeType.DisplayName : service.Accounts.DeviceName)}”，否則再次關聯後會出現兩個本機。",
                     $"This PC stays on the other devices' lists. Delete “{(service.Accounts.WeType.DisplayName.Length > 0 ? service.Accounts.WeType.DisplayName : service.Accounts.DeviceName)}” under My devices in their WeType cross-device settings, or linking again will list this PC twice."),
-                Loc.T("解除关联", "Unlink"), danger: false)) return;
+                Loc.T("解除關聯", "Unlink"), danger: false)) return;
             action.IsEnabled = false;
             try
             {
@@ -133,7 +133,7 @@ public sealed partial class SettingsWindow
             var divider = new Border { Height = 1, Margin = new Thickness(0, 12, 0, 2) };
             divider.SetResourceReference(Border.BackgroundProperty, "SettingsBorder");
             content.Children.Add(divider);
-            content.Children.Add(Toggle(Loc.T("自动同步", "Sync automatically"), SyncEnabled(kind), value =>
+            content.Children.Add(Toggle(Loc.T("自動同步", "Sync automatically"), SyncEnabled(kind), value =>
             {
                 Change(s => { if (kind == SyncKind.Lan) s.LanClipboardSync = value; else if (kind == SyncKind.WeType) s.WeTypeClipboardSync = value; else s.DoubaoClipboardSync = value; });
                 RefreshSyncStatus();
@@ -150,7 +150,7 @@ public sealed partial class SettingsWindow
 
     private sealed record DoubaoAdvancedView(StackPanel Root, StackPanel List);
 
-    // "高级", closed until asked for: the account's other devices, each with a button that takes it off the account's list.
+    // "高階", closed until asked for: the account's other devices, each with a button that takes it off the account's list.
     // A device leaves the list by signing out on it; this is for one that stayed, its sign-out not having reached the service
     // or its sign-in having been lost (a reinstall), which Doubao's own applications offer no way to remove.
     private DoubaoAdvancedView DoubaoAdvanced()
@@ -163,11 +163,11 @@ public sealed partial class SettingsWindow
         arrow.RenderTransformOrigin = new Point(0.5, 0.5); arrow.Margin = new Thickness(6, 1, 0, 0);
         arrow.SetBinding(Shape.StrokeProperty, new System.Windows.Data.Binding("Foreground") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.FindAncestor, typeof(Button), 1) });
         var label = new StackPanel { Orientation = Orientation.Horizontal };
-        label.Children.Add(new TextBlock { Text = Loc.T("高级", "Advanced"), FontSize = 12.5 });
+        label.Children.Add(new TextBlock { Text = Loc.T("高階", "Advanced"), FontSize = 12.5 });
         label.Children.Add(arrow);
         var open = ActionButton("", () => { }); open.Content = label;
         open.HorizontalAlignment = HorizontalAlignment.Left; open.Padding = new Thickness(6, 5, 6, 5); open.Margin = new Thickness(-6, 6, 0, 6);
-        AutomationProperties.SetName(open, Loc.T("豆包输入法高级设置", "Doubao IME advanced settings"));
+        AutomationProperties.SetName(open, Loc.T("豆包輸入法高階設定", "Doubao IME advanced settings"));
         root.Children.Add(open);
         var list = new StackPanel { Visibility = Visibility.Collapsed, Margin = new Thickness(0, 0, 0, 10) };
         root.Children.Add(list);
@@ -180,7 +180,7 @@ public sealed partial class SettingsWindow
             if (!show || reading) return;
             reading = true;
             list.Children.Clear();
-            list.Children.Add(TextLine(Loc.T("正在读取账号下的设备…", "Reading the account's devices…"), 12, TextSecondary));
+            list.Children.Add(TextLine(Loc.T("正在讀取賬號下的裝置…", "Reading the account's devices…"), 12, TextSecondary));
             try
             {
                 using var limit = CancellationTokenSource.CreateLinkedTokenSource(_app.Lifetime.Token);
@@ -190,7 +190,7 @@ public sealed partial class SettingsWindow
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
                 list.Children.Clear();
-                list.Children.Add(TextLine(Loc.T("没有读取到设备，请检查网络后重新展开。", "The devices could not be read. Check the network and open this again."), 12, TextSecondary));
+                list.Children.Add(TextLine(Loc.T("沒有讀取到裝置，請檢查網路後重新展開。", "The devices could not be read. Check the network and open this again."), 12, TextSecondary));
             }
             finally { reading = false; }
         };
@@ -200,14 +200,14 @@ public sealed partial class SettingsWindow
     private void ShowDoubaoDevices(StackPanel list, IReadOnlyList<DoubaoDevice> devices)
     {
         list.Children.Clear();
-        var note = TextLine(devices.Count == 0 ? Loc.T("账号下没有其他设备。", "The account has no other devices.")
-            : Loc.T("账号下的其他设备。正常情况下，在那台设备上退出登录，它就会从这里消失；退出后仍留在这里的设备，可以在这里移除。",
+        var note = TextLine(devices.Count == 0 ? Loc.T("賬號下沒有其他裝置。", "The account has no other devices.")
+            : Loc.T("賬號下的其他裝置。正常情況下，在那臺裝置上退出登入，它就會從這裡消失；退出後仍留在這裡的裝置，可以在這裡移除。",
                 "The account's other devices. A device normally leaves this list when it signs out; one that stayed after signing out can be removed here."), 12, TextSecondary);
         note.TextWrapping = TextWrapping.Wrap;
         list.Children.Add(note);
         foreach (var device in devices)
         {
-            string name = device.Name.Length > 0 ? device.Name : Loc.T("未命名的设备", "Unnamed device");
+            string name = device.Name.Length > 0 ? device.Name : Loc.T("未命名的裝置", "Unnamed device");
             var text = TextLine(name, 12.5, TextPrimary); text.TextTrimming = TextTrimming.CharacterEllipsis; text.VerticalAlignment = VerticalAlignment.Center; text.Margin = new Thickness(0, 0, 16, 0);
             text.ToolTip = name;
             var remove = ActionButton(Loc.T("移除", "Remove"), () => { });
@@ -219,8 +219,8 @@ public sealed partial class SettingsWindow
             list.Children.Add(row);
             remove.Click += async (_, _) =>
             {
-                if (!Confirm(Loc.T($"从豆包账号中移除“{name}”？", $"Remove “{name}” from the Doubao account?"),
-                    Loc.T("它不再出现在已关联设备中。那台设备如果还在使用，需要在它上面重新登录豆包。", "It no longer appears among the linked devices. If that device is still in use, Doubao needs to be signed in to on it again."),
+                if (!Confirm(Loc.T($"從豆包賬號中移除“{name}”？", $"Remove “{name}” from the Doubao account?"),
+                    Loc.T("它不再出現在已關聯裝置中。那臺裝置如果還在使用，需要在它上面重新登入豆包。", "It no longer appears among the linked devices. If that device is still in use, Doubao needs to be signed in to on it again."),
                     Loc.T("移除", "Remove"), danger: false)) return;
                 remove.IsEnabled = false;
                 bool gone = false;
@@ -232,8 +232,8 @@ public sealed partial class SettingsWindow
                 }
                 catch (Exception ex) when (ex is not OutOfMemoryException) { }
                 if (gone) { list.Children.Remove(row); return; }
-                remove.IsEnabled = true; remove.Content = Loc.T("重试", "Try again");
-                text.Text = name + Loc.T(" · 没有移除成功", " · not removed");
+                remove.IsEnabled = true; remove.Content = Loc.T("重試", "Try again");
+                text.Text = name + Loc.T(" · 沒有移除成功", " · not removed");
             };
         }
     }
@@ -286,10 +286,10 @@ public sealed partial class SettingsWindow
             bool connected = SyncConnected(kind), enabled = SyncEnabled(kind);
             var (text, level) = kind switch
             {
-                SyncKind.Lan when !connected => (Loc.T("未配对", "Not paired"), SyncLevel.Idle),
-                SyncKind.WeType when !connected => (Loc.T("未关联", "Not linked"), SyncLevel.Idle),
-                SyncKind.Doubao when !connected => (Loc.T("未登录", "Not signed in"), SyncLevel.Idle),
-                _ when !enabled => (Loc.T("已暂停", "Paused"), SyncLevel.Idle),
+                SyncKind.Lan when !connected => (Loc.T("未配對", "Not paired"), SyncLevel.Idle),
+                SyncKind.WeType when !connected => (Loc.T("未關聯", "Not linked"), SyncLevel.Idle),
+                SyncKind.Doubao when !connected => (Loc.T("未登入", "Not signed in"), SyncLevel.Idle),
+                _ when !enabled => (Loc.T("已暫停", "Paused"), SyncLevel.Idle),
                 SyncKind.Lan => (service.LanStatus, service.LanLevel),
                 _ => (service.Status(kind == SyncKind.Doubao), service.Level(kind == SyncKind.Doubao))
             };
@@ -298,15 +298,15 @@ public sealed partial class SettingsWindow
             if (kind == SyncKind.WeType && connected)
             {
                 var identity = service.Accounts.WeType;
-                if (identity.PeerNames.Count > 0) detail = Loc.T("已关联：", "Linked: ") + string.Join(Loc.T("、", ", "), identity.PeerNames);
+                if (identity.PeerNames.Count > 0) detail = Loc.T("已關聯：", "Linked: ") + string.Join(Loc.T("、", ", "), identity.PeerNames);
                 // Another device renamed this one: the name it goes by there.
                 if (identity.DisplayName.Length > 0 && identity.DisplayName != service.Accounts.DeviceName)
-                    detail += (detail.Length > 0 ? "\n" : "") + Loc.T($"本机在微信输入法中显示为“{identity.DisplayName}”", $"WeType shows this PC as “{identity.DisplayName}”");
+                    detail += (detail.Length > 0 ? "\n" : "") + Loc.T($"本機在微信輸入法中顯示為“{identity.DisplayName}”", $"WeType shows this PC as “{identity.DisplayName}”");
             }
             if (kind == SyncKind.Doubao && connected && service.DoubaoCapability is { CanSync: false })
             {
-                if (!enabled) (text, level) = (Loc.T("此设备的互传开关未开启", "Sync is turned off for this device"), SyncLevel.Attention);
-                detail = Loc.T($"在手机或另一台电脑的豆包输入法中打开“超级互传”，在已关联设备中开启“{service.Accounts.DeviceName}”。",
+                if (!enabled) (text, level) = (Loc.T("此裝置的互傳開關未開啟", "Sync is turned off for this device"), SyncLevel.Attention);
+                detail = Loc.T($"在手機或另一臺電腦的豆包輸入法中開啟“超級互傳”，在已關聯裝置中開啟“{service.Accounts.DeviceName}”。",
                     $"In Doubao IME on your phone or another PC, open its cross-device transfer and turn on “{service.Accounts.DeviceName}” among the linked devices.");
             }
             card.Status.Text = text;

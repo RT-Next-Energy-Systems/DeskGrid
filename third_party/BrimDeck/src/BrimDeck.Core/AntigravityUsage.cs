@@ -52,7 +52,7 @@ public sealed class AntigravityUsage
     {
         var existing = folders.Where(Directory.Exists).ToList();
         snapshot.UsageAvailable = existing.Count > 0;
-        if (!snapshot.UsageAvailable) { snapshot.UsageNote = Loc.T("未找到本机 Antigravity 会话记录。", "No local Antigravity session records were found."); return; }
+        if (!snapshot.UsageAvailable) { snapshot.UsageNote = Loc.T("未找到本機 Antigravity 會話記錄。", "No local Antigravity session records were found."); return; }
         var entries = new Dictionary<string, TokenEntry>(StringComparer.Ordinal);
         int count = 0, failed = 0;
         // Only conversations inside the current window stay cached, so the cache does not grow for as long as the app runs.
@@ -75,9 +75,9 @@ public sealed class AntigravityUsage
         foreach (var gone in _cache.Keys.Where(database => !visited.Contains(database)).ToList()) _cache.Remove(gone);
         snapshot.Entries = entries.Values.OrderBy(e => e.Time).ToList();
         snapshot.UsageComplete = failed == 0;
-        snapshot.UsageNote = Loc.T($"本机 Antigravity 与 Antigravity CLI {start.LocalDateTime:yyyy-MM-dd} 起 · {count} 个会话",
+        snapshot.UsageNote = Loc.T($"本機 Antigravity 與 Antigravity CLI {start.LocalDateTime:yyyy-MM-dd} 起 · {count} 個會話",
             $"Local Antigravity and Antigravity CLI since {start.LocalDateTime:yyyy-MM-dd} · " + Loc.Count(count, "session", "sessions"));
-        if (failed > 0) snapshot.UsageNote += Loc.T($" · {failed} 个会话暂时无法读取", " · " + Loc.Count(failed, "session", "sessions") + " cannot be read right now");
+        if (failed > 0) snapshot.UsageNote += Loc.T($" · {failed} 個會話暫時無法讀取", " · " + Loc.Count(failed, "session", "sessions") + " cannot be read right now");
     }
 
     private static IEnumerable<string> SafeFiles(string folder)

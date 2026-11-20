@@ -38,8 +38,8 @@ public sealed partial class SettingsWindow
         {
             string app = AppName(holding.Name, holding.Path);
             ProfileNotice(_palette.Accent, holding.Trigger == ProfileTrigger.Foreground
-                ? Loc.T($"自动切换规则生效中：{app} 在前台。", $"An automatic switch rule applies: {app} is in front.")
-                : Loc.T($"自动切换规则生效中：{app} 正在运行。", $"An automatic switch rule applies: {app} is running."));
+                ? Loc.T($"自動切換規則生效中：{app} 在前臺。", $"An automatic switch rule applies: {app} is in front.")
+                : Loc.T($"自動切換規則生效中：{app} 正在執行。", $"An automatic switch rule applies: {app} is running."));
         }
         // Two joined buttons make a new profile, made current at once with its name ready to change: a copy of the one in use, or
         // every setting at its default.
@@ -48,8 +48,8 @@ public sealed partial class SettingsWindow
         create.SetResourceReference(Border.BorderBrushProperty, "SettingsBorder");
         create.SetResourceReference(Border.BackgroundProperty, "SettingsInput");
         var pair = new StackPanel { Orientation = Orientation.Horizontal };
-        foreach (var (label, blank, corners) in new[] { (Loc.T("以当前配置新建", "New from current"), false, new CornerRadius(5, 0, 0, 5)),
-            (Loc.T("以默认设置新建", "New with defaults"), true, new CornerRadius(0, 5, 5, 0)) })
+        foreach (var (label, blank, corners) in new[] { (Loc.T("以當前配置新建", "New from current"), false, new CornerRadius(5, 0, 0, 5)),
+            (Loc.T("以預設設定新建", "New with defaults"), true, new CornerRadius(0, 5, 5, 0)) })
         {
             if (pair.Children.Count > 0)
             {
@@ -96,11 +96,11 @@ public sealed partial class SettingsWindow
         var labels = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 6, 12, 6) };
         var heading = new StackPanel { Orientation = Orientation.Horizontal };
         var title = new Button { Content = name, Style = (Style)FindResource("SettingsCardName"), FontSize = 13, FontWeight = FontWeights.SemiBold,
-            Foreground = UI.Brush(TextPrimary), Margin = new Thickness(-4, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, ToolTip = Loc.T("单击重命名", "Click to rename") };
+            Foreground = UI.Brush(TextPrimary), Margin = new Thickness(-4, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center, ToolTip = Loc.T("單擊重新命名", "Click to rename") };
         AutomationProperties.SetName(title, Loc.T("重命名 ", "Rename ") + name);
         var box = new TextBox { Style = (Style)FindResource("SettingsField"), Height = 26, FontSize = 12.5, Padding = new Thickness(6, 0, 6, 0), Width = 220,
             Visibility = Visibility.Collapsed, MaxLength = Profiles.MaximumName };
-        AutomationProperties.SetName(box, Loc.T("配置名称", "Profile name"));
+        AutomationProperties.SetName(box, Loc.T("配置名稱", "Profile name"));
         heading.Children.Add(title); heading.Children.Add(box);
         if (current)
         {
@@ -144,23 +144,23 @@ public sealed partial class SettingsWindow
         {
             var menu = AppMenu(more!);
             var rename = new MenuItem { Header = Loc.T("重命名", "Rename") }; rename.Click += (_, _) => Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Input, Edit);
-            var copy = new MenuItem { Header = Loc.T("复制", "Copy"), IsEnabled = _app.Settings.Profiles.Count < Profiles.Maximum };
+            var copy = new MenuItem { Header = Loc.T("複製", "Copy"), IsEnabled = _app.Settings.Profiles.Count < Profiles.Maximum };
             copy.Click += (_, _) => ChangeShared(s => s.Profiles.Add(Profiles.Duplicate(s, id, Profiles.NextName(s))));
-            var delete = new MenuItem { Header = Loc.T("删除", "Delete"), IsEnabled = !current };
+            var delete = new MenuItem { Header = Loc.T("刪除", "Delete"), IsEnabled = !current };
             delete.Click += (_, _) =>
             {
                 // What changes is said only for what uses the profile, the rules by their apps' names.
                 var now = _app.Settings;
-                var lines = new List<string> { Loc.T($"确定删除“{name}”吗？", $"Delete “{name}”?") };
+                var lines = new List<string> { Loc.T($"確定刪除“{name}”嗎？", $"Delete “{name}”?") };
                 if (now.Display == DisplayPlacement.Chosen && now.DisplayMonitors.Any(d => d.Profile == id))
-                    lines.Add(Loc.T("使用它的显示器会自动改为当前正在使用的配置。", "Displays that use it will change to the profile in use."));
+                    lines.Add(Loc.T("使用它的顯示器會自動改為當前正在使用的配置。", "Displays that use it will change to the profile in use."));
                 string Apps(IEnumerable<ProfileRule> rules) => string.Join(Loc.T("、", ", "), rules.Select(r => AppName(r.Name, r.Path)).Distinct());
                 if (now.ProfileRules.Where(r => r.Profile == id).ToList() is { Count: > 0 } switching)
-                    lines.Add(Loc.T($"删除后，{Apps(switching)}的自动切换规则不会再切换配置。", $"The automatic switch rules for {Apps(switching)} will no longer switch profiles."));
+                    lines.Add(Loc.T($"刪除後，{Apps(switching)}的自動切換規則不會再切換配置。", $"The automatic switch rules for {Apps(switching)} will no longer switch profiles."));
                 if (now.ProfileRules.Where(r => r.Displays.Any(d => d.Profile == id)).ToList() is { Count: > 0 } showing)
-                    lines.Add(Loc.T($"{Apps(showing)}的规则中使用它的显示器，会自动改为跟随当前正在使用的配置。", $"In the rules for {Apps(showing)}, displays that use it will follow the profile in use."));
+                    lines.Add(Loc.T($"{Apps(showing)}的規則中使用它的顯示器，會自動改為跟隨當前正在使用的配置。", $"In the rules for {Apps(showing)}, displays that use it will follow the profile in use."));
                 string text = string.Join(Environment.NewLine, lines);
-                if (!Confirm(Loc.T("删除配置", "Delete profile"), text, Loc.T("删除", "Delete"))) return;
+                if (!Confirm(Loc.T("刪除配置", "Delete profile"), text, Loc.T("刪除", "Delete"))) return;
                 ChangeShared(s => s.Profiles.RemoveAll(p => p.Id == id));
             };
             menu.Items.Add(rename); menu.Items.Add(copy); menu.Items.Add(new Separator()); menu.Items.Add(delete);
@@ -182,15 +182,15 @@ public sealed partial class SettingsWindow
         return combo;
     }
 
-    private static string InUseLabel => Loc.T("跟随使用中的配置", "Follow the profile in use");
-    private static string NoPanelLabel => Loc.T("不显示面板", "No panel");
+    private static string InUseLabel => Loc.T("跟隨使用中的配置", "Follow the profile in use");
+    private static string NoPanelLabel => Loc.T("不顯示面板", "No panel");
 
-    // What a display shows outside rules, for the rules' "跟随显示器设置": the profile in use, a profile's name, or no panel.
+    // What a display shows outside rules, for the rules' "跟隨顯示器設定": the profile in use, a profile's name, or no panel.
     private static string DisplayUsually(DeckSettings shared, DisplayInfo display, IReadOnlyList<DisplayInfo> displays)
     {
         if (shared.Display != DisplayPlacement.Chosen)
-            return display.Primary || (!displays.Any(d => d.Primary) && displays[0] == display) ? Loc.T("使用中的配置", "profile in use") : Loc.T("不显示面板", "no panel");
-        if (shared.DisplayMonitors.FirstOrDefault(c => c.Id == display.Id) is not { } own) return Loc.T("不显示面板", "no panel");
+            return display.Primary || (!displays.Any(d => d.Primary) && displays[0] == display) ? Loc.T("使用中的配置", "profile in use") : Loc.T("不顯示面板", "no panel");
+        if (shared.DisplayMonitors.FirstOrDefault(c => c.Id == display.Id) is not { } own) return Loc.T("不顯示面板", "no panel");
         return own.Profile is { } id && Profiles.Find(shared, id) is { } profile ? Profiles.Name(profile) : Loc.T("使用中的配置", "profile in use");
     }
 
@@ -203,12 +203,12 @@ public sealed partial class SettingsWindow
         bool chosenMode = shared.Display == DisplayPlacement.Chosen;
         var missing = chosenMode ? shared.DisplayMonitors.Where(c => displays.All(d => d.Id != c.Id)).ToList() : [];
         if (displays.Count < 2 && missing.Count == 0) return;
-        SectionTitle(Loc.T("显示器", "Displays"));
+        SectionTitle(Loc.T("顯示器", "Displays"));
         var modes = new UniformGrid { Columns = 2, Width = 240 };
-        foreach (var (placement, name) in new[] { (DisplayPlacement.Primary, Loc.T("仅主显示器", "Primary only")), (DisplayPlacement.Chosen, Loc.T("自选显示器", "Choose displays")) })
+        foreach (var (placement, name) in new[] { (DisplayPlacement.Primary, Loc.T("僅主顯示器", "Primary only")), (DisplayPlacement.Chosen, Loc.T("自選顯示器", "Choose displays")) })
         {
             var option = new RadioButton { Style = (Style)FindResource("SettingsSegment"), Content = name, IsChecked = shared.Display == placement, GroupName = "Display" };
-            AutomationProperties.SetName(option, Loc.T("显示在 · ", "Show on · ") + name);
+            AutomationProperties.SetName(option, Loc.T("顯示在 · ", "Show on · ") + name);
             option.Checked += (_, _) =>
             {
                 if (_app.Settings.Display == placement) return;
@@ -223,7 +223,7 @@ public sealed partial class SettingsWindow
             };
             modes.Children.Add(option);
         }
-        var rows = new List<FrameworkElement> { Row(Loc.T("显示在", "Show on"), SegmentBorder(modes)) };
+        var rows = new List<FrameworkElement> { Row(Loc.T("顯示在", "Show on"), SegmentBorder(modes)) };
         if (chosenMode)
         {
             var options = new List<string> { InUseLabel };
@@ -234,12 +234,12 @@ public sealed partial class SettingsWindow
             {
                 var own = shared.DisplayMonitors.FirstOrDefault(c => c.Id == display.Id);
                 int selected = own is null ? hidden : own.Profile is { } id && shared.Profiles.FindIndex(p => p.Id == id) is >= 0 and var at ? at + 1 : 0;
-                string label = Displays.Label(display, displays) + (display.Primary ? Loc.T(" · 主显示器", " · primary") : "");
+                string label = Displays.Label(display, displays) + (display.Primary ? Loc.T(" · 主顯示器", " · primary") : "");
                 var combo = ProfileCombo(label, options, selected, index =>
                 {
                     // The last display that shows a panel keeps one.
                     if (index == hidden && _app.Settings.DisplayMonitors.All(c => c.Id == display.Id))
-                    { SaveStatus(Loc.T("至少要有一台显示器显示面板。", "At least one display must show the panel."), true); ShowPage(ProfilesPage); return; }
+                    { SaveStatus(Loc.T("至少要有一臺顯示器顯示面板。", "At least one display must show the panel."), true); ShowPage(ProfilesPage); return; }
                     SaveStatus("");
                     Guid? profile = index > 0 && index < hidden ? _app.Settings.Profiles[index - 1].Id : null;
                     ChangeShared(s =>
@@ -252,14 +252,14 @@ public sealed partial class SettingsWindow
             }
             foreach (var gone in missing)
             {
-                string label = (gone.Name.Length > 0 ? gone.Name : Loc.T("显示器", "Display")) + Loc.T("（未连接）", " (not connected)");
+                string label = (gone.Name.Length > 0 ? gone.Name : Loc.T("顯示器", "Display")) + Loc.T("（未連線）", " (not connected)");
                 rows.Add(DisplayLine(Row(label, RemoveButton(label, () => ChangeShared(s => s.DisplayMonitors.RemoveAll(c => c.Id == gone.Id))))));
             }
         }
         Group([.. rows]);
     }
 
-    // The displays are items under "显示在", so their names are not set as headings.
+    // The displays are items under "顯示在", so their names are not set as headings.
     private static Grid DisplayLine(Grid line)
     {
         if (line.Children[0] is StackPanel { Children: [HelpHeading or TextBlock] } labels && labels.Children[0] is TextBlock plain) plain.FontWeight = FontWeights.Normal;
@@ -271,17 +271,17 @@ public sealed partial class SettingsWindow
     // collapsed content's parts do (OptionsPartRow).
     private void ProfileRules(DeckSettings shared)
     {
-        SectionTitle(Loc.T("自动切换", "Switch automatically"));
-        PlayerNote(Loc.T("指定的应用运行或在前台时，自动切换到所选的配置；也可以为每台显示器单独指定配置或不显示面板。条件结束后恢复原样。多条规则同时满足时，排在上面的生效，拖动左侧的手柄可以调整顺序。规则对所有配置都有效。",
+        SectionTitle(Loc.T("自動切換", "Switch automatically"));
+        PlayerNote(Loc.T("指定的應用執行或在前臺時，自動切換到所選的配置；也可以為每臺顯示器單獨指定配置或不顯示面板。條件結束後恢復原樣。多條規則同時滿足時，排在上面的生效，拖動左側的手柄可以調整順序。規則對所有配置都有效。",
             "While the app runs or is in front, switches to the chosen profile; each display can also be given its own profile or no panel. When that ends, everything goes back. When several rules hold, the one higher up applies; drag the handle at the left to reorder. The rules apply whatever profile is in use."));
         var head = new Grid { MinHeight = 44 };
         head.ColumnDefinitions.Add(new ColumnDefinition()); head.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var label = TextLine(Loc.T("规则", "Rules"), 13, TextPrimary, FontWeights.SemiBold); label.VerticalAlignment = VerticalAlignment.Center;
+        var label = TextLine(Loc.T("規則", "Rules"), 13, TextPrimary, FontWeights.SemiBold); label.VerticalAlignment = VerticalAlignment.Center;
         head.Children.Add(label);
         int n = shared.ProfileRules.Count;
-        var count = TextLine(n == 0 ? Loc.T("未添加", "None") : Loc.T($"{n} 条", n == 1 ? "1 rule" : $"{n} rules"), 12, TextTertiary);
+        var count = TextLine(n == 0 ? Loc.T("未新增", "None") : Loc.T($"{n} 條", n == 1 ? "1 rule" : $"{n} rules"), 12, TextTertiary);
         count.VerticalAlignment = VerticalAlignment.Center; count.Margin = new Thickness(0, 0, 12, 0);
-        var add = AddAppButton(Loc.T("添加自动切换规则", "Add an automatic switch rule"), RuleMenu);
+        var add = AddAppButton(Loc.T("新增自動切換規則", "Add an automatic switch rule"), RuleMenu);
         add.IsEnabled = n < Profiles.MaximumRules;
         var controls = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         controls.Children.Add(count); controls.Children.Add(add);
@@ -318,26 +318,26 @@ public sealed partial class SettingsWindow
         Enable(rule.Enabled);
         // When the rule holds.
         var triggers = new UniformGrid { Columns = 2, Width = 240 };
-        foreach (var (trigger, text) in new[] { (ProfileTrigger.Running, Loc.T("应用运行时", "While it runs")), (ProfileTrigger.Foreground, Loc.T("应用在前台时", "While in front")) })
+        foreach (var (trigger, text) in new[] { (ProfileTrigger.Running, Loc.T("應用執行時", "While it runs")), (ProfileTrigger.Foreground, Loc.T("應用在前臺時", "While in front")) })
         {
             var option = new RadioButton { Content = text, Style = (Style)FindResource("SettingsSegment"), GroupName = "Trigger" + id.ToString("N"), IsChecked = rule.Trigger == trigger };
             AutomationProperties.SetName(option, name + " · " + text);
             option.Checked += (_, _) => Edit(r => r.Trigger = trigger);
             triggers.Children.Add(option);
         }
-        picks.Children.Add(Row(Loc.T("生效时机", "When"), SegmentBorder(triggers)));
+        picks.Children.Add(Row(Loc.T("生效時機", "When"), SegmentBorder(triggers)));
         // The profile it makes current.
-        var profiles = new List<string> { Loc.T("不切换配置", "Keep the profile in use") };
+        var profiles = new List<string> { Loc.T("不切換配置", "Keep the profile in use") };
         profiles.AddRange(shared.Profiles.Select(Profiles.Name));
         int selected = rule.Profile is { } wanted && shared.Profiles.FindIndex(p => p.Id == wanted) is >= 0 and var at ? at + 1 : 0;
-        picks.Children.Add(Row(Loc.T("切换到", "Switch to"), ProfileCombo(name + " · " + Loc.T("切换到", "Switch to"), profiles, selected,
+        picks.Children.Add(Row(Loc.T("切換到", "Switch to"), ProfileCombo(name + " · " + Loc.T("切換到", "Switch to"), profiles, selected,
             choice => Edit(r => r.Profile = choice == 0 ? null : shared.Profiles[choice - 1].Id))));
         // Each display while the rule holds: as the displays section sets it (what that is, in brackets), the profile in use, a
         // chosen profile, or no panel; in the order the displays section lists them.
         foreach (var display in displays)
         {
-            string label = displays.Count == 1 ? Loc.T("面板", "Panel") : Displays.Label(display, displays) + (display.Primary ? Loc.T(" · 主显示器", " · primary") : "");
-            var options = new List<string> { Loc.T($"跟随显示器设置（{DisplayUsually(shared, display, displays)}）", $"As the display is set ({DisplayUsually(shared, display, displays)})"), InUseLabel };
+            string label = displays.Count == 1 ? Loc.T("面板", "Panel") : Displays.Label(display, displays) + (display.Primary ? Loc.T(" · 主顯示器", " · primary") : "");
+            var options = new List<string> { Loc.T($"跟隨顯示器設定（{DisplayUsually(shared, display, displays)}）", $"As the display is set ({DisplayUsually(shared, display, displays)})"), InUseLabel };
             options.AddRange(shared.Profiles.Select(Profiles.Name));
             options.Add(NoPanelLabel);
             int hidden = options.Count - 1;
@@ -359,7 +359,7 @@ public sealed partial class SettingsWindow
             picks.Visibility = open ? Visibility.Visible : Visibility.Collapsed; PointArrow(arrow, open);
             item.Height = open ? double.NaN : RuleRowHeight;
         }
-        arrow = ChevronButton(Loc.T($"展开 {name} 规则", $"Show the {name} rule"), () => Show(!_openRules.Contains(id)));
+        arrow = ChevronButton(Loc.T($"展開 {name} 規則", $"Show the {name} rule"), () => Show(!_openRules.Contains(id)));
         arrow.Margin = new Thickness(2, 0, 0, 0);
         var heading = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 12, 0) };
         heading.Children.Add(AppIcon(rule.Path));
@@ -377,7 +377,7 @@ public sealed partial class SettingsWindow
         }
         var controls = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         var enabled = new CheckBox { Style = (Style)FindResource("SettingsToggle"), IsChecked = rule.Enabled, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 4, 0) };
-        AutomationProperties.SetName(enabled, Loc.T($"启用 {name} 规则", $"Enable the {name} rule"));
+        AutomationProperties.SetName(enabled, Loc.T($"啟用 {name} 規則", $"Enable the {name} rule"));
         enabled.Checked += (_, _) => { Edit(r => r.Enabled = true); Enable(true); };
         enabled.Unchecked += (_, _) => { Edit(r => r.Enabled = false); Enable(false); };
         controls.Children.Add(enabled);
@@ -417,8 +417,8 @@ public sealed partial class SettingsWindow
             .OrderBy(entry => entry.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
         foreach (var (app, name) in apps)
             menu.Items.Add(AppMenuItem(name, FileName(app.Name, app.Path), app.Path, () => AddRule(app.Name, app.Path)));
-        if (apps.Count == 0) menu.Items.Add(new MenuItem { Header = Loc.T("没有可添加的应用", "No apps to add"), IsEnabled = false });
-        AddBrowseItem(menu, Loc.T("选择应用", "Choose an app"), path => AddRule(System.IO.Path.GetFileNameWithoutExtension(path), path));
+        if (apps.Count == 0) menu.Items.Add(new MenuItem { Header = Loc.T("沒有可新增的應用", "No apps to add"), IsEnabled = false });
+        AddBrowseItem(menu, Loc.T("選擇應用", "Choose an app"), path => AddRule(System.IO.Path.GetFileNameWithoutExtension(path), path));
         menu.IsOpen = true;
     }
 

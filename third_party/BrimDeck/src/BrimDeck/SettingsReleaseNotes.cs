@@ -27,14 +27,14 @@ public sealed partial class SettingsWindow
         if (_notesDialog is not null || _updateDialog is not null || !IsVisible) return;
         var updates = _app.Updates;
         string? updatedFrom = updates.UpdatedFrom;
-        var dialog = new Window { Title = Loc.T("BrimDeck 更新内容", "What's new in BrimDeck"), Owner = this, Width = 560, SizeToContent = SizeToContent.Height,
+        var dialog = new Window { Title = Loc.T("BrimDeck 更新內容", "What's new in BrimDeck"), Owner = this, Width = 560, SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, ShowInTaskbar = false, FontFamily = SettingsFont(UiFontRole.Panel),
             Background = UI.Brush(Surface), Foreground = UI.Brush(TextPrimary) };
         dialog.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("/BrimDeck;component/SettingsResources.xaml", UriKind.Relative) });
         _palette.Apply(dialog.Resources); Native.SettingsChrome.Apply(dialog); dialog.ResizeMode = ResizeMode.NoResize;
         dialog.SourceInitialized += (_, _) => Native.SettingsChrome.SetTheme(dialog, _palette.Dark);
         var panel = new StackPanel { Margin = new Thickness(26, 22, 26, 24) };
-        var title = TextLine(Loc.T("更新内容", "What's new"), 21, TextPrimary, FontWeights.SemiBold); title.Margin = new Thickness(0, 0, 0, 16); panel.Children.Add(title);
+        var title = TextLine(Loc.T("更新內容", "What's new"), 21, TextPrimary, FontWeights.SemiBold); title.Margin = new Thickness(0, 0, 0, 16); panel.Children.Add(title);
 
         var list = new StackPanel { Margin = new Thickness(0, 0, 14, 0) };
         var entries = ReleaseHistory.Shown(ReleaseHistory.Bundled, updates.CurrentVersion, updates.Beta);
@@ -43,12 +43,12 @@ public sealed partial class SettingsWindow
             if (list.Children.Count > 0) list.Children.Add(new Border { Height = 1, Background = UI.Brush(_palette.RowDivider), Margin = new Thickness(0, 18, 0, 18) });
             list.Children.Add(ReleaseSection(entry, ReleaseHistory.IsNew(entry.Version, updatedFrom, updates.CurrentVersion)));
         }
-        if (entries.Count == 0) list.Children.Add(TextLine(Loc.T("这个版本没有附带更新说明。", "This version has no release notes."), 12, TextSecondary));
+        if (entries.Count == 0) list.Children.Add(TextLine(Loc.T("這個版本沒有附帶更新說明。", "This version has no release notes."), 12, TextSecondary));
         var scroll = new ScrollViewer { Content = list, MaxHeight = 480, Style = (Style)FindResource("SettingsScrollViewer") };
-        AutomationProperties.SetName(scroll, Loc.T("更新内容", "What's new"));
+        AutomationProperties.SetName(scroll, Loc.T("更新內容", "What's new"));
         panel.Children.Add(scroll);
 
-        var close = ActionButton(Loc.T("关闭", "Close"), dialog.Close); close.HorizontalAlignment = HorizontalAlignment.Right;
+        var close = ActionButton(Loc.T("關閉", "Close"), dialog.Close); close.HorizontalAlignment = HorizontalAlignment.Right;
         close.Margin = new Thickness(0, 18, 0, 0); close.IsCancel = true; panel.Children.Add(close);
         void Theme()
         {

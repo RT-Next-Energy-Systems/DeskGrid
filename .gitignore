@@ -491,3 +491,6 @@ artifacts/
 /context/progress.md
 /context/todo.md
 /context/session-log.md
+
+# BrimDeck (third_party) needs its release notes: the version and the "what is new" window come from them.
+!third_party/BrimDeck/releases/

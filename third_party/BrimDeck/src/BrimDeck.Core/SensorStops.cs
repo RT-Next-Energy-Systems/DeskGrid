@@ -51,13 +51,13 @@ public static class SensorStops
     // The line the settings show for a stop.
     public static string Notice(SensorStop stop) => stop.Reading switch
     {
-        GuardedReading.CpuTemperature => Loc.T("已停止读取 CPU 温度，上次读取时电脑可能卡住了。",
+        GuardedReading.CpuTemperature => Loc.T("已停止讀取 CPU 溫度，上次讀取時電腦可能卡住了。",
             "Stopped reading the CPU temperature: the PC may have frozen the last time it was read."),
-        GuardedReading.PowerMeter => Loc.T("已停止读取功率计与 CPU 功耗，上次读取时电脑可能卡住了。",
+        GuardedReading.PowerMeter => Loc.T("已停止讀取功率計與 CPU 功耗，上次讀取時電腦可能卡住了。",
             "Stopped reading the power meter and CPU power: the PC may have frozen the last time they were read."),
-        GuardedReading.GpuDriver => Loc.T($"已停止从驱动读取“{stop.Name}”的利用率与功耗，上次读取时电脑可能卡住了。",
+        GuardedReading.GpuDriver => Loc.T($"已停止從驅動讀取“{stop.Name}”的利用率與功耗，上次讀取時電腦可能卡住了。",
             $"Stopped reading the usage and power of “{stop.Name}” from its driver: the PC may have frozen the last time they were read."),
-        _ => Loc.T($"已停止读取“{stop.Name}”的温度，上次读取时电脑可能卡住了。",
+        _ => Loc.T($"已停止讀取“{stop.Name}”的溫度，上次讀取時電腦可能卡住了。",
             $"Stopped reading the temperature of “{stop.Name}”: the PC may have frozen the last time it was read.")
     };
 

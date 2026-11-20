@@ -15,7 +15,7 @@ namespace BrimDeck;
 // that descenders do not lift it. The text is placed on whole device pixels, where the measurement was made.
 //
 // The ink is measured as it is seen: a row at the top or bottom that holds only a few pixels, such as the tips of the hooks
-// in "时" and "除", counts for as much of a row as its ink is of a usual row's. Counted fully, those tips made "退出时清除" sit
+// in "時" and "除", counts for as much of a row as its ink is of a usual row's. Counted fully, those tips made "退出時清除" sit
 // half a pixel high. And where the room left above and below the letters is an odd number of pixels, no whole-pixel place
 // centres them, so the label they sit in (FitHeight) is made one pixel taller. A label that shows one of several words keeps
 // one height for all of them, the one that leaves the word furthest from the middle nearest it, so it does not change size

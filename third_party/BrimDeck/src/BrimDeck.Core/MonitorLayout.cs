@@ -86,8 +86,8 @@ public sealed record MonitorColors(string Performance, string Efficiency, string
 
     public static string Name(MonitorPalette palette) => palette switch
     {
-        MonitorPalette.Graphite => Loc.T("石墨", "Graphite"), MonitorPalette.Warm => Loc.T("暖色", "Warm"), MonitorPalette.Theme => Loc.T("跟随主题", "Theme"),
-        MonitorPalette.Custom => Loc.T("自定义", "Custom"), _ => Loc.T("海洋", "Sea")
+        MonitorPalette.Graphite => Loc.T("石墨", "Graphite"), MonitorPalette.Warm => Loc.T("暖色", "Warm"), MonitorPalette.Theme => Loc.T("跟隨主題", "Theme"),
+        MonitorPalette.Custom => Loc.T("自定義", "Custom"), _ => Loc.T("海洋", "Sea")
     };
 }
 

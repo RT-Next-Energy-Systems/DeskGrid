@@ -111,7 +111,7 @@ public partial class App : Application
         UseLanguage(); UseFont();
         PanelTheme.Use(Settings);
         ScheduleDaylight();
-        // "跟随系统" follows the Windows app theme while BrimDeck runs.
+        // "跟隨系統" follows the Windows app theme while BrimDeck runs.
         Microsoft.Win32.SystemEvents.UserPreferenceChanged += SystemThemeChanged;
         // The language a first start takes from Windows is kept, even if the display language changes later.
         if (Store.IsFirstStart) FlushSettings();
@@ -200,7 +200,7 @@ public partial class App : Application
     private void UseLanguage()
     {
         Loc.Use(Settings.Language);
-        Resources["PinSourceName"] = Loc.T("固定显示", "Pin");
+        Resources["PinSourceName"] = Loc.T("固定顯示", "Pin");
         Resources["UnpinSourceName"] = Loc.T("取消固定", "Unpin");
     }
     public void OpenSettings() => ShowSettings(false);
@@ -254,7 +254,7 @@ public partial class App : Application
             {
                 try { Secrets.Delete(previous.InstanceId); }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
-                { _settingsWindow?.SaveStatus(Loc.T("密钥文件无法更新，请检查本机设置目录后重试。", "The key file could not be updated. Check the local settings folder and try again."), true); return; }
+                { _settingsWindow?.SaveStatus(Loc.T("金鑰檔案無法更新，請檢查本機設定目錄後重試。", "The key file could not be updated. Check the local settings folder and try again."), true); return; }
             }
         }
         bool syncEnabled = settings.UsageAutoSync && !Settings.UsageAutoSync;
@@ -604,7 +604,7 @@ public partial class App : Application
         {
             string? error = null;
             try { Store.Write(text); }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { error = Loc.T("保存失败，请检查设置目录权限。", "Saving failed. Check the permissions of the settings folder."); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { error = Loc.T("儲存失敗，請檢查設定目錄許可權。", "Saving failed. Check the permissions of the settings folder."); }
             Dispatcher.BeginInvoke(() => { if (error is null) _settingsWindow?.SaveStatus(""); else _settingsWindow?.SaveStatus(error, true); });
         }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
     }

@@ -7,7 +7,7 @@ namespace BrimDeck.Core;
 // allowance, which has no share of its own to show. ReadAt is when the desktop app took a cached reading.
 public sealed record GrokBotReading(double? UsedPercent, DateTimeOffset? ResetAt, string Plan, DateTimeOffset? ReadAt = null)
 {
-    public List<Quota> Quotas => UsedPercent is { } used ? [new Quota("每周额度", Math.Clamp(used, 0, 100), ResetAt, 10080)] : [];
+    public List<Quota> Quotas => UsedPercent is { } used ? [new Quota("每週額度", Math.Clamp(used, 0, 100), ResetAt, 10080)] : [];
 }
 
 // The Grok Bot desktop app's own sign-in. A class rather than a record, so the token never appears in ToString.

@@ -27,9 +27,9 @@ public static class PhoneLinkCard
     // Words of the card's own interface, never a phone's name.
     private static readonly string[] Interface =
     [
-        "手机连接", "phone link", "打开", "open", "设置", "settings", "电池", "battery", "蓝牙", "bluetooth",
-        "短信", "messages", "呼叫", "call", "照片", "photos", "发送文件", "send files", "最近", "recent", "功能", "features",
-        "连接", "connect", "不可用", "unavailable"
+        "手机连接", "手機連線", "手機連接", "phone link", "打开", "打開", "open", "设置", "設定", "settings", "电池", "電池", "battery", "蓝牙", "藍牙", "bluetooth",
+        "短信", "簡訊", "messages", "呼叫", "call", "照片", "photos", "发送文件", "傳送檔案", "send files", "最近", "recent", "功能", "features",
+        "连接", "連線", "連接", "connect", "不可用", "unavailable"
     ];
     // The same words ready to match: English ones as whole words, so "call" is not found inside "Callie's" and "open" is
     // found only as a word of its own; Chinese ones as they stand, a run of characters without word breaks.
@@ -37,7 +37,7 @@ public static class PhoneLinkCard
         Interface.Where(word => word.All(c => c <= '\u007f')).Select(Regex.Escape)) + @")\b", RegexOptions.CultureInvariant);
     private static readonly string[] InterfaceCjk = Interface.Where(word => word.Any(c => c > '\u007f')).ToArray();
     private static readonly Regex PercentText = new(@"^\s*(\d{1,3})\s*%\s*$", RegexOptions.CultureInvariant);
-    private static readonly string[] NotCharging = ["discharging", "not charging", "未充电", "未充電", "不充电", "没有充电", "放电", "放電"];
+    private static readonly string[] NotCharging = ["discharging", "not charging", "未充电", "未充電", "不充电", "不充電", "没有充电", "沒有充電", "放电", "放電"];
     private static readonly string[] ChargingWords = ["charging", "正在充电", "正在充電", "充电中", "充電中", "已接通电源", "已接通電源"];
 
     public static PhoneLinkReading? Parse(string? json)
@@ -119,14 +119,14 @@ public static class PhoneLinkCard
             if (dash >= 2 && Looks(text[..dash].Trim())) return text[..dash].Trim();
         }
         foreach (var text in texts) if (Looks(text)) return text;
-        return Loc.T("手机", "Phone");
+        return Loc.T("手機", "Phone");
     }
 
     private static bool Looks(string text)
     {
         if (text.Length is < 2 or > 60 || Percent(text) is not null) return false;
         var lower = text.ToLowerInvariant();
-        // What the phone is doing is said in words of its own ("正在充电", "discharging"), which are never its name.
+        // What the phone is doing is said in words of its own ("正在充電", "discharging"), which are never its name.
         if (ChargingWords.Any(word => lower.Contains(word, StringComparison.Ordinal))
             || NotCharging.Any(word => lower.Contains(word, StringComparison.Ordinal))) return false;
         if (InterfaceText(lower)) return false;

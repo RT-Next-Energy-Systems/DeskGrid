@@ -52,10 +52,10 @@ internal sealed class ClockFace : FrameworkElement
 
     public static string Title(ClockStyle style) => style switch
     {
-        ClockStyle.Stacked => Loc.T("双行", "Two lines"), ClockStyle.Digits => Loc.T("叠放", "Stacked digits"), ClockStyle.Dots => Loc.T("点阵", "Dot matrix"),
-        ClockStyle.Segment => Loc.T("数码管", "Seven segment"), ClockStyle.Neon => Loc.T("霓虹", "Neon"), ClockStyle.Serif => Loc.T("衬线", "Serif"),
-        ClockStyle.Wide => Loc.T("宽体", "Wide"), ClockStyle.Condensed => Loc.T("窄体", "Condensed"), ClockStyle.Pixel => Loc.T("像素", "Pixel"),
-        ClockStyle.Rounded => Loc.T("圆润", "Rounded"), _ => Loc.T("简约", "Simple")
+        ClockStyle.Stacked => Loc.T("雙行", "Two lines"), ClockStyle.Digits => Loc.T("疊放", "Stacked digits"), ClockStyle.Dots => Loc.T("點陣", "Dot matrix"),
+        ClockStyle.Segment => Loc.T("數碼管", "Seven segment"), ClockStyle.Neon => Loc.T("霓虹", "Neon"), ClockStyle.Serif => Loc.T("襯線", "Serif"),
+        ClockStyle.Wide => Loc.T("寬體", "Wide"), ClockStyle.Condensed => Loc.T("窄體", "Condensed"), ClockStyle.Pixel => Loc.T("畫素", "Pixel"),
+        ClockStyle.Rounded => Loc.T("圓潤", "Rounded"), _ => Loc.T("簡約", "Simple")
     };
     // The cover color is used when a song with a cover is playing; otherwise the clock takes the theme's clock color, which
     // "white" stands for. Every color is drawn as the theme can read it on its surface (see Look.Readable). Under high

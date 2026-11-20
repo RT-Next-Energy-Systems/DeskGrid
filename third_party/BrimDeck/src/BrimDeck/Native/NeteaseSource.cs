@@ -25,7 +25,7 @@ internal sealed record NeteaseProcess(int Id, long Started, string Path, int? De
         var deadline = Environment.TickCount64 + 15_000;
         while (IsAlive() || !request.HasExited)
         {
-            if (Environment.TickCount64 >= deadline) throw new InvalidOperationException(Loc.T("网易云未响应退出请求，请稍后重试。", "NetEase Cloud Music did not respond to the request to quit. Try again later."));
+            if (Environment.TickCount64 >= deadline) throw new InvalidOperationException(Loc.T("網易雲未響應退出請求，請稍後重試。", "NetEase Cloud Music did not respond to the request to quit. Try again later."));
             await Task.Delay(100, cancellationToken).ConfigureAwait(false);
         }
     }
@@ -33,7 +33,7 @@ internal sealed record NeteaseProcess(int Id, long Started, string Path, int? De
     {
         var info = new ProcessStartInfo(path) { UseShellExecute = true, WorkingDirectory = System.IO.Path.GetDirectoryName(path)! };
         foreach (var argument in arguments) info.ArgumentList.Add(argument);
-        var process = Process.Start(info) ?? throw new InvalidOperationException(Loc.T("无法启动网易云。", "NetEase Cloud Music could not be started."));
+        var process = Process.Start(info) ?? throw new InvalidOperationException(Loc.T("無法啟動網易雲。", "NetEase Cloud Music could not be started."));
         // Shell execution keeps the player's diagnostic streams detached from BrimDeck.
         return process;
     }
@@ -101,7 +101,7 @@ internal sealed class NeteaseSource : IMediaPlayerConnection
 {
     internal const int ControlPort = 21631;
     // A failed connection leaves BrimDeck reading only what plays, but the player keeps the port it was started with.
-    internal static string PortStillOpen => Loc.T("BrimDeck 已改为只读取播放信息。网易云如果仍在运行，它的调试端口仍然开着；以普通方式重新启动网易云即可关闭。",
+    internal static string PortStillOpen => Loc.T("BrimDeck 已改為只讀取播放資訊。網易雲如果仍在執行，它的除錯埠仍然開著；以普通方式重新啟動網易雲即可關閉。",
         " BrimDeck now only reads what is playing. If NetEase Cloud Music is still running, its debugging port is still open; start NetEase Cloud Music again the normal way to close it.");
     private readonly CancellationTokenSource _stop = new();
     private readonly SemaphoreSlim _refresh = new(1, 1);
@@ -171,7 +171,7 @@ internal sealed class NeteaseSource : IMediaPlayerConnection
         {
             try { await RefreshAsync().ConfigureAwait(false); }
             catch (OperationCanceledException) when (_stop.IsCancellationRequested) { break; }
-            catch { Error = Loc.T("网易云来源暂时不可用。", "The NetEase Cloud Music source is temporarily unavailable."); }
+            catch { Error = Loc.T("網易雲來源暫時不可用。", "The NetEase Cloud Music source is temporarily unavailable."); }
             try { await _wake.WaitAsync(TimeSpan.FromSeconds(AutoPending || FilePending ? 1 : 5), _stop.Token).ConfigureAwait(false); }
             catch (OperationCanceledException) { break; }
         }
@@ -224,7 +224,7 @@ internal sealed class NeteaseSource : IMediaPlayerConnection
             if (_cdp is { Failed: true })
             {
                 _cdpFailed = true;
-                Error = (_cdp.Error ?? Loc.T("完整控制连接失败。", "The full control connection failed.")) + PortStillOpen;
+                Error = (_cdp.Error ?? Loc.T("完整控制連線失敗。", "The full control connection failed.")) + PortStillOpen;
                 _cdp.Changed -= CdpChanged; _cdp.Dispose(); _cdp = null;
             }
             if (_cdp is not null) { PublishCdp(); return; }
@@ -287,7 +287,7 @@ internal sealed class NeteaseSource : IMediaPlayerConnection
         Error = null; Changed?.Invoke();
         try
         {
-            string path = owner?.Path ?? Volatile.Read(ref _installed) ?? NeteaseProcess.FindInstalled() ?? throw new InvalidOperationException(Loc.T("未找到网易云音乐。", "NetEase Cloud Music was not found."));
+            string path = owner?.Path ?? Volatile.Read(ref _installed) ?? NeteaseProcess.FindInstalled() ?? throw new InvalidOperationException(Loc.T("未找到網易雲音樂。", "NetEase Cloud Music was not found."));
             if (owner is not null) await owner.ExitAsync(_stop.Token).ConfigureAwait(false);
             // The user asked for this start, so the player starts the ordinary way and its window appears.
             using var launched = NeteaseProcess.Start(path,
@@ -314,7 +314,7 @@ internal sealed class NeteaseSource : IMediaPlayerConnection
                 if (_cdp is { } failed) { _cdp = null; failed.Changed -= CdpChanged; failed.Dispose(); }
             }
             finally { _refresh.Release(); }
-            throw new InvalidOperationException(Loc.T("未能建立完整控制连接。", "The full control connection could not be made.") + PortStillOpen);
+            throw new InvalidOperationException(Loc.T("未能建立完整控制連線。", "The full control connection could not be made.") + PortStillOpen);
         }
         catch (OperationCanceledException) { return false; }
         catch (Exception ex) { if (!quiet) Error = ex.Message; return false; }
@@ -383,7 +383,7 @@ internal sealed class NeteaseSource : IMediaPlayerConnection
         catch (Exception ex) { return ex.Message; }
         _fileState = LibcefPatchState.Patched; _fileCheckedAt = Environment.TickCount64;
         if (_process?.IsAlive() == true && _cdp?.Ready != true && !await EnableFullControlAsync().ConfigureAwait(false))
-            return Error ?? Loc.T("未能建立完整控制连接。", "The full control connection could not be made.");
+            return Error ?? Loc.T("未能建立完整控制連線。", "The full control connection could not be made.");
         Signal(); return null;
     }
     // Restores the file; a running player keeps the port until its next start, as its explanation says.

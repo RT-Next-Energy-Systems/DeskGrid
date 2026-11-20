@@ -39,7 +39,7 @@ public static class ShelfRules
     public static readonly RuleField[] FileFields = [RuleField.FileType, RuleField.Extension, RuleField.FileName, RuleField.Folder];
     public static RuleField[] Fields(ShelfSide side) => side == ShelfSide.Clipboard ? ClipFields : FileFields;
 
-    // A condition new in the editor: "内容类型" or "文件类型", nothing picked yet.
+    // A condition new in the editor: "內容型別" or "檔案型別", nothing picked yet.
     public static RuleCondition NewCondition(ShelfSide side) => new() { Field = side == ShelfSide.Clipboard ? RuleField.Kind : RuleField.FileType };
 
     public static bool Filled(RuleCondition condition) => condition.Field is RuleField.Kind or RuleField.FileType
@@ -58,12 +58,12 @@ public static class ShelfRules
         {
             return error.Error switch
             {
-                RegexParseError.InsufficientClosingParentheses => Loc.T("缺少右括号。", "A closing parenthesis is missing."),
-                RegexParseError.InsufficientOpeningParentheses => Loc.T("右括号多于左括号。", "There are more closing parentheses than opening ones."),
-                RegexParseError.UnterminatedBracket => Loc.T("缺少右方括号。", "A closing bracket is missing."),
-                RegexParseError.QuantifierAfterNothing => Loc.T("数量符号前面没有内容。", "A quantifier has nothing before it."),
-                RegexParseError.UnescapedEndingBackslash => Loc.T("末尾的反斜杠需要再写一个。", "The backslash at the end needs another one."),
-                _ => Loc.T($"第 {error.Offset} 个字符处有误。", $"There is a mistake at character {error.Offset}.")
+                RegexParseError.InsufficientClosingParentheses => Loc.T("缺少右括號。", "A closing parenthesis is missing."),
+                RegexParseError.InsufficientOpeningParentheses => Loc.T("右括號多於左括號。", "There are more closing parentheses than opening ones."),
+                RegexParseError.UnterminatedBracket => Loc.T("缺少右方括號。", "A closing bracket is missing."),
+                RegexParseError.QuantifierAfterNothing => Loc.T("數量符號前面沒有內容。", "A quantifier has nothing before it."),
+                RegexParseError.UnescapedEndingBackslash => Loc.T("末尾的反斜槓需要再寫一個。", "The backslash at the end needs another one."),
+                _ => Loc.T($"第 {error.Offset} 個字元處有誤。", $"There is a mistake at character {error.Offset}.")
             };
         }
     }
@@ -210,23 +210,23 @@ public static class ShelfRules
     // ---- Names, for the editor and the summary ----
     public static string Name(RuleField field) => field switch
     {
-        RuleField.Kind => Loc.T("内容类型", "Kind"), RuleField.Text => Loc.T("文字", "Text"), RuleField.Site => Loc.T("链接网站", "Link site"),
-        RuleField.Source => Loc.T("来源应用", "Source app"), RuleField.FileType => Loc.T("文件类型", "File type"), RuleField.Extension => Loc.T("扩展名", "Extension"),
-        RuleField.FileName => Loc.T("文件名", "File name"), _ => Loc.T("所在文件夹", "Folder")
+        RuleField.Kind => Loc.T("內容型別", "Kind"), RuleField.Text => Loc.T("文字", "Text"), RuleField.Site => Loc.T("連結網站", "Link site"),
+        RuleField.Source => Loc.T("來源應用", "Source app"), RuleField.FileType => Loc.T("檔案型別", "File type"), RuleField.Extension => Loc.T("副檔名", "Extension"),
+        RuleField.FileName => Loc.T("檔名", "File name"), _ => Loc.T("所在資料夾", "Folder")
     };
     public static string Name(RuleTest test) => test switch
     {
-        RuleTest.Contains => Loc.T("包含", "contains"), RuleTest.StartsWith => Loc.T("开头是", "starts with"), RuleTest.EndsWith => Loc.T("结尾是", "ends with"),
-        RuleTest.Format => Loc.T("是", "is"), _ => Loc.T("符合正则", "matches regex")
+        RuleTest.Contains => Loc.T("包含", "contains"), RuleTest.StartsWith => Loc.T("開頭是", "starts with"), RuleTest.EndsWith => Loc.T("結尾是", "ends with"),
+        RuleTest.Format => Loc.T("是", "is"), _ => Loc.T("符合正則", "matches regex")
     };
     public static string Name(ClipKind kind) => kind switch
     {
-        ClipKind.Link => Loc.T("链接", "Link"), ClipKind.Code => Loc.T("代码", "Code"), ClipKind.Color => Loc.T("颜色", "Color"), ClipKind.Image => Loc.T("图片", "Picture"), _ => Loc.T("文字", "Text")
+        ClipKind.Link => Loc.T("連結", "Link"), ClipKind.Code => Loc.T("程式碼", "Code"), ClipKind.Color => Loc.T("顏色", "Color"), ClipKind.Image => Loc.T("圖片", "Picture"), _ => Loc.T("文字", "Text")
     };
     public static string Name(TextFormat format) => format switch
     {
-        TextFormat.Email => Loc.T("邮箱地址", "Email address"), TextFormat.Phone => Loc.T("手机号码", "Mobile number"), TextFormat.Path => Loc.T("文件路径", "File path"),
-        TextFormat.IpAddress => Loc.T("IP 地址", "IP address"), TextFormat.Number => Loc.T("纯数字", "Number"), _ => Loc.T("Git 提交号", "Git commit")
+        TextFormat.Email => Loc.T("郵箱地址", "Email address"), TextFormat.Phone => Loc.T("手機號碼", "Mobile number"), TextFormat.Path => Loc.T("檔案路徑", "File path"),
+        TextFormat.IpAddress => Loc.T("IP 地址", "IP address"), TextFormat.Number => Loc.T("純數字", "Number"), _ => Loc.T("Git 提交號", "Git commit")
     };
     public static string Example(TextFormat format) => format switch
     {
@@ -235,13 +235,13 @@ public static class ShelfRules
     };
     public static string Name(FileKind kind) => kind switch
     {
-        FileKind.Folder => Loc.T("文件夹", "Folder"), FileKind.Image => Loc.T("图片", "Image"), FileKind.Document => Loc.T("文档", "Document"),
+        FileKind.Folder => Loc.T("資料夾", "Folder"), FileKind.Image => Loc.T("圖片", "Image"), FileKind.Document => Loc.T("文件", "Document"),
         FileKind.Spreadsheet => Loc.T("表格", "Spreadsheet"), FileKind.Presentation => Loc.T("演示文稿", "Presentation"), FileKind.Pdf => "PDF",
-        FileKind.Archive => Loc.T("压缩包", "Archive"), FileKind.Installer => Loc.T("安装包", "Installer"), FileKind.Video => Loc.T("视频", "Video"),
-        FileKind.Audio => Loc.T("音频", "Audio"), _ => Loc.T("代码", "Code")
+        FileKind.Archive => Loc.T("壓縮包", "Archive"), FileKind.Installer => Loc.T("安裝包", "Installer"), FileKind.Video => Loc.T("影片", "Video"),
+        FileKind.Audio => Loc.T("音訊", "Audio"), _ => Loc.T("程式碼", "Code")
     };
 
-    // One line for the category's row: each condition said on its own ("图片或链接", "来自 chrome"), joined by "或" or "且".
+    // One line for the category's row: each condition said on its own ("圖片或連結", "來自 chrome"), joined by "或" or "且".
     public static string Summary(ShelfRule rule, ShelfSide side)
     {
         var parts = Used(rule, side).Select(Describe).ToList();
@@ -257,8 +257,8 @@ public static class ShelfRules
         {
             RuleField.Kind => string.Join(or, c.Values.Select(v => Enum.TryParse<ClipKind>(v, out var k) ? Name(k) : v)),
             RuleField.FileType => string.Join(or, c.Values.Select(v => Enum.TryParse<FileKind>(v, out var k) ? Name(k) : v)),
-            RuleField.Site => Loc.T($"{list} 的链接", $"links to {list}"),
-            RuleField.Source => Loc.T($"来自 {Apps()}", $"from {Apps()}"),
+            RuleField.Site => Loc.T($"{list} 的連結", $"links to {list}"),
+            RuleField.Source => Loc.T($"來自 {Apps()}", $"from {Apps()}"),
             RuleField.Extension => list,
             RuleField.Folder => Loc.T($"在 {c.Value.Trim()} 中", $"in {c.Value.Trim()}"),
             _ when c.Test == RuleTest.Format => Enum.TryParse<TextFormat>(c.Value, out var f) ? Name(f) : c.Value,

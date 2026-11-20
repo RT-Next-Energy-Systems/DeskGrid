@@ -154,43 +154,43 @@ internal static class UI
     // Null when there is nothing to add to the amount itself, so the cost shows no tooltip.
     public static string? CostNote(CostSummary cost, Pricing pricing)
     {
-        if (!cost.HasValue && cost.Unpriced == 0) return Loc.T("无用量记录", "No usage records");
-        if (!cost.HasValue && cost.Unpriced > 0) return pricing.LastError ?? Loc.T("未匹配到完整价格", "Prices could not be matched for every record");
+        if (!cost.HasValue && cost.Unpriced == 0) return Loc.T("無用量記錄", "No usage records");
+        if (!cost.HasValue && cost.Unpriced > 0) return pricing.LastError ?? Loc.T("未匹配到完整價格", "Prices could not be matched for every record");
         var lines = new List<string>();
         if (cost.IsEstimate && pricing.UpdatedAt is { } time)
-            lines.Add(Loc.T($"价格更新 {time.LocalDateTime:MM-dd HH:mm}", $"Prices updated {time.LocalDateTime:MM-dd HH:mm}") +
-                (pricing.IsStale || pricing.LastError is not null ? Loc.T(" · 缓存", " · cached") : ""));
-        if (cost.Fitted > 0) lines.Add(Loc.T($"{cost.Fitted} 条记录的费用按每周已用金额分摊", Loc.Count(cost.Fitted, "record shares", "records share") + " the weekly amount used"));
-        if (cost.Unpriced > 0) lines.Add(Loc.T($"{cost.Unpriced} 条记录未计价", Loc.Count(cost.Unpriced, "record has", "records have") + " no price"));
+            lines.Add(Loc.T($"價格更新 {time.LocalDateTime:MM-dd HH:mm}", $"Prices updated {time.LocalDateTime:MM-dd HH:mm}") +
+                (pricing.IsStale || pricing.LastError is not null ? Loc.T(" · 快取", " · cached") : ""));
+        if (cost.Fitted > 0) lines.Add(Loc.T($"{cost.Fitted} 條記錄的費用按每週已用金額分攤", Loc.Count(cost.Fitted, "record shares", "records share") + " the weekly amount used"));
+        if (cost.Unpriced > 0) lines.Add(Loc.T($"{cost.Unpriced} 條記錄未計價", Loc.Count(cost.Unpriced, "record has", "records have") + " no price"));
         return lines.Count == 0 ? null : string.Join("\n", lines);
     }
     public static string Reset(DateTimeOffset? date)
     {
-        if (date is null) return Loc.T("重置时间未知", "Reset time unknown");
+        if (date is null) return Loc.T("重置時間未知", "Reset time unknown");
         var remaining = date.Value - DateTimeOffset.Now;
-        if (remaining <= TimeSpan.Zero) return Loc.T("已到重置时间，等待更新", "Reset time reached; waiting for an update");
-        if (remaining.TotalDays >= 1) return Loc.T($"{(int)remaining.TotalDays} 天 {remaining.Hours} 小时后重置", $"Resets in {(int)remaining.TotalDays} d {remaining.Hours} h");
-        if (remaining.TotalHours >= 1) return Loc.T($"{remaining.Hours} 小时 {remaining.Minutes} 分后重置", $"Resets in {remaining.Hours} h {remaining.Minutes} min");
+        if (remaining <= TimeSpan.Zero) return Loc.T("已到重置時間，等待更新", "Reset time reached; waiting for an update");
+        if (remaining.TotalDays >= 1) return Loc.T($"{(int)remaining.TotalDays} 天 {remaining.Hours} 小時後重置", $"Resets in {(int)remaining.TotalDays} d {remaining.Hours} h");
+        if (remaining.TotalHours >= 1) return Loc.T($"{remaining.Hours} 小時 {remaining.Minutes} 分後重置", $"Resets in {remaining.Hours} h {remaining.Minutes} min");
         int minutes = Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes));
-        return Loc.T($"{minutes} 分钟后重置", $"Resets in {minutes} min");
+        return Loc.T($"{minutes} 分鐘後重置", $"Resets in {minutes} min");
     }
     public static string ShortReset(DateTimeOffset? date)
     {
         if (date is null) return "";
         var remaining = date.Value - DateTimeOffset.Now;
         if (remaining <= TimeSpan.Zero) return Loc.T("待重置", "Reset due");
-        if (remaining.TotalDays >= 1) return Loc.T($"{(int)remaining.TotalDays} 天 {remaining.Hours} 时后", $"in {(int)remaining.TotalDays}d {remaining.Hours}h");
-        if (remaining.TotalHours >= 1) return Loc.T($"{remaining.Hours} 时 {remaining.Minutes} 分后", $"in {remaining.Hours}h {remaining.Minutes}m");
+        if (remaining.TotalDays >= 1) return Loc.T($"{(int)remaining.TotalDays} 天 {remaining.Hours} 時後", $"in {(int)remaining.TotalDays}d {remaining.Hours}h");
+        if (remaining.TotalHours >= 1) return Loc.T($"{remaining.Hours} 時 {remaining.Minutes} 分後", $"in {remaining.Hours}h {remaining.Minutes}m");
         int minutes = Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes));
-        return Loc.T($"{minutes} 分后", $"in {minutes}m");
+        return Loc.T($"{minutes} 分後", $"in {minutes}m");
     }
-    // "Gemini · 5 小时" → group "Gemini", which orders the quota pages. The group stays in the data's words.
+    // "Gemini · 5 小時" → group "Gemini", which orders the quota pages. The group stays in the data's words.
     public static string QuotaGroup(Quota quota) => quota.Label.Contains('·') ? quota.Label.Split('·')[0].Trim() : "";
-    // "5 小时额度" → "5 小时"; "Gemini · 5 小时" → "Gemini 5 小时" and "Claude · 每周" → "Claude 每周", written like
+    // "5 小時額度" → "5 小時"; "Gemini · 5 小時" → "Gemini 5 小時" and "Claude · 每週" → "Claude 每週", written like
     // Claude's "Opus 每周", so a grouped quota names its group in its own row. The shown label is translated.
     public static string QuotaLabel(Quota quota)
     {
-        var period = (quota.Label.Contains('·') ? quota.Label.Split('·')[^1] : quota.Label).Replace("额度", "", StringComparison.Ordinal).Trim();
+        var period = (quota.Label.Contains('·') ? quota.Label.Split('·')[^1] : quota.Label).Replace("額度", "", StringComparison.Ordinal).Trim();
         var group = QuotaGroup(quota);
         if (group.Length == 0) return Loc.Label(period);
         return period == "每周" ? Loc.Label(group + " 每周") : group + " " + Loc.Label(period);

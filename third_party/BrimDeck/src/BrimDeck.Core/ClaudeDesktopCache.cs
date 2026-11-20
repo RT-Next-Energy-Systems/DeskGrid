@@ -10,12 +10,12 @@ public enum ClaudePlanOrigin { None, Account, SignIn, LocalRecord }
 public static class ClaudeSources
 {
     public static string Name(ClaudeSignIn signIn) => signIn == ClaudeSignIn.Code ? "Claude Code" : Loc.T("Claude 桌面版", "Claude desktop app");
-    public static string Quota(ClaudeSignIn signIn) => Name(signIn) + Loc.T(" · 账户配额", " · account quota");
+    public static string Quota(ClaudeSignIn signIn) => Name(signIn) + Loc.T(" · 賬戶配額", " · account quota");
     public static string Plan(ClaudePlanOrigin origin, ClaudeSignIn signIn) => origin switch
     {
-        ClaudePlanOrigin.Account => Loc.T("Claude 账户", "Claude account"),
-        ClaudePlanOrigin.SignIn => Name(signIn) + Loc.T(" 登录记录", " sign-in record"),
-        ClaudePlanOrigin.LocalRecord => Loc.T("Claude 本地账户记录", "Claude local account record"),
+        ClaudePlanOrigin.Account => Loc.T("Claude 賬戶", "Claude account"),
+        ClaudePlanOrigin.SignIn => Name(signIn) + Loc.T(" 登入記錄", " sign-in record"),
+        ClaudePlanOrigin.LocalRecord => Loc.T("Claude 本地賬戶記錄", "Claude local account record"),
         _ => ""
     };
 }

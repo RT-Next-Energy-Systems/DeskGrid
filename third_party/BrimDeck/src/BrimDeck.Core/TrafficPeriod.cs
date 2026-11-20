@@ -22,12 +22,12 @@ public static class TrafficPeriods
         return new DateTimeOffset(date, zone.GetUtcOffset(date));
     }
 
-    // The span's name, before its figure on the page and in the tooltips: "当天", "1 天", "7 天", "30 天".
+    // The span's name, before its figure on the page and in the tooltips: "當天", "1 天", "7 天", "30 天".
     public static string Name(TrafficPeriod period) => period switch
     {
         TrafficPeriod.Day => Loc.T("1 天", "1 day"),
         TrafficPeriod.Week => Loc.T("7 天", "7 days"),
         TrafficPeriod.Month => Loc.T("30 天", "30 days"),
-        _ => Loc.T("当天", "Today")
+        _ => Loc.T("當天", "Today")
     };
 }

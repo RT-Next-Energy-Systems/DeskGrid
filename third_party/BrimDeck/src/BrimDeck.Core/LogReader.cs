@@ -84,17 +84,17 @@ public sealed class LogReader
             _merged[id] = merged = (cutoff, entries.Values.OrderBy(x => x.Time).ToList());
         }
         result.Entries = merged.Entries;
-        var where = place ?? Loc.T("本机", "This PC");
-        result.UsageNote = result.UsageAvailable ? Loc.T($"{where} {cutoff.LocalDateTime:yyyy-MM-dd} 起 · {count} 个记录文件", $"{where} since {cutoff.LocalDateTime:yyyy-MM-dd} · " + Loc.Count(count, "record file", "record files"))
-            : Loc.T("未找到本机会话记录。", "No local session records were found.");
+        var where = place ?? Loc.T("本機", "This PC");
+        result.UsageNote = result.UsageAvailable ? Loc.T($"{where} {cutoff.LocalDateTime:yyyy-MM-dd} 起 · {count} 個記錄檔案", $"{where} since {cutoff.LocalDateTime:yyyy-MM-dd} · " + Loc.Count(count, "record file", "record files"))
+            : Loc.T("未找到本機會話記錄。", "No local session records were found.");
         result.UsageComplete = errors == 0;
-        if (errors > 0) result.UsageNote += Loc.T($" · {errors} 处记录未能读取", " · " + Loc.Count(errors, "record", "records") + " could not be read");
+        if (errors > 0) result.UsageNote += Loc.T($" · {errors} 處記錄未能讀取", " · " + Loc.Count(errors, "record", "records") + " could not be read");
         if (latestQuota.ValueKind == JsonValueKind.Object)
         {
             result.Quotas = QuotaParser.Codex(latestQuota, result.QuotaTime ?? now, false);
             result.Plan = latestQuota.Get("plan_type").Text();
-            result.Source = Loc.T("本地配额快照", "Local quota snapshot");
-            result.Status = Loc.T("本地记录", "Local records");
+            result.Source = Loc.T("本地配額快照", "Local quota snapshot");
+            result.Status = Loc.T("本地記錄", "Local records");
         }
         return result;
     }
@@ -317,7 +317,7 @@ public static class QuotaParser
                 (window.Get("window_minutes").Number() is { } mins ? (int)mins : null);
             var reset = window.Get(online ? "reset_at" : "resets_at").Date();
             if (reset is null && window.Get("reset_after_seconds").Number() is { } after && after is >= 0 and < 31536000) reset = now.AddSeconds(after);
-            string label = minutes switch { 300 => "5 小时额度", 10080 => "每周额度", > 0 => $"{minutes} 分钟额度", _ => field.StartsWith("primary") ? "主要额度" : "次要额度" };
+            string label = minutes switch { 300 => "5 小時額度", 10080 => "每週額度", > 0 => $"{minutes} 分鐘額度", _ => field.StartsWith("primary") ? "主要額度" : "次要額度" };
             result.Add(new(label, Math.Clamp(used, 0, 100), reset, minutes));
         }
         return result;
@@ -330,7 +330,7 @@ public static class QuotaParser
             if (percent is not { } value || value < 0 || result.Any(q => q.Label == label)) return;
             result.Add(new(label, value, reset, window));
         }
-        foreach (var (key, label, window) in new[] { ("five_hour", "5 小时额度", 300), ("seven_day", "每周额度", 10080) })
+        foreach (var (key, label, window) in new[] { ("five_hour", "5 小時額度", 300), ("seven_day", "每週額度", 10080) })
             Add(label, root.Get(key).Get("utilization").Number(), root.Get(key).Get("resets_at").Date(), window);
         // Current Claude clients read server-driven limits, including Fable, from scope.model.display_name.
         // The server decides entitlement; missing/null meters never become an invented zero for a plan.
@@ -339,8 +339,8 @@ public static class QuotaParser
             string kind = limit.Get("kind").Text(), group = limit.Get("group").Text();
             string model = limit.Get("scope").Get("model").Get("display_name").Text();
             string surface = limit.Get("scope").Get("surface").Get("display_name").Text();
-            if (kind == "session") Add("5 小时额度", limit.Get("percent").Number(), limit.Get("resets_at").Date(), 300);
-            else if (kind == "weekly_all") Add("每周额度", limit.Get("percent").Number(), limit.Get("resets_at").Date(), 10080);
+            if (kind == "session") Add("5 小時額度", limit.Get("percent").Number(), limit.Get("resets_at").Date(), 300);
+            else if (kind == "weekly_all") Add("每週額度", limit.Get("percent").Number(), limit.Get("resets_at").Date(), 10080);
             else if (!string.IsNullOrWhiteSpace(model.Length > 0 ? model : surface))
             {
                 var name = model.Length > 0 ? model : surface;
@@ -366,12 +366,12 @@ public static class QuotaParser
         {
             if (plan.Get("totalPercentUsed").Number() is not { } used) return result;
             int? minutes = root.Get("billingCycleStart").Date() is { } begin && reset is { } end && end > begin ? (int)Math.Round((end - begin).TotalMinutes) : null;
-            result.Add(new(minutes == 10080 ? "每周额度" : "账期额度", Math.Clamp(used, 0, 100), reset, minutes));
+            result.Add(new(minutes == 10080 ? "每週額度" : "賬期額度", Math.Clamp(used, 0, 100), reset, minutes));
             return result;
         }
         foreach (var (key, label) in new[] { ("autoPercentUsed", "Cursor 模型"), ("apiPercentUsed", "其他模型") })
             if (plan.Get(key).Number() is { } percent) result.Add(new(label, Math.Clamp(percent, 0, 100), reset));
-        if (result.Count == 0 && plan.Get("totalPercentUsed").Number() is { } total) result.Add(new("账期额度", Math.Clamp(total, 0, 100), reset));
+        if (result.Count == 0 && plan.Get("totalPercentUsed").Number() is { } total) result.Add(new("賬期額度", Math.Clamp(total, 0, 100), reset));
         return result;
     }
     // GetSandUsageStatus reports one weekly figure for the Grok Bot / Cursor account: how much of the included
@@ -413,7 +413,7 @@ public static class QuotaParser
         if (window.Length == 0) window = id.EndsWith("-5h", StringComparison.OrdinalIgnoreCase) ? "5h" : id.EndsWith("-weekly", StringComparison.OrdinalIgnoreCase) ? "weekly" : "";
         var (period, minutes) = window switch
         {
-            "5h" => ("5 小时", (int?)300),
+            "5h" => ("5 小時", (int?)300),
             "daily" or "1d" => ("每日", 1440),
             "weekly" or "7d" => ("每周", 10080),
             _ => (bucket.Get("displayName").Text() is { Length: > 0 } name ? name : id, (int?)null)

@@ -85,7 +85,7 @@ public static class MediaRouting
     }
 
     // Apple Music's session reports "<artist> — <album>" as the artist and leaves the album empty (measured with
-    // version 1.1540.23042.0: "伍佰 & China Blue — 泪桥 - Single"). The first dash ends the artist.
+    // version 1.1540.23042.0: "伍佰 & China Blue — 淚橋 - Single"). The first dash ends the artist.
     public static (string Artist, string Album) SessionArtistAlbum(string appId, string artist, string album)
     {
         const string separator = " — ";

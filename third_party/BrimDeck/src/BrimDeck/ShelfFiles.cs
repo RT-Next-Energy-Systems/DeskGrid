@@ -141,7 +141,7 @@ internal static class ShelfFiles
         if (Icons.Count > 1000) { Icons.Clear(); Asked.Clear(); }
         return icon;
     }
-    // The Explorer's name for the file's type, such as "PNG 文件" or "文件夹".
+    // The Explorer's name for the file's type, such as "PNG 檔案" or "資料夾".
     public static string TypeName(string path)
     {
         if (Types.TryGetValue(path, out var known)) return known;

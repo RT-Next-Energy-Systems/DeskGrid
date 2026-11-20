@@ -91,7 +91,7 @@ public sealed class UsageLastSeen(string path, Func<DateTimeOffset>? clock = nul
     }
 
     // The marker's text for a reading taken at `read`, worked out when it is drawn so that it follows the day and the language.
-    public static string Label(DateTimeOffset read, DateTimeOffset now) => Loc.T($"上次读取 {Clock(read, now)}", $"Last read {Clock(read, now)}");
+    public static string Label(DateTimeOffset read, DateTimeOffset now) => Loc.T($"上次讀取 {Clock(read, now)}", $"Last read {Clock(read, now)}");
 
     // Keeps the readings of a finished round for the next start. A source that read nothing this time keeps its earlier reading
     // (until MaxAge), a source that is no longer enabled keeps none. Returns whether the file was written; a failed write leaves the
@@ -246,8 +246,8 @@ public sealed class UsageLastSeen(string path, Func<DateTimeOffset>? clock = nul
             Metrics = metrics, Quotas = [], Plan = Text(stored.Plan), Entries = entries,
             UsageAvailable = stored.UsageAvailable, UsageComplete = stored.UsageComplete, UsageStart = stored.UsageStart,
             LastSeenAt = shown, IsStale = true, LiveQuota = false, QuotaTime = stored.QuotaAt ?? read,
-            StatusLabel = label, Status = Loc.T($"显示 {Clock(shown, now)} 读取的数据，新数据到达后会替换。", $"Showing the data read at {Clock(shown, now)}. New data replaces it when it arrives."),
-            UsageNote = stored.UsageAvailable ? Loc.T($"显示 {Clock(read, now)} 读取的数据。", $"Showing the data read at {Clock(read, now)}.") : ""
+            StatusLabel = label, Status = Loc.T($"顯示 {Clock(shown, now)} 讀取的資料，新資料到達後會替換。", $"Showing the data read at {Clock(shown, now)}. New data replaces it when it arrives."),
+            UsageNote = stored.UsageAvailable ? Loc.T($"顯示 {Clock(read, now)} 讀取的資料。", $"Showing the data read at {Clock(read, now)}.") : ""
         };
     }
 

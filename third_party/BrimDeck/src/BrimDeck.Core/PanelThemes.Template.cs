@@ -9,8 +9,8 @@ namespace BrimDeck.Core;
 public static partial class PanelThemes
 {
     // The placeholders of the template that a new file replaces.
-    private const string TemplateId = "my-theme", TemplateName = "我的主题", TemplateNameEn = "My theme",
-        TemplateDescription = "一句话描述这个主题。", TemplateDescriptionEn = "One sentence about this theme.";
+    private const string TemplateId = "my-theme", TemplateName = "我的主題", TemplateNameEn = "My theme",
+        TemplateDescription = "一句話描述這個主題。", TemplateDescriptionEn = "One sentence about this theme.";
     private static string? _template;
     // The template a new custom theme starts from: every token and effect, each with its meaning.
     public static string Template => _template ??= Resource(typeof(PanelThemes).Assembly.GetManifestResourceNames()
@@ -40,7 +40,7 @@ public static partial class PanelThemes
     // them. The test "A theme made from another starts out identical" guards this.
     public static string FillTemplate(string id, PanelPalette? start = null, string? baseId = null, PanelThemeFile? source = null)
     {
-        // "my-theme-2" is named "我的主题 2", so several new themes can be told apart on their cards; the descriptions start empty.
+        // "my-theme-2" is named "我的主題 2", so several new themes can be told apart on their cards; the descriptions start empty.
         string number = Regex.Match(id, @"-(\d+)$") is { Success: true } suffix ? " " + suffix.Groups[1].Value : "";
         var text = Template.Replace($"\"id\": \"{TemplateId}\"", $"\"id\": \"{id}\"", StringComparison.Ordinal)
             .Replace($"\"name\": \"{TemplateName}\"", $"\"name\": \"{TemplateName}{number}\"", StringComparison.Ordinal)

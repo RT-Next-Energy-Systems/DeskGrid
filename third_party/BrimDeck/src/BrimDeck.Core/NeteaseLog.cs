@@ -224,7 +224,7 @@ public sealed record NeteaseLogState
     // not reported where it is yet.
     private MediaTrack Song(NeteaseLogEvent e, DateTimeOffset at, double? position, bool paused) => new()
     {
-        Source = "网易云音乐", SongId = "netease:" + e.SongId, Title = e.Title, Artist = e.Artist, Album = e.Album,
+        Source = "網易雲音樂", SongId = "netease:" + e.SongId, Title = e.Title, Artist = e.Artist, Album = e.Album,
         End = TimeSpan.FromSeconds(e.DurationSeconds),
         State = position is null ? MediaState.Unknown : paused ? MediaState.Paused : MediaState.Playing,
         PositionKnown = position is not null, TimelinePending = position is null,

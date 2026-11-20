@@ -10,7 +10,7 @@ using BrimDeck.Core;
 
 namespace BrimDeck;
 
-// The expanded monitor page's choices ("展开时"): switches for what the page shows, the quick sets, and under them a sketch of the
+// The expanded monitor page's choices ("展開時"): switches for what the page shows, the quick sets, and under them a sketch of the
 // page with a block for each part it keeps together (ExpandedMonitor.Blocks: CPU and GPU, memory with the network, the frame rate,
 // the drives, power), stacked as the page stacks them. Dragging a block, or Alt+Up/Down on it, moves that part on the page. The
 // process list is drawn beside them and does not move: the page's size places it.
@@ -20,23 +20,23 @@ public sealed partial class SettingsWindow
 
     private static string ExpandedName(ExpandedItem item) => item switch
     {
-        ExpandedItem.Gpu => "GPU", ExpandedItem.Memory => Loc.T("内存", "Memory"), ExpandedItem.Download => Loc.T("下载", "Download"), ExpandedItem.Upload => Loc.T("上传", "Upload"),
-        ExpandedItem.Frames => Loc.T("帧率", "Frame rate"), ExpandedItem.Storage => Loc.T("硬盘", "Drives"), ExpandedItem.Power => Loc.T("功耗与电池", "Power and battery"),
-        ExpandedItem.Processes => Loc.T("进程列表", "Process list"), _ => "CPU"
+        ExpandedItem.Gpu => "GPU", ExpandedItem.Memory => Loc.T("記憶體", "Memory"), ExpandedItem.Download => Loc.T("下載", "Download"), ExpandedItem.Upload => Loc.T("上傳", "Upload"),
+        ExpandedItem.Frames => Loc.T("幀率", "Frame rate"), ExpandedItem.Storage => Loc.T("硬碟", "Drives"), ExpandedItem.Power => Loc.T("功耗與電池", "Power and battery"),
+        ExpandedItem.Processes => Loc.T("程序列表", "Process list"), _ => "CPU"
     };
 
     private static string ExpandedHelp(ExpandedItem item) => item switch
     {
-        ExpandedItem.Cpu => Loc.T("CPU 总占用和各核心的占用。", "The CPU's total usage and each core's."),
-        ExpandedItem.Gpu => Loc.T("GPU 占用和各引擎的占用。", "The GPU's usage and each engine's."),
-        ExpandedItem.Memory => Loc.T("内存占用与提交量。", "Memory in use and the commit charge."),
-        ExpandedItem.Download => Loc.T("下载速率。", "The download rate."),
-        ExpandedItem.Upload => Loc.T("上传速率。", "The upload rate."),
-        ExpandedItem.Frames => Loc.T("前台程序的帧率、程序名称和所在显示器的刷新率。首次开启时需要授权。",
+        ExpandedItem.Cpu => Loc.T("CPU 總佔用和各核心的佔用。", "The CPU's total usage and each core's."),
+        ExpandedItem.Gpu => Loc.T("GPU 佔用和各引擎的佔用。", "The GPU's usage and each engine's."),
+        ExpandedItem.Memory => Loc.T("記憶體佔用與提交量。", "Memory in use and the commit charge."),
+        ExpandedItem.Download => Loc.T("下載速率。", "The download rate."),
+        ExpandedItem.Upload => Loc.T("上傳速率。", "The upload rate."),
+        ExpandedItem.Frames => Loc.T("前臺程式的幀率、程式名稱和所在顯示器的重新整理率。首次開啟時需要授權。",
             "The frame rate of the program in front, with its name and its display's refresh rate. Needs permission the first time."),
-        ExpandedItem.Storage => Loc.T("不含 U 盘、移动硬盘、网络盘和光驱。", "USB, external, network and optical drives are not included."),
-        ExpandedItem.Power => Loc.T("整机功耗和本机电池。", "System power and this PC's battery."),
-        _ => Loc.T("按 CPU 或内存列出占用最高的应用。位置随面板大小，在右侧或下方。", "Lists the apps using the most CPU or memory. The panel's size places it, at the side or below.")
+        ExpandedItem.Storage => Loc.T("不含 U 盤、行動硬碟、網路盤和光碟機。", "USB, external, network and optical drives are not included."),
+        ExpandedItem.Power => Loc.T("整機功耗和本機電池。", "System power and this PC's battery."),
+        _ => Loc.T("按 CPU 或記憶體列出佔用最高的應用。位置隨面板大小，在右側或下方。", "Lists the apps using the most CPU or memory. The panel's size places it, at the side or below.")
     };
 
     // The scheme's colors of an item, one dot each: the CPU's fastest and slowest cores, the others one.
@@ -55,7 +55,7 @@ public sealed partial class SettingsWindow
 
     private Action? _refreshExpanded;
 
-    // The rows of the "展开时" group that choose what the page shows: the chips and the sketch of the page.
+    // The rows of the "展開時" group that choose what the page shows: the chips and the sketch of the page.
     private (FrameworkElement Chips, FrameworkElement Sketch) ExpandedOptions()
     {
         bool syncing = false;
@@ -67,15 +67,15 @@ public sealed partial class SettingsWindow
         // What the page shows: a chip for each item, five to a line, the temperatures last (a detail of the CPU, the GPU and the drives).
         var cells = new UniformGrid { Columns = 5, Margin = new Thickness(0, 8, -8, 4) };
         foreach (var item in ExpandedMonitor.Order) cells.Children.Add(ExpandedChip(item, refresh, Edit));
-        var heat = PickChip(Loc.T("温度", "Temperatures"), [],
-            Loc.T("CPU、GPU 和硬盘的温度。读不到的温度不显示。CPU 温度由主板固件提供，许多电脑没有这项数据；有的电脑读到的是主板的温度，不是 CPU 本身的温度。",
+        var heat = PickChip(Loc.T("溫度", "Temperatures"), [],
+            Loc.T("CPU、GPU 和硬碟的溫度。讀不到的溫度不顯示。CPU 溫度由主機板韌體提供，許多電腦沒有這項資料；有的電腦讀到的是主機板的溫度，不是 CPU 本身的溫度。",
                 "The CPU's, the GPU's and the drives' temperatures. Temperatures that cannot be read are not shown. The CPU temperature comes from the motherboard firmware. Many PCs do not provide it, and on some it is the motherboard's temperature rather than the CPU's."),
             refresh);
         heat.Checked += (_, _) => { if (!syncing) Resize(s => s.MonitorTemperatures = true, DeckPage.Monitor); };
         heat.Unchecked += (_, _) => { if (!syncing) Resize(s => s.MonitorTemperatures = false, DeckPage.Monitor); };
         refresh.Add(() => heat.IsChecked = S.MonitorTemperatures);
         cells.Children.Add(heat);
-        var title = SettingLabel(Loc.T("显示的内容", "What the page shows"), null);
+        var title = SettingLabel(Loc.T("顯示的內容", "What the page shows"), null);
         title.Margin = new Thickness(0, 12, 0, 0);
         var switches = new StackPanel();
         switches.Children.Add(title);
@@ -99,7 +99,7 @@ public sealed partial class SettingsWindow
             for (int channel = 0; channel < fills.Length; channel++) fills[channel].Fill = UI.Brush(roles.Length > 0 ? RoleColor(colors, roles[channel]) : TextTertiary);
         });
         var chip = new ToggleButton { Style = (Style)FindResource("SettingsPickChip"), Content = content, Margin = new Thickness(0, 0, 8, 8), ToolTip = help };
-        AutomationProperties.SetName(chip, Loc.T("展开时显示 ", "Show when expanded: ") + name); AutomationProperties.SetHelpText(chip, help);
+        AutomationProperties.SetName(chip, Loc.T("展開時顯示 ", "Show when expanded: ") + name); AutomationProperties.SetHelpText(chip, help);
         return chip;
     }
 
@@ -282,7 +282,7 @@ public sealed partial class SettingsWindow
         // Puts the page back in the default order; grey while it is in it already. What is shown or hidden stays as it is.
         Button? restore = null;
         void Restorable() { if (restore is null) return; bool moved = !ExpandedMonitor.IsDefaultOrder(S.ExpandedReadings); restore.IsEnabled = moved; restore.Opacity = moved ? 1 : .4; }
-        restore = ActionButton(Loc.T("恢复默认顺序", "Restore the default order"), () => { Change(s => s.ExpandedReadings = ExpandedMonitor.InDefaultOrder(s.ExpandedReadings)); Build(); Restorable(); });
+        restore = ActionButton(Loc.T("恢復預設順序", "Restore the default order"), () => { Change(s => s.ExpandedReadings = ExpandedMonitor.InDefaultOrder(s.ExpandedReadings)); Build(); Restorable(); });
         restore.Style = (Style)FindResource("SettingsLink"); restore.VerticalAlignment = VerticalAlignment.Center;
         refresh.Add(Restorable);
         void Build()
@@ -296,7 +296,7 @@ public sealed partial class SettingsWindow
             var grid = new Grid();
             if (blocks.Count == 0 && !processes)
             {
-                var none = TextLine(Loc.T("没有选择任何内容，展开页会显示提示。", "Nothing is chosen; the expanded page says so."), 12, TextTertiary);
+                var none = TextLine(Loc.T("沒有選擇任何內容，展開頁會顯示提示。", "Nothing is chosen; the expanded page says so."), 12, TextTertiary);
                 none.HorizontalAlignment = HorizontalAlignment.Center; none.VerticalAlignment = VerticalAlignment.Center;
                 grid.Height = 64; grid.Margin = new Thickness(0, 0, 0, SketchGap); grid.Children.Add(none);
                 host.Child = grid;
@@ -331,7 +331,7 @@ public sealed partial class SettingsWindow
 
         var title = new Grid { Margin = new Thickness(0, 12, 0, 0) };
         title.ColumnDefinitions.Add(new ColumnDefinition()); title.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        title.Children.Add(SettingLabel(Loc.T("页面顺序", "Order on the page"), null));
+        title.Children.Add(SettingLabel(Loc.T("頁面順序", "Order on the page"), null));
         Grid.SetColumn(restore, 1); title.Children.Add(restore);
         var panel = new StackPanel();
         panel.Children.Add(title); panel.Children.Add(host);
@@ -359,7 +359,7 @@ public sealed partial class SettingsWindow
         };
         view.SetResourceReference(Border.BackgroundProperty, "SettingsAccentTint");
         view.SetResourceReference(Border.BorderBrushProperty, "SettingsAccentText");
-        AutomationProperties.SetName(view, Loc.T($"{name}：拖动，或按 Alt+↑/↓ 调整顺序", $"{name}: drag, or press Alt+Up/Down, to move it"));
+        AutomationProperties.SetName(view, Loc.T($"{name}：拖動，或按 Alt+↑/↓ 調整順序", $"{name}: drag, or press Alt+Up/Down, to move it"));
         List<ExpandedItem> Order() => [.. stack.Children.OfType<Border>().Select(child => (ExpandedItem)child.Tag)];
 
         Border[] blocks = []; double[] tops = [], heights = [];

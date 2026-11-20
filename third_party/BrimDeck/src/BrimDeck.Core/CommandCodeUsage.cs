@@ -105,7 +105,7 @@ public static class CommandCodeUsage
             }
             try { using var doc = JsonDocument.Parse(body); return doc.RootElement.Clone(); }
             catch (JsonException) when (!required) { return default; }
-            catch (JsonException) { throw new InvalidDataException(Loc.T("Command Code 返回的额度无法识别。", "The quota Command Code returned is not recognized.")); }
+            catch (JsonException) { throw new InvalidDataException(Loc.T("Command Code 返回的額度無法識別。", "The quota Command Code returned is not recognized.")); }
         }
         static string Query(params (string Name, string Value)[] pairs) =>
             string.Join("&", pairs.Where(pair => pair.Value.Length > 0).Select(pair => pair.Name + "=" + Uri.EscapeDataString(pair.Value))) is { Length: > 0 } query ? "?" + query : "";
@@ -128,11 +128,11 @@ public static class CommandCodeUsage
     public static Reading Parse(JsonElement credits, JsonElement subscription, JsonElement summary)
     {
         if (credits.Get("credits").ValueKind != JsonValueKind.Object)
-            throw new InvalidDataException(Loc.T("Command Code 没有返回额度。", "Command Code returned no quota."));
+            throw new InvalidDataException(Loc.T("Command Code 沒有返回額度。", "Command Code returned no quota."));
         var metrics = new List<UsageMetric>();
         var warnings = new List<string>();
         var limits = credits.Get("windowLimits");
-        foreach (var (field, label, minutes) in new[] { ("fiveHour", "5 小时额度", 300), ("weekly", "每周额度", 10080) })
+        foreach (var (field, label, minutes) in new[] { ("fiveHour", "5 小時額度", 300), ("weekly", "每週額度", 10080) })
         {
             var window = limits.Get(field);
             if (window.Get("cap").Number() is not (> 0 and var cap)) continue;
@@ -143,8 +143,8 @@ public static class CommandCodeUsage
                 Note = Dollars(used) + " / " + Dollars(cap)
             });
             if (window.Get("exceeded").ValueKind == JsonValueKind.True)
-                warnings.Add(minutes == 300 ? Loc.T("已用完 5 小时额度，重置前只能使用额外积分", "The 5-hour limit is used up; only extra credits can be used until it resets.")
-                    : Loc.T("已用完每周额度，重置前只能使用额外积分", "The weekly limit is used up; only extra credits can be used until it resets."));
+                warnings.Add(minutes == 300 ? Loc.T("已用完 5 小時額度，重置前只能使用額外積分", "The 5-hour limit is used up; only extra credits can be used until it resets.")
+                    : Loc.T("已用完每週額度，重置前只能使用額外積分", "The weekly limit is used up; only extra credits can be used until it resets."));
         }
         var balance = credits.Get("credits");
         double left = Math.Max(0, balance.Get("monthlyCredits").Number() ?? 0);
@@ -155,13 +155,13 @@ public static class CommandCodeUsage
         if (summary.Get("totalMonthlyCredits").Number() is { } spent && Math.Max(0, spent) + left > 0)
         {
             spent = Math.Max(0, spent);
-            metrics.Add(new(MetricKind.Percent, "每月额度")
+            metrics.Add(new(MetricKind.Percent, "每月額度")
             { Id = "monthly", Percent = Math.Clamp(spent / (spent + left) * 100, 0, 100), ResetAt = periodEnd, Note = Dollars(spent) + " / " + Dollars(spent + left) });
         }
         else if (left > 0)
-            metrics.Add(new(MetricKind.Balance, "每月额度") { Id = "monthly", Amount = (decimal)left, Currency = "USD", ResetAt = periodEnd });
+            metrics.Add(new(MetricKind.Balance, "每月額度") { Id = "monthly", Amount = (decimal)left, Currency = "USD", ResetAt = periodEnd });
         if (extra > 0 || metrics.Count == 0)
-            metrics.Add(new(MetricKind.Balance, "额外积分") { Id = "extra", Amount = (decimal)extra, Currency = "USD" });
+            metrics.Add(new(MetricKind.Balance, "額外積分") { Id = "extra", Amount = (decimal)extra, Currency = "USD" });
         return new(metrics, active ? PlanName(period.Get("planId").Text()) : "", warnings);
     }
 

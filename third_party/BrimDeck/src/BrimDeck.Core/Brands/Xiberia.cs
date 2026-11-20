@@ -1,6 +1,6 @@
 namespace BrimDeck.Core;
 
-// XIBERIA (西伯利亚) headsets on their 2.4 GHz receivers, vendor 0x36F9 (the receivers' own id; XIBERIA HUB binds any
+// XIBERIA (西伯利亞) headsets on their 2.4 GHz receivers, vendor 0x36F9 (the receivers' own id; XIBERIA HUB binds any
 // receiver whose descriptor declares reports 0x55 and 0x41, not a product list, so every 36F9 vendor collection that declares
 // 0x55, the command report, is asked).
 // Output report 0x55, 64 bytes: 55 65 00 00 (0x65 the battery, 00 the device index); the answer 55 65 00 <percent>, no

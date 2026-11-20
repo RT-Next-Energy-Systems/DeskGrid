@@ -1,6 +1,6 @@
 namespace BrimDeck.Core;
 
-// Darmoshark (达摩鲨) mice. Two firmware families, each on a chip maker's shared vendor id, so only these products:
+// Darmoshark (達摩鯊) mice. Two firmware families, each on a chip maker's shared vendor id, so only these products:
 // - The M3 and N3 on Telink's 0x248A: the 2.4 GHz receiver FF30 (product string "RF Dongle", interface 1), the M3 on its
 //   cable FF12 and the N3 on its cable FF10, collection usage page 0x8C usage 1. Feature report 0x51 (20 bytes) with
 //   opcode 0x06 (identity), read back from the same report: 51 06 <protocol, 2 bytes> <vendor id 8A 24> <product id, 2

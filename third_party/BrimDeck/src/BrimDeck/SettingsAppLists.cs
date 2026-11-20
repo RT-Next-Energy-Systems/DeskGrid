@@ -39,7 +39,7 @@ public partial class SettingsWindow
             heading.Children.Add(arrow);
         }
         int n = lines.Count;
-        var count = TextLine(n == 0 ? Loc.T("未添加", "None") : Loc.T($"{n} 个应用", n == 1 ? "1 app" : $"{n} apps"), 12, TextTertiary);
+        var count = TextLine(n == 0 ? Loc.T("未新增", "None") : Loc.T($"{n} 個應用", n == 1 ? "1 app" : $"{n} apps"), 12, TextTertiary);
         count.VerticalAlignment = VerticalAlignment.Center; count.Margin = new Thickness(0, 0, 12, 0);
         var add = AddAppButton(addName, menu);
         add.IsEnabled = enabled;
@@ -81,7 +81,7 @@ public partial class SettingsWindow
     private void AddBrowseItem(ContextMenu menu, string title, Action<string> chosen)
     {
         menu.Items.Add(new Separator());
-        var browse = new MenuItem { Header = Loc.T("浏览可执行文件…", "Browse for an executable…") };
+        var browse = new MenuItem { Header = Loc.T("瀏覽可執行檔案…", "Browse for an executable…") };
         browse.Click += (_, _) => { if (BrowseExecutable(title) is { } path) chosen(path); };
         menu.Items.Add(browse);
     }
@@ -91,7 +91,7 @@ public partial class SettingsWindow
         var dialog = new OpenFileDialog
         {
             Title = title,
-            Filter = Loc.T("应用程序 (*.exe)|*.exe", "Applications (*.exe)|*.exe"),
+            Filter = Loc.T("應用程式 (*.exe)|*.exe", "Applications (*.exe)|*.exe"),
             CheckFileExists = true
         };
         return dialog.ShowDialog(this) == true ? dialog.FileName : null;

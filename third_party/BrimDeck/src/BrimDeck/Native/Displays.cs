@@ -27,8 +27,8 @@ public static class Displays
             string id = target.Path is { Length: > 0 } path ? path : info.Device;
             // A laptop's own panel usually reports no model name.
             string name = target.Name is { Length: > 0 } friendly ? friendly
-                : known && target.Technology is 6 or 11 or 13 or unchecked((int)0x80000000) ? Loc.T("内置显示器", "Built-in display")
-                : Loc.T("显示器 ", "Display ") + info.Device.Replace(@"\\.\DISPLAY", "");
+                : known && target.Technology is 6 or 11 or 13 or unchecked((int)0x80000000) ? Loc.T("內建顯示器", "Built-in display")
+                : Loc.T("顯示器 ", "Display ") + info.Device.Replace(@"\\.\DISPLAY", "");
             var bounds = new Rect(info.Monitor.Left, info.Monitor.Top, info.Monitor.Right - info.Monitor.Left, info.Monitor.Bottom - info.Monitor.Top);
             list.Add(new DisplayInfo(id, name, info.Device, monitor, (info.Flags & 1) != 0, bounds) { Refresh = known ? target.Refresh : null });
             return true;

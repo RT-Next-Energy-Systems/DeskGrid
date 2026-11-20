@@ -26,7 +26,7 @@ public static class DshUsage
         using (var stream = SharedFile.Open(path))
         using (var reader = new StreamReader(stream, Encoding.UTF8)) text = reader.ReadToEnd();
         var root = Yaml.Parse(text);
-        if (Yaml.Find(root, "version") != "1") throw new InvalidDataException(Loc.T("DeepSeek Harness 凭据格式无法识别。", "The DeepSeek Harness credential format is not recognized."));
+        if (Yaml.Find(root, "version") != "1") throw new InvalidDataException(Loc.T("DeepSeek Harness 憑據格式無法識別。", "The DeepSeek Harness credential format is not recognized."));
         // DeepSeek Harness discards a grant issued by another origin, so only one from the public platform is used.
         var grant = Yaml.Find(root, "records", "deepseek-account-platform/default", "payload", "token");
         if (Yaml.Find(root, "records", "deepseek-account-platform/default", "kind") != "grant" ||
@@ -37,7 +37,7 @@ public static class DshUsage
     // GET /api/v0/users/get_user_summary with the grant in x-dsh-auth-token, as DeepSeek Harness reads it:
     // {code:0, data:{biz_code:0, biz_data:{normal_wallets:[{currency, balance}], bonus_wallets:[{currency, balance}],
     // total_costs:[{currency, amount}]}}}. Amounts are decimal strings with up to 16 places. The platform's web console
-    // shows these as the topped-up balance, the granted balance and the account's total cost ("累计消费金额").
+    // shows these as the topped-up balance, the granted balance and the account's total cost ("累計消費金額").
     // The two wallets together are the balance /user/balance reports; each is cut to whole cents first, so the two
     // sources show the same amounts.
     public static List<UsageMetric>? Summary(JsonElement root)
@@ -62,10 +62,10 @@ public static class DshUsage
         foreach (var currency in new[] { "CNY", "USD" }.Where(c => normal.ContainsKey(c) || bonus.ContainsKey(c)))
         {
             decimal paid = Cents(normal.GetValueOrDefault(currency)), granted = Cents(bonus.GetValueOrDefault(currency));
-            metrics.Add(new(MetricKind.Balance, "账户余额") { Id = "total:" + currency, Amount = paid + granted, Currency = currency });
-            metrics.Add(new(MetricKind.Balance, "赠送余额") { Id = "granted:" + currency, Amount = granted, Currency = currency });
+            metrics.Add(new(MetricKind.Balance, "賬戶餘額") { Id = "total:" + currency, Amount = paid + granted, Currency = currency });
+            metrics.Add(new(MetricKind.Balance, "贈送餘額") { Id = "granted:" + currency, Amount = granted, Currency = currency });
             // The total cost comes last, so the first page shows the two balances.
-            if (costs.TryGetValue(currency, out var cost)) metrics.Add(new(MetricKind.Spend, "累计消费") { Id = "cost:" + currency, Amount = Math.Max(0, Cents(cost)), Currency = currency });
+            if (costs.TryGetValue(currency, out var cost)) metrics.Add(new(MetricKind.Spend, "累計消費") { Id = "cost:" + currency, Amount = Math.Max(0, Cents(cost)), Currency = currency });
         }
         return metrics.Count == 0 ? null : metrics;
     }

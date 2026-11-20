@@ -10,12 +10,12 @@ public sealed record PanelThemeAdjustment(string Key, string Before, string Afte
     public string Describe()
     {
         var token = PanelThemes.Tokens.FirstOrDefault(token => token.Key == Key);
-        string name = token is null ? Loc.T("应用颜色", "App color") : Loc.T(token.Chinese, token.English);
+        string name = token is null ? Loc.T("應用顏色", "App color") : Loc.T(token.Chinese, token.English);
         string ratio = Ratio.ToString("0.0", CultureInfo.InvariantCulture), minimum = Minimum.ToString("0.#", CultureInfo.InvariantCulture);
         return Reached
-            ? Loc.T($"{name}（{Key}）对比度 {ratio}:1，低于 {minimum}:1，已由 {Before} 调整为 {After}",
+            ? Loc.T($"{name}（{Key}）對比度 {ratio}:1，低於 {minimum}:1，已由 {Before} 調整為 {After}",
                 $"{name} ({Key}) has a contrast of {ratio}:1, below {minimum}:1; {Before} is shown as {After}")
-            : Loc.T($"{name}（{Key}）对比度 {ratio}:1，低于 {minimum}:1，且背景明暗不一、无法全部达标，已改用最接近的 {After}；请调整相关底色",
+            : Loc.T($"{name}（{Key}）對比度 {ratio}:1，低於 {minimum}:1，且背景明暗不一、無法全部達標，已改用最接近的 {After}；請調整相關底色",
                 $"{name} ({Key}) has a contrast of {ratio}:1, below {minimum}:1. Its backgrounds are both light and dark, so no color meets every minimum; the closest, {After}, is shown. Adjust the backgrounds");
     }
 }

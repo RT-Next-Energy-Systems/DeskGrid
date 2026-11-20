@@ -6,7 +6,7 @@ using BrimDeck.Core;
 
 namespace BrimDeck;
 
-// Diagrams for the cards that choose the open page's layout ("展开时"). Each card draws its own page, as the cover and the lyrics
+// Diagrams for the cards that choose the open page's layout ("展開時"). Each card draws its own page, as the cover and the lyrics
 // are shown now: the record and the lyric lines come and go with them, and without the record the stacked layout's column
 // stands at the page's left edge or in the middle. The parts keep the page's own proportions: three lyric lines under the
 // titles with the current one in the middle, and in the column layout a cover that takes the larger part of the column's

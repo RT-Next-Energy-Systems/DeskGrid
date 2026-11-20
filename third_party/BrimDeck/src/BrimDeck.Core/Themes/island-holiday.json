@@ -7,9 +7,9 @@
   //   of a shadow.
   "formatVersion": 1,
   "id": "island-holiday",
-  "name": "海岛假日",
+  "name": "海島假日",
   "nameEn": "Island Holiday",
-  "description": "白天是暖沙与泻湖的浅色，夜晚是月光海面的深色，按本地时间自动渐变切换；夜里岛下泛起柔和的海光。",
+  "description": "白天是暖沙與瀉湖的淺色，夜晚是月光海面的深色，按本地時間自動漸變切換；夜裡島下泛起柔和的海光。",
   "descriptionEn": "Warm sand and lagoon by day, a moonlit sea by night, fading over by the local clock; at night a soft sea glow lies under the island.",
   "author": "BrimDeck",
   "license": "Apache-2.0",
@@ -65,7 +65,7 @@
     "gradients": [
       { "name": "日落", "nameEn": "Sunset", "stops": ["#A9480E", "#A83565", "#6544C2"] },
       { "name": "海洋", "nameEn": "Ocean", "stops": ["#08717A", "#1D5DBA", "#5444C2"] },
-      { "name": "极光", "nameEn": "Aurora", "stops": ["#2B732F", "#08717A", "#1D5DBA"] },
+      { "name": "極光", "nameEn": "Aurora", "stops": ["#2B732F", "#08717A", "#1D5DBA"] },
       { "name": "火焰", "nameEn": "Ember", "stops": ["#955800", "#A9480E", "#B73527"] },
       { "name": "霓虹", "nameEn": "Neon", "stops": ["#A12A91", "#6544C2", "#08717A"] }
     ]
@@ -130,7 +130,7 @@
       "gradients": [
         { "name": "日落", "nameEn": "Sunset", "stops": ["#FFD27A", "#FF9E8C", "#FF8FC0"] },
         { "name": "海洋", "nameEn": "Ocean", "stops": ["#7CF2E8", "#6FC6FF", "#A9A8FF"] },
-        { "name": "极光", "nameEn": "Aurora", "stops": ["#93FFB8", "#6FE8E0", "#A9A8FF"] },
+        { "name": "極光", "nameEn": "Aurora", "stops": ["#93FFB8", "#6FE8E0", "#A9A8FF"] },
         { "name": "火焰", "nameEn": "Ember", "stops": ["#FFE18A", "#FFC06B", "#FF9286"] },
         { "name": "霓虹", "nameEn": "Neon", "stops": ["#FF93EE", "#B9A0FF", "#6FE8E0"] }
       ]

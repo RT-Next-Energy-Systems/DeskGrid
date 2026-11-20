@@ -68,11 +68,11 @@ public partial class MainWindow
         SyncButton.Visibility = Settings.UsagePage && IsUsagePage ? Visibility.Visible : Visibility.Collapsed;
         SyncButton.Foreground = UI.Brush(paused ? Look.Hex("danger") : Look.Secondary);
         SyncSlash.Visibility = paused ? Visibility.Visible : Visibility.Collapsed;
-        var tip = _details ? Refreshing ? Loc.T("正在同步用量与模型消耗…", "Syncing usage and model consumption…") : Loc.T("立即同步用量与模型消耗", "Sync usage and model consumption now")
-            : Settings.UsageAutoSync ? Loc.T("每 60 秒自动同步一次，点击关闭同步", "Syncs automatically every 60 seconds. Click to turn syncing off.")
-            : Loc.T("同步已关闭，点击开启", "Syncing is off. Click to turn it on.");
+        var tip = _details ? Refreshing ? Loc.T("正在同步用量與模型消耗…", "Syncing usage and model consumption…") : Loc.T("立即同步用量與模型消耗", "Sync usage and model consumption now")
+            : Settings.UsageAutoSync ? Loc.T("每 60 秒自動同步一次，點選關閉同步", "Syncs automatically every 60 seconds. Click to turn syncing off.")
+            : Loc.T("同步已關閉，點選開啟", "Syncing is off. Click to turn it on.");
         if (SyncButton.ToolTip is System.Windows.Controls.ToolTip shown) shown.Content = tip; else SyncButton.ToolTip = UI.LeftwardToolTip(tip);
-        AutomationProperties.SetName(SyncButton, _details ? tip : Settings.UsageAutoSync ? Loc.T("关闭自动同步", "Turn off automatic sync") : Loc.T("开启自动同步", "Turn on automatic sync"));
+        AutomationProperties.SetName(SyncButton, _details ? tip : Settings.UsageAutoSync ? Loc.T("關閉自動同步", "Turn off automatic sync") : Loc.T("開啟自動同步", "Turn on automatic sync"));
 
         bool onScreen = _expanded && IsUsagePage && Settings.UsagePage && !IsSuppressed;
         _syncCountdown = !_details && Settings.UsageAutoSync && Lead._refresh.IsEnabled;

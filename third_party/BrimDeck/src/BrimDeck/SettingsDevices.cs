@@ -12,7 +12,7 @@ namespace BrimDeck;
 // what order), the level at which a battery shows as low, and the list of devices, read while this page is open: each with a
 // handle to reorder it, its name (click to rename it) and where it shows, in the collapsed row and on the page. A device the
 // user changed anything for is remembered (DeviceLists.Remember) and stays listed, dimmed, while it is not connected, with a
-// button to forget it. Whether the page shows, and its size, are set with the other pages under 展开外观.
+// button to forget it. Whether the page shows, and its size, are set with the other pages under 展開外觀.
 public partial class SettingsWindow
 {
     private const int DevicesSettingsPage = 12;
@@ -33,16 +33,16 @@ public partial class SettingsWindow
         }
         Target.Children.Add(holder);
 
-        // Whether the notch and the capsule show the devices is set with their other parts (收起外观 › 显示内容).
-        SectionTitle(Loc.T("收起时", "When collapsed"));
+        // Whether the notch and the capsule show the devices is set with their other parts (收起外觀 › 顯示內容).
+        SectionTitle(Loc.T("收起時", "When collapsed"));
         _devicePreview = new Border { Height = 96, CornerRadius = new CornerRadius(8), Background = UI.Brush(Inset), BorderBrush = UI.Brush(Divider), BorderThickness = new Thickness(1),
             Margin = new Thickness(0, 0, 0, 12) };
         Target.Children.Add(_devicePreview);
         FillDevicePreview();
-        Group(Toggle(Loc.T("显示数字", "Show figures"), S.DeviceFigures, value => { Change(s => s.DeviceFigures = value); FillDevicePreview(); }));
+        Group(Toggle(Loc.T("顯示數字", "Show figures"), S.DeviceFigures, value => { Change(s => s.DeviceFigures = value); FillDevicePreview(); }));
 
         // The thresholds color the page and the collapsed row alike. Getting low stays above low: its choices start above it.
-        SectionTitle(Loc.T("电量阈值", "Battery thresholds"));
+        SectionTitle(Loc.T("電量閾值", "Battery thresholds"));
         var warning = new ComboBox { Width = 110, Style = (Style)FindResource("SettingsCombo") };
         var low = new ComboBox { Width = 110, Style = (Style)FindResource("SettingsCombo"), ItemsSource = Devices.LowChoices.Select(percent => $"{percent}%").ToList(),
             SelectedIndex = Math.Max(0, Devices.LowChoices.ToList().IndexOf(S.DeviceLowPercent)) };
@@ -56,8 +56,8 @@ public partial class SettingsWindow
             filling = false;
         }
         FillWarning();
-        AutomationProperties.SetName(warning, Loc.T("预警阈值", "Warning threshold")); PopupMotion.Attach(warning);
-        AutomationProperties.SetName(low, Loc.T("告警阈值", "Critical threshold")); PopupMotion.Attach(low);
+        AutomationProperties.SetName(warning, Loc.T("預警閾值", "Warning threshold")); PopupMotion.Attach(warning);
+        AutomationProperties.SetName(low, Loc.T("告警閾值", "Critical threshold")); PopupMotion.Attach(low);
         warning.SelectionChanged += (_, _) =>
         {
             if (filling || warning.SelectedIndex < 0) return;
@@ -71,19 +71,19 @@ public partial class SettingsWindow
             Change(s => { s.DeviceLowPercent = Devices.LowChoices[low.SelectedIndex]; s.Normalize(); });
             FillWarning(); FillDevicePreview();
         };
-        Group(Row(Loc.T("预警阈值", "Warning threshold"), warning, help: () => Loc.T("电量不高于此值时显示为偏低，使用预警颜色。", "At or under this level a battery shows as getting low, in its warning color.")),
-            Row(Loc.T("告警阈值", "Critical threshold"), low, help: () => Loc.T("电量不高于此值时显示为低电量，使用告警颜色。", "At or under this level a battery shows as low, in its critical color.")));
+        Group(Row(Loc.T("預警閾值", "Warning threshold"), warning, help: () => Loc.T("電量不高於此值時顯示為偏低，使用預警顏色。", "At or under this level a battery shows as getting low, in its warning color.")),
+            Row(Loc.T("告警閾值", "Critical threshold"), low, help: () => Loc.T("電量不高於此值時顯示為低電量，使用告警顏色。", "At or under this level a battery shows as low, in its critical color.")));
 
-        SectionTitle(Loc.T("设备", "Devices"));
+        SectionTitle(Loc.T("裝置", "Devices"));
         var headings = DeviceColumns(); headings.Height = 34;
         AddHeadings(headings, new[]
         {
-            (Loc.T("名称", "Name"), 2, ""), (Loc.T("主题", "Theme"), 4, Loc.T("电量正常时圆环的颜色。", "The ring's color while the battery is normal.")),
-            (Loc.T("充电", "Charging"), 5, Loc.T("充电时圆环的颜色。", "The ring's color while charging.")),
-            (Loc.T("预警", "Warning"), 6, Loc.T("电量不高于预警阈值时的颜色。", "The color at or under the warning threshold.")),
-            (Loc.T("告警", "Critical"), 7, Loc.T("电量不高于告警阈值时的颜色。", "The color at or under the critical threshold.")),
-            (Loc.T("收起时", "Collapsed"), 8, ""), (Loc.T("展开页", "Page"), 9, ""),
-            (Loc.T("读取", "Read"), 10, Loc.T("关闭后不再向该设备发送任何请求。读取时设备出现异常会自动关闭。", "Turned off, nothing is sent to the device. It turns off by itself if the device misbehaves while read."))
+            (Loc.T("名稱", "Name"), 2, ""), (Loc.T("主題", "Theme"), 4, Loc.T("電量正常時圓環的顏色。", "The ring's color while the battery is normal.")),
+            (Loc.T("充電", "Charging"), 5, Loc.T("充電時圓環的顏色。", "The ring's color while charging.")),
+            (Loc.T("預警", "Warning"), 6, Loc.T("電量不高於預警閾值時的顏色。", "The color at or under the warning threshold.")),
+            (Loc.T("告警", "Critical"), 7, Loc.T("電量不高於告警閾值時的顏色。", "The color at or under the critical threshold.")),
+            (Loc.T("收起時", "Collapsed"), 8, ""), (Loc.T("展開頁", "Page"), 9, ""),
+            (Loc.T("讀取", "Read"), 10, Loc.T("關閉後不再向該裝置傳送任何請求。讀取時裝置出現異常會自動關閉。", "Turned off, nothing is sent to the device. It turns off by itself if the device misbehaves while read."))
         });
         var nameHeading = headings.Children.OfType<FrameworkElement>().First(heading => Grid.GetColumn(heading) == 2);
         nameHeading.HorizontalAlignment = HorizontalAlignment.Left; nameHeading.Margin = new Thickness(4, 0, 6, 0);
@@ -127,7 +127,7 @@ public partial class SettingsWindow
         var devices = DeviceLists.Collapsed(all, S.DeviceChoices);
         if (devices.Count == 0)
         {
-            var words = TextLine(_app.Devices?.Settled == true ? Loc.T("没有要显示的设备", "No devices to show") : Loc.T("正在查找设备…", "Looking for devices…"), 12, TextSecondary);
+            var words = TextLine(_app.Devices?.Settled == true ? Loc.T("沒有要顯示的裝置", "No devices to show") : Loc.T("正在查詢裝置…", "Looking for devices…"), 12, TextSecondary);
             words.HorizontalAlignment = HorizontalAlignment.Center; words.VerticalAlignment = VerticalAlignment.Center;
             _devicePreview.Child = words;
             return;
@@ -137,7 +137,7 @@ public partial class SettingsWindow
         strip.Width = strip.PreferredWidth;
         var capsule = new Border { Height = 32, CornerRadius = new CornerRadius(16), Background = UI.Brush(PanelTheme.Hex("surface")), Padding = new Thickness(14, 4, 14, 4),
             Child = strip, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, LayoutTransform = new ScaleTransform(1.5, 1.5) };
-        AutomationProperties.SetName(capsule, Loc.T("收起时的预览", "Collapsed preview"));
+        AutomationProperties.SetName(capsule, Loc.T("收起時的預覽", "Collapsed preview"));
         _devicePreview.Child = capsule;
     }
 
@@ -158,8 +158,8 @@ public partial class SettingsWindow
         rows.Children.Clear(); _deviceDetails.Clear();
         if (listed.Count == 0)
         {
-            var empty = TextLine(_app.Devices?.Settled == true ? Loc.T("没有已连接的无线设备。连接后会自动出现在这里。", "No wireless devices connected. They show here once connected.")
-                : Loc.T("正在查找设备…", "Looking for devices…"), 12.5, TextSecondary);
+            var empty = TextLine(_app.Devices?.Settled == true ? Loc.T("沒有已連線的無線裝置。連線後會自動出現在這裡。", "No wireless devices connected. They show here once connected.")
+                : Loc.T("正在查詢裝置…", "Looking for devices…"), 12.5, TextSecondary);
             empty.Margin = new Thickness(0, 14, 0, 14); rows.Children.Add(empty);
             return;
         }
@@ -182,12 +182,12 @@ public partial class SettingsWindow
         // the device's own.
         var labels = new StackPanel { VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 8, 0) };
         var title = new Button { Content = name, Style = (Style)FindResource("SettingsCardName"), HorizontalAlignment = HorizontalAlignment.Left, FontSize = 13,
-            Foreground = UI.Brush(TextPrimary), Margin = new Thickness(-4, 0, 0, 0), ToolTip = Loc.T("单击重命名", "Click to rename") };
+            Foreground = UI.Brush(TextPrimary), Margin = new Thickness(-4, 0, 0, 0), ToolTip = Loc.T("單擊重新命名", "Click to rename") };
         AutomationProperties.SetName(title, Loc.T("重命名 ", "Rename ") + name);
         var box = new TextBox { Style = (Style)FindResource("SettingsField"), Height = 26, FontSize = 12.5, Padding = new Thickness(6, 0, 6, 0), Width = 260,
             HorizontalAlignment = HorizontalAlignment.Left, Visibility = Visibility.Collapsed, MaxLength = DeviceLists.MaximumLabel };
-        AutomationProperties.SetName(box, Loc.T("设备名称", "Device name"));
-        var detail = TextLine(device is null ? Loc.T("未连接", "Not connected") : DeviceDetail(device), 11.5, TextSecondary);
+        AutomationProperties.SetName(box, Loc.T("裝置名稱", "Device name"));
+        var detail = TextLine(device is null ? Loc.T("未連線", "Not connected") : DeviceDetail(device), 11.5, TextSecondary);
         detail.TextTrimming = TextTrimming.CharacterEllipsis;
         bool editing = false;
         void Finish(bool keep)
@@ -196,7 +196,7 @@ public partial class SettingsWindow
             editing = false;
             string text = box.Text.Trim();
             box.Visibility = Visibility.Collapsed; title.Visibility = Visibility.Visible;
-            detail.Text = device is null ? Loc.T("未连接", "Not connected") : DeviceDetail(device);
+            detail.Text = device is null ? Loc.T("未連線", "Not connected") : DeviceDetail(device);
             if (!keep || text == name) return;
             string? label = text.Length == 0 || text == choice.Name ? null : text;
             EditDevices(choices => DeviceLists.Find(choices, choice.Key)!.Label = label);
@@ -221,9 +221,9 @@ public partial class SettingsWindow
         // A device not connected can be forgotten: it leaves the list, and shows everywhere again if it comes back.
         if (device is null)
         {
-            var forget = ActionButton(Loc.T("忘记", "Forget"), () => EditDevices(choices => choices.RemoveAll(other => other.Key == choice.Key)));
+            var forget = ActionButton(Loc.T("忘記", "Forget"), () => EditDevices(choices => choices.RemoveAll(other => other.Key == choice.Key)));
             forget.FontSize = 11; forget.VerticalAlignment = VerticalAlignment.Center; forget.Margin = new Thickness(0, 0, 8, 0);
-            AutomationProperties.SetName(forget, Loc.T("忘记 ", "Forget ") + name);
+            AutomationProperties.SetName(forget, Loc.T("忘記 ", "Forget ") + name);
             Grid.SetColumn(forget, 3); row.Children.Add(forget);
             ring.Opacity = .55; labels.Opacity = .55;
         }
@@ -238,7 +238,7 @@ public partial class SettingsWindow
             Grid.SetColumn(toggle, column); row.Children.Add(toggle);
             return toggle;
         }
-        // The device's four colors; "默认" returns one to the default (DeviceInks).
+        // The device's four colors; "預設" returns one to the default (DeviceInks).
         var colors = MonitorThemeColors.For(S);
         void Swatch(string label, string? own, string standard, Action<DeviceChoice, string?> set, int column)
         {
@@ -247,21 +247,21 @@ public partial class SettingsWindow
             button.HorizontalAlignment = HorizontalAlignment.Center; button.VerticalAlignment = VerticalAlignment.Center;
             Grid.SetColumn(button, column); row.Children.Add(button);
         }
-        Swatch(Loc.T("主题", "theme"), choice.Color, UI.Primary, (c, value) => c.Color = value, 4);
-        Swatch(Loc.T("充电", "charging"), choice.ChargeColor, DevicesView.Charging, (c, value) => c.ChargeColor = value, 5);
-        Swatch(Loc.T("预警", "warning"), choice.WarningColor, colors.Warning, (c, value) => c.WarningColor = value, 6);
+        Swatch(Loc.T("主題", "theme"), choice.Color, UI.Primary, (c, value) => c.Color = value, 4);
+        Swatch(Loc.T("充電", "charging"), choice.ChargeColor, DevicesView.Charging, (c, value) => c.ChargeColor = value, 5);
+        Swatch(Loc.T("預警", "warning"), choice.WarningColor, colors.Warning, (c, value) => c.WarningColor = value, 6);
         Swatch(Loc.T("告警", "critical"), choice.CriticalColor, colors.Critical, (c, value) => c.CriticalColor = value, 7);
         // Dimmed, its choice kept, while neither the notch nor the capsule shows the devices.
-        var collapsed = Switch(choice.Collapsed, Loc.T("收起时显示", "Show when collapsed"), (c, on) => c.Collapsed = on, 8);
+        var collapsed = Switch(choice.Collapsed, Loc.T("收起時顯示", "Show when collapsed"), (c, on) => c.Collapsed = on, 8);
         collapsed.Opacity = S.NotchDevices || S.CapsuleDevices ? 1 : .4;
-        Switch(choice.Expanded, Loc.T("在展开页显示", "Show on the page"), (c, on) => c.Expanded = on, 9);
+        Switch(choice.Expanded, Loc.T("在展開頁顯示", "Show on the page"), (c, on) => c.Expanded = on, 9);
         // Only the readers that send requests or listen (DeviceReadSwitches). The switch is the hardware's: every remembered key
         // of it takes it. A device stopped for misbehaving shows off, and turned on is tried afresh (DeviceReadBook.Resume).
         if (ReadSwitchable(device, choice) is { } hardware)
         {
             var reading = new CheckBox { Style = (Style)FindResource("SettingsToggle"), Padding = new Thickness(0), HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center, IsChecked = ReadState(device, choice) == true };
-            AutomationProperties.SetName(reading, Loc.T("读取电量", "Read battery") + " " + name);
+            AutomationProperties.SetName(reading, Loc.T("讀取電量", "Read battery") + " " + name);
             void SetReading(bool on) => EditDevices(choices =>
             {
                 DeviceLists.Find(choices, choice.Key)!.Hardware ??= hardware;
@@ -305,15 +305,15 @@ public partial class SettingsWindow
     private static string DeviceDetail(DeviceBattery device) => string.Join(" · ", new[] { Devices.KindName(device.Kind), Devices.SourceName(device.Source),
         device.Parts.Count > 0 ? string.Join("  ", device.Parts.Select(part => Devices.PartName(part.Part) + " " + Devices.Figure(part.Percent)))
             : device.Lowest is not null ? Devices.Figure(device.Lowest)
-            : device.Hardware is { } hardware && DeviceReadStore.Book.Stopped(hardware) ? Loc.T("读取时设备异常，已停止读取", "Stopped: the device misbehaved while read")
-            : device.Hardware is { } off && DeviceReadSwitches.IsOff(off) ? Loc.T("已关闭读取", "Reading off")
-            : Loc.T("未报告电量", "No battery reported") }
-        .Concat(device.Charging ? [Loc.T("充电中", "Charging")] : []));
+            : device.Hardware is { } hardware && DeviceReadStore.Book.Stopped(hardware) ? Loc.T("讀取時裝置異常，已停止讀取", "Stopped: the device misbehaved while read")
+            : device.Hardware is { } off && DeviceReadSwitches.IsOff(off) ? Loc.T("已關閉讀取", "Reading off")
+            : Loc.T("未報告電量", "No battery reported") }
+        .Concat(device.Charging ? [Loc.T("充電中", "Charging")] : []));
 
     private void DeviceSizeControls()
     {
         var dimensions = new Grid { Margin = new Thickness(0, 8, 0, 0) }; dimensions.ColumnDefinitions.Add(new()); dimensions.ColumnDefinitions.Add(new());
-        var width = Dimension(Loc.T("宽度", "Width"), S.DevicesWidth, 440, 1200, value => Resize(s => s.DevicesWidth = value, DeckPage.Devices)); width.Margin = new Thickness(0, 0, 20, 0); dimensions.Children.Add(width);
+        var width = Dimension(Loc.T("寬度", "Width"), S.DevicesWidth, 440, 1200, value => Resize(s => s.DevicesWidth = value, DeckPage.Devices)); width.Margin = new Thickness(0, 0, 20, 0); dimensions.Children.Add(width);
         var height = Dimension(Loc.T("高度", "Height"), S.DevicesHeight, 140, 400, value => Resize(s => s.DevicesHeight = value, DeckPage.Devices)); height.Margin = new Thickness(20, 0, 0, 0); Grid.SetColumn(height, 1); dimensions.Children.Add(height);
         Target.Children.Add(dimensions);
     }

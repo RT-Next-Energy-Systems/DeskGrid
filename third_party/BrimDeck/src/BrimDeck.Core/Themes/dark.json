@@ -5,7 +5,7 @@
   "id": "dark",
   "name": "深色",
   "nameEn": "Dark",
-  "description": "纯黑表面，与屏幕顶部的硬件刘海融为一体。",
+  "description": "純黑表面，與螢幕頂部的硬體劉海融為一體。",
   "descriptionEn": "A pure black surface that blends in with a hardware notch.",
   "author": "BrimDeck",
   "license": "Apache-2.0",
@@ -60,7 +60,7 @@
     "gradients": [
       { "name": "日落", "nameEn": "Sunset", "stops": ["#FFB38A", "#FF7EB3", "#B69CFF"] },
       { "name": "海洋", "nameEn": "Ocean", "stops": ["#7CF3FF", "#4FA8FF", "#6A6CFF"] },
-      { "name": "极光", "nameEn": "Aurora", "stops": ["#8BFFB0", "#5CE1E6", "#B69CFF"] },
+      { "name": "極光", "nameEn": "Aurora", "stops": ["#8BFFB0", "#5CE1E6", "#B69CFF"] },
       { "name": "火焰", "nameEn": "Ember", "stops": ["#FFE27A", "#FF9F43", "#FF5E5E"] },
       { "name": "霓虹", "nameEn": "Neon", "stops": ["#FF5CF0", "#A66BFF", "#5CE1E6"] }
     ]

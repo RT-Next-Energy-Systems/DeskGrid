@@ -93,7 +93,7 @@ public partial class MainWindow
         // With what is left chosen (DeckSettings.QuotaRingRemaining), the notice and its ring say what is left, as the rings and bars do.
         bool left = Settings.QuotaRingRemaining;
         double share = left ? 100 - Math.Clamp(alert.Used, 0, 100) : alert.Used;
-        var used = UI.Fixed(left ? Loc.T($"{alert.Label}剩余 {share:0}%", $"{alert.Label}{share:0}% left") : Loc.T($"{alert.Label}已用 {alert.Used:0}%", $"{alert.Label}{alert.Used:0}% used"), font, line, Look.Secondary);
+        var used = UI.Fixed(left ? Loc.T($"{alert.Label}剩餘 {share:0}%", $"{alert.Label}{share:0}% left") : Loc.T($"{alert.Label}已用 {alert.Used:0}%", $"{alert.Label}{alert.Used:0}% used"), font, line, Look.Secondary);
         string shortReset = UI.ShortReset(alert.ResetAt);
         var reset = shortReset.Length > 0 ? UI.Fixed(Loc.T(shortReset + "重置", shortReset.StartsWith("in ", StringComparison.Ordinal) ? "resets " + shortReset : shortReset), font, line, Look.Tertiary) : null;
         double Natural(FrameworkElement element)

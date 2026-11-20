@@ -62,7 +62,7 @@ public partial class MainWindow
     }
     internal void SelectModelRange(UsageDateRange range)
     {
-        if (range.End > DateTime.Today) throw new ArgumentException(Loc.T("结束日期不能晚于今天。", "The end date cannot be later than today."));
+        if (range.End > DateTime.Today) throw new ArgumentException(Loc.T("結束日期不能晚於今天。", "The end date cannot be later than today."));
         _customRange = range; _usageHandover = Handover.Dissolve; ResetModelScroll();
         // The logs are read back only as far as the range shown needs: a later range lets the next refresh drop what is before it.
         var earliest = _historyStart ?? DateTime.Today.AddDays(-29);
@@ -93,7 +93,7 @@ public partial class MainWindow
     private FrameworkElement ModelApplicationFilter(IReadOnlyList<ProviderId> apps, int stage)
     {
         if (stage == 4)
-            return ModelAction(Loc.T($"应用 · {_modelApps.Count} ▾", $"Apps · {_modelApps.Count} ▾"), Loc.T("筛选应用", "Filter apps"), () => OpenModelApplications(apps), toolTip: false);
+            return ModelAction(Loc.T($"應用 · {_modelApps.Count} ▾", $"Apps · {_modelApps.Count} ▾"), Loc.T("篩選應用", "Filter apps"), () => OpenModelApplications(apps), toolTip: false);
         var strip = new StackPanel { Orientation = Orientation.Horizontal };
         foreach (var app in apps)
         {
@@ -108,7 +108,7 @@ public partial class MainWindow
                 var dot = new Ellipse { Width = 6, Height = 6, Fill = UI.Brush(StatisticsTheme(app)), Margin = new Thickness(0, 0, 4, 0), VerticalAlignment = VerticalAlignment.Center };
                 return new StackPanel { Orientation = Orientation.Horizontal, Children = { dot, text } };
             }
-            var button = ModelAction(label, Loc.T("筛选 ", "Filter ") + name, () => ToggleModelApp(app), _modelApps.Contains(app),
+            var button = ModelAction(label, Loc.T("篩選 ", "Filter ") + name, () => ToggleModelApp(app), _modelApps.Contains(app),
                 style: "SegmentButton", height: 22, toolTip: false, content: Tab);
             button.Padding = new Thickness(stage >= 2 ? 5 : 8, 0, stage >= 2 ? 5 : 8, 0);
             strip.Children.Add(button);
@@ -119,7 +119,7 @@ public partial class MainWindow
     private Button ModelDateButton(bool iconOnly)
     {
         Button button = null!;
-        button = ModelAction(iconOnly ? "\uE787" : ModelPeriodLabel, Loc.T("按时间", "By date"), () => OpenModelDates(button), _customRange is not null, iconOnly, toolTip: false);
+        button = ModelAction(iconOnly ? "\uE787" : ModelPeriodLabel, Loc.T("按時間", "By date"), () => OpenModelDates(button), _customRange is not null, iconOnly, toolTip: false);
         if (!iconOnly)
         {
             var content = new StackPanel { Orientation = Orientation.Horizontal };
@@ -127,7 +127,7 @@ public partial class MainWindow
             // The calendar glyph sits slightly above the label; move the glyph, not the label. The top margin centers it
             // 2/3 DIP lower (one device pixel at 150%), and layout rounding keeps it on whole pixels at every scale.
             icon.Margin = new Thickness(0, 4.0 / 3, 0, 0); content.Children.Add(icon);
-            var label = UI.Centered(_customRange is null ? Loc.T("按时间", "By date") : ModelPeriodLabel, 12, _customRange is null ? Look.Secondary : Look.Primary);
+            var label = UI.Centered(_customRange is null ? Loc.T("按時間", "By date") : ModelPeriodLabel, 12, _customRange is null ? Look.Secondary : Look.Primary);
             label.Margin = new Thickness(6, 0, 0, 0); content.Children.Add(label); button.Content = content;
         }
         return button;
@@ -160,7 +160,7 @@ public partial class MainWindow
             foreach (var element in new[] { applications, periods, dates }) element.Measure(new Size(double.PositiveInfinity, 28));
             if (applications.DesiredSize.Width + periods.DesiredSize.Width + dates.DesiredSize.Width + 16 <= available) break;
             if (stage == 4)
-                applications = ModelAction(Loc.T("应用 ▾", "Apps ▾"), Loc.T("筛选应用", "Filter apps"), () => OpenModelApplications(apps), toolTip: false);
+                applications = ModelAction(Loc.T("應用 ▾", "Apps ▾"), Loc.T("篩選應用", "Filter apps"), () => OpenModelApplications(apps), toolTip: false);
         }
         Grid.SetColumn(periods, 2); Grid.SetColumn(dates, 4);
         filters.Children.Add(applications); filters.Children.Add(periods); filters.Children.Add(dates);
@@ -184,12 +184,12 @@ public partial class MainWindow
     private void OpenModelApplications(IReadOnlyList<ProviderId> apps)
     {
         var stack = new StackPanel();
-        var popup = new Window { Title = Loc.T("筛选应用", "Filter apps"), Width = 210, SizeToContent = SizeToContent.Height, WindowStyle = WindowStyle.None,
+        var popup = new Window { Title = Loc.T("篩選應用", "Filter apps"), Width = 210, SizeToContent = SizeToContent.Height, WindowStyle = WindowStyle.None,
             ResizeMode = ResizeMode.NoResize, AllowsTransparency = true, Background = Brushes.Transparent, ShowInTaskbar = false, Topmost = true }; Look.Text(popup);
         foreach (var app in apps)
         {
             Button button = null!;
-            button = ModelAction(AppPresets.Name(app), Loc.T("筛选 ", "Filter ") + AppPresets.Name(app), () =>
+            button = ModelAction(AppPresets.Name(app), Loc.T("篩選 ", "Filter ") + AppPresets.Name(app), () =>
             { ToggleModelApp(app); button.Tag = _modelApps.Contains(app) ? "Selected" : null; }, _modelApps.Contains(app), toolTip: false);
             button.Margin = new Thickness(0, 3, 0, 3); stack.Children.Add(button);
         }
@@ -258,7 +258,7 @@ public partial class MainWindow
     private static string TokenBreakdown(IEnumerable<TokenEntry> source)
     {
         var entries = source.ToList();
-        return Loc.T($"输入 {entries.Sum(t => t.Input):N0}\n缓存写入 {entries.Sum(t => t.CacheWrite + t.CacheWriteHour):N0}\n缓存读取 {entries.Sum(t => t.CacheRead):N0}\n输出 {entries.Sum(t => t.Output):N0}\nToken 合计 {entries.Sum(t => t.Total):N0}",
+        return Loc.T($"輸入 {entries.Sum(t => t.Input):N0}\n快取寫入 {entries.Sum(t => t.CacheWrite + t.CacheWriteHour):N0}\n快取讀取 {entries.Sum(t => t.CacheRead):N0}\n輸出 {entries.Sum(t => t.Output):N0}\nToken 合計 {entries.Sum(t => t.Total):N0}",
             $"Input {entries.Sum(t => t.Input):N0}\nCache write {entries.Sum(t => t.CacheWrite + t.CacheWriteHour):N0}\nCache read {entries.Sum(t => t.CacheRead):N0}\nOutput {entries.Sum(t => t.Output):N0}\nTotal tokens {entries.Sum(t => t.Total):N0}");
     }
 
@@ -298,8 +298,8 @@ public partial class MainWindow
         if (tiers.Length > 0) line++;
         (string Label, Func<TokenPrices, decimal?> Price)[] kinds =
         [
-            (Loc.T("输入", "Input"), p => p.Input), (Loc.T("输出", "Output"), p => p.Output), (Loc.T("缓存写入", "Cache write"), p => p.CacheWrite),
-            (Loc.T("缓存写入（1 小时）", "Cache write (1 hour)"), p => p.CacheWriteHour == p.CacheWrite ? null : p.CacheWriteHour), (Loc.T("缓存读取", "Cache read"), p => p.CacheRead),
+            (Loc.T("輸入", "Input"), p => p.Input), (Loc.T("輸出", "Output"), p => p.Output), (Loc.T("快取寫入", "Cache write"), p => p.CacheWrite),
+            (Loc.T("快取寫入（1 小時）", "Cache write (1 hour)"), p => p.CacheWriteHour == p.CacheWrite ? null : p.CacheWriteHour), (Loc.T("快取讀取", "Cache read"), p => p.CacheRead),
         ];
         foreach (var (label, price) in kinds.Where(kind => columns.Any(prices => kind.Price(prices) is not null)))
         {
@@ -309,17 +309,17 @@ public partial class MainWindow
                     line, i + 1, right: true, margin: new Thickness(16, 0, 0, 0));
             line++;
         }
-        string note = shared ? derived is null ? Loc.T("单价尚未推算出来", "The prices have not been worked out yet")
-            : Loc.T("USD / 百万 Token · 根据每周已用金额推算", "USD per million tokens · worked out from the weekly amount used") : recovery switch
+        string note = shared ? derived is null ? Loc.T("單價尚未推算出來", "The prices have not been worked out yet")
+            : Loc.T("USD / 百萬 Token · 根據每週已用金額推算", "USD per million tokens · worked out from the weekly amount used") : recovery switch
         {
-            { Status: RecoveryStatus.Recovered } => Loc.T("USD / 百万 Token · 根据接口金额推算", "USD per million tokens · worked out from the API amounts"),
-            { Status: RecoveryStatus.TooFewRecords, Records: var count } => Loc.T($"所选时段只有 {count} 条记录，不足以推算单价",
+            { Status: RecoveryStatus.Recovered } => Loc.T("USD / 百萬 Token · 根據介面金額推算", "USD per million tokens · worked out from the API amounts"),
+            { Status: RecoveryStatus.TooFewRecords, Records: var count } => Loc.T($"所選時段只有 {count} 條記錄，不足以推算單價",
                 $"The selected period has only {Loc.Count(count, "record", "records")}, too few to work out the prices"),
-            { Status: RecoveryStatus.Undetermined } => Loc.T("所选时段的记录不足以确定各项单价", "The records in the selected period cannot determine each price"),
-            { Status: RecoveryStatus.Inconsistent } => Loc.T("各条记录的金额不符合固定单价，无法推算单价", "The amounts of the records do not fit fixed prices, so the prices cannot be worked out"),
-            _ => model is null ? Loc.T("未找到该模型的单价", "No unit price was found for this model")
-                : Loc.T("USD / 百万 Token", "USD per million tokens") + (listed is null ? "" : Loc.T($" · {AppPresets.Name(record.Provider)} 标价", $" · {AppPresets.Name(record.Provider)} list prices"))
-                    + (tiers.Length > 0 ? Loc.T(" · 按单次请求的输入量分档", " · tiered by the input of each request") : ""),
+            { Status: RecoveryStatus.Undetermined } => Loc.T("所選時段的記錄不足以確定各項單價", "The records in the selected period cannot determine each price"),
+            { Status: RecoveryStatus.Inconsistent } => Loc.T("各條記錄的金額不符合固定單價，無法推算單價", "The amounts of the records do not fit fixed prices, so the prices cannot be worked out"),
+            _ => model is null ? Loc.T("未找到該模型的單價", "No unit price was found for this model")
+                : Loc.T("USD / 百萬 Token", "USD per million tokens") + (listed is null ? "" : Loc.T($" · {AppPresets.Name(record.Provider)} 標價", $" · {AppPresets.Name(record.Provider)} list prices"))
+                    + (tiers.Length > 0 ? Loc.T(" · 按單次請求的輸入量分檔", " · tiered by the input of each request") : ""),
         };
         Cell(note, line, 0, Look.Secondary, span: span, margin: new Thickness(0, columns.Length == 0 ? 0 : 3, 0, 0));
         return grid;
@@ -359,8 +359,8 @@ public partial class MainWindow
         double[] widths = expanded ? [compact ? 72 : 80, 0, ..Enumerable.Repeat(compact ? 52d : 56d, 4), compact ? 58 : 62, compact ? 64 : 78] : [84, 0, 84, 84];
         var values = result.Rows.Select(row => Values(row.Entries)).ToArray();
         var headings = expanded
-            ? new[] { Loc.T("输入", "Input"), Loc.T("缓存写入", "Cache write"), Loc.T("缓存读取", "Cache read"), Loc.T("输出", "Output"), Loc.T("Token 合计", "Total tokens"), Loc.T("费用 · USD", "Cost · USD") }
-            : [Loc.T("Token 合计", "Total tokens"), Loc.T("费用 · USD", "Cost · USD")];
+            ? new[] { Loc.T("輸入", "Input"), Loc.T("快取寫入", "Cache write"), Loc.T("快取讀取", "Cache read"), Loc.T("輸出", "Output"), Loc.T("Token 合計", "Total tokens"), Loc.T("費用 · USD", "Cost · USD") }
+            : [Loc.T("Token 合計", "Total tokens"), Loc.T("費用 · USD", "Cost · USD")];
         for (int n = 0; n < totals.Length; n++)
         {
             // English headings are longer than the numbers under them; a column also fits its heading.
@@ -404,7 +404,7 @@ public partial class MainWindow
             }
             return row;
         }
-        panel.Children.Add(new Border { Child = Row(Loc.T("应用", "App"), Loc.T("模型", "Model"), headings, true, false), BorderBrush = UI.Brush(Look.Hairline), BorderThickness = new Thickness(0, 0, 0, 1) });
+        panel.Children.Add(new Border { Child = Row(Loc.T("應用", "App"), Loc.T("模型", "Model"), headings, true, false), BorderBrush = UI.Brush(Look.Hairline), BorderThickness = new Thickness(0, 0, 0, 1) });
         var list = new StackPanel();
         for (int i = 0; i < result.Rows.Count; i++)
         {
@@ -432,14 +432,14 @@ public partial class MainWindow
         Grid.SetRow(scroll, 1); panel.Children.Add(scroll);
         if (result.Rows.Count == 0)
         {
-            var message = UI.Centered(incomplete ? Refreshing ? Loc.T("正在读取所选时段…", "Reading the selected period…") : Loc.T("所选应用的用量明细暂不可用", "Usage details for the selected apps are not available yet")
-                : Loc.T("所选时段暂无用量记录", "No usage records in the selected period"), 12, Look.Tertiary);
+            var message = UI.Centered(incomplete ? Refreshing ? Loc.T("正在讀取所選時段…", "Reading the selected period…") : Loc.T("所選應用的用量明細暫不可用", "Usage details for the selected apps are not available yet")
+                : Loc.T("所選時段暫無用量記錄", "No usage records in the selected period"), 12, Look.Tertiary);
             message.HorizontalAlignment = HorizontalAlignment.Center; message.VerticalAlignment = VerticalAlignment.Center; Grid.SetRow(message, 1); panel.Children.Add(message);
         }
-        string selected = _modelApps.SetEquals(Settings.StatisticsProviders) ? Loc.T("全部", "All") : _modelApps.Count == 1 ? AppPresets.Name(_modelApps.Single()) : Loc.T($"{_modelApps.Count} 个应用", Loc.Count(_modelApps.Count, "app", "apps"));
-        string summary = $"{selected} · {ModelPeriodLabel} · " + Loc.T($"{result.Rows.Count} 项", Loc.Count(result.Rows.Count, "item", "items"));
-        var totalRow = Row(incomplete ? Loc.T("已知合计", "Known total") : Loc.T("合计", "Total"), summary, totals, false, true);
-        string missing = incomplete ? Loc.T("部分明细尚未读取完整：", "Some details are not fully read yet: ") + string.Join(Loc.T("、", ", "), result.IncompleteProviders.Select(AppPresets.Name)) : "";
+        string selected = _modelApps.SetEquals(Settings.StatisticsProviders) ? Loc.T("全部", "All") : _modelApps.Count == 1 ? AppPresets.Name(_modelApps.Single()) : Loc.T($"{_modelApps.Count} 個應用", Loc.Count(_modelApps.Count, "app", "apps"));
+        string summary = $"{selected} · {ModelPeriodLabel} · " + Loc.T($"{result.Rows.Count} 項", Loc.Count(result.Rows.Count, "item", "items"));
+        var totalRow = Row(incomplete ? Loc.T("已知合計", "Known total") : Loc.T("合計", "Total"), summary, totals, false, true);
+        string missing = incomplete ? Loc.T("部分明細尚未讀取完整：", "Some details are not fully read yet: ") + string.Join(Loc.T("、", ", "), result.IncompleteProviders.Select(AppPresets.Name)) : "";
         // The label cells explain only an incomplete total; otherwise the visible summary says it all.
         string? totalTip = incomplete ? missing : null;
         if (restored.Count > 0)

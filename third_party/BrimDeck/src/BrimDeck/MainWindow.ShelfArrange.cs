@@ -76,7 +76,7 @@ public partial class MainWindow
     {
         var line = new Border { Width = 1, Background = UI.Brush(Look.Hairline), HorizontalAlignment = HorizontalAlignment.Center, Margin = new Thickness(0, 4, 0, 4), CornerRadius = new CornerRadius(1), IsHitTestVisible = false };
         var grip = new Border { Width = DividerGrip, Background = Brushes.Transparent, Cursor = Cursors.SizeWE, HorizontalAlignment = HorizontalAlignment.Center, Child = line };
-        AutomationProperties.SetName(grip, Loc.T("两栏宽度", "Column widths"));
+        AutomationProperties.SetName(grip, Loc.T("兩欄寬度", "Column widths"));
         void Show(bool lit) { line.Width = lit ? 2 : 1; line.Background = UI.Brush(_shareDrag is not null ? Look.Hex("accent") : lit ? Look.Hex("track") : Look.Hairline); }
         _divider = (grip, Show);
         grip.MouseEnter += (_, _) => Show(true);
@@ -225,7 +225,7 @@ public partial class MainWindow
         {
             bool filesFront = ShelfFront == ShelfSide.Files;
             ShelfPageIcon.Data = filesFront ? TrayPageIcon : ClipboardPageIcon;
-            string label = filesFront ? Loc.T("切换到剪贴板", "Switch to clipboard") : Loc.T("切换到文件中转", "Switch to file transfer");
+            string label = filesFront ? Loc.T("切換到剪貼簿", "Switch to clipboard") : Loc.T("切換到檔案中轉", "Switch to file transfer");
             AutomationProperties.SetName(ShelfPageButton, label);
             ShelfPageButton.ToolTip = label;
             return;
@@ -234,18 +234,18 @@ public partial class MainWindow
         ShelfPageIcon.Data = Settings.ShelfShown == ShelfShown.Files ? TrayPageIcon : ClipboardPageIcon;
         AutomationProperties.SetName(ShelfPageButton, Settings.ShelfShown switch
         {
-            ShelfShown.Clipboard => Loc.T("剪贴板", "Clipboard"),
-            ShelfShown.Files => Loc.T("文件中转", "File transfer"),
-            _ => Loc.T("剪贴板与文件中转", "Clipboard and file transfer")
+            ShelfShown.Clipboard => Loc.T("剪貼簿", "Clipboard"),
+            ShelfShown.Files => Loc.T("檔案中轉", "File transfer"),
+            _ => Loc.T("剪貼簿與檔案中轉", "Clipboard and file transfer")
         });
         ShelfPageButton.ToolTip = null;
     }
 
     private string ShelfSearchName => Settings.ShelfShown switch
     {
-        ShelfShown.Clipboard => Loc.T("搜索剪贴板", "Search the clipboard"),
-        ShelfShown.Files => Loc.T("搜索文件中转", "Search the file transfer"),
-        _ => Loc.T("搜索剪贴板与文件中转", "Search the clipboard and file transfer")
+        ShelfShown.Clipboard => Loc.T("搜尋剪貼簿", "Search the clipboard"),
+        ShelfShown.Files => Loc.T("搜尋檔案中轉", "Search the file transfer"),
+        _ => Loc.T("搜尋剪貼簿與檔案中轉", "Search the clipboard and file transfer")
     };
 
     private void StopDeckHover() => _deckHoverTimer?.Stop();
@@ -303,8 +303,8 @@ public partial class MainWindow
     {
         bool left = side == ShelfSide.Clipboard, compact = layout.Tier == ShelfTier.Compact;
         int count = left ? VisibleClips().Count : VisibleFiles().Count;
-        string name = left ? Loc.T("剪贴板", "Clipboard") : Loc.T("文件中转", "Files");
-        string full = left ? Loc.T("剪贴板", "Clipboard") : Loc.T("文件中转", "File transfer");
+        string name = left ? Loc.T("剪貼簿", "Clipboard") : Loc.T("檔案中轉", "Files");
+        string full = left ? Loc.T("剪貼簿", "Clipboard") : Loc.T("檔案中轉", "File transfer");
         double iconSize = compact ? 15 : 16, nameSize = layout.Tier switch { ShelfTier.Compact => 11.5, ShelfTier.Standard => 12, _ => 12.5 };
         double countSize = layout.Aux, gap = compact ? 5 : 7, top = compact ? 6 : 9, bottom = compact ? 5 : 8;
         var inkBrush = new SolidColorBrush(ink); var faintBrush = new SolidColorBrush(faint);
@@ -353,7 +353,7 @@ public partial class MainWindow
             HorizontalAlignment = left || Settings.ShelfSameSideStack ? HorizontalAlignment.Left : HorizontalAlignment.Right,
             Child = new Grid { ClipToBounds = true, Children = { body, strip } }
         };
-        AutomationProperties.SetName(strip, Loc.T($"切换到{full}", $"Switch to {full}"));
+        AutomationProperties.SetName(strip, Loc.T($"切換到{full}", $"Switch to {full}"));
         return new DeckCard
         {
             Side = side, Root = card, Body = body, Edge = strip, Icon = icon, Count = number, Fill = fill, Rim = rim, Ink = inkBrush, Faint = faintBrush,
@@ -415,9 +415,9 @@ public partial class MainWindow
     // The title of the card in front, stacked: a click on it brings the other card forward. Nothing about it is drawn differently.
     private void SwitchTitle(TextBlock title, ShelfSide side)
     {
-        string other = side == ShelfSide.Clipboard ? Loc.T("文件中转", "File transfer") : Loc.T("剪贴板", "Clipboard");
+        string other = side == ShelfSide.Clipboard ? Loc.T("檔案中轉", "File transfer") : Loc.T("剪貼簿", "Clipboard");
         title.Cursor = Cursors.Hand;
-        AutomationProperties.SetName(title, Loc.T($"切换到{other}", $"Switch to {other}"));
+        AutomationProperties.SetName(title, Loc.T($"切換到{other}", $"Switch to {other}"));
         title.MouseLeftButtonDown += (_, e) => e.Handled = true;
         title.MouseLeftButtonUp += (_, e) => { e.Handled = true; BringForward(side == ShelfSide.Clipboard ? ShelfSide.Files : ShelfSide.Clipboard); };
     }

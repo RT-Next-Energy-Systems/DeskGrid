@@ -40,7 +40,7 @@ public sealed record QuotaRing(IReadOnlyList<double?> Shares, string Detail)
     {
         var choices = Choices(snapshot);
         double? Shown(UsageMetric metric) => Used(metric, entry) is { } used ? remaining ? 100 - used : used : null;
-        string Share(double shown) => remaining ? Loc.T($"剩余 {shown:0.#}%", $"{shown:0.#}% left") : Loc.T($"已用 {shown:0.#}%", $"{shown:0.#}% used");
+        string Share(double shown) => remaining ? Loc.T($"剩餘 {shown:0.#}%", $"{shown:0.#}% left") : Loc.T($"已用 {shown:0.#}%", $"{shown:0.#}% used");
         string Text(UsageMetric metric) => metric.ValueText.Length > 0 && metric.ValueText != "—" ? metric.ValueText + " " + metric.ValueSuffix : Loc.Label(metric.Label);
         // The tooltip: every quota with a share, and every balance or amount spent, with its figure; a lone share needs no name.
         var listed = snapshot.Metrics.Where(metric => Shown(metric) is not null || metric.Kind is MetricKind.Balance or MetricKind.Spend && metric.Amount is not null).ToArray();
@@ -99,7 +99,7 @@ public sealed record QuotaRing(IReadOnlyList<double?> Shares, string Detail)
     public static bool TakesTarget(UsageMetric metric) => metric.Kind is MetricKind.Balance or MetricKind.Spend && metric.Amount is not null && !IsAccountBalance(metric);
 
     // The account balance, with or without the row's target balance as its total (DashboardUsage.Quota).
-    public static bool IsAccountBalance(UsageMetric metric) => metric is { Kind: MetricKind.Balance, Label: "账户余额" } && (metric.Total is null || metric.TotalIsTarget);
+    public static bool IsAccountBalance(UsageMetric metric) => metric is { Kind: MetricKind.Balance, Label: "賬戶餘額" } && (metric.Total is null || metric.TotalIsTarget);
 
     // The quotas the nested rings show by default, outside in (UsageMetric.Id), for the settings to start from.
     public static IReadOnlyList<string> Automatic(ProviderSnapshot snapshot) => [.. Choices(snapshot).Take(MaximumRings).Select(metric => metric.Id)];
@@ -109,7 +109,7 @@ public sealed record QuotaRing(IReadOnlyList<double?> Shares, string Detail)
     public static IReadOnlyList<UsageMetric> Choices(ProviderSnapshot snapshot) => Ordered(snapshot.Metrics.Where(metric =>
         metric.UsedPercent is { } used && double.IsFinite(used) || metric.Kind is MetricKind.Balance or MetricKind.Spend && metric.Amount is not null));
 
-    // The default order of a source's quotas: the account balance first; then a source that groups its quotas ("Gemini · 5 小时",
+    // The default order of a source's quotas: the account balance first; then a source that groups its quotas ("Gemini · 5 小時",
     // "Claude · 每周", or one Claude organization's before another's) keeps its groups in its own order, and within a group, as for a
     // source without groups, the shortest window comes first (five hours, a day, a week, a month) and quotas without a window (tool
     // calls, a key's balance, an amount spent) come last. Quotas that tie keep the source's order, so Claude's week comes before its

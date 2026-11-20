@@ -238,7 +238,7 @@ public static class KimiUsage
         var usages = root.Get("usages");
         if (usages.ValueKind == JsonValueKind.Object)
         {
-            foreach (var (key, label, minutes) in new[] { ("limit_5h", "5 小时额度", 300), ("limit_7d", "每周额度", 10080), ("limit_month_total", "每月额度", 43200) })
+            foreach (var (key, label, minutes) in new[] { ("limit_5h", "5 小時額度", 300), ("limit_7d", "每週額度", 10080), ("limit_month_total", "每月額度", 43200) })
             {
                 var window = usages.Get(key);
                 if (window.Get("used_ratio").Number() is not { } ratio) continue;
@@ -251,13 +251,13 @@ public static class KimiUsage
             {
                 var minutes = Minutes(limit.Get("window"));
                 if (Share(limit.Get("detail")) is not { } used || minutes is not > 0) continue;
-                var label = minutes switch { 300 => "5 小时额度", 10080 => "每周额度", 43200 or 44640 => "每月额度",
-                    _ => $"{minutes} 分钟额度" };
+                var label = minutes switch { 300 => "5 小時額度", 10080 => "每週額度", 43200 or 44640 => "每月額度",
+                    _ => $"{minutes} 分鐘額度" };
                 if (metrics.Any(m => m.Label == label)) continue;
                 metrics.Add(Percent(label, minutes.Value, used, ResetTime(limit.Get("detail"))));
             }
-            if (Share(root.Get("usage")) is { } weekly && metrics.All(m => m.Label != "每周额度"))
-                metrics.Add(Percent("每周额度", 10080, weekly, ResetTime(root.Get("usage"))));
+            if (Share(root.Get("usage")) is { } weekly && metrics.All(m => m.Label != "每週額度"))
+                metrics.Add(Percent("每週額度", 10080, weekly, ResetTime(root.Get("usage"))));
         }
         metrics = [.. metrics.OrderBy(m => m.Window)];
         // Extra usage is shown only alongside a plan's windows.
@@ -320,7 +320,7 @@ public static class KimiUsage
     { "" => null, "REGION_CN" => false, var region => region.StartsWith("REGION_", StringComparison.Ordinal) ? true : null };
     // The source text naming the service, as ZCode names Z.ai and Zhipu accounts.
     public static string Source(string product, bool global) =>
-        product + (global ? Loc.T(" · kimi.ai 账户", " · kimi.ai account") : Loc.T(" · kimi.com 账户", " · kimi.com account"));
+        product + (global ? Loc.T(" · kimi.ai 賬戶", " · kimi.ai account") : Loc.T(" · kimi.com 賬戶", " · kimi.com account"));
 
     // Kimi Open Platform (ProviderId.KimiPlatform): a pay-as-you-go API key of the Open Platform, which bills apart from the
     // membership. platform.kimi.com keys are answered at api.moonshot.cn in CNY, platform.kimi.ai keys at api.moonshot.ai in USD;
@@ -335,9 +335,9 @@ public static class KimiUsage
         var data = root.Get("data");
         if (root.Get("code").Number() is not 0 || Amount(data.Get("available_balance")) is not { } total) throw new InvalidDataException();
         available = total > 0;
-        var metrics = new List<UsageMetric> { new(MetricKind.Balance, "账户余额") { Id = "total", Amount = total, Currency = currency } };
-        if (Amount(data.Get("cash_balance")) is { } cash) metrics.Add(new(MetricKind.Balance, "现金余额") { Id = "cash", Amount = cash, Currency = currency });
-        if (Amount(data.Get("voucher_balance")) is { } voucher) metrics.Add(new(MetricKind.Balance, "代金券余额") { Id = "voucher", Amount = voucher, Currency = currency });
+        var metrics = new List<UsageMetric> { new(MetricKind.Balance, "賬戶餘額") { Id = "total", Amount = total, Currency = currency } };
+        if (Amount(data.Get("cash_balance")) is { } cash) metrics.Add(new(MetricKind.Balance, "現金餘額") { Id = "cash", Amount = cash, Currency = currency });
+        if (Amount(data.Get("voucher_balance")) is { } voucher) metrics.Add(new(MetricKind.Balance, "代金券餘額") { Id = "voucher", Amount = voucher, Currency = currency });
         return metrics;
     }
 

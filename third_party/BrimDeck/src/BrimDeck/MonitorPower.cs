@@ -17,9 +17,9 @@ internal sealed record PowerOptions(PowerStyle Style, int Low, bool Battery, Rea
 //
 // It is one line, laid out as the page's other lines are (memory, network, the drives): a glyph in the room a dial takes, then the
 // figure right-aligned in the room of its widest and its small unit after it, so the unit does not move. The power: a bolt, the watts,
-// the name of what they are of ("整机", "CPU", "GPU"; a click on the power part switches), the last minute of it as a curve that fills
+// the name of what they are of ("整機", "CPU", "GPU"; a click on the power part switches), the last minute of it as a curve that fills
 // the line, and its mean since the page opened at the curve's end. On a machine with a battery,
-// the battery closes the line as one group: the time left or to full where there is one ("剩余 1:42", "充满 0:40"), its drawing (the
+// the battery closes the line as one group: the time left or to full where there is one ("剩餘 1:42", "充滿 0:40"), its drawing (the
 // gauge, with a plug at its corner on mains), and the charge, its "%" ending where the drives' "°C" ends; the curve ends before it.
 // Where the figure comes from, the parts, the rate, the power mode, Battery saver and the health are in the tooltips, one for the power
 // and one for the battery (PowerText), each shown over its part.

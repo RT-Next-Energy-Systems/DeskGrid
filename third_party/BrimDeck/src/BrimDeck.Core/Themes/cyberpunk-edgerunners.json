@@ -8,9 +8,9 @@
   //   CRT scan lines and a magenta glow under the collapsed notch, as on the show's screens and HUDs.
   "formatVersion": 1,
   "id": "cyberpunk-edgerunners",
-  "name": "赛博朋克：边缘行者",
+  "name": "賽博朋克：邊緣行者",
   "nameEn": "Cyberpunk: Edgerunners",
-  "description": "非官方同人配色：夜之城的紫黑夜空、青与品红霓虹、标志性的赛博黄，配扫描线与辉光。",
+  "description": "非官方同人配色：夜之城的紫黑夜空、青與品紅霓虹、標誌性的賽博黃，配掃描線與輝光。",
   "descriptionEn": "An unofficial fan palette: the violet night of Night City, cyan and magenta neon, the signature yellow, scan lines and glow.",
   "author": "BrimDeck",
   "license": "Apache-2.0",
@@ -65,7 +65,7 @@
     "gradients": [
       { "name": "日落", "nameEn": "Sunset", "stops": ["#FCEE0A", "#FF9E3D", "#FF2A6D"] },
       { "name": "海洋", "nameEn": "Ocean", "stops": ["#00F0FF", "#6FA8FF", "#C25BFF"] },
-      { "name": "极光", "nameEn": "Aurora", "stops": ["#3DFFB0", "#00F0FF", "#6FA8FF"] },
+      { "name": "極光", "nameEn": "Aurora", "stops": ["#3DFFB0", "#00F0FF", "#6FA8FF"] },
       { "name": "火焰", "nameEn": "Ember", "stops": ["#FCEE0A", "#FF9E3D", "#FF3B5C"] },
       { "name": "霓虹", "nameEn": "Neon", "stops": ["#FF2A6D", "#C25BFF", "#00F0FF"] }
     ]

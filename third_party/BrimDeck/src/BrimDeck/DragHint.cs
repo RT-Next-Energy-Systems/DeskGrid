@@ -7,7 +7,7 @@ using BrimDeck.Native;
 
 namespace BrimDeck;
 
-// The word beside the pointer while files are dragged out of the file transfer: what letting go there does, "复制" or "移动"
+// The word beside the pointer while files are dragged out of the file transfer: what letting go there does, "複製" or "移動"
 // (MainWindow.DragOut). The pointer leaves the panel during the drag, so the word has a window of its own: above everything, never
 // activated and transparent to the pointer, which keeps it from being taken for the place the files are dropped on. It looks as
 // the label of a music gesture does.

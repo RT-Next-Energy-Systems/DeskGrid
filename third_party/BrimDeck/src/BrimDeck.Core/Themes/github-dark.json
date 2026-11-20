@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "id": "github-dark",
   "name": "GitHub Dark",
-  "description": "GitHub 深色默认主题：蓝黑底色，Primer 设计系统的语义色。",
+  "description": "GitHub 深色預設主題：藍黑底色，Primer 設計系統的語義色。",
   "descriptionEn": "GitHub Dark Default: a blue-black surface with the semantic colors of Primer.",
   "author": "GitHub (Primer)",
   "license": "MIT",
@@ -59,7 +59,7 @@
     "gradients": [
       { "name": "日落", "nameEn": "Sunset", "stops": ["#D29922", "#DB6D28", "#DB61A2"] },
       { "name": "海洋", "nameEn": "Ocean", "stops": ["#39C5CF", "#4493F8", "#A371F7"] },
-      { "name": "极光", "nameEn": "Aurora", "stops": ["#3FB950", "#39C5CF", "#4493F8"] },
+      { "name": "極光", "nameEn": "Aurora", "stops": ["#3FB950", "#39C5CF", "#4493F8"] },
       { "name": "火焰", "nameEn": "Ember", "stops": ["#D29922", "#DB6D28", "#F85149"] },
       { "name": "霓虹", "nameEn": "Neon", "stops": ["#DB61A2", "#A371F7", "#39C5CF"] }
     ]

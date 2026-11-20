@@ -1,10 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.8.0
 
 ### Changed
 
 - **NotiLand is now BrimDeck.** DeskGrid's own island was replaced by [BrimDeck](https://github.com/MoFeng2223/BrimDeck) (Apache-2.0), which DeskGrid carries and runs beside itself while **Show NotiLand** is on: AI tool quotas, music, system readings, device batteries, a clipboard history and a file transfer. The parts of BrimDeck that change another program's files or install a service with administrator rights are left out (see `third_party/BrimDeck/DESKGRID.md`). The old island's other settings, shortcuts and `--ctl island` commands are gone; BrimDeck is set up in its own settings window. DeskGrid.exe is about 95 MB bigger because it carries BrimDeck.
+- All Simplified Chinese in the repository is now Traditional Chinese. NotiLand's Chinese interface (texts, labels, comments, built-in theme names and its release notes) is Traditional; only the text that matches other programs (NetEase's log lines and registry name, lyric notices, the quotes of NetEase and KuGou's own menus) stays Simplified, and the device and Phone Link keyword lists have both.
 
 ### Fixed
 

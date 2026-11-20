@@ -6,7 +6,7 @@ using BrimDeck.Core;
 
 namespace BrimDeck;
 
-// A diagram for the arrangement cards in the settings ("页面布局"): not a picture of the panel, only how its two columns are laid
+// A diagram for the arrangement cards in the settings ("頁面佈局"): not a picture of the panel, only how its two columns are laid
 // out, drawn large enough to read at a glance in the settings' own colors, and standing still. Side by side, the clipboard and the
 // file transfer are two blocks with the divider between them, always split at the default share: the diagram says what the
 // arrangement is, not how it is set. Stacked, the clipboard is a card
@@ -64,7 +64,7 @@ internal static class ShelfArrangementPreview
     // transfer is "Files" here: the full name would not fit a narrow block. A block too narrow for its name shows the icon alone.
     private static Border Block(bool clips, double width, double height, string fill, string? edge, Tones tones)
     {
-        string name = clips ? Loc.T("剪贴板", "Clipboard") : Loc.T("文件中转", "Files");
+        string name = clips ? Loc.T("剪貼簿", "Clipboard") : Loc.T("檔案中轉", "Files");
         var stack = new StackPanel();
         var head = new StackPanel { Orientation = Orientation.Horizontal };
         head.Children.Add(Icon(clips, clips ? tones.Clip : tones.File, 13));
@@ -85,7 +85,7 @@ internal static class ShelfArrangementPreview
     // clockwise), in the middle of the part that shows beside the card.
     private static Border StripBlock(double width, double height, Tones tones)
     {
-        string name = Loc.T("文件中转", "Files");
+        string name = Loc.T("檔案中轉", "Files");
         var stack = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center };
         stack.Children.Add(Icon(false, tones.File, 13));
         if (name.Any(letter => letter >= 0x2E80))

@@ -17,7 +17,7 @@ namespace BrimDeck.Core;
 // MiMo server then keeps the sign-in in its own cookies. Its API answers { code, data } and refuses a missing or expired sign-in
 // with HTTP 401. GET /user/xiaomi/subscription/self returns { current, subscriptions }, current being the plan in force or null:
 // { planCode, title, planTier (1 to 4), status, renewalMode, startTime, endTime, percent, nextResetTime, source }. percent is the
-// share of the weekly allowance left: the desktop app shows it as "剩余 {percent}%" under its weekly limit, resetting at
+// share of the weekly allowance left: the desktop app shows it as "剩餘 {percent}%" under its weekly limit, resetting at
 // nextResetTime. Times come without an offset; they are taken as China time, the time of the server they come from.
 public static class MiMoUsage
 {
@@ -139,7 +139,7 @@ public static class MiMoUsage
 
     public static string PlanName(int tier, string title) => tier switch
     {
-        1 => Loc.T("入门", "Starter"), 2 => Loc.T("进阶", "Plus"), 3 => Loc.T("高阶", "Pro"), 4 => Loc.T("尊享", "Ultra"),
+        1 => Loc.T("入門", "Starter"), 2 => Loc.T("進階", "Plus"), 3 => Loc.T("高階", "Pro"), 4 => Loc.T("尊享", "Ultra"),
         _ => title.Trim()
     };
 
@@ -151,7 +151,7 @@ public static class MiMoUsage
         if (current.ValueKind != JsonValueKind.Object) return new("", null);
         var plan = PlanName((int)(current.Get("planTier").Number() ?? 0), current.Get("title").Text());
         if (current.Get("percent").Number() is not { } left) return new(plan, null);
-        return new(plan, new Quota("每周额度", Math.Clamp(100 - left, 0, 100), ChinaDate(current.Get("nextResetTime")), 7 * 24 * 60));
+        return new(plan, new Quota("每週額度", Math.Clamp(100 - left, 0, 100), ChinaDate(current.Get("nextResetTime")), 7 * 24 * 60));
     }
 
     private static DateTimeOffset? ChinaDate(JsonElement value)
@@ -166,16 +166,16 @@ public static class MiMoUsage
     public static void Read(ProviderSnapshot snapshot, IDesktopSources desktop, string database, DateTimeOffset start, DateTimeOffset now)
     {
         snapshot.UsageAvailable = File.Exists(database);
-        if (!snapshot.UsageAvailable) { snapshot.UsageNote = Loc.T("未找到本机 MiMo 记录。", "No local MiMo records were found."); return; }
+        if (!snapshot.UsageAvailable) { snapshot.UsageNote = Loc.T("未找到本機 MiMo 記錄。", "No local MiMo records were found."); return; }
         var since = start.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture);
         var rows = desktop.QueryDatabase(database, "SELECT id, session_id, time_created, json_extract(data, '$.providerID'), json_extract(data, '$.modelID'), " +
             "json_extract(data, '$.tokens.input'), json_extract(data, '$.tokens.cache.read'), json_extract(data, '$.tokens.cache.write'), " +
             "json_extract(data, '$.tokens.output'), json_extract(data, '$.tokens.reasoning'), json_extract(data, '$.cost') " +
             $"FROM message WHERE json_extract(data, '$.role') = 'assistant' AND time_created >= {since}");
-        if (rows is null) { snapshot.UsageComplete = false; snapshot.UsageNote = Loc.T("MiMo 记录暂时无法读取。", "The MiMo records cannot be read right now."); return; }
+        if (rows is null) { snapshot.UsageComplete = false; snapshot.UsageNote = Loc.T("MiMo 記錄暫時無法讀取。", "The MiMo records cannot be read right now."); return; }
         snapshot.Entries = Parse(rows).Where(e => e.Time >= start && e.Time <= now && e.Total > 0).OrderBy(e => e.Time).ToList();
         int sessions = rows.Where(row => row.Length > 1 && row[1] is not null).Select(row => row[1]).Distinct().Count();
-        snapshot.UsageNote = Loc.T($"本机 MiMo {start.LocalDateTime:yyyy-MM-dd} 起 · {sessions} 个会话 · {snapshot.Entries.Count} 次模型请求",
+        snapshot.UsageNote = Loc.T($"本機 MiMo {start.LocalDateTime:yyyy-MM-dd} 起 · {sessions} 個會話 · {snapshot.Entries.Count} 次模型請求",
             $"Local MiMo since {start.LocalDateTime:yyyy-MM-dd} · " + Loc.Count(sessions, "session", "sessions") + " · " + Loc.Count(snapshot.Entries.Count, "model request", "model requests"));
     }
 
@@ -232,10 +232,10 @@ public static class MiMoUsage
         var info = root.Get("balance_infos").Items().FirstOrDefault();
         if (info.ValueKind != JsonValueKind.Object || Money(info.Get("total_available")) is not { } total) throw new InvalidDataException();
         var currency = info.Get("currency").Text().ToUpperInvariant();
-        var metrics = new List<UsageMetric> { new(MetricKind.Balance, "账户余额") { Id = "total", Amount = total, Currency = currency } };
-        if (Money(info.Get("cash_balance")) is { } cash) metrics.Add(new(MetricKind.Balance, "充值余额") { Id = "cash", Amount = cash, Currency = currency });
-        if (Money(info.Get("gift_balance")) is { } gift) metrics.Add(new(MetricKind.Balance, "赠送余额") { Id = "gift", Amount = gift, Currency = currency });
-        if (Money(info.Get("frozen_balance")) is { } frozen && frozen > 0) metrics.Add(new(MetricKind.Balance, "冻结金额") { Id = "frozen", Amount = frozen, Currency = currency });
+        var metrics = new List<UsageMetric> { new(MetricKind.Balance, "賬戶餘額") { Id = "total", Amount = total, Currency = currency } };
+        if (Money(info.Get("cash_balance")) is { } cash) metrics.Add(new(MetricKind.Balance, "充值餘額") { Id = "cash", Amount = cash, Currency = currency });
+        if (Money(info.Get("gift_balance")) is { } gift) metrics.Add(new(MetricKind.Balance, "贈送餘額") { Id = "gift", Amount = gift, Currency = currency });
+        if (Money(info.Get("frozen_balance")) is { } frozen && frozen > 0) metrics.Add(new(MetricKind.Balance, "凍結金額") { Id = "frozen", Amount = frozen, Currency = currency });
         return metrics;
     }
 
@@ -246,7 +246,7 @@ public static class MiMoUsage
         var spent = root.Get("data").Items().Where(day => day.Get("currency").Text().Equals(currency, StringComparison.OrdinalIgnoreCase))
             .Sum(day => Money(day.Get("consumed_amount")) ?? 0);
         var month = new DateTimeOffset(now.UtcDateTime.Year, now.UtcDateTime.Month, 1, 0, 0, 0, TimeSpan.Zero);
-        return new(MetricKind.Spend, "本月扣费") { Id = "month", Amount = spent, Currency = currency, ResetAt = month.AddMonths(1) };
+        return new(MetricKind.Spend, "本月扣費") { Id = "month", Amount = spent, Currency = currency, ResetAt = month.AddMonths(1) };
     }
 
     public static string UsageQuery(DateTimeOffset now) => $"start_date={now.UtcDateTime:yyyy-MM}-01&end_date={now.UtcDateTime:yyyy-MM-dd}";
@@ -259,7 +259,7 @@ public static class MiMoUsage
         var quota = root.Get("quota");
         if (Money(quota.Get("total_credits")) is not { } total || total <= 0 || Money(quota.Get("used_credits")) is not { } used) throw new InvalidDataException();
         var plan = string.Join(" ", code.Split(['-', '_', ' '], StringSplitOptions.RemoveEmptyEntries).Select(word => char.ToUpperInvariant(word[0]) + word[1..]));
-        return (plan, new(MetricKind.Count, "套餐额度") { Id = "token-plan", Total = total, Used = used, Unit = "Credits", ResetAt = root.Get("period").Get("end_at").Date() });
+        return (plan, new(MetricKind.Count, "套餐額度") { Id = "token-plan", Total = total, Used = used, Unit = "Credits", ResetAt = root.Get("period").Get("end_at").Date() });
     }
 
     private static decimal? Money(JsonElement value) =>

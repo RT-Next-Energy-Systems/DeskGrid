@@ -1,6 +1,6 @@
 namespace BrimDeck.Core;
 
-// Metaphyuni's (玄派) Metapanda (玄熊猫) P1 on its NearLink receiver 369B:00B3 (product string "MPMouseNearLink"), usage page
+// Metaphyuni's (玄派) Metapanda (玄熊貓) P1 on its NearLink receiver 369B:00B3 (product string "MPMouseNearLink"), usage page
 // 0xFFA0 usage 2, 64-byte input and output reports: the collection, report ids and vendor of Thunderobot's ML903
 // (ThunderobotMice), with another command. Output report 0xA0 with the wireless-status command 0x50, answered on input
 // report 0xA1:

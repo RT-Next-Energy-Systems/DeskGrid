@@ -54,14 +54,14 @@ public static class MediaAppTarget
     public static string DisplayName(string appId, Func<string, string?> registered)
     {
         string lower = appId.ToLowerInvariant();
-        if (lower.Contains("cloudmusic") || lower.Contains("netease")) return "网易云音乐";
-        if (lower.Contains("qqmusic")) return "QQ 音乐";
-        if (lower == "kugou") return "酷狗音乐";
+        if (lower.Contains("cloudmusic") || lower.Contains("netease")) return "網易雲音樂";
+        if (lower.Contains("qqmusic")) return "QQ 音樂";
+        if (lower == "kugou") return "酷狗音樂";
         if (lower.Contains("msedge")) return "Microsoft Edge";
         if (lower.Contains("chrome")) return "Google Chrome";
         if (lower.Contains("spotify")) return "Spotify";
         if (lower.Contains("itunes") || lower.Contains("applemusic")) return "Apple Music";
-        if (lower.Contains("qiyi")) return "爱奇艺";
+        if (lower.Contains("qiyi")) return "愛奇藝";
         // QueMusic's lyrics are read from its local files, which needs its name whether or not Windows lists it.
         if (lower == "bronekox.quemusic") return "QueMusic";
         string id = appId.Split('!')[0];

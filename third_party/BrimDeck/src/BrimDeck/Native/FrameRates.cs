@@ -126,7 +126,7 @@ internal sealed class FrameRates : IDisposable
         lock (_lock)
         {
             if (!_wanted) return Reading<FrameSample>.Unavailable(Why.Waiting);
-            if (_refused) return Reading<FrameSample>.Unavailable(Loc.T("无权读取帧事件", "Not allowed to read frame events"));
+            if (_refused) return Reading<FrameSample>.Unavailable(Loc.T("無權讀取幀事件", "Not allowed to read frame events"));
             // The session ended without being asked (stopped from outside): it is started again, at most every five seconds.
             if (_reader is { IsAlive: false } && now - _restarted >= 5)
             {

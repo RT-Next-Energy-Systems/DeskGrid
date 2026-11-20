@@ -61,7 +61,7 @@ public sealed partial class SettingsWindow
     private static void PointArrow(Button arrow, bool open)
     {
         if (arrow.Content is UIElement chevron) chevron.RenderTransform = new RotateTransform(open ? 0 : -90);
-        AutomationProperties.SetItemStatus(arrow, open ? Loc.T("已展开", "Expanded") : Loc.T("已收起", "Collapsed"));
+        AutomationProperties.SetItemStatus(arrow, open ? Loc.T("已展開", "Expanded") : Loc.T("已收起", "Collapsed"));
     }
     // The Windows 11 icon font's small chevron (ChevronDownSmall) is hinted like text and heavy enough beside a bold label.
     // Expandable rows, selectors, combo boxes and the panel's source button all use it.
@@ -93,7 +93,7 @@ public sealed partial class SettingsWindow
     }
     private void AttachSourceDetails(AppEntry entry, Grid row, Border border)
     {
-        var arrow = ChevronButton(Loc.T("展开 " + entry.Name + " 配额配置", "Show " + entry.Name + " quota configuration"), () => ToggleSourceRow(entry.InstanceId));
+        var arrow = ChevronButton(Loc.T("展開 " + entry.Name + " 配額配置", "Show " + entry.Name + " quota configuration"), () => ToggleSourceRow(entry.InstanceId));
         arrow.HorizontalAlignment = HorizontalAlignment.Right; arrow.VerticalAlignment = VerticalAlignment.Center;
         AutomationProperties.SetAutomationId(arrow, "expand-source-" + entry.InstanceId.ToString("N"));
         // Right after the drag handle, so Tab reaches the arrow at the row's left before the row's other controls (SW-05). The two
@@ -143,11 +143,11 @@ public sealed partial class SettingsWindow
     {
         var grid = AppColumns(); grid.Margin = new Thickness(0, 0, 0, 12);
         bool grokBot = entry.QuotaSource == ProviderId.GrokBot;
-        string title = Loc.T("联网获取额度", "Fetch quota online");
+        string title = Loc.T("聯網獲取額度", "Fetch quota online");
         string help = grokBot
-            ? Loc.T("开启：使用 Grok Bot 桌面版的登录，联网获取每周额度。\n关闭：不联网，只显示 Grok Bot 桌面版在本机缓存的最新每周额度。",
+            ? Loc.T("開啟：使用 Grok Bot 桌面版的登入，聯網獲取每週額度。\n關閉：不聯網，只顯示 Grok Bot 桌面版在本機快取的最新每週額度。",
                 "On: fetches the weekly allowance online with the Grok Bot desktop app sign-in.\nOff: no network access; shows the latest weekly allowance the Grok Bot desktop app cached on this PC.")
-            : Loc.T("开启：使用 Claude Code 或桌面版的登录，联网获取额度。\n关闭：不联网，只显示 Claude 桌面版在本机记录的最新额度。",
+            : Loc.T("開啟：使用 Claude Code 或桌面版的登入，聯網獲取額度。\n關閉：不聯網，只顯示 Claude 桌面版在本機記錄的最新額度。",
                 "On: fetches the quota online with the Claude Code or desktop app sign-in.\nOff: no network access; shows the latest quota the Claude desktop app recorded on this PC.");
         var line = new Grid();
         // The label column is shared with the off-peak lines below, so the switch starts where their controls start.
@@ -182,7 +182,7 @@ public sealed partial class SettingsWindow
         var line = new Grid();
         line.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto, SharedSizeGroup = "SourceLabel" });
         line.ColumnDefinitions.Add(new ColumnDefinition());
-        var caption = TextLine(Loc.T("小米账号", "Xiaomi account"), 12, TextSecondary);
+        var caption = TextLine(Loc.T("小米賬號", "Xiaomi account"), 12, TextSecondary);
         caption.Margin = new Thickness(16, 0, 16, 0); caption.MinWidth = 52; caption.VerticalAlignment = VerticalAlignment.Center;
         line.Children.Add(caption);
         var controls = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
@@ -195,13 +195,13 @@ public sealed partial class SettingsWindow
             return button;
         }
         var signIn = Outline("mimo-sign-in"); var signOut = Outline("mimo-sign-out");
-        signOut.Content = Loc.T("退出登录", "Sign out");
+        signOut.Content = Loc.T("退出登入", "Sign out");
         controls.Children.Add(state); controls.Children.Add(signIn); controls.Children.Add(signOut);
         void Show()
         {
             bool waiting = _mimoSignIn is not null, signedIn = _app.MiMo.SignedIn;
-            state.Text = waiting ? Loc.T("请在浏览器窗口中登录", "Sign in in the browser window") : signedIn ? Loc.T("已登录", "Signed in") : Loc.T("未登录", "Not signed in");
-            signIn.Content = waiting ? Loc.T("取消", "Cancel") : signedIn ? Loc.T("重新登录", "Sign in again") : Loc.T("登录", "Sign in");
+            state.Text = waiting ? Loc.T("請在瀏覽器視窗中登入", "Sign in in the browser window") : signedIn ? Loc.T("已登入", "Signed in") : Loc.T("未登入", "Not signed in");
+            signIn.Content = waiting ? Loc.T("取消", "Cancel") : signedIn ? Loc.T("重新登入", "Sign in again") : Loc.T("登入", "Sign in");
             signOut.Visibility = signedIn && !waiting ? Visibility.Visible : Visibility.Collapsed;
         }
         signIn.Click += async (_, _) =>
@@ -212,13 +212,13 @@ public sealed partial class SettingsWindow
             try
             {
                 await Task.Run(() => _app.MiMo.SignInAsync(cancellation.Token));
-                SaveStatus(Loc.T("已登录小米账号", "Signed in to the Xiaomi account"));
+                SaveStatus(Loc.T("已登入小米賬號", "Signed in to the Xiaomi account"));
                 _ = _app.Deck.RefreshAsync();
             }
             catch (OperationCanceledException) { }
             catch (Native.MiMoAccount.SignInException ex) { SaveStatus(ex.Message, true); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or System.Net.WebSockets.WebSocketException or System.Net.Http.HttpRequestException or System.Text.Json.JsonException)
-            { SaveStatus(Loc.T("登录失败，请重试", "Signing in failed. Try again."), true); }
+            { SaveStatus(Loc.T("登入失敗，請重試", "Signing in failed. Try again."), true); }
             finally { if (_mimoSignIn == cancellation) _mimoSignIn = null; cancellation.Dispose(); Show(); }
         };
         signOut.Click += (_, _) => { _app.MiMo.SignOut(); Show(); _ = _app.Deck.RefreshAsync(); };
@@ -284,9 +284,9 @@ public sealed partial class SettingsWindow
         if (ProviderCatalog.NeedsSite(entry.QuotaSource))
         {
             bool custom = entry.QuotaSource == ProviderId.Custom;
-            var site = Plain("site", Loc.T("站点地址", "Site address")); site.Text = entry.Site;
-            string usage = custom ? Loc.T("可选，作为 ctx.site 传给脚本", "Optional. Passed to the script as ctx.site")
-                : Loc.T("末尾的 /、/v1 和控制台路径会自动去掉", "A trailing /, /v1 or console path is removed automatically");
+            var site = Plain("site", Loc.T("站點地址", "Site address")); site.Text = entry.Site;
+            string usage = custom ? Loc.T("可選，作為 ctx.site 傳給指令碼", "Optional. Passed to the script as ctx.site")
+                : Loc.T("末尾的 /、/v1 和控制檯路徑會自動去掉", "A trailing /, /v1 or console path is removed automatically");
             var hint = TextLine(usage, 12.5, TextTertiary);
             // An HTTP address the row does not allow (one saved by an earlier version included) is not read; the line under
             // the field says why, apart from the hint inside it.
@@ -307,7 +307,7 @@ public sealed partial class SettingsWindow
                     try
                     {
                         var uri = ProviderCatalog.ValidateUrl(normalized, current.AllowHttp);
-                        if (uri.Query.Length > 0) throw new InvalidDataException(Loc.T("站点地址不应包含查询参数。", "The site address must not contain query parameters."));
+                        if (uri.Query.Length > 0) throw new InvalidDataException(Loc.T("站點地址不應包含查詢引數。", "The site address must not contain query parameters."));
                     }
                     catch (InvalidDataException ex)
                     {
@@ -324,11 +324,11 @@ public sealed partial class SettingsWindow
             site.TextChanged += (_, _) => { Hint(); InvalidateTest(); };
             site.LostKeyboardFocus += (_, _) => CommitSite();
             site.KeyDown += (_, e) => { if (e.Key == Key.Enter) { CommitSite(); e.Handled = true; } };
-            Line(Loc.T("站点地址", "Site address"), Field(site, hint));
+            Line(Loc.T("站點地址", "Site address"), Field(site, hint));
             Line("", warning);
 
-            string allowTitle = Loc.T("允许 HTTP", "Allow HTTP");
-            string allowHelp = Loc.T("允许用 HTTP 访问，但 API 密钥会以明文发送。只建议在可信网络中开启，例如局域网。",
+            string allowTitle = Loc.T("允許 HTTP", "Allow HTTP");
+            string allowHelp = Loc.T("允許用 HTTP 訪問，但 API 金鑰會以明文傳送。只建議在可信網路中開啟，例如區域網。",
                 "HTTP is allowed, but the API key is sent in plain text. Turn this on only on a trusted network, such as a LAN.");
             var allow = new CheckBox { Style = (Style)FindResource("SettingsToggle"), IsChecked = entry.AllowHttp, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Center };
             AutomationProperties.SetName(allow, allowTitle); AutomationProperties.SetHelpText(allow, allowHelp);
@@ -352,23 +352,23 @@ public sealed partial class SettingsWindow
         var password = new PasswordBox { FontSize = 12.5, MaxLength = 4096, Padding = new Thickness(0), BorderThickness = new Thickness(0),
             Background = Brushes.Transparent, Foreground = UI.Brush(TextPrimary), CaretBrush = UI.Brush(_palette.Accent),
             VerticalAlignment = VerticalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 6, 0) };
-        AutomationProperties.SetAutomationId(password, "secret-" + entry.InstanceId.ToString("N")); AutomationProperties.SetName(password, Loc.T("API 密钥", "API key"));
-        var visible = Plain("secret-text", Loc.T("API 密钥", "API key")); visible.MaxLength = 4096; visible.Visibility = Visibility.Collapsed;
+        AutomationProperties.SetAutomationId(password, "secret-" + entry.InstanceId.ToString("N")); AutomationProperties.SetName(password, Loc.T("API 金鑰", "API key"));
+        var visible = Plain("secret-text", Loc.T("API 金鑰", "API key")); visible.MaxLength = 4096; visible.Visibility = Visibility.Collapsed;
         string emptyHint = entry.QuotaSource switch
         {
-            ProviderId.GlmChina or ProviderId.GlmGlobal => Loc.T("GLM 套餐密钥，加密保存在本机", "GLM plan key, stored encrypted on this PC"),
-            ProviderId.DeepSeek => Loc.T("DeepSeek API 密钥，加密保存在本机", "DeepSeek API key, stored encrypted on this PC"),
-            ProviderId.KimiApi => Loc.T("Kimi Code API 密钥（sk-kimi-…），加密保存在本机", "Kimi Code API key (sk-kimi-…), stored encrypted on this PC"),
-            ProviderId.KimiPlatform => Loc.T("Kimi 开放平台 API 密钥，加密保存在本机", "Kimi Open Platform API key, stored encrypted on this PC"),
-            ProviderId.OpenCodeGo => Loc.T("OpenCode Console API 密钥（oc_sk_…），加密保存在本机", "OpenCode Console API key (oc_sk_…), stored encrypted on this PC"),
-            ProviderId.CommandCodeApi => Loc.T("Command Code API 密钥，加密保存在本机", "Command Code API key, stored encrypted on this PC"),
-            ProviderId.MiMoApi => Loc.T("小米 MiMo 开放平台按量计费 API 密钥（sk-…），加密保存在本机", "Xiaomi MiMo Open Platform pay-as-you-go API key (sk-…), stored encrypted on this PC"),
-            ProviderId.MiMoTokenPlan => Loc.T("小米 MiMo Token Plan 密钥（tp-…），加密保存在本机", "Xiaomi MiMo Token Plan key (tp-…), stored encrypted on this PC"),
-            ProviderId.OpenRouter => Loc.T("OpenRouter API 密钥（sk-or-v1-…），加密保存在本机", "OpenRouter API key (sk-or-v1-…), stored encrypted on this PC"),
-            ProviderId.Custom => Loc.T("可选，加密保存在本机", "Optional, stored encrypted on this PC"),
-            _ => Loc.T("填写 API 密钥，加密保存在本机", "Enter the API key; it is stored encrypted on this PC")
+            ProviderId.GlmChina or ProviderId.GlmGlobal => Loc.T("GLM 套餐金鑰，加密儲存在本機", "GLM plan key, stored encrypted on this PC"),
+            ProviderId.DeepSeek => Loc.T("DeepSeek API 金鑰，加密儲存在本機", "DeepSeek API key, stored encrypted on this PC"),
+            ProviderId.KimiApi => Loc.T("Kimi Code API 金鑰（sk-kimi-…），加密儲存在本機", "Kimi Code API key (sk-kimi-…), stored encrypted on this PC"),
+            ProviderId.KimiPlatform => Loc.T("Kimi 開放平臺 API 金鑰，加密儲存在本機", "Kimi Open Platform API key, stored encrypted on this PC"),
+            ProviderId.OpenCodeGo => Loc.T("OpenCode Console API 金鑰（oc_sk_…），加密儲存在本機", "OpenCode Console API key (oc_sk_…), stored encrypted on this PC"),
+            ProviderId.CommandCodeApi => Loc.T("Command Code API 金鑰，加密儲存在本機", "Command Code API key, stored encrypted on this PC"),
+            ProviderId.MiMoApi => Loc.T("小米 MiMo 開放平臺按量計費 API 金鑰（sk-…），加密儲存在本機", "Xiaomi MiMo Open Platform pay-as-you-go API key (sk-…), stored encrypted on this PC"),
+            ProviderId.MiMoTokenPlan => Loc.T("小米 MiMo Token Plan 金鑰（tp-…），加密儲存在本機", "Xiaomi MiMo Token Plan key (tp-…), stored encrypted on this PC"),
+            ProviderId.OpenRouter => Loc.T("OpenRouter API 金鑰（sk-or-v1-…），加密儲存在本機", "OpenRouter API key (sk-or-v1-…), stored encrypted on this PC"),
+            ProviderId.Custom => Loc.T("可選，加密儲存在本機", "Optional, stored encrypted on this PC"),
+            _ => Loc.T("填寫 API 金鑰，加密儲存在本機", "Enter the API key; it is stored encrypted on this PC")
         };
-        string savedHint = Loc.T("已加密保存在本机，输入新密钥以更换", "Stored encrypted on this PC. Enter a new key to replace it");
+        string savedHint = Loc.T("已加密儲存在本機，輸入新金鑰以更換", "Stored encrypted on this PC. Enter a new key to replace it");
         var keyHint = TextLine(entry.SecretRevision != Guid.Empty ? savedHint : emptyHint, 12.5, TextTertiary);
         var inputs = new Grid(); inputs.Children.Add(password); inputs.Children.Add(visible);
         // The icon shows the current state: struck through while the key is dots, open while it is plain text.
@@ -376,7 +376,7 @@ public sealed partial class SettingsWindow
         const string eyeOff = eye + " M 2.5,0.5 L 13.5,11.5";
         bool syncing = false, dirty = false, swapping = false;
         Button? reveal = null;
-        reveal = GlyphButton(eyeOff, 16, 12, Loc.T("显示密钥", "Show key"), () => ToggleReveal());
+        reveal = GlyphButton(eyeOff, 16, 12, Loc.T("顯示金鑰", "Show key"), () => ToggleReveal());
         reveal.Width = 28; reveal.Height = 28; reveal.Focusable = false; reveal.ToolTip = null; ((Shape)reveal.Content).StrokeThickness = 1.2;
         // Only the other box is updated: writing back into the box being typed in would move its caret to the start.
         void EditSecret(string value, bool fromPassword)
@@ -400,7 +400,7 @@ public sealed partial class SettingsWindow
                 keyHint.Visibility = Visibility.Visible;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or CryptographicException or System.Text.Json.JsonException)
-            { SaveStatus(Loc.T("密钥保存失败，请检查本机设置目录。", "The key could not be saved. Check the local settings folder."), true); }
+            { SaveStatus(Loc.T("金鑰儲存失敗，請檢查本機設定目錄。", "The key could not be saved. Check the local settings folder."), true); }
         }
         // Swapping the dots for plain text hides the box being typed in; that is not leaving the field, so nothing is saved.
         void ToggleReveal()
@@ -435,26 +435,26 @@ public sealed partial class SettingsWindow
             }
             swapping = false;
             ((Shape)reveal!.Content).SetValue(System.Windows.Shapes.Path.DataProperty, Geometry.Parse(show ? eye : eyeOff));
-            AutomationProperties.SetName(reveal, show ? Loc.T("隐藏密钥", "Hide key") : Loc.T("显示密钥", "Show key"));
+            AutomationProperties.SetName(reveal, show ? Loc.T("隱藏金鑰", "Hide key") : Loc.T("顯示金鑰", "Show key"));
         }
         password.LostKeyboardFocus += (_, _) => { if (!swapping) SaveSecret(); };
         visible.LostKeyboardFocus += (_, _) => { if (!swapping) SaveSecret(); };
-        Line(entry.QuotaSource == ProviderId.Custom ? Loc.T("API 密钥（可选）", "API key (optional)") : Loc.T("API 密钥", "API key"), Field(inputs, keyHint, reveal));
+        Line(entry.QuotaSource == ProviderId.Custom ? Loc.T("API 金鑰（可選）", "API key (optional)") : Loc.T("API 金鑰", "API key"), Field(inputs, keyHint, reveal));
 
         if (entry.QuotaSource == ProviderId.Custom)
         {
             var (frame, code) = ScriptEditor.Create(entry.Script, _palette);
-            AutomationProperties.SetAutomationId(code, "script-" + entry.InstanceId.ToString("N")); AutomationProperties.SetName(code, Loc.T("配额脚本", "Quota script"));
+            AutomationProperties.SetAutomationId(code, "script-" + entry.InstanceId.ToString("N")); AutomationProperties.SetName(code, Loc.T("配額指令碼", "Quota script"));
             void SaveCode() { if (S.Entry(entry.InstanceId) is { } current && current.Script != code.Text) Change(s => s.Entry(entry.InstanceId)!.Script = code.Text); }
             commitScript = SaveCode;
             code.IsKeyboardFocusWithinChanged += (_, _) => { if (!code.IsKeyboardFocusWithin) SaveCode(); };
             code.TextChanged += (_, _) => InvalidateTest();
             // The code reaches across to the show switch: the switch is 38 wide and centred in its 50-wide column, so the frame stops 6 short of it.
-            var codeLabel = Line(Loc.T("代码", "Code"), frame, 7)!; codeLabel.VerticalAlignment = VerticalAlignment.Top; codeLabel.Margin = new Thickness(16, 13, 16, 0);
+            var codeLabel = Line(Loc.T("程式碼", "Code"), frame, 7)!; codeLabel.VerticalAlignment = VerticalAlignment.Top; codeLabel.Margin = new Thickness(16, 13, 16, 0);
             frame.Margin = new Thickness(0, 5, 6, 5);
         }
 
-        var test = ActionButton(Loc.T("测试连接", "Test connection"), () => { }); test.Style = (Style)FindResource("SettingsOutlineButton");
+        var test = ActionButton(Loc.T("測試連線", "Test connection"), () => { }); test.Style = (Style)FindResource("SettingsOutlineButton");
         test.Height = 34; test.HorizontalAlignment = HorizontalAlignment.Left;
         AutomationProperties.SetAutomationId(test, "test-source-" + entry.InstanceId.ToString("N"));
         test.Click += async (_, _) =>
@@ -466,7 +466,7 @@ public sealed partial class SettingsWindow
             _sourceTestCancellation?.Cancel();
             var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_app.Lifetime.Token); _sourceTestCancellation = cancellation;
             var configuration = current.ConfigurationKey;
-            test.IsEnabled = false; test.Content = Loc.T("正在测试…", "Testing…"); result.Visibility = Visibility.Collapsed;
+            test.IsEnabled = false; test.Content = Loc.T("正在測試…", "Testing…"); result.Visibility = Visibility.Collapsed;
             try
             {
                 var response = await _app.Usage.TestProviderAsync(current, cancellation.Token);
@@ -484,7 +484,7 @@ public sealed partial class SettingsWindow
                 if (response.Logs.Count > 0) { var logs = TextLine(string.Join("\n", response.Logs), 11.5, TextSecondary); logs.TextWrapping = TextWrapping.Wrap; result.Children.Add(logs); }
             }
             catch (OperationCanceledException) { }
-            finally { test.Content = Loc.T("测试连接", "Test connection"); test.IsEnabled = true; if (_sourceTestCancellation == cancellation) _sourceTestCancellation = null; cancellation.Dispose(); }
+            finally { test.Content = Loc.T("測試連線", "Test connection"); test.IsEnabled = true; if (_sourceTestCancellation == cancellation) _sourceTestCancellation = null; cancellation.Dispose(); }
         };
         Line("", test);
         Line("", result);
@@ -520,7 +520,7 @@ public sealed partial class SettingsWindow
         string Name(UsageMetric metric) => metric.Kind == MetricKind.Text ? metric.Label : UI.QuotaLabel(new Quota(metric.Label, 0, null, metric.Window));
         // A chosen quota the source does not report now stays listed, so the choice is kept while the quota is away.
         string Label(string quota) => choices.FirstOrDefault(metric => metric.Id == quota) is { } metric ? Name(metric)
-            : UI.QuotaLabel(new Quota(quota, 0, null)) + Loc.T("（暂无数据）", " (no data)");
+            : UI.QuotaLabel(new Quota(quota, 0, null)) + Loc.T("（暫無資料）", " (no data)");
         ComboBox Combo(string name, List<(string Id, string Label)> options, string selected, Action<string> choose)
         {
             var box = new ComboBox { Width = 140, Style = (Style)FindResource("SettingsCombo"), VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Left,
@@ -542,7 +542,7 @@ public sealed partial class SettingsWindow
             var items = choices.Where(metric => QuotaRing.IsAccountBalance(metric) && hasAccount || QuotaRing.TakesTarget(metric))
                 .Select(metric => (Account: QuotaRing.IsAccountBalance(metric) && hasAccount, metric.Id, Name: Name(metric))).ToList();
             // Before anything is read the account balance is offered, as the source has one; once read, only what the source reports.
-            if (hasAccount && snapshot.Metrics.Count == 0) items.Insert(0, (true, "", Loc.T("账户余额", "Account balance")));
+            if (hasAccount && snapshot.Metrics.Count == 0) items.Insert(0, (true, "", Loc.T("賬戶餘額", "Account balance")));
             if (items.Count == 0) return;
             var panel = new WrapPanel { Orientation = Orientation.Horizontal };
             foreach (var item in items)
@@ -556,7 +556,7 @@ public sealed partial class SettingsWindow
                 pair.Children.Add(name); pair.Children.Add(field);
                 panel.Children.Add(pair);
             }
-            Line(Loc.T("目标金额", "Targets"), () => Loc.T("以填写的金额为 100%：余额按剩余比例计算，例如目标 100、剩余 20 时显示已用 80%；扣费按已花比例计算。配额环、展开面板的进度条、预警颜色与提醒都按它计算。留空时只显示金额。",
+            Line(Loc.T("目標金額", "Targets"), () => Loc.T("以填寫的金額為 100%：餘額按剩餘比例計算，例如目標 100、剩餘 20 時顯示已用 80%；扣費按已花比例計算。配額環、展開面板的進度條、預警顏色與提醒都按它計算。留空時只顯示金額。",
                 "The amount entered counts as 100%: a balance is shown by what is left (with 100 as the target and 20 left, 80% is shown as used), spending by what is spent. The quota rings, the panel's bars, warning colors and notices all follow it. Left empty, only the amount is shown."), panel, top: true);
         }
         FrameworkElement Field(bool account, string quota, string name)
@@ -565,8 +565,8 @@ public sealed partial class SettingsWindow
             decimal? Saved() => S.Entry(id) is not { } current ? null : account ? current.BalanceTarget : current.QuotaTargets.TryGetValue(quota, out var value) ? value : null;
             var input = new TextBox { Style = (Style)FindResource("SettingsNumber"), TextAlignment = TextAlignment.Left, FontSize = 12.5, MaxLength = 20,
                 VerticalAlignment = VerticalAlignment.Center, Text = Format(Saved()) };
-            AutomationProperties.SetName(input, entry.Name + " " + name + (account ? Loc.T(" 目标余额", " target balance") : Loc.T(" 目标金额", " target")));
-            var hint = TextLine(Loc.T("未设置", "Not set"), 12.5, TextTertiary);
+            AutomationProperties.SetName(input, entry.Name + " " + name + (account ? Loc.T(" 目標餘額", " target balance") : Loc.T(" 目標金額", " target")));
+            var hint = TextLine(Loc.T("未設定", "Not set"), 12.5, TextTertiary);
             hint.VerticalAlignment = VerticalAlignment.Center; hint.IsHitTestVisible = false; hint.Margin = new Thickness(5, 0, 0, 0);
             var content = new Grid(); content.Children.Add(hint); content.Children.Add(input);
             var field = new Border { Child = content, Width = 110, Height = 34, HorizontalAlignment = HorizontalAlignment.Left, CornerRadius = new CornerRadius(6), Padding = new Thickness(10, 0, 10, 0),
@@ -584,8 +584,8 @@ public sealed partial class SettingsWindow
                 {
                     if (!decimal.TryParse(text, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var parsed) || parsed <= 0 || parsed > AppPresets.MaximumBalanceTarget)
                     {
-                        SaveStatus(account ? Loc.T("目标余额必须是大于 0 的金额，例如 100。", "The target balance must be an amount greater than 0, such as 100.")
-                            : Loc.T("目标金额必须是大于 0 的金额，例如 100。", "The target must be an amount greater than 0, such as 100."), true);
+                        SaveStatus(account ? Loc.T("目標餘額必須是大於 0 的金額，例如 100。", "The target balance must be an amount greater than 0, such as 100.")
+                            : Loc.T("目標金額必須是大於 0 的金額，例如 100。", "The target must be an amount greater than 0, such as 100."), true);
                         input.Text = Format(Saved()); Hint();
                         return;
                     }
@@ -618,10 +618,10 @@ public sealed partial class SettingsWindow
         {
             // By default the single ring shows the account balance where the source has one, else the most used quota (QuotaRing.For).
             var account = choices.FirstOrDefault(QuotaRing.IsAccountBalance);
-            List<(string Id, string Label)> options = [("", account is not null ? Name(account) : hasAccount && snapshot.Metrics.Count == 0 ? Loc.T("账户余额", "Account balance") : Loc.T("已用最高的一项", "Most used")),
+            List<(string Id, string Label)> options = [("", account is not null ? Name(account) : hasAccount && snapshot.Metrics.Count == 0 ? Loc.T("賬戶餘額", "Account balance") : Loc.T("已用最高的一項", "Most used")),
                 .. choices.Where(metric => metric != account).Select(metric => (metric.Id, Name(metric)))];
             if (entry.SingleRingQuota.Length > 0 && choices.All(metric => metric.Id != entry.SingleRingQuota)) options.Add((entry.SingleRingQuota, Label(entry.SingleRingQuota)));
-            string title = Loc.T("配额环额度", "Ring quota");
+            string title = Loc.T("配額環額度", "Ring quota");
             Line(title, null, Combo(title, options, account is not null && entry.SingleRingQuota == account.Id ? "" : entry.SingleRingQuota,
                 quota => { Change(s => s.Entry(id)!.SingleRingQuota = quota); RefreshAppRow(id); }));
             return grid;
@@ -634,17 +634,17 @@ public sealed partial class SettingsWindow
         if (quotas.Count == 0)
         {
             // Nothing read yet, or a source whose figures have nothing to draw (text only).
-            Line(Loc.T("外环额度", "Outer ring"), null, Note(snapshot.Metrics.Count == 0 ? Loc.T("读取到额度后可以选择。", "Can be chosen once quotas are read.")
-                : Loc.T("这个来源没有可按比例显示的额度，配额环显示为满环。", "This source has no quota with a share to show; its ring is drawn full.")));
+            Line(Loc.T("外環額度", "Outer ring"), null, Note(snapshot.Metrics.Count == 0 ? Loc.T("讀取到額度後可以選擇。", "Can be chosen once quotas are read.")
+                : Loc.T("這個來源沒有可按比例顯示的額度，配額環顯示為滿環。", "This source has no quota with a share to show; its ring is drawn full.")));
             return grid;
         }
         while (slots.Count < QuotaRing.MaximumRings) slots.Add("");
-        string[] names = [Loc.T("外环额度", "Outer ring"), Loc.T("中环额度", "Middle ring"), Loc.T("内环额度", "Inner ring")];
+        string[] names = [Loc.T("外環額度", "Outer ring"), Loc.T("中環額度", "Middle ring"), Loc.T("內環額度", "Inner ring")];
         for (int i = 0; i < QuotaRing.MaximumRings; i++)
         {
             int slot = i;
             // Any ring may be left out; the others keep their places.
-            List<(string Id, string Label)> options = [("", Loc.T("不显示", "None")), .. quotas];
+            List<(string Id, string Label)> options = [("", Loc.T("不顯示", "None")), .. quotas];
             var box = Combo(names[slot], options, slots[slot], quota =>
             {
                 var chosen = slots.ToList();
@@ -662,13 +662,13 @@ public sealed partial class SettingsWindow
             if (slot == 0)
             {
                 // Beside the outer ring, always: the way back to the default rings (an empty choice, QuotaRing.For).
-                var reset = ActionButton(Loc.T("恢复默认", "Restore defaults"), () =>
+                var reset = ActionButton(Loc.T("恢復預設", "Restore defaults"), () =>
                 {
                     if (S.Entry(id)?.RingQuotas.Count is not > 0) return;
                     Change(s => s.Entry(id)!.RingQuotas = []); RefreshAppRow(id);
                 });
                 reset.FontSize = 11; reset.Margin = new Thickness(12, 0, 0, 0); reset.VerticalAlignment = VerticalAlignment.Center;
-                AutomationProperties.SetName(reset, entry.Name + Loc.T(" 配额环恢复默认", " quota rings restore defaults"));
+                AutomationProperties.SetName(reset, entry.Name + Loc.T(" 配額環恢復預設", " quota rings restore defaults"));
                 line.Children.Add(reset);
             }
             Line(names[slot], null, line);
@@ -716,7 +716,7 @@ public sealed partial class SettingsWindow
             AutomationProperties.SetAutomationId(bar, "offpeak-bar-" + index + "-" + id);
             var times = TextLine(Span(saved.Start, saved.End), 12.5, TextPrimary); times.VerticalAlignment = VerticalAlignment.Center;
             times.Margin = new Thickness(16, 0, 0, 0);
-            void Describe() => AutomationProperties.SetName(bar, Loc.T($"低峰时段 {index + 1}：", $"Off-peak period {index + 1}: ") + Span(bar.Start, bar.End));
+            void Describe() => AutomationProperties.SetName(bar, Loc.T($"低峰時段 {index + 1}：", $"Off-peak period {index + 1}: ") + Span(bar.Start, bar.End));
             Describe();
             bar.Moved += () => { times.Text = Span(bar.Start, bar.End); Describe(); };
             bar.Committed += () =>
@@ -729,7 +729,7 @@ public sealed partial class SettingsWindow
             cross.SetBinding(Shape.StrokeProperty, new Binding("Foreground") { RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(Button), 1) });
             var remove = new Button { Style = (Style)FindResource("SettingsGlyphButton"), Content = cross, Width = 24, Height = 26, Padding = new Thickness(0),
                 Margin = new Thickness(4, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-            AutomationProperties.SetName(remove, Loc.T($"删除低峰时段 {index + 1}", $"Remove off-peak period {index + 1}"));
+            AutomationProperties.SetName(remove, Loc.T($"刪除低峰時段 {index + 1}", $"Remove off-peak period {index + 1}"));
             AutomationProperties.SetAutomationId(remove, "offpeak-remove-" + index + "-" + id);
             remove.Click += (_, _) => { Change(s => s.Entry(entry.InstanceId)!.OffPeak.RemoveAt(index)); RefreshAppRow(entry.InstanceId); };
             Grid.SetColumn(remove, 2);
@@ -747,12 +747,12 @@ public sealed partial class SettingsWindow
         add.HorizontalAlignment = HorizontalAlignment.Left; add.Height = 34; add.Margin = new Thickness(-10, 5, 0, 5); add.Padding = new Thickness(10, 0, 12, 0); add.IsEnabled = !full;
         var addContent = new StackPanel { Orientation = Orientation.Horizontal };
         addContent.Children.Add(Stroke("M 5,0 L 5,10 M 0,5 L 10,5", 10, 10, TextSecondary));
-        var addLabel = TextLine(Loc.T("添加时段", "Add period"), 12.5, TextSecondary); addLabel.Margin = new Thickness(8, 0, 0, 0); addLabel.VerticalAlignment = VerticalAlignment.Center;
+        var addLabel = TextLine(Loc.T("新增時段", "Add period"), 12.5, TextSecondary); addLabel.Margin = new Thickness(8, 0, 0, 0); addLabel.VerticalAlignment = VerticalAlignment.Center;
         addContent.Children.Add(addLabel); add.Content = addContent;
-        if (full) { add.ToolTip = Loc.T($"最多 {AppPresets.MaximumOffPeakPeriods} 个时段", $"Up to {AppPresets.MaximumOffPeakPeriods} periods"); ToolTipService.SetShowOnDisabled(add, true); }
-        AutomationProperties.SetName(add, Loc.T("添加低峰时段", "Add off-peak period")); AutomationProperties.SetAutomationId(add, "offpeak-add-" + id);
+        if (full) { add.ToolTip = Loc.T($"最多 {AppPresets.MaximumOffPeakPeriods} 個時段", $"Up to {AppPresets.MaximumOffPeakPeriods} periods"); ToolTipService.SetShowOnDisabled(add, true); }
+        AutomationProperties.SetName(add, Loc.T("新增低峰時段", "Add off-peak period")); AutomationProperties.SetAutomationId(add, "offpeak-add-" + id);
         periods.Children.Add(add);
-        Line(Loc.T("低峰时间", "Off-peak time"), periods);
+        Line(Loc.T("低峰時間", "Off-peak time"), periods);
 
         if (entry.OffPeak.Count > 0)
         {
@@ -769,10 +769,10 @@ public sealed partial class SettingsWindow
                 AutomationProperties.SetAutomationId(swatch, "offpeak-" + key + "-" + id);
                 swatchLine.Children.Add(caption); swatchLine.Children.Add(swatch);
             }
-            Swatch(Loc.T("主题", "Theme"), "theme", entry.OffPeakColor, entry.ThemeColor.Length > 0 ? entry.ThemeColor : PanelTheme.AppDefault(entry.QuotaSource), (e, v) => e.OffPeakColor = v);
-            Swatch(Loc.T("预警", "Warning"), "warning", entry.OffPeakWarningColor, entry.WarningColor.Length > 0 ? entry.WarningColor : PanelTheme.WarningDefault, (e, v) => e.OffPeakWarningColor = v);
+            Swatch(Loc.T("主題", "Theme"), "theme", entry.OffPeakColor, entry.ThemeColor.Length > 0 ? entry.ThemeColor : PanelTheme.AppDefault(entry.QuotaSource), (e, v) => e.OffPeakColor = v);
+            Swatch(Loc.T("預警", "Warning"), "warning", entry.OffPeakWarningColor, entry.WarningColor.Length > 0 ? entry.WarningColor : PanelTheme.WarningDefault, (e, v) => e.OffPeakWarningColor = v);
             Swatch(Loc.T("告警", "Critical"), "critical", entry.OffPeakCriticalColor, entry.CriticalColor.Length > 0 ? entry.CriticalColor : PanelTheme.CriticalDefault, (e, v) => e.OffPeakCriticalColor = v);
-            Line(Loc.T("低峰颜色", "Off-peak colors"), swatchLine);
+            Line(Loc.T("低峰顏色", "Off-peak colors"), swatchLine);
         }
         return grid;
     }

@@ -26,18 +26,18 @@ public sealed partial class SettingsWindow
     private static (string Chinese, string English, string[] Keys)[] TokenGroups =>
     [
         ("文字", "Text", ["textPrimary", "textSecondary", "textTertiary", "menuDetail"]),
-        ("强调与状态", "Accent and states", ["accent", "onAccent", "danger", "liked", "rangeFill"]),
-        ("时间与律动条", "Clock and equalizer", ["clock", "equalizer"]),
-        ("面板与收起形态", "Panel and collapsed view", ["surface", "rim", "shadow", "indicator", "indicatorProgress", "coverPlaceholder", "coverOutline"]),
+        ("強調與狀態", "Accent and states", ["accent", "onAccent", "danger", "liked", "rangeFill"]),
+        ("時間與律動條", "Clock and equalizer", ["clock", "equalizer"]),
+        ("面板與收起形態", "Panel and collapsed view", ["surface", "rim", "shadow", "indicator", "indicatorProgress", "coverPlaceholder", "coverOutline"]),
         ("控件", "Controls", ["hairline", "track", "ringTrack", "fill", "fillSelected", "hover", "pressed", "outline", "input", "scrollThumb", "switchFill", "seekRail", "rowDivider", "rowHover"]),
-        ("弹出层与提示", "Pop-ups and tooltips", ["popup", "popupBorder", "tooltip", "tooltipBorder", "bubble", "bubbleBorder"]),
+        ("彈出層與提示", "Pop-ups and tooltips", ["popup", "popupBorder", "tooltip", "tooltipBorder", "bubble", "bubbleBorder"]),
     ];
 
     private static string AppColorName(string key) => key switch
     {
         "claude" => "Claude", "codex" => "Codex", "antigravity" => "Antigravity", "cursor" => "Cursor", "zcode" => "ZCode", "dsh" => "DeepSeek Harness",
-        "grokBot" => "Grok Bot", "kimi" => "Kimi Code", "opencode" => "OpenCode", "codeagent" => "CodeAgent", "commandcode" => "Command Code", "workbuddy" => "WorkBuddy", "manual" => Loc.T("手动填写的来源", "Sources entered by hand"), "other" => Loc.T("其他应用", "Other apps"),
-        "warning" => Loc.T("预警", "Warning"), "critical" => Loc.T("告警", "Critical"), _ => key
+        "grokBot" => "Grok Bot", "kimi" => "Kimi Code", "opencode" => "OpenCode", "codeagent" => "CodeAgent", "commandcode" => "Command Code", "workbuddy" => "WorkBuddy", "manual" => Loc.T("手動填寫的來源", "Sources entered by hand"), "other" => Loc.T("其他應用", "Other apps"),
+        "warning" => Loc.T("預警", "Warning"), "critical" => Loc.T("告警", "Critical"), _ => key
     };
 
     private void ThemeEditor(PanelThemeInfo theme)
@@ -47,20 +47,20 @@ public sealed partial class SettingsWindow
         Button? undoAll = null;
         if (draft is not null)
         {
-            undoAll = ActionButton(Loc.T("撤销全部修改", "Undo all changes"), () => { PanelTheme.Discard(theme.Id); RebuildThemePage(); });
+            undoAll = ActionButton(Loc.T("撤銷全部修改", "Undo all changes"), () => { PanelTheme.Discard(theme.Id); RebuildThemePage(); });
             undoAll.Style = (Style)FindResource("SettingsLink");
         }
-        SectionTitle(Loc.T("颜色", "Colors"), undoAll, () => Loc.T("修改只在保存后生效：保存前，面板和主题卡片都保持原样，下方“自定义”中会出现保存卡片。修改背景、前景或强调色时，与它相关的颜色会按它重新生成，可在“高级设置”中逐项调整。",
+        SectionTitle(Loc.T("顏色", "Colors"), undoAll, () => Loc.T("修改只在儲存後生效：儲存前，面板和主題卡片都保持原樣，下方“自定義”中會出現儲存卡片。修改背景、前景或強調色時，與它相關的顏色會按它重新生成，可在“高階設定”中逐項調整。",
             "Changes take effect only once saved: until then the panel and the theme cards stay as they are, and save cards appear under Custom below. Changing the background, foreground or accent makes the colors that follow from it again; adjust them one by one under Advanced."));
         Group(
-            ColorRow(theme, palette, draft, PanelThemes.BackgroundKey, Loc.T("背景", "Background"), Loc.T("刘海、胶囊与展开面板的底色", "The surface of the notch, capsule and panel"), seed: true),
-            ColorRow(theme, palette, draft, PanelThemes.ForegroundKey, Loc.T("前景", "Foreground"), Loc.T("主要文字；次要文字、分隔线与控件底色由它生成", "Primary text; secondary text, dividers and fills follow from it"), seed: true),
-            ColorRow(theme, palette, draft, PanelThemes.AccentKey, Loc.T("强调色", "Accent"), Loc.T("键盘焦点与选中的日期", "Keyboard focus and chosen dates"), seed: true));
+            ColorRow(theme, palette, draft, PanelThemes.BackgroundKey, Loc.T("背景", "Background"), Loc.T("劉海、膠囊與展開面板的底色", "The surface of the notch, capsule and panel"), seed: true),
+            ColorRow(theme, palette, draft, PanelThemes.ForegroundKey, Loc.T("前景", "Foreground"), Loc.T("主要文字；次要文字、分隔線與控制元件底色由它生成", "Primary text; secondary text, dividers and fills follow from it"), seed: true),
+            ColorRow(theme, palette, draft, PanelThemes.AccentKey, Loc.T("強調色", "Accent"), Loc.T("鍵盤焦點與選中的日期", "Keyboard focus and chosen dates"), seed: true));
 
-        var toggle = ActionButton((_themeAdvancedOpen ? Loc.T("收起高级设置", "Hide advanced") : Loc.T("高级设置", "Advanced")) + (_themeAdvancedOpen ? " ▴" : " ▾"),
+        var toggle = ActionButton((_themeAdvancedOpen ? Loc.T("收起高階設定", "Hide advanced") : Loc.T("高階設定", "Advanced")) + (_themeAdvancedOpen ? " ▴" : " ▾"),
             () => { _themeAdvancedOpen = !_themeAdvancedOpen; RebuildThemePage(); });
         toggle.Style = (Style)FindResource("SettingsLink"); toggle.HorizontalAlignment = HorizontalAlignment.Left; toggle.Margin = new Thickness(0, -12, 0, 20);
-        AutomationProperties.SetName(toggle, Loc.T("高级颜色设置", "Advanced color settings"));
+        AutomationProperties.SetName(toggle, Loc.T("高階顏色設定", "Advanced color settings"));
         Target.Children.Add(toggle);
         if (!_themeAdvancedOpen) return;
 
@@ -69,19 +69,19 @@ public sealed partial class SettingsWindow
             SectionTitle(Loc.T(chinese, english));
             Group([.. keys.Select(key => PanelThemes.Tokens.First(token => token.Key == key)).Select(token => ColorRow(theme, palette, draft, token.Key, Loc.T(token.Chinese, token.English), TokenNote(token)))]);
         }
-        SectionTitle(Loc.T("应用默认颜色", "Default app colors"), help: () => Loc.T("在“配额与统计”中没有单独选择颜色的应用列使用这些颜色。",
+        SectionTitle(Loc.T("應用預設顏色", "Default app colors"), help: () => Loc.T("在“配額與統計”中沒有單獨選擇顏色的應用列使用這些顏色。",
             "Application columns without a color chosen under Quotas and usage use these colors."));
         Group([.. PanelThemes.AppKeys.Select(key => ColorRow(theme, palette, draft, key, AppColorName(key), "apps." + key, app: true))]);
         SectionTitle(Loc.T("效果", "Effects"));
         string Percent(double value) => (value * 100).ToString("0", CultureInfo.InvariantCulture) + " %";
         string Units(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
         Group(
-            EffectRow(theme, draft, palette, "rimWidth", Loc.T("边缘描线宽度", "Rim width"), .25, value => Units(value) + " DIP"),
-            EffectRow(theme, draft, palette, "shadowBlur", Loc.T("阴影模糊", "Shadow blur"), 1, Units),
-            EffectRow(theme, draft, palette, "shadowDepth", Loc.T("阴影偏移", "Shadow depth"), 1, Units),
-            EffectRow(theme, draft, palette, "shadowOpacity", Loc.T("阴影不透明度", "Shadow opacity"), .01, Percent),
-            EffectRow(theme, draft, palette, "scanlines", Loc.T("扫描线", "Scan lines"), .01, Percent));
-        var rest = TextLine(Loc.T("表面渐变、边缘渐变、时间的预设颜色与渐变，以及颜色选择器的预设色，仍需在主题文件中修改。",
+            EffectRow(theme, draft, palette, "rimWidth", Loc.T("邊緣描線寬度", "Rim width"), .25, value => Units(value) + " DIP"),
+            EffectRow(theme, draft, palette, "shadowBlur", Loc.T("陰影模糊", "Shadow blur"), 1, Units),
+            EffectRow(theme, draft, palette, "shadowDepth", Loc.T("陰影偏移", "Shadow depth"), 1, Units),
+            EffectRow(theme, draft, palette, "shadowOpacity", Loc.T("陰影不透明度", "Shadow opacity"), .01, Percent),
+            EffectRow(theme, draft, palette, "scanlines", Loc.T("掃描線", "Scan lines"), .01, Percent));
+        var rest = TextLine(Loc.T("表面漸變、邊緣漸變、時間的預設顏色與漸變，以及顏色選擇器的預設色，仍需在主題檔案中修改。",
             "The surface and rim gradients, the clock's preset colors and gradients, and the color picker's presets are still set in the theme file."), 11.5, TextTertiary);
         rest.TextWrapping = TextWrapping.Wrap; rest.Margin = new Thickness(0, -16, 0, 28);
         Target.Children.Add(rest);
@@ -98,7 +98,7 @@ public sealed partial class SettingsWindow
         var written = app ? palette.WrittenApps[key] : palette.WrittenColors[key];
         bool changed = draft is not null && (app ? draft.Apps.ContainsKey(key) : draft.Colors.ContainsKey(key));
         if (!app && palette.Adjustments.FirstOrDefault(adjustment => adjustment.Key == key) is { } adjusted)
-            note += Loc.T($"；为保证可读，将显示为 {adjusted.After}", $"; shown as {adjusted.After} to stay readable");
+            note += Loc.T($"；為保證可讀，將顯示為 {adjusted.After}", $"; shown as {adjusted.After} to stay readable");
         var subtitle = TextLine(note, 11, TextTertiary); subtitle.TextWrapping = TextWrapping.Wrap;
 
         var controls = new StackPanel { Orientation = Orientation.Horizontal };
@@ -109,9 +109,9 @@ public sealed partial class SettingsWindow
             controls.Children.Add(mark);
             if (!seed)
             {
-                var undo = ActionButton(Loc.T("撤销", "Undo"), () => EditTheme(theme, (d, file) => { if (app) d.SetApp(file, key, null); else d.SetColor(file, key, null); }));
+                var undo = ActionButton(Loc.T("撤銷", "Undo"), () => EditTheme(theme, (d, file) => { if (app) d.SetApp(file, key, null); else d.SetColor(file, key, null); }));
                 undo.Style = (Style)FindResource("SettingsLink"); undo.VerticalAlignment = VerticalAlignment.Center; undo.Margin = new Thickness(0, 0, 12, 0);
-                AutomationProperties.SetName(undo, Loc.T("撤销修改 ", "Undo change to ") + title);
+                AutomationProperties.SetName(undo, Loc.T("撤銷修改 ", "Undo change to ") + title);
                 controls.Children.Add(undo);
             }
         }
@@ -136,13 +136,13 @@ public sealed partial class SettingsWindow
         line.Children.Add(text);
         var chip = new Button { Style = (Style)FindResource("SettingsButton"), Content = line, MinWidth = 120, HorizontalContentAlignment = HorizontalAlignment.Left,
             Background = UI.Brush(_palette.Input), BorderBrush = UI.Brush(_palette.InputBorder), Padding = new Thickness(10, 5, 12, 5) };
-        AutomationProperties.SetName(chip, title + " " + color); chip.ToolTip = Loc.T("选择颜色", "Choose a color");
+        AutomationProperties.SetName(chip, title + " " + color); chip.ToolTip = Loc.T("選擇顏色", "Choose a color");
         var popup = new Popup { PlacementTarget = chip, Placement = PlacementMode.Bottom, StaysOpen = false, AllowsTransparency = true, VerticalOffset = 4 };
         popup.Child = ColorPicker(color.WithAlpha(255).ToString(), !canUndo, value =>
         {
             popup.IsOpen = false;
             PopupMotion.AfterClose(() => choose(value.Length == 0 ? null : ThemeColor.Parse(value)));
-        }, Loc.T("撤销", "Undo"));
+        }, Loc.T("撤銷", "Undo"));
         TogglePopup(chip, popup);
         return chip;
     }
@@ -169,9 +169,9 @@ public sealed partial class SettingsWindow
         {
             var mark = TextLine(Loc.T("修改未保存", "Unsaved"), 11.5, TextSecondary); mark.VerticalAlignment = VerticalAlignment.Center; mark.Margin = new Thickness(0, 0, 10, 0);
             mark.SetResourceReference(TextBlock.ForegroundProperty, "SettingsAccent");
-            var undo = ActionButton(Loc.T("撤销", "Undo"), () => EditTheme(theme, (d, file) => d.SetEffect(file, key, null)));
+            var undo = ActionButton(Loc.T("撤銷", "Undo"), () => EditTheme(theme, (d, file) => d.SetEffect(file, key, null)));
             undo.Style = (Style)FindResource("SettingsLink"); undo.VerticalAlignment = VerticalAlignment.Center;
-            AutomationProperties.SetName(undo, Loc.T("撤销修改 ", "Undo change to ") + title);
+            AutomationProperties.SetName(undo, Loc.T("撤銷修改 ", "Undo change to ") + title);
             state.Children.Add(mark); state.Children.Add(undo);
         }
         Grid.SetColumn(state, 3); row.Children.Add(state);
@@ -217,13 +217,13 @@ public sealed partial class SettingsWindow
     {
         if (adjustments.Count == 0) return [];
         int count = adjustments.Count;
-        var toggle = ActionButton(Loc.T($"已调整 {count} 项颜色", $"{count} color{(count == 1 ? "" : "s")} adjusted") + (_themeReadabilityOpen ? " ▴" : " ▾"),
+        var toggle = ActionButton(Loc.T($"已調整 {count} 項顏色", $"{count} color{(count == 1 ? "" : "s")} adjusted") + (_themeReadabilityOpen ? " ▴" : " ▾"),
             () => { _themeReadabilityOpen = !_themeReadabilityOpen; RebuildThemePage(); });
         toggle.Style = (Style)FindResource("SettingsLink");
-        AutomationProperties.SetName(toggle, _themeReadabilityOpen ? Loc.T("收起可读性调整", "Hide readability adjustments") : Loc.T("查看可读性调整", "Show readability adjustments"));
+        AutomationProperties.SetName(toggle, _themeReadabilityOpen ? Loc.T("收起可讀性調整", "Hide readability adjustments") : Loc.T("檢視可讀性調整", "Show readability adjustments"));
         var rows = new List<FrameworkElement>
         {
-            Row(Loc.T("可读性调整", "Readability"), toggle, help: () => Loc.T("为保证文字与信息清晰可读，低于对比度下限的颜色会沿原色相自动调亮或调暗到刚好达标，不影响主题文件本身。",
+            Row(Loc.T("可讀性調整", "Readability"), toggle, help: () => Loc.T("為保證文字與資訊清晰可讀，低於對比度下限的顏色會沿原色相自動調亮或調暗到剛好達標，不影響主題檔案本身。",
                 "To keep text and figures readable, a color below its contrast minimum is lightened or darkened along its own hue just enough to pass. The theme file is not changed."))
         };
         if (_themeReadabilityOpen) rows.AddRange(adjustments.Select(AdjustmentRow));
@@ -234,13 +234,13 @@ public sealed partial class SettingsWindow
     private Grid AdjustmentRow(PanelThemeAdjustment adjustment)
     {
         var token = PanelThemes.Tokens.FirstOrDefault(token => token.Key == adjustment.Key);
-        string name = token is not null ? Loc.T(token.Chinese, token.English) : Loc.T("应用颜色 · ", "App color · ") + AppColorName(adjustment.Key);
+        string name = token is not null ? Loc.T(token.Chinese, token.English) : Loc.T("應用顏色 · ", "App color · ") + AppColorName(adjustment.Key);
         var row = new Grid { MinHeight = 34, Margin = new Thickness(16, 0, 0, 0), ToolTip = adjustment.Describe() };
         row.ColumnDefinitions.Add(new ColumnDefinition()); row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         var label = TextLine(name, 12, TextSecondary); label.VerticalAlignment = VerticalAlignment.Center; row.Children.Add(label);
         var values = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         string ratio = adjustment.Ratio.ToString("0.0", CultureInfo.InvariantCulture), minimum = adjustment.Minimum.ToString("0.#", CultureInfo.InvariantCulture);
-        var contrast = TextLine(Loc.T($"对比度 {ratio}:1，需要 {minimum}:1", $"Contrast {ratio}:1, needs {minimum}:1"), 11.5, TextTertiary);
+        var contrast = TextLine(Loc.T($"對比度 {ratio}:1，需要 {minimum}:1", $"Contrast {ratio}:1, needs {minimum}:1"), 11.5, TextTertiary);
         contrast.VerticalAlignment = VerticalAlignment.Center; contrast.Margin = new Thickness(0, 0, 16, 0);
         values.Children.Add(contrast);
         void Color(string hex)
@@ -253,7 +253,7 @@ public sealed partial class SettingsWindow
         Color(adjustment.After);
         if (!adjustment.Reached)
         {
-            var note = TextLine(Loc.T("无法完全达标", "Not fully reached"), 11.5, _palette.Dark ? "#F0A6AA" : "#B12E3A"); note.VerticalAlignment = VerticalAlignment.Center; note.Margin = new Thickness(10, 0, 0, 0);
+            var note = TextLine(Loc.T("無法完全達標", "Not fully reached"), 11.5, _palette.Dark ? "#F0A6AA" : "#B12E3A"); note.VerticalAlignment = VerticalAlignment.Center; note.Margin = new Thickness(10, 0, 0, 0);
             values.Children.Add(note);
         }
         Grid.SetColumn(values, 1); row.Children.Add(values);
@@ -277,10 +277,10 @@ public sealed partial class SettingsWindow
     // the theme in use.
     private Button OverwriteCard(PanelThemeInfo theme)
     {
-        var card = SaveCard(Loc.T("覆盖当前主题", "Overwrite current theme"), OverwriteColor, OverwriteThemeDraft);
+        var card = SaveCard(Loc.T("覆蓋當前主題", "Overwrite current theme"), OverwriteColor, OverwriteThemeDraft);
         card.BorderBrush = UI.Brush("#529DFF");
-        card.ToolTip = Loc.T($"把未保存的修改写入“{theme.DisplayName}”的主题文件。", $"Writes the unsaved changes into the theme file of \"{theme.DisplayName}\".");
-        AutomationProperties.SetName(card, Loc.T("覆盖当前主题 ", "Overwrite current theme ") + theme.DisplayName);
+        card.ToolTip = Loc.T($"把未儲存的修改寫入“{theme.DisplayName}”的主題檔案。", $"Writes the unsaved changes into the theme file of \"{theme.DisplayName}\".");
+        AutomationProperties.SetName(card, Loc.T("覆蓋當前主題 ", "Overwrite current theme ") + theme.DisplayName);
         return card;
     }
 
@@ -291,7 +291,7 @@ public sealed partial class SettingsWindow
         if (theme.Path is not { } path || PanelTheme.DraftOf(theme.Id) is not { } draft) return;
         try { File.WriteAllText(path, PanelThemes.WriteDraft(File.ReadAllText(path), draft)); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
-        { SaveStatus(Loc.T("无法保存主题：", "Could not save the theme: ") + ex.Message, true); return; }
+        { SaveStatus(Loc.T("無法儲存主題：", "Could not save the theme: ") + ex.Message, true); return; }
         PanelTheme.Discard(theme.Id);
         SaveStatus("");
         ShowSavedTheme(reload: true);
@@ -310,7 +310,7 @@ public sealed partial class SettingsWindow
             ChooseOwnTheme(created);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
-        { SaveStatus(Loc.T("无法保存主题：", "Could not save the theme: ") + ex.Message, true); return; }
+        { SaveStatus(Loc.T("無法儲存主題：", "Could not save the theme: ") + ex.Message, true); return; }
         SaveStatus("");
         ShowSavedTheme(reload: false);
     }

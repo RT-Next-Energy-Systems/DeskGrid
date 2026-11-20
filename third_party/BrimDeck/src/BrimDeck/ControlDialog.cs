@@ -56,7 +56,7 @@ internal abstract class ControlDialog : Window
                 VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center } };
         info.ToolTip = new ToolTip { Content = new TextBlock { Text = how, TextWrapping = TextWrapping.Wrap, MaxWidth = 320 } };
         ToolTipService.SetInitialShowDelay(info, 0);
-        AutomationProperties.SetName(info, Loc.T("修改方式说明", "How the file is changed")); AutomationProperties.SetHelpText(info, how);
+        AutomationProperties.SetName(info, Loc.T("修改方式說明", "How the file is changed")); AutomationProperties.SetHelpText(info, how);
         Body.Children.Add(new HelpHeading(label, info) { HorizontalAlignment = HorizontalAlignment.Left });
     }
 

@@ -32,7 +32,7 @@ public static class KeychronMice
 
     // Other brands' mice on the same firmware platform (their vendor ids are shared, so only these products), sent the
     // status command as an output report only, as their sources do:
-    // - 京东京造 JZM5, its 2.4 GHz receiver 362D:D107 (Lemokey's id), usage page 0x8C usage 1: from
+    // - 京東京造 JZM5, its 2.4 GHz receiver 362D:D107 (Lemokey's id), usage page 0x8C usage 1: from
     //   LANMIN-X/Jingzao-JZM5-Battery's JZM5BatteryTray.swift (MIT; measured on the receiver).
     // - RIDLAG Owl X 8K, its receiver 362D:FF09 on 0xFFC1 / 1: from MouseDock's device database (MIT; from static analysis).
     // - Motospeed X6, its 8K receiver 0BDA:FFE0 (Realtek's id) on 0xFFC1 (usage 1 as on Keychron's own): from OpenMouse's
@@ -44,7 +44,7 @@ public static class KeychronMice
     public static readonly int[] VgnReceivers = [0x1A20, 0x1A21, 0x1A22, 0x1A23, 0x1A35, 0x1A36, 0x1A3B, 0x1A3C, 0x1A3E];
     public static readonly (string Brand, string Prefix, string Name, int Vendor, int Product, int Page)[] Partners =
     [
-        ("JD Jingzao mouse", "jingzao", "京东京造 JZM5", 0x362D, 0xD107, 0x008C),
+        ("JD Jingzao mouse", "jingzao", "京東京造 JZM5", 0x362D, 0xD107, 0x008C),
         ("RIDLAG mouse", "ridlag", "RIDLAG Owl X 8K", 0x362D, 0xFF09, 0xFFC1),
         ("Motospeed mouse", "motospeed", "Motospeed X6", 0x0BDA, 0xFFE0, 0xFFC1),
     ];

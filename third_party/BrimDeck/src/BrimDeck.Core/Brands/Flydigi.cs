@@ -1,6 +1,6 @@
 namespace BrimDeck.Core;
 
-// Flydigi (飞智) controllers on their dongles and cables, vendor 0x37D7 (Flydigi's own): every pad on the vendor collection
+// Flydigi (飛智) controllers on their dongles and cables, vendor 0x37D7 (Flydigi's own): every pad on the vendor collection
 // below, not a list of models (SDL's driver names the Vader 5 Pro 2401, Apex 5 2501 and Apex 6 2502; later pads on the same
 // protocol are read too). Not the CD2 charging dock (37D7:6001, usage page 0xFFA0 usage 1 as well, no report ids): it answers
 // command 1 with its own heartbeat, whose bytes would be read as a pad's battery (OpenFlydigi's PROTOCOL.md, CC0).

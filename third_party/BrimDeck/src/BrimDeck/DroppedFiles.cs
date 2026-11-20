@@ -6,7 +6,7 @@ using System.Windows;
 namespace BrimDeck;
 
 // The files and folders in what is dragged onto the panel. The Explorer gives a list of paths (CF_HDROP) only when everything
-// selected is a file or a folder; with "此电脑" or "回收站" among the desktop's icons it gives none (measured on Windows 11: a
+// selected is a file or a folder; with "此電腦" or "回收站" among the desktop's icons it gives none (measured on Windows 11: a
 // selection of files and such an item offers only "Shell IDList Array"), and the panel then took the drag for something it has no
 // use for. So without the list of paths the shell's own list is read: the items that have a path are taken, the others passed over.
 internal static class DroppedFiles

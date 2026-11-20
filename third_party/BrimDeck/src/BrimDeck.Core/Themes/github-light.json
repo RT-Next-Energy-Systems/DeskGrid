@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "id": "github-light",
   "name": "GitHub Light",
-  "description": "GitHub 浅色默认主题：白色底色，清晰的灰阶与语义色。",
+  "description": "GitHub 淺色預設主題：白色底色，清晰的灰階與語義色。",
   "descriptionEn": "GitHub Light Default: a white surface with crisp grays and semantic colors.",
   "author": "GitHub (Primer)",
   "license": "MIT",
@@ -59,7 +59,7 @@
     "gradients": [
       { "name": "日落", "nameEn": "Sunset", "stops": ["#BC4C00", "#BF3989", "#8250DF"] },
       { "name": "海洋", "nameEn": "Ocean", "stops": ["#1B7C83", "#0969DA", "#8250DF"] },
-      { "name": "极光", "nameEn": "Aurora", "stops": ["#1A7F37", "#1B7C83", "#0969DA"] },
+      { "name": "極光", "nameEn": "Aurora", "stops": ["#1A7F37", "#1B7C83", "#0969DA"] },
       { "name": "火焰", "nameEn": "Ember", "stops": ["#9A6700", "#BC4C00", "#D1242F"] },
       { "name": "霓虹", "nameEn": "Neon", "stops": ["#BF3989", "#8250DF", "#0969DA"] }
     ]

@@ -20,7 +20,7 @@ internal sealed class ModelDateWindow : Window
     {
         look ??= PanelTheme.Main;
         PanelLook.Set(this, look); look.PublishTo(Resources, onlyOwn: true);
-        Title = Loc.T("按时间", "By date"); Width = 246; WindowStyle = WindowStyle.None;
+        Title = Loc.T("按時間", "By date"); Width = 246; WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize; AllowsTransparency = true; Background = Brushes.Transparent; ShowInTaskbar = false; Topmost = true;
         FontFamily = UI.PanelFont;
         Picker = new ModelDatePicker(range, look.Current) { VerticalAlignment = VerticalAlignment.Top };

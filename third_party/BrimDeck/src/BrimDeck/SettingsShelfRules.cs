@@ -38,15 +38,15 @@ public partial class SettingsWindow
         if (!_categorySummaries.TryGetValue(category.Id, out var block)) return;
         bool wrong = ShelfRules.Problem(category.Rule, side) is not null;
         var parts = new List<string>();
-        if (wrong) parts.Add(Loc.T("规则有误", "The rule has a mistake"));
-        else if (ShelfRules.Active(category.Rule, side)) parts.Add(Loc.T("自动：", "Adds: ") + ShelfRules.Summary(category.Rule!, side));
+        if (wrong) parts.Add(Loc.T("規則有誤", "The rule has a mistake"));
+        else if (ShelfRules.Active(category.Rule, side)) parts.Add(Loc.T("自動：", "Adds: ") + ShelfRules.Summary(category.Rule!, side));
         block.Text = string.Join(" · ", parts);
         block.ToolTip = block.Text.Length > 0 ? block.Text : null;
         block.Foreground = UI.Brush(wrong ? _palette.Negative : TextTertiary);
     }
 
     // In the row, a small label that says what happens to what is in the category and changes it when clicked: "一直保留" (on)
-    // or, off, what happens to the history, which it goes with (HistoryFate: "退出时清除", "保留 30 天"). Both words are laid out,
+    // or, off, what happens to the history, which it goes with (HistoryFate: "退出時清除", "保留 30 天"). Both words are laid out,
     // the other hidden, so the label keeps its width. Each word is centred in the label by its letters as drawn (InkCentredText),
     // whatever the font and scale.
     private ToggleButton KeepSwitch(ShelfCategory category)
@@ -107,7 +107,7 @@ public partial class SettingsWindow
 
     private Button CategoryOptionsButton(ShelfSide side, ShelfCategory category, bool open)
     {
-        var button = GlyphButton(FunnelIcon, 12, 12, Loc.T($"{category.Name}的自动规则", $"{category.Name}: what goes in by itself"), () =>
+        var button = GlyphButton(FunnelIcon, 12, 12, Loc.T($"{category.Name}的自動規則", $"{category.Name}: what goes in by itself"), () =>
         {
             _openCategory = _openCategory == category.Id ? null : category.Id;
             ShowPage(_page);
@@ -116,7 +116,7 @@ public partial class SettingsWindow
         // No hover tip: the name stays for screen readers.
         button.ToolTip = null;
         button.Width = 28; button.Height = 28; button.HorizontalAlignment = HorizontalAlignment.Center;
-        AutomationProperties.SetItemStatus(button, open ? Loc.T("已展开", "Expanded") : Loc.T("已收起", "Collapsed"));
+        AutomationProperties.SetItemStatus(button, open ? Loc.T("已展開", "Expanded") : Loc.T("已收起", "Collapsed"));
         return button;
     }
 
@@ -142,50 +142,50 @@ public partial class SettingsWindow
             if (footText is null || putIn is null) return;
             if (ShelfRules.Problem(category.Rule, side) is not null)
             {
-                footText.Text = Loc.T("现有记录暂不计算：请先改正正则表达式。", "Not counted until the regular expression is corrected."); putIn.IsEnabled = false; return;
+                footText.Text = Loc.T("現有記錄暫不計算：請先改正正規表示式。", "Not counted until the regular expression is corrected."); putIn.IsEnabled = false; return;
             }
             int outside = side == ShelfSide.Clipboard ? ShelfRules.Outside(ShelfData, category).Count : ShelfRules.OutsideFiles(ShelfData, category).Count;
             footText.Text = side == ShelfSide.Clipboard
-                ? Loc.T($"现有记录中有 {outside} 条内容符合，尚未放进这个分类", outside == 1 ? "1 entry already here meets it and is not in this category" : $"{outside} entries already here meet it and are not in this category")
-                : Loc.T($"现有文件中有 {outside} 个符合，尚未放进这个分类", outside == 1 ? "1 file already here meets it and is not in this category" : $"{outside} files already here meet it and are not in this category");
+                ? Loc.T($"現有記錄中有 {outside} 條內容符合，尚未放進這個分類", outside == 1 ? "1 entry already here meets it and is not in this category" : $"{outside} entries already here meet it and are not in this category")
+                : Loc.T($"現有檔案中有 {outside} 個符合，尚未放進這個分類", outside == 1 ? "1 file already here meets it and is not in this category" : $"{outside} files already here meet it and are not in this category");
             putIn.IsEnabled = outside > 0;
         }
 
         // ---- The first line: how the conditions combine ----
         var lead = new WrapPanel { Margin = new Thickness(0, 0, 0, 8) };
         TextBlock LeadText(string text) { var t = TextLine(text, 12.5, TextSecondary); t.VerticalAlignment = VerticalAlignment.Center; return t; }
-        string into = Loc.T($"自动放入“{category.Name}”", $"go into {category.Name} by themselves");
+        string into = Loc.T($"自動放入“{category.Name}”", $"go into {category.Name} by themselves");
         if (conditions.Count == 0) lead.Children.Add(LeadText(side == ShelfSide.Clipboard
-            ? Loc.T("没有规则时，只收入手动加入的内容。", "Without a rule, only what you put in by hand goes in.")
-            : Loc.T("没有规则时，只收入手动加入的文件。", "Without a rule, only the files you put in by hand go in.")));
-        else if (conditions.Count == 1) lead.Children.Add(LeadText(Loc.T($"符合以下条件时，{into}", $"Entries that meet this condition {into}")));
+            ? Loc.T("沒有規則時，只收入手動加入的內容。", "Without a rule, only what you put in by hand goes in.")
+            : Loc.T("沒有規則時，只收入手動加入的檔案。", "Without a rule, only the files you put in by hand go in.")));
+        else if (conditions.Count == 1) lead.Children.Add(LeadText(Loc.T($"符合以下條件時，{into}", $"Entries that meet this condition {into}")));
         else
         {
             lead.Children.Add(LeadText(Loc.T("符合", "Entries that meet ")));
-            var match = RuleCombo([Loc.T("任一", "any"), Loc.T("全部", "all")], rule!.Match == RuleMatch.All ? 1 : 0, 76, Loc.T("条件组合", "How the conditions combine"),
+            var match = RuleCombo([Loc.T("任一", "any"), Loc.T("全部", "all")], rule!.Match == RuleMatch.All ? 1 : 0, 76, Loc.T("條件組合", "How the conditions combine"),
                 index => { rule.Match = index == 1 ? RuleMatch.All : RuleMatch.Any; ShelfEdited(); Refresh(); });
             match.Margin = new Thickness(8, 0, 8, 0); lead.Children.Add(match);
-            lead.Children.Add(LeadText(Loc.T($"条件时，{into}", $"of the conditions {into}")));
+            lead.Children.Add(LeadText(Loc.T($"條件時，{into}", $"of the conditions {into}")));
         }
         box.Children.Add(lead);
 
         foreach (var condition in conditions.ToList())
             box.Children.Add(ConditionRow(side, category, condition, Refresh));
 
-        var add = AddLink(Loc.T("添加条件", "Add a condition"), () =>
+        var add = AddLink(Loc.T("新增條件", "Add a condition"), () =>
         {
             (category.Rule ??= new ShelfRule()).Conditions.Add(ShelfRules.NewCondition(side));
             ShelfEdited(); ShowPage(_page);
         });
         add.Margin = new Thickness(0, conditions.Count == 0 ? 2 : 0, 0, 0);
-        AutomationProperties.SetName(add, Loc.T($"给{category.Name}添加条件", $"Add a condition to {category.Name}"));
+        AutomationProperties.SetName(add, Loc.T($"給{category.Name}新增條件", $"Add a condition to {category.Name}"));
         box.Children.Add(add);
 
         // ---- What is already here and meets the rule ----
         if (conditions.Count > 0)
         {
             var foot = new DockPanel { Margin = new Thickness(0, 10, 0, 0) };
-            putIn = ActionButton(Loc.T("放进这个分类", "Put them in"), () =>
+            putIn = ActionButton(Loc.T("放進這個分類", "Put them in"), () =>
             {
                 if (side == ShelfSide.Clipboard) foreach (var clip in ShelfRules.Outside(ShelfData, category)) clip.Categories.Add(category.Id);
                 else foreach (var file in ShelfRules.OutsideFiles(ShelfData, category)) file.Categories.Add(category.Id);
@@ -213,7 +213,7 @@ public partial class SettingsWindow
         void Saved() { ShelfEdited(); refresh(); }
 
         var fields = ShelfRules.Fields(side);
-        var field = RuleCombo([.. fields.Select(ShelfRules.Name)], Array.IndexOf(fields, condition.Field), 108, Loc.T("条件", "Condition"), index =>
+        var field = RuleCombo([.. fields.Select(ShelfRules.Name)], Array.IndexOf(fields, condition.Field), 108, Loc.T("條件", "Condition"), index =>
         {
             if (fields[index] == condition.Field) return;
             condition.Field = fields[index]; condition.Test = RuleTest.Contains; condition.Values = []; condition.Value = "";
@@ -228,7 +228,7 @@ public partial class SettingsWindow
             RuleTest[] tests = condition.Field == RuleField.Text
                 ? [RuleTest.Contains, RuleTest.StartsWith, RuleTest.EndsWith, RuleTest.Format, RuleTest.Regex]
                 : [RuleTest.Contains, RuleTest.StartsWith, RuleTest.EndsWith, RuleTest.Regex];
-            test = RuleCombo([.. tests.Select(ShelfRules.Name)], Math.Max(0, Array.IndexOf(tests, condition.Test)), 104, Loc.T("比较方式", "Comparison"), index =>
+            test = RuleCombo([.. tests.Select(ShelfRules.Name)], Math.Max(0, Array.IndexOf(tests, condition.Test)), 104, Loc.T("比較方式", "Comparison"), index =>
             {
                 if (tests[index] == condition.Test) return;
                 bool format = tests[index] == RuleTest.Format || condition.Test == RuleTest.Format;
@@ -270,7 +270,7 @@ public partial class SettingsWindow
             case RuleField.Text when condition.Test == RuleTest.Format:
                 var formats = Enum.GetValues<TextFormat>();
                 var chosen = Array.FindIndex(formats, f => f.ToString() == condition.Value);
-                value = RuleCombo([.. formats.Select(f => $"{ShelfRules.Name(f)}　{ShelfRules.Example(f)}")], Math.Max(0, chosen), double.NaN, Loc.T("内置格式", "Format"),
+                value = RuleCombo([.. formats.Select(f => $"{ShelfRules.Name(f)}　{ShelfRules.Example(f)}")], Math.Max(0, chosen), double.NaN, Loc.T("內建格式", "Format"),
                     index => { condition.Value = formats[index].ToString(); Saved(); });
                 if (chosen < 0) condition.Value = formats[0].ToString();
                 break;
@@ -280,9 +280,9 @@ public partial class SettingsWindow
                 AutomationProperties.SetName(box, ShelfRules.Name(condition.Field));
                 box.ToolTip = condition.Field switch
                 {
-                    RuleField.Site => Loc.T("域名，多个用逗号分隔，例如 github.com", "Domains separated by commas, e.g. github.com"),
-                    RuleField.Source => Loc.T("进程名，多个用逗号分隔，例如 chrome, msedge", "Process names separated by commas, e.g. chrome, msedge"),
-                    RuleField.Extension => Loc.T("多个用逗号分隔，例如 .psd, .fig", "Separated by commas, e.g. .psd, .fig"),
+                    RuleField.Site => Loc.T("域名，多個用逗號分隔，例如 github.com", "Domains separated by commas, e.g. github.com"),
+                    RuleField.Source => Loc.T("程序名，多個用逗號分隔，例如 chrome, msedge", "Process names separated by commas, e.g. chrome, msedge"),
+                    RuleField.Extension => Loc.T("多個用逗號分隔，例如 .psd, .fig", "Separated by commas, e.g. .psd, .fig"),
                     _ => null
                 };
                 hint = TextLine("", 11.5, _palette.Negative); hint.Margin = new Thickness(0, 4, 0, 0); hint.TextWrapping = TextWrapping.Wrap;
@@ -299,9 +299,9 @@ public partial class SettingsWindow
                 if (condition.Field == RuleField.Folder)
                 {
                     var pick = new DockPanel();
-                    var browse = ActionButton(Loc.T("选择…", "Choose…"), () =>
+                    var browse = ActionButton(Loc.T("選擇…", "Choose…"), () =>
                     {
-                        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = Loc.T("选择文件夹", "Choose a folder") };
+                        var dialog = new Microsoft.Win32.OpenFolderDialog { Title = Loc.T("選擇資料夾", "Choose a folder") };
                         if (dialog.ShowDialog(this) == true) box.Text = dialog.FolderName;
                         ShelfEdited();
                     });
@@ -316,7 +316,7 @@ public partial class SettingsWindow
         Grid.SetColumn(value, 2); line.Children.Add(value);
         if (hint is not null) { Grid.SetColumn(hint, 2); Grid.SetRow(hint, 1); line.Children.Add(hint); }
 
-        var remove = GlyphButton("M 0,0 L 8,8 M 8,0 L 0,8", 8, 8, Loc.T("删除条件", "Delete the condition"), () =>
+        var remove = GlyphButton("M 0,0 L 8,8 M 8,0 L 0,8", 8, 8, Loc.T("刪除條件", "Delete the condition"), () =>
         {
             if (category.Rule is { } rule)
             {

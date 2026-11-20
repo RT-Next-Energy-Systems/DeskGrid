@@ -233,7 +233,7 @@ internal sealed partial class ClipboardSyncService : IDisposable
             try { _watch = new ClipboardWatch(Copied, name => ClipboardExclusions.Excludes(_app.Settings.ClipboardExcluded, name)); }
             catch (System.ComponentModel.Win32Exception)
             {
-                foreach (bool doubao in _workers.Keys) Report(doubao, Loc.T("无法读取剪贴板", "Cannot read the clipboard"), SyncLevel.Attention);
+                foreach (bool doubao in _workers.Keys) Report(doubao, Loc.T("無法讀取剪貼簿", "Cannot read the clipboard"), SyncLevel.Attention);
             }
         }
         else ReleaseIdleWatcher();
@@ -312,10 +312,10 @@ internal sealed partial class ClipboardSyncService : IDisposable
     private async Task RunAsync(bool doubao, CancellationTokenSource stop)
     {
         using IClipboardSyncClient client = doubao ? new DoubaoSyncClient(Accounts.Doubao!) { Trace = Log } : new WeTypeSyncClient(Accounts.WeType, Save) { Trace = Log };
-        string source = doubao ? Loc.T("豆包输入法", "Doubao IME") : Loc.T("微信输入法", "WeType");
+        string source = doubao ? Loc.T("豆包輸入法", "Doubao IME") : Loc.T("微信輸入法", "WeType");
         bool initialized = false, sending = false; string? lastId = null, lastSignature = null; int failures = 0;
         static string Signature(RemoteClip clip) => clip.Image is { } bytes ? HashImage(bytes) : Hash(clip.Text);
-        Report(doubao, Loc.T("正在连接…", "Connecting…"), SyncLevel.Idle);
+        Report(doubao, Loc.T("正在連線…", "Connecting…"), SyncLevel.Idle);
         try
         {
             while (!stop.IsCancellationRequested)
@@ -338,7 +338,7 @@ internal sealed partial class ClipboardSyncService : IDisposable
                         lastId = await client.PeekAsync(stop.Token);
                         stop.Token.ThrowIfCancellationRequested();
                         initialized = true; failures = 0;
-                        Report(doubao, Loc.T("已连接", "Connected"), SyncLevel.Active);
+                        Report(doubao, Loc.T("已連線", "Connected"), SyncLevel.Active);
                     }
                     if (_pending.Remove(doubao, out var copy))
                     {
@@ -366,7 +366,7 @@ internal sealed partial class ClipboardSyncService : IDisposable
                 {
                     // The switch is on the account: once another device turns this one on, syncing starts by itself.
                     DoubaoCapability = new(ex.SyncState, ex.SupportsCopy); initialized = false; wait = 15;
-                    Report(true, Loc.T("此设备的互传开关未开启", "Sync is turned off for this device"), SyncLevel.Attention);
+                    Report(true, Loc.T("此裝置的互傳開關未開啟", "Sync is turned off for this device"), SyncLevel.Attention);
                 }
                 catch (WeTypeUnpairedException)
                 {
@@ -376,19 +376,19 @@ internal sealed partial class ClipboardSyncService : IDisposable
                         Accounts.WeType.PeerNames = [];
                         try { Save(); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or CryptographicException) { }
                     }
-                    Report(false, Loc.T("已被其他设备解除关联", "Removed by another device"), SyncLevel.Attention);
+                    Report(false, Loc.T("已被其他裝置解除關聯", "Removed by another device"), SyncLevel.Attention);
                 }
                 catch (DoubaoRequestException ex)
                 {
                     initialized = false; wait = 30;
-                    Report(true, Loc.T("豆包拒绝了请求（错误码 ", "Doubao refused the request (code ") + ex.Code + Loc.T("）", ")"), SyncLevel.Attention);
+                    Report(true, Loc.T("豆包拒絕了請求（錯誤碼 ", "Doubao refused the request (code ") + ex.Code + Loc.T("）", ")"), SyncLevel.Attention);
                 }
                 catch (Exception ex) when (ex is not OutOfMemoryException)
                 {
                     Log((doubao ? "doubao" : "wetype") + (sending ? " send failed: " : " failed: ") + Describe(ex));
                     failures = Math.Min(failures + 1, 5); initialized = false; wait = Math.Min(60, 3 * (1 << failures));
-                    Report(doubao, sending ? Loc.T("发送失败，请重新复制", "Not sent. Copy again to retry")
-                        : Loc.T("连接中断，正在重试…", "Connection lost. Retrying…"), SyncLevel.Attention);
+                    Report(doubao, sending ? Loc.T("傳送失敗，請重新複製", "Not sent. Copy again to retry")
+                        : Loc.T("連線中斷，正在重試…", "Connection lost. Retrying…"), SyncLevel.Attention);
                 }
                 sending = false;
                 using var pause = CancellationTokenSource.CreateLinkedTokenSource(stop.Token, _wake.Token);
@@ -427,7 +427,7 @@ internal sealed partial class ClipboardSyncService : IDisposable
             }
             if (!rich) await client.SendAsync(copy.Text, ct);
             _lastSent[doubao] = Hash(copy.Text);
-            Report(doubao, At(Loc.T("已发送文字", "Text sent")), SyncLevel.Active);
+            Report(doubao, At(Loc.T("已傳送文字", "Text sent")), SyncLevel.Active);
             return;
         }
         if (!client.SupportsImages) return;
@@ -437,13 +437,13 @@ internal sealed partial class ClipboardSyncService : IDisposable
             var picture = await Task.Run(() => ShelfService.EncodeForSync(png, limit), ct) ?? throw new SyncImageTooLargeException();
             await client.SendImageAsync(picture, copy.PixelWidth, copy.PixelHeight, ct);
             _lastSent[doubao] = HashImage(png);
-            Report(doubao, At(Loc.T("已发送图片", "Image sent")), SyncLevel.Active);
+            Report(doubao, At(Loc.T("已傳送圖片", "Image sent")), SyncLevel.Active);
         }
         catch (SyncImageTooLargeException ex)
         {
             // The service's own threshold, when it named one, tells which pictures would go through.
             string size = ex.Limit > 0 ? Loc.T($"（上限 {ex.Limit / 1024} KB）", $" (limit {ex.Limit / 1024} KB)") : "";
-            Report(doubao, Loc.T("图片过大，未发送", "Image too large to send") + size, SyncLevel.Active);
+            Report(doubao, Loc.T("圖片過大，未傳送", "Image too large to send") + size, SyncLevel.Active);
         }
     }
 
@@ -457,7 +457,7 @@ internal sealed partial class ClipboardSyncService : IDisposable
                 ct.ThrowIfCancellationRequested();
                 // A copy made here while the picture was on its way stays on the clipboard.
                 if (sequence != ClipboardWatch.GetClipboardSequenceNumber() || _pending.ContainsKey(doubao) || !AcceptImage(png, image, source)) return;
-                Report(doubao, At(Loc.T("已接收图片", "Image received")), SyncLevel.Active);
+                Report(doubao, At(Loc.T("已接收圖片", "Image received")), SyncLevel.Active);
             }
             else
             {

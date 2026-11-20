@@ -185,7 +185,7 @@ internal sealed class MediaSessions : IDisposable
                 await Task.Delay(250);
                 if (kugou.Ready) return null;
             }
-            return KugouError = Loc.T("酷狗已重启，但未能连接", "KuGou restarted, but could not be connected");
+            return KugouError = Loc.T("酷狗已重啟，但未能連線", "KuGou restarted, but could not be connected");
         }
         catch (Exception ex) { return KugouError = ex.Message; }
         finally
@@ -251,7 +251,7 @@ internal sealed class MediaSessions : IDisposable
             manager.CurrentSessionChanged += CurrentChanged;
             _sessionListDirty = true; Error = null; Schedule();
         }
-        catch (Exception ex) { Error = Loc.T("无法读取媒体会话：", "Media sessions could not be read: ") + ex.Message; }
+        catch (Exception ex) { Error = Loc.T("無法讀取媒體會話：", "Media sessions could not be read: ") + ex.Message; }
         finally { _requestingManager = false; }
     }
     private void SessionsChanged(GlobalSystemMediaTransportControlsSessionManager sender, SessionsChangedEventArgs args)
@@ -456,7 +456,7 @@ internal sealed class MediaSessions : IDisposable
                 if (changed) Changed?.Invoke();
             } while (_again && !_disposed);
         }
-        catch (Exception ex) { Error = Loc.T("媒体信息暂时不可用：", "Media information is temporarily unavailable: ") + ex.Message; Changed?.Invoke(); }
+        catch (Exception ex) { Error = Loc.T("媒體資訊暫時不可用：", "Media information is temporarily unavailable: ") + ex.Message; Changed?.Invoke(); }
         finally { _reading = false; }
     }
 
@@ -579,7 +579,7 @@ internal sealed class MediaSessions : IDisposable
         var pending = ReadSystemCoreAsync(source, metadata, source.Revision);
         source.PendingRead = pending;
         try { await pending.WaitAsync(TimeSpan.FromSeconds(1)); }
-        catch (TimeoutException) { Error = Loc.T("Windows 媒体读取超时。", "Reading Windows media timed out."); }
+        catch (TimeoutException) { Error = Loc.T("Windows 媒體讀取超時。", "Reading Windows media timed out."); }
     }
 
     private async Task ReadSystemCoreAsync(SystemSource source, bool metadata, int revision)
@@ -656,7 +656,7 @@ internal sealed class MediaSessions : IDisposable
         }
         catch (Exception ex)
         {
-            Error = Loc.T("Windows 媒体读取失败：", "Reading Windows media failed: ") + ex.Message;
+            Error = Loc.T("Windows 媒體讀取失敗：", "Reading Windows media failed: ") + ex.Message;
             if (source.Track is { } previous) source.Track = previous with { State = MediaState.Unknown, PositionKnown = false,
                 CanToggle = false, CanPrevious = false, CanNext = false, CanSeek = false, CanRepeat = false, CanShuffle = false };
         }

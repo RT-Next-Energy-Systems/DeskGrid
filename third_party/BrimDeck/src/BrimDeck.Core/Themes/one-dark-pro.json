@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "id": "one-dark-pro",
   "name": "One Dark Pro",
-  "description": "Atom 经典的 One Dark：蓝灰底色，柔和的橙、绿、蓝。",
+  "description": "Atom 經典的 One Dark：藍灰底色，柔和的橙、綠、藍。",
   "descriptionEn": "The classic One Dark from Atom: a blue-gray surface with soft orange, green and blue.",
   "author": "Binaryify",
   "license": "MIT",
@@ -59,7 +59,7 @@
     "gradients": [
       { "name": "日落", "nameEn": "Sunset", "stops": ["#E5C07B", "#D19A66", "#E06C75"] },
       { "name": "海洋", "nameEn": "Ocean", "stops": ["#56B6C2", "#61AFEF", "#528BFF"] },
-      { "name": "极光", "nameEn": "Aurora", "stops": ["#98C379", "#56B6C2", "#61AFEF"] },
+      { "name": "極光", "nameEn": "Aurora", "stops": ["#98C379", "#56B6C2", "#61AFEF"] },
       { "name": "火焰", "nameEn": "Ember", "stops": ["#E5C07B", "#E06C75", "#C678DD"] },
       { "name": "霓虹", "nameEn": "Neon", "stops": ["#C678DD", "#61AFEF", "#56B6C2"] }
     ]

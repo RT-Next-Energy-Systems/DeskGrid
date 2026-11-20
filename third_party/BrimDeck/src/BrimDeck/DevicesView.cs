@@ -241,8 +241,8 @@ internal sealed class DevicesView : FrameworkElement
     private void Empty(DrawingContext drawing, double w, double h, double ppd, double opacity)
     {
         if (opacity <= .001) return;
-        var heading = MonitorDraw.Text(Loc.T("没有已连接的无线设备", "No wireless devices connected"), 13, Look.Secondary, ppd);
-        string hint = Loc.T("连接蓝牙耳机、键鼠、手柄，或插上罗技等接收器后会显示在这里", "Bluetooth headphones, keyboards, mice and controllers, and receivers such as Logitech's, show here once connected");
+        var heading = MonitorDraw.Text(Loc.T("沒有已連線的無線裝置", "No wireless devices connected"), 13, Look.Secondary, ppd);
+        string hint = Loc.T("連線藍芽耳機、鍵鼠、手柄，或插上羅技等接收器後會顯示在這裡", "Bluetooth headphones, keyboards, mice and controllers, and receivers such as Logitech's, show here once connected");
         // Laid out once per text, width and scale: it is drawn on every frame of a fade.
         var key = (hint, Math.Round(Math.Max(40, Math.Min(w - 24, 300))), ppd, Look.Tertiary);
         if (_hint is not { } known || known.Key != key)
@@ -271,7 +271,7 @@ internal sealed class DevicesView : FrameworkElement
     private void Looking(DrawingContext drawing, double w, double h, double ppd, double opacity)
     {
         if (opacity <= .001) return;
-        var words = MonitorDraw.Text(Loc.T("正在查找设备…", "Looking for devices…"), 11, Look.Tertiary, ppd);
+        var words = MonitorDraw.Text(Loc.T("正在查詢裝置…", "Looking for devices…"), 11, Look.Tertiary, ppd);
         double size = h >= 120 ? 48 : 32, gap = size * .6, total = size + 12 + words.Height, top = Math.Round((h - total) / 2);
         if (opacity < .999) drawing.PushOpacity(opacity);
         for (int i = 0; i < 3; i++)
@@ -394,10 +394,10 @@ internal sealed class DevicesView : FrameworkElement
     {
         var parts = new List<string>();
         if (device.Parts.Count > 0) parts.Add(string.Join("  ", device.Parts.Select(part => Devices.PartName(part.Part) + " " + Devices.Figure(part.Percent))));
-        if (device.Charging) parts.Add(Loc.T("充电中", "Charging"));
-        else if (device.Lowest is null) parts.Add(Loc.T("未报告电量", "No battery reported"));
-        else if (level == MemoryLevel.Critical) parts.Add(Loc.T("电量低", "Battery low"));
-        else if (level == MemoryLevel.Elevated) parts.Add(Loc.T("电量偏低", "Getting low"));
+        if (device.Charging) parts.Add(Loc.T("充電中", "Charging"));
+        else if (device.Lowest is null) parts.Add(Loc.T("未報告電量", "No battery reported"));
+        else if (level == MemoryLevel.Critical) parts.Add(Loc.T("電量低", "Battery low"));
+        else if (level == MemoryLevel.Elevated) parts.Add(Loc.T("電量偏低", "Getting low"));
         else if (device.Coarse) parts.Add(Loc.T("估算", "Estimated"));
         if (parts.Count == 0) parts.Add(Devices.SourceName(device.Source));
         return string.Join(" · ", parts);

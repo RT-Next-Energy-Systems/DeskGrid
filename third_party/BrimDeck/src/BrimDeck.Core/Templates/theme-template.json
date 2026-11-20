@@ -1,15 +1,15 @@
 {
   // BrimDeck panel theme template (format 1). Save the file in the themes folder (Settings › Panel theme › Open themes folder;
-  // 设置 › 面板主题 › 打开主题文件夹), then choose it. While that page is open, saving reloads the theme ("Reload" / "重新加载"
+  // 設定 › 面板主題 › 開啟主題資料夾), then choose it. While that page is open, saving reloads the theme ("Reload" / "重新載入"
   // does so by hand). Comments like this one are allowed; delete any line you do not need: whatever is left out comes from the
   // base theme. Colors are "#RRGGBB" or "#AARRGGBB" (AA = opacity, 00-FF).
   // Text that would be hard to read is never shown as written: a color below its contrast minimum is lightened or darkened
   // along its own hue, just far enough, and the settings page lists every such change.
   "formatVersion": 1,
   "id": "my-theme",                 // Unique: lowercase letters, digits, "-", "_" and "."
-  "name": "我的主题",
+  "name": "我的主題",
   "nameEn": "My theme",
-  "description": "一句话描述这个主题。",
+  "description": "一句話描述這個主題。",
   "descriptionEn": "One sentence about this theme.",
   "author": "",
   "license": "",
@@ -87,7 +87,7 @@
     "gradients": [
       { "name": "日落", "nameEn": "Sunset", "stops": ["#FFB38A", "#FF7EB3", "#B69CFF"] },
       { "name": "海洋", "nameEn": "Ocean", "stops": ["#7CF3FF", "#4FA8FF", "#6A6CFF"] },
-      { "name": "极光", "nameEn": "Aurora", "stops": ["#8BFFB0", "#5CE1E6", "#B69CFF"] },
+      { "name": "極光", "nameEn": "Aurora", "stops": ["#8BFFB0", "#5CE1E6", "#B69CFF"] },
       { "name": "火焰", "nameEn": "Ember", "stops": ["#FFE27A", "#FF9F43", "#FF5E5E"] },
       { "name": "霓虹", "nameEn": "Neon", "stops": ["#FF5CF0", "#A66BFF", "#5CE1E6"] }
     ]

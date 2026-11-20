@@ -423,7 +423,7 @@ internal sealed class ShelfService : IDisposable
             Directory.CreateDirectory(DragFolder);
             foreach (var old in Directory.EnumerateFiles(DragFolder).Where(file => DateTime.UtcNow - File.GetLastWriteTimeUtc(file) > TimeSpan.FromMinutes(10)).ToList())
                 try { File.Delete(old); } catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
-            string path = Path.Combine(DragFolder, Loc.T("图片 ", "Picture ") + entry.Copied.ToLocalTime().ToString("yyyy-MM-dd HHmmss", System.Globalization.CultureInfo.InvariantCulture) + ".png");
+            string path = Path.Combine(DragFolder, Loc.T("圖片 ", "Picture ") + entry.Copied.ToLocalTime().ToString("yyyy-MM-dd HHmmss", System.Globalization.CultureInfo.InvariantCulture) + ".png");
             File.WriteAllBytes(path, png);
             return path;
         }

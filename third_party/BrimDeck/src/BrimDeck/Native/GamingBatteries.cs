@@ -75,7 +75,7 @@ internal sealed class GamingBatteries(Dispatcher dispatcher, Action<DeviceSource
                 int? percent = !placeholder && left is { } remaining && capacity is { } full && full > 0
                     ? Devices.Clamp((int)Math.Round(remaining * 100.0 / full)) : null;
                 string hardware = Devices.Hardware(controller.HardwareVendorId, controller.HardwareProductId);
-                string name = controller.DisplayName is { Length: > 0 } display ? display : Loc.T("游戏手柄", "Game controller");
+                string name = controller.DisplayName is { Length: > 0 } display ? display : Loc.T("遊戲手柄", "Game controller");
                 devices.Add(new DeviceBattery("gip:" + (controller.NonRoamableId ?? hardware), name, DeviceKind.Controller, DeviceSource.Gaming, percent)
                 {
                     Charging = battery.Status == Windows.System.Power.BatteryStatus.Charging, Hardware = hardware
@@ -151,7 +151,7 @@ internal sealed class GamingBatteries(Dispatcher dispatcher, Action<DeviceSource
             {
                 if (api.Capabilities(1, slot, 0, out var capabilities) != Success || !XInputBattery.Receiver360Slot(capabilities.ProductId, capabilities.Flags)) continue;
                 if (api.Battery(slot, GamepadBattery, out var information) != Success || XInputBattery.Battery(information.Type, information.Level) is not { } read) continue;
-                yield return new DeviceBattery($"xinput:{hardware}:{slot}", Loc.T("Xbox 360 无线手柄", "Xbox 360 Wireless Controller"), DeviceKind.Controller,
+                yield return new DeviceBattery($"xinput:{hardware}:{slot}", Loc.T("Xbox 360 無線手柄", "Xbox 360 Wireless Controller"), DeviceKind.Controller,
                     DeviceSource.Gaming, read.Percent) { Charging = read.Charging, Coarse = read.Coarse, Hardware = hardware };
             }
         }

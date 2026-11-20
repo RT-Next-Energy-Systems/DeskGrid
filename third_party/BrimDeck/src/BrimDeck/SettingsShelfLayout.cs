@@ -8,7 +8,7 @@ using BrimDeck.Core;
 
 namespace BrimDeck;
 
-// "页面布局", first in the clipboard's group ("中转站"): which columns the clipboard and file transfer page shows, and, when it
+// "頁面佈局", first in the clipboard's group ("中轉站"): which columns the clipboard and file transfer page shows, and, when it
 // shows both, how it arranges them, chosen on cards with a diagram of each arrangement (ShelfArrangementPreview). With one column
 // there is nothing to arrange, so the arrangement and its settings are hidden. Under the cards stand the settings of the arrangement
 // chosen, and only those, as on the collapsed view's page: side by side, how the width is shared between the columns, which
@@ -20,7 +20,7 @@ public partial class SettingsWindow
     internal const int ShelfLayoutSettingsPage = 17;
 
     private static string ArrangementName(ShelfArrangement arrangement) =>
-        arrangement == ShelfArrangement.Split ? Loc.T("并排", "Side by side") : Loc.T("叠放", "Stacked");
+        arrangement == ShelfArrangement.Split ? Loc.T("並排", "Side by side") : Loc.T("疊放", "Stacked");
 
     private void ShelfLayoutSettings()
     {
@@ -33,16 +33,16 @@ public partial class SettingsWindow
             clips.Visibility = shown != ShelfShown.Files ? Visibility.Visible : Visibility.Collapsed;
             files.Visibility = shown != ShelfShown.Clipboard ? Visibility.Visible : Visibility.Collapsed;
         }
-        Group(MusicChoice(Loc.T("显示内容", "Show"), S.ShelfShown,
-            [(ShelfShown.Clipboard, Loc.T("剪贴板", "Clipboard")), (ShelfShown.Files, Loc.T("文件中转", "File transfer")), (ShelfShown.Both, Loc.T("都显示", "Both"))],
+        Group(MusicChoice(Loc.T("顯示內容", "Show"), S.ShelfShown,
+            [(ShelfShown.Clipboard, Loc.T("剪貼簿", "Clipboard")), (ShelfShown.Files, Loc.T("檔案中轉", "File transfer")), (ShelfShown.Both, Loc.T("都顯示", "Both"))],
             value => { Change(s => s.ShelfShown = value); Show(value); }));
         arranging = Collect(Arrangement);
-        clips = Collect(() => ViewCards(Loc.T("剪贴板的显示方式", "How the clipboard shows entries"), "ShelfClipView",
-            [(ClipView.Single, Loc.T("单行", "One line")), (ClipView.Three, Loc.T("三行", "Three lines")), (ClipView.Blocks, Loc.T("方块", "Blocks"))],
+        clips = Collect(() => ViewCards(Loc.T("剪貼簿的顯示方式", "How the clipboard shows entries"), "ShelfClipView",
+            [(ClipView.Single, Loc.T("單行", "One line")), (ClipView.Three, Loc.T("三行", "Three lines")), (ClipView.Blocks, Loc.T("方塊", "Blocks"))],
             S.ShelfClipView, value => { if (S.ShelfClipView != value) Change(s => s.ShelfClipView = value); }, value => ShelfViewPreview.Create(value, _palette)));
-        files = Collect(() => ViewCards(Loc.T("文件中转的显示方式", "How the file transfer shows files"), "ShelfFileView",
-            [(FileView.Single, Loc.T("单行", "One line")), (FileView.Two, Loc.T("双行", "Two lines")), (FileView.Grid, Loc.T("网格", "Grid")),
-                (FileView.Row, Loc.T("横排", "Row")), (FileView.Column, Loc.T("竖排", "Column"))],
+        files = Collect(() => ViewCards(Loc.T("檔案中轉的顯示方式", "How the file transfer shows files"), "ShelfFileView",
+            [(FileView.Single, Loc.T("單行", "One line")), (FileView.Two, Loc.T("雙行", "Two lines")), (FileView.Grid, Loc.T("網格", "Grid")),
+                (FileView.Row, Loc.T("橫排", "Row")), (FileView.Column, Loc.T("豎排", "Column"))],
             S.ShelfFileView, value =>
             {
                 if (S.ShelfFileView != value) Change(s => s.ShelfFileView = value);
@@ -90,15 +90,15 @@ public partial class SettingsWindow
                     Group(ColumnWidths());
                 else
                 {
-                    Group(MusicChoice(Loc.T("堆叠位置", "Stack position"), S.ShelfSameSideStack,
-                        [(false, Loc.T("异侧堆叠", "Opposite sides")), (true, Loc.T("同侧堆叠", "Same side"))],
+                    Group(MusicChoice(Loc.T("堆疊位置", "Stack position"), S.ShelfSameSideStack,
+                        [(false, Loc.T("異側堆疊", "Opposite sides")), (true, Loc.T("同側堆疊", "Same side"))],
                         value => Change(s => s.ShelfSameSideStack = value)));
-                    SectionTitle(Loc.T("切换方式", "Switching"), help: () => Loc.T(
-                        "单击侧条、卡片标题或当前页图标也能切换。",
+                    SectionTitle(Loc.T("切換方式", "Switching"), help: () => Loc.T(
+                        "單擊側條、卡片標題或當前頁圖示也能切換。",
                         "A click on the side strip, the card's title or the current page's icon switches as well."));
-                    Group(Toggle(Loc.T("指针悬停在侧条时切换", "Switch when the pointer hovers over the side strip"), S.ShelfHoverSwitch, value => Change(s => s.ShelfHoverSwitch = value)),
-                        Toggle(Loc.T("按下鼠标中键切换", "Switch with a middle click"), S.ShelfMiddleSwitch, value => Change(s => s.ShelfMiddleSwitch = value)),
-                        Toggle(Loc.T("触控板双指横滑或 Shift + 滚轮切换", "Switch with a two-finger sideways swipe or Shift + wheel"), S.ShelfSwipeSwitch, value => Change(s => s.ShelfSwipeSwitch = value)));
+                    Group(Toggle(Loc.T("指標懸停在側條時切換", "Switch when the pointer hovers over the side strip"), S.ShelfHoverSwitch, value => Change(s => s.ShelfHoverSwitch = value)),
+                        Toggle(Loc.T("按下滑鼠中鍵切換", "Switch with a middle click"), S.ShelfMiddleSwitch, value => Change(s => s.ShelfMiddleSwitch = value)),
+                        Toggle(Loc.T("觸控板雙指橫滑或 Shift + 滾輪切換", "Switch with a two-finger sideways swipe or Shift + wheel"), S.ShelfSwipeSwitch, value => Change(s => s.ShelfSwipeSwitch = value)));
                 }
             });
             SwapOptions(options, incoming, previous is { } from && from != arrangement ? (arrangement > from ? 1 : -1) : 0);
@@ -125,7 +125,7 @@ public partial class SettingsWindow
         Show(S.ShelfArrangement, null);
     }
 
-    // "两栏宽度": a slider that stands for the divider, with the clipboard's name and share at its left and the file transfer's at
+    // "兩欄寬度": a slider that stands for the divider, with the clipboard's name and share at its left and the file transfer's at
     // its right. Moved to the right it widens the clipboard, as the divider does on the panel. The names stand outside the
     // slider, so neither is ever cut, however narrow its column.
     private Slider? _shareSlider;
@@ -158,13 +158,13 @@ public partial class SettingsWindow
         TextBlock Name(string text) { var name = TextLine(text, 12, TextSecondary); name.VerticalAlignment = VerticalAlignment.Center; return name; }
         var clipsNumber = Number(TextAlignment.Right); var filesNumber = Number(TextAlignment.Left);
         var line = new StackPanel { Orientation = Orientation.Horizontal };
-        foreach (var part in new UIElement[] { Name(Loc.T("剪贴板", "Clipboard")), clipsNumber, slider, filesNumber, Name(Loc.T("文件中转", "File transfer")) }) line.Children.Add(part);
+        foreach (var part in new UIElement[] { Name(Loc.T("剪貼簿", "Clipboard")), clipsNumber, slider, filesNumber, Name(Loc.T("檔案中轉", "File transfer")) }) line.Children.Add(part);
         void Show()
         {
             double clips = slider.Value;
             clipsNumber.Text = clips.ToString("0", CultureInfo.InvariantCulture) + "%";
             filesNumber.Text = (100 - clips).ToString("0", CultureInfo.InvariantCulture) + "%";
-            AutomationProperties.SetName(slider, Loc.T($"两栏宽度：剪贴板 {clips:0}%，文件中转 {100 - clips:0}%", $"Column widths: clipboard {clips:0}%, file transfer {100 - clips:0}%"));
+            AutomationProperties.SetName(slider, Loc.T($"兩欄寬度：剪貼簿 {clips:0}%，檔案中轉 {100 - clips:0}%", $"Column widths: clipboard {clips:0}%, file transfer {100 - clips:0}%"));
         }
         Show();
         _shareSlider = slider;
@@ -196,8 +196,8 @@ public partial class SettingsWindow
             if (dragging) _app.PreviewDeck.PreviewShelfShare(share);
             else if (Math.Abs(share - S.ShelfFileShare) >= .05) Resize(s => s.ShelfFileShare = share, DeckPage.Clipboard);
         };
-        return Row(Loc.T("两栏宽度", "Column widths"), line, help: () => Loc.T(
-            "在面板上拖动分隔线也能调整。双击分隔线，恢复为剪贴板 60%、文件中转 40%。",
+        return Row(Loc.T("兩欄寬度", "Column widths"), line, help: () => Loc.T(
+            "在面板上拖動分隔線也能調整。雙擊分隔線，恢復為剪貼簿 60%、檔案中轉 40%。",
             "Dragging the divider on the panel works as well. A double-click on it gives back 60% for the clipboard and 40% for the file transfer."));
     }
 }

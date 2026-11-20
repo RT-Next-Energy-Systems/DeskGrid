@@ -44,7 +44,7 @@ public sealed class DshSessions
     {
         var root = Folder(home);
         snapshot.UsageAvailable = Directory.Exists(root);
-        if (!snapshot.UsageAvailable) { _cache.Clear(); _merged = null; snapshot.UsageNote = Loc.T("未找到本机 DeepSeek Harness 会话记录。", "No local DeepSeek Harness session records were found."); return; }
+        if (!snapshot.UsageAvailable) { _cache.Clear(); _merged = null; snapshot.UsageNote = Loc.T("未找到本機 DeepSeek Harness 會話記錄。", "No local DeepSeek Harness session records were found."); return; }
         var options = new EnumerationOptions { RecurseSubdirectories = true, IgnoreInaccessible = true, AttributesToSkip = FileAttributes.ReparsePoint };
         var current = Directory.EnumerateFiles(root, "session*.jsonl*", options)
             .Select(file => (File: file, Match: Generation.Match(Path.GetFileName(file)))).Where(f => f.Match.Success)
@@ -80,9 +80,9 @@ public sealed class DshSessions
         }
         snapshot.Entries = _merged.Value.Entries;
         snapshot.UsageComplete = errors == 0;
-        snapshot.UsageNote = Loc.T($"本机 DeepSeek Harness {start.LocalDateTime:yyyy-MM-dd} 起 · {count} 个会话 · {snapshot.Entries.Count} 次模型请求",
+        snapshot.UsageNote = Loc.T($"本機 DeepSeek Harness {start.LocalDateTime:yyyy-MM-dd} 起 · {count} 個會話 · {snapshot.Entries.Count} 次模型請求",
             $"Local DeepSeek Harness since {start.LocalDateTime:yyyy-MM-dd} · " + Loc.Count(count, "session", "sessions") + " · " + Loc.Count(snapshot.Entries.Count, "model request", "model requests"));
-        if (errors > 0) snapshot.UsageNote += Loc.T($" · {errors} 处记录未能读取", " · " + Loc.Count(errors, "record", "records") + " could not be read");
+        if (errors > 0) snapshot.UsageNote += Loc.T($" · {errors} 處記錄未能讀取", " · " + Loc.Count(errors, "record", "records") + " could not be read");
     }
 
     private void Parse(string file, CacheItem item, FileInfo info)

@@ -92,14 +92,14 @@ internal sealed partial class ClipboardSyncService
             {
                 try
                 {
-                    Status(Loc.T("正在等待另一台电脑…", "Waiting for the other PC…"), SyncLevel.Idle);
+                    Status(Loc.T("正在等待另一臺電腦…", "Waiting for the other PC…"), SyncLevel.Idle);
                     await LanClipboardLink.RunWithImagesAsync(peer, async (stream, images, token) =>
                     {
                         token.ThrowIfCancellationRequested();
-                        Status(images ? Loc.T("已连接", "Connected")
-                            : Loc.T("已连接 · 另一台电脑的版本只同步文字", "Connected · The other PC's version syncs text only"), SyncLevel.Active);
+                        Status(images ? Loc.T("已連線", "Connected")
+                            : Loc.T("已連線 · 另一臺電腦的版本只同步文字", "Connected · The other PC's version syncs text only"), SyncLevel.Active);
                         try { await ExchangeLanAsync(stream, images, token); }
-                        finally { Status(Loc.T("正在等待另一台电脑…", "Waiting for the other PC…"), SyncLevel.Idle); }
+                        finally { Status(Loc.T("正在等待另一臺電腦…", "Waiting for the other PC…"), SyncLevel.Idle); }
                     }, stop.Token, (address, port) =>
                     {
                         // The other computer came back with another address: it is tried first from now on.
@@ -115,7 +115,7 @@ internal sealed partial class ClipboardSyncService
                     or System.Net.NetworkInformation.NetworkInformationException)
                 {
                     if (stop.IsCancellationRequested) break;
-                    Status(Loc.T("正在等待另一台电脑…", "Waiting for the other PC…"), SyncLevel.Idle);
+                    Status(Loc.T("正在等待另一臺電腦…", "Waiting for the other PC…"), SyncLevel.Idle);
                 }
                 await Task.Delay(TimeSpan.FromSeconds(3), stop.Token);
             }
@@ -177,7 +177,7 @@ internal sealed partial class ClipboardSyncService
                     });
                     return;
                 }
-                string source = Accounts.Lan?.DeviceName is { Length: > 0 } name ? name : Loc.T("局域网设备", "LAN device");
+                string source = Accounts.Lan?.DeviceName is { Length: > 0 } name ? name : Loc.T("區域網裝置", "LAN device");
                 if (content is LanClipboardContent.Text(var text))
                 {
                     string hash = Hash(text);

@@ -2,11 +2,12 @@
 
 與 `CHANGELOG.md`（英文）內容相同，設定視窗在繁體中文介面顯示這一份。兩份要一起維護。
 
-## Unreleased
+## 0.8.0
 
 ### 變更
 
 - **NotiLand 改成 BrimDeck。** DeskGrid 自己的提示島換成 [BrimDeck](https://github.com/MoFeng2223/BrimDeck)（Apache-2.0）：**顯示 NotiLand** 開啟時，DeskGrid 帶著它並在旁邊執行，提供 AI 工具額度、音樂、系統讀數、裝置電量、剪貼簿歷史與檔案暫存。BrimDeck 中會修改其他程式檔案或以系統管理員權限安裝服務的部分已拿掉（見 `third_party/BrimDeck/DESKGRID.md`）。舊提示島的其他設定、快速鍵與 `--ctl island` 指令一併移除，改在 BrimDeck 自己的設定視窗設定。DeskGrid.exe 因為內含 BrimDeck 而大約增加 95 MB。
+- 儲存庫中所有簡體中文都改成繁體中文。NotiLand 的中文介面（文字、標籤、註解、內建主題名稱與發行說明）現在是繁體；只有用來比對其他程式的文字（網易雲的日誌與登錄名稱、歌詞提示、網易雲與酷狗自己選單的引文）維持簡體，裝置與「手機連線」的關鍵字清單則兩種寫法都有。
 
 ### 修正
 

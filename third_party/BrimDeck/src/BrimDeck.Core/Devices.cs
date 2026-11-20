@@ -272,14 +272,14 @@ public static class Devices
     private static readonly (string Word, DeviceKind Kind)[] Words =
     [
         ("airpods", DeviceKind.Earbuds), ("buds", DeviceKind.Earbuds), ("earbud", DeviceKind.Earbuds), ("enco", DeviceKind.Earbuds), ("freebuds", DeviceKind.Earbuds),
-        ("耳塞", DeviceKind.Earbuds), ("真无线", DeviceKind.Earbuds), ("tws", DeviceKind.Earbuds), ("powerbeats", DeviceKind.Earbuds), ("wf-", DeviceKind.Earbuds),
-        ("headset", DeviceKind.Headphones), ("headphone", DeviceKind.Headphones), ("耳机", DeviceKind.Headphones), ("wh-", DeviceKind.Headphones), ("arctis", DeviceKind.Headphones),
+        ("耳塞", DeviceKind.Earbuds), ("真无线", DeviceKind.Earbuds), ("真無線", DeviceKind.Earbuds), ("tws", DeviceKind.Earbuds), ("powerbeats", DeviceKind.Earbuds), ("wf-", DeviceKind.Earbuds),
+        ("headset", DeviceKind.Headphones), ("headphone", DeviceKind.Headphones), ("耳机", DeviceKind.Headphones), ("耳機", DeviceKind.Headphones), ("wh-", DeviceKind.Headphones), ("arctis", DeviceKind.Headphones),
         ("cloud", DeviceKind.Headphones), ("bose", DeviceKind.Headphones), (" qc", DeviceKind.Headphones), ("void", DeviceKind.Headphones), ("kraken", DeviceKind.Headphones),
-        ("keyboard", DeviceKind.Keyboard), ("键盘", DeviceKind.Keyboard), ("kbd", DeviceKind.Keyboard), (" keys", DeviceKind.Keyboard),
-        ("mouse", DeviceKind.Mouse), ("鼠标", DeviceKind.Mouse), ("trackball", DeviceKind.Mouse), ("mx master", DeviceKind.Mouse), ("mx anywhere", DeviceKind.Mouse),
+        ("keyboard", DeviceKind.Keyboard), ("键盘", DeviceKind.Keyboard), ("鍵盤", DeviceKind.Keyboard), ("kbd", DeviceKind.Keyboard), (" keys", DeviceKind.Keyboard),
+        ("mouse", DeviceKind.Mouse), ("鼠标", DeviceKind.Mouse), ("滑鼠", DeviceKind.Mouse), ("鼠標", DeviceKind.Mouse), ("trackball", DeviceKind.Mouse), ("mx master", DeviceKind.Mouse), ("mx anywhere", DeviceKind.Mouse),
         ("controller", DeviceKind.Controller), ("gamepad", DeviceKind.Controller), ("手柄", DeviceKind.Controller), ("dualsense", DeviceKind.Controller),
         ("dualshock", DeviceKind.Controller), ("xbox", DeviceKind.Controller), ("joy-con", DeviceKind.Controller), ("pro controller", DeviceKind.Controller),
-        (" pen ", DeviceKind.Pen), ("手写笔", DeviceKind.Pen), ("触控笔", DeviceKind.Pen), ("stylus", DeviceKind.Pen), ("pencil", DeviceKind.Pen),
+        (" pen ", DeviceKind.Pen), ("手写笔", DeviceKind.Pen), ("手寫筆", DeviceKind.Pen), ("触控笔", DeviceKind.Pen), ("觸控筆", DeviceKind.Pen), ("stylus", DeviceKind.Pen), ("pencil", DeviceKind.Pen),
         ("speaker", DeviceKind.Speaker), ("音箱", DeviceKind.Speaker), ("soundlink", DeviceKind.Speaker), ("jbl flip", DeviceKind.Speaker), ("jbl charge", DeviceKind.Speaker),
     ];
 
@@ -302,18 +302,18 @@ public static class Devices
 
     public static string KindName(DeviceKind kind) => kind switch
     {
-        DeviceKind.Mouse => Loc.T("鼠标", "Mouse"), DeviceKind.Keyboard => Loc.T("键盘", "Keyboard"), DeviceKind.Headphones => Loc.T("头戴耳机", "Headphones"),
-        DeviceKind.Earbuds => Loc.T("入耳耳机", "Earbuds"), DeviceKind.Controller => Loc.T("手柄", "Controller"), DeviceKind.Pen => Loc.T("笔", "Pen"),
-        DeviceKind.Speaker => Loc.T("音箱", "Speaker"), DeviceKind.Phone => Loc.T("手机", "Phone"), _ => Loc.T("设备", "Device")
+        DeviceKind.Mouse => Loc.T("滑鼠", "Mouse"), DeviceKind.Keyboard => Loc.T("鍵盤", "Keyboard"), DeviceKind.Headphones => Loc.T("頭戴耳機", "Headphones"),
+        DeviceKind.Earbuds => Loc.T("入耳耳機", "Earbuds"), DeviceKind.Controller => Loc.T("手柄", "Controller"), DeviceKind.Pen => Loc.T("筆", "Pen"),
+        DeviceKind.Speaker => Loc.T("音箱", "Speaker"), DeviceKind.Phone => Loc.T("手機", "Phone"), _ => Loc.T("裝置", "Device")
     };
 
     public static string SourceName(DeviceSource source) => source switch
     {
-        DeviceSource.PhoneLink => Loc.T("手机连接", "Phone Link"),
-        DeviceSource.Logitech => Loc.T("罗技接收器", "Logitech receiver"), DeviceSource.Razer => "Razer", DeviceSource.SteelSeries => "SteelSeries",
-        DeviceSource.HyperX => "HyperX", DeviceSource.Sony => "PlayStation", DeviceSource.Gatt => Loc.T("蓝牙电池服务", "Bluetooth battery service"),
-        DeviceSource.Gaming => Loc.T("游戏控制器", "Game controller"), DeviceSource.Hid => Loc.T("HID 电量", "HID battery"), DeviceSource.Apple => Loc.T("Apple 广播", "Apple broadcast"),
-        _ => Loc.T("蓝牙", "Bluetooth")
+        DeviceSource.PhoneLink => Loc.T("手機連線", "Phone Link"),
+        DeviceSource.Logitech => Loc.T("羅技接收器", "Logitech receiver"), DeviceSource.Razer => "Razer", DeviceSource.SteelSeries => "SteelSeries",
+        DeviceSource.HyperX => "HyperX", DeviceSource.Sony => "PlayStation", DeviceSource.Gatt => Loc.T("藍芽電池服務", "Bluetooth battery service"),
+        DeviceSource.Gaming => Loc.T("遊戲控制器", "Game controller"), DeviceSource.Hid => Loc.T("HID 電量", "HID battery"), DeviceSource.Apple => Loc.T("Apple 廣播", "Apple broadcast"),
+        _ => Loc.T("藍芽", "Bluetooth")
     };
 
     public static string PartName(BatteryPart part) => part switch { BatteryPart.Left => Loc.T("左", "L"), BatteryPart.Right => Loc.T("右", "R"), _ => Loc.T("盒", "Case") };
@@ -321,14 +321,14 @@ public static class Devices
     // The figure as shown: "85%", or "—" for a device that reports no battery.
     public static string Figure(int? percent) => percent is { } p ? Clamp(p).ToString(System.Globalization.CultureInfo.InvariantCulture) + "%" : "—";
 
-    // A line for the tooltip and the settings: "左 80% · 右 75% · 盒 60% · 充电中 · 蓝牙".
+    // A line for the tooltip and the settings: "左 80% · 右 75% · 盒 60% · 充電中 · 藍芽".
     public static string Describe(DeviceBattery device)
     {
         var parts = new List<string>();
-        if (device.Parts.Count > 0) parts.AddRange(device.Parts.Select(part => PartName(part.Part) + " " + Figure(part.Percent) + (part.Charging ? Loc.T("（充电）", " (charging)") : "")));
-        else parts.Add(device.Percent is null ? Loc.T("未报告电量", "No battery reported") : Figure(device.Percent) + (device.Coarse ? Loc.T("（约）", " (approx.)") : ""));
+        if (device.Parts.Count > 0) parts.AddRange(device.Parts.Select(part => PartName(part.Part) + " " + Figure(part.Percent) + (part.Charging ? Loc.T("（充電）", " (charging)") : "")));
+        else parts.Add(device.Percent is null ? Loc.T("未報告電量", "No battery reported") : Figure(device.Percent) + (device.Coarse ? Loc.T("（約）", " (approx.)") : ""));
         if (device.Asleep) parts.Add(Loc.T("休眠", "Sleeping"));
-        if (device.Charging) parts.Add(Loc.T("充电中", "Charging"));
+        if (device.Charging) parts.Add(Loc.T("充電中", "Charging"));
         parts.Add(SourceName(device.Source));
         return device.Name + "\n" + string.Join(" · ", parts);
     }
@@ -365,7 +365,7 @@ public static class Devices
 
     // Suspensions of a phone's Bluetooth name that still name the same phone: "Xiaomi 13 Ultra 5G" is the "Xiaomi 13
     // Ultra" Phone Link shows. Anything else after the shorter name is a different model ("Pixel 8" and "Pixel 8 Pro").
-    private static readonly string[] PhoneSuffixes = ["5g", "4g", "lte", "5ge", "nr", "dualsim", "双卡", "双卡双待"];
+    private static readonly string[] PhoneSuffixes = ["5g", "4g", "lte", "5ge", "nr", "dualsim", "双卡", "双卡双待", "雙卡", "雙卡雙待"];
 
     // Whether two names are the same phone: letters and digits only, in lower case, then equal, or one the start of the
     // other followed only by the way a phone names its link (Phone Link and Bluetooth may differ by that).

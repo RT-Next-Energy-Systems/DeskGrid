@@ -50,7 +50,7 @@ public sealed partial class SettingsWindow
         var button = ActionButton("", close); button.Content = CaptionIcon("close"); button.Style = (Style)FindResource("SettingsCloseButton");
         button.Width = 32; button.Height = 32; button.Padding = new Thickness(0); button.Margin = new Thickness(0, 10, 10, 0);
         button.HorizontalAlignment = HorizontalAlignment.Right; button.VerticalAlignment = VerticalAlignment.Top; button.IsCancel = true;
-        WindowChrome.SetIsHitTestVisibleInChrome(button, true); AutomationProperties.SetName(button, Loc.T("关闭", "Close"));
+        WindowChrome.SetIsHitTestVisibleInChrome(button, true); AutomationProperties.SetName(button, Loc.T("關閉", "Close"));
         layout.Children.Add(button);
         body.Margin = new Thickness(24, 16, 24, 24);
         Grid.SetRow(body, 1); layout.Children.Add(body);
@@ -138,18 +138,18 @@ public sealed partial class SettingsWindow
         finally { button.Click -= Take; }
     }
 
-    private SyncCodeView WeTypeEnterView() => SyncCode(false, Loc.T("匹配码", "Match code"),
-        Loc.T("在手机或另一台电脑上打开微信输入法的设置，进入“跨设备”，点击“查看匹配码”。", "On your phone or another PC, open WeType's settings, go to its cross-device page (跨设备) and choose 查看匹配码 to see its match code."),
-        Loc.T("在这里输入匹配码。那台设备如果弹出确认，选择允许。", "Enter the code here. If that device asks to confirm, allow it."));
+    private SyncCodeView WeTypeEnterView() => SyncCode(false, Loc.T("匹配碼", "Match code"),
+        Loc.T("在手機或另一臺電腦上開啟微信輸入法的設定，進入“跨裝置”，點選“檢視匹配碼”。", "On your phone or another PC, open WeType's settings, go to its cross-device page (跨裝置) and choose 檢視匹配碼 to see its match code."),
+        Loc.T("在這裡輸入匹配碼。那臺裝置如果彈出確認，選擇允許。", "Enter the code here. If that device asks to confirm, allow it."));
 
-    private SyncCodeView WeTypeShowView() => SyncCode(true, Loc.T("本机匹配码", "This device's match code"),
-        Loc.T("在手机或另一台电脑上打开微信输入法的设置，进入“跨设备”，点击底部的“关联设备”。", "On your phone or another PC, open WeType's settings, go to its cross-device page (跨设备) and choose 关联设备 at the bottom."),
-        Loc.T("在那台设备上输入下面的匹配码，再回到这里点击“允许”。", "Enter the code below on that device, then choose Allow here."));
+    private SyncCodeView WeTypeShowView() => SyncCode(true, Loc.T("本機匹配碼", "This device's match code"),
+        Loc.T("在手機或另一臺電腦上開啟微信輸入法的設定，進入“跨裝置”，點選底部的“關聯裝置”。", "On your phone or another PC, open WeType's settings, go to its cross-device page (跨裝置) and choose 關聯裝置 at the bottom."),
+        Loc.T("在那臺裝置上輸入下面的匹配碼，再回到這裡點選“允許”。", "Enter the code below on that device, then choose Allow here."));
 
     private TextBlock WeTypeFootnote()
     {
-        var note = TextLine(Loc.T("那台设备要在“跨设备”中开启“跨设备复制粘贴”，它复制的内容才会同步过来。个人词库、常用语等其他开关与 BrimDeck 无关。",
-            "That device syncs what it copies only with 跨设备复制粘贴 turned on in its cross-device page. Its other switches, such as dictionary and phrases, do not concern BrimDeck."), 11.5, TextTertiary);
+        var note = TextLine(Loc.T("那臺裝置要在“跨裝置”中開啟“跨裝置複製貼上”，它複製的內容才會同步過來。個人詞庫、常用語等其他開關與 BrimDeck 無關。",
+            "That device syncs what it copies only with 跨裝置複製貼上 turned on in its cross-device page. Its other switches, such as dictionary and phrases, do not concern BrimDeck."), 11.5, TextTertiary);
         note.TextWrapping = TextWrapping.Wrap; note.Margin = new Thickness(0, 16, 0, 0);
         return note;
     }
@@ -158,7 +158,7 @@ public sealed partial class SettingsWindow
     {
         var service = _app.ClipboardSync;
         service.Accounts.WeType.DeviceName = service.Accounts.DeviceName;
-        var shell = SyncDialog(Loc.T("关联微信输入法", "Link WeType"));
+        var shell = SyncDialog(Loc.T("關聯微信輸入法", "Link WeType"));
         var host = new Border();
         using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(_app.Lifetime.Token);
         shell.Window.Closed += (_, _) => lifetime.Cancel();
@@ -192,7 +192,7 @@ public sealed partial class SettingsWindow
                 {
                     string code = await NextCodeAsync(view.Code, token);
                     view.Code.IsEnabled = false;
-                    SetSyncStatus(view.Status, Loc.T("正在关联…那台设备如果弹出确认，选择允许。", "Linking… If that device asks to confirm, allow it."));
+                    SetSyncStatus(view.Status, Loc.T("正在關聯…那臺裝置如果彈出確認，選擇允許。", "Linking… If that device asks to confirm, allow it."));
                     using var deadline = CancellationTokenSource.CreateLinkedTokenSource(token);
                     deadline.CancelAfter(TimeSpan.FromSeconds(60));
                     try
@@ -203,11 +203,11 @@ public sealed partial class SettingsWindow
                     }
                     catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
                     catch (Exception ex) when (ex is OperationCanceledException or TimeoutException)
-                    { SetSyncStatus(view.Status, Loc.T("那台设备没有允许关联，请重新输入。", "That device did not allow the link. Enter the code again."), true); }
+                    { SetSyncStatus(view.Status, Loc.T("那臺裝置沒有允許關聯，請重新輸入。", "That device did not allow the link. Enter the code again."), true); }
                     catch (HttpRequestException)
-                    { SetSyncStatus(view.Status, Loc.T("无法连接微信输入法的服务器，请检查网络。", "Cannot reach WeType. Check your network."), true); }
+                    { SetSyncStatus(view.Status, Loc.T("無法連線微信輸入法的伺服器，請檢查網路。", "Cannot reach WeType. Check your network."), true); }
                     catch (Exception ex) when (ex is not OutOfMemoryException)
-                    { SetSyncStatus(view.Status, Loc.T("匹配码不正确或已过期。", "The code is wrong or has expired."), true); }
+                    { SetSyncStatus(view.Status, Loc.T("匹配碼不正確或已過期。", "The code is wrong or has expired."), true); }
                     view.Code.Text = ""; view.Code.IsEnabled = true; view.Code.Focus();
                 }
             }
@@ -227,7 +227,7 @@ public sealed partial class SettingsWindow
                     try
                     {
                         view.Action.Visibility = Visibility.Collapsed; view.Code.Text = "";
-                        SetSyncStatus(view.Status, Loc.T("正在获取匹配码…", "Getting a code…"));
+                        SetSyncStatus(view.Status, Loc.T("正在獲取匹配碼…", "Getting a code…"));
                         using (var request = CancellationTokenSource.CreateLinkedTokenSource(token))
                         {
                             request.CancelAfter(TimeSpan.FromSeconds(30));
@@ -240,7 +240,7 @@ public sealed partial class SettingsWindow
                         while (asking is null && DateTime.UtcNow < until)
                         {
                             int left = Math.Max(1, (int)Math.Ceiling((until - DateTime.UtcNow).TotalSeconds));
-                            SetSyncStatus(view.Status, Loc.T($"{left} 秒内有效", $"Valid for {left} s"));
+                            SetSyncStatus(view.Status, Loc.T($"{left} 秒內有效", $"Valid for {left} s"));
                             try { asking = await client.PollPairingCodeAsync(code, token); }
                             // The server no longer knows the code: it has expired.
                             catch (InvalidDataException) { break; }
@@ -248,15 +248,15 @@ public sealed partial class SettingsWindow
                         }
                         if (asking is { } peer)
                         {
-                            SetSyncStatus(view.Status, Loc.T($"“{peer.Name}”请求关联", $"“{peer.Name}” asks to link"));
-                            view.Action.Content = Loc.T("允许", "Allow"); view.Action.Visibility = Visibility.Visible;
+                            SetSyncStatus(view.Status, Loc.T($"“{peer.Name}”請求關聯", $"“{peer.Name}” asks to link"));
+                            view.Action.Content = Loc.T("允許", "Allow"); view.Action.Visibility = Visibility.Visible;
                             using var answer = CancellationTokenSource.CreateLinkedTokenSource(token);
                             answer.CancelAfter(TimeSpan.FromSeconds(60));
                             try
                             {
                                 await ClickAsync(view.Action, answer.Token);
                                 view.Action.Visibility = Visibility.Collapsed;
-                                SetSyncStatus(view.Status, Loc.T("正在关联…", "Linking…"));
+                                SetSyncStatus(view.Status, Loc.T("正在關聯…", "Linking…"));
                                 await client.ConfirmPairingAsync(peer.BindId, peer.Name, answer.Token);
                                 Linked();
                                 return;
@@ -265,7 +265,7 @@ public sealed partial class SettingsWindow
                         }
                         await ReleaseAsync();
                         view.Code.Text = "";
-                        SetSyncStatus(view.Status, Loc.T("匹配码已过期。", "The code has expired."));
+                        SetSyncStatus(view.Status, Loc.T("匹配碼已過期。", "The code has expired."));
                     }
                     catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
                     catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -273,10 +273,10 @@ public sealed partial class SettingsWindow
                         await ReleaseAsync();
                         view.Code.Text = "";
                         SetSyncStatus(view.Status, ex is HttpRequestException or TimeoutException
-                            ? Loc.T("无法连接微信输入法的服务器，请检查网络。", "Cannot reach WeType. Check your network.")
-                            : Loc.T("关联没有完成。", "The link was not completed."), true);
+                            ? Loc.T("無法連線微信輸入法的伺服器，請檢查網路。", "Cannot reach WeType. Check your network.")
+                            : Loc.T("關聯沒有完成。", "The link was not completed."), true);
                     }
-                    view.Action.Content = Loc.T("重新获取", "Get a new code"); view.Action.Visibility = Visibility.Visible;
+                    view.Action.Content = Loc.T("重新獲取", "Get a new code"); view.Action.Visibility = Visibility.Visible;
                     await ClickAsync(view.Action, token);
                 }
             }
@@ -294,7 +294,7 @@ public sealed partial class SettingsWindow
             }
         }
 
-        shell.Body.Children.Add(SyncModes(Loc.T("输入匹配码", "Enter a code"), Loc.T("显示本机匹配码", "Show this device's code"), show => _ = SwitchAsync(show)));
+        shell.Body.Children.Add(SyncModes(Loc.T("輸入匹配碼", "Enter a code"), Loc.T("顯示本機匹配碼", "Show this device's code"), show => _ = SwitchAsync(show)));
         shell.Body.Children.Add(host);
         shell.Body.Children.Add(WeTypeFootnote());
         _ = SwitchAsync(false);
@@ -306,10 +306,10 @@ public sealed partial class SettingsWindow
     {
         var view = new StackPanel();
         view.Children.Add(SyncSteps(
-            Loc.T("在打开的浏览器窗口中登录豆包账号。", "Sign in to your Doubao account in the browser window that opens."),
-            Loc.T("在手机或另一台电脑的豆包输入法中登录同一账号，并开启“超级互传”。", "In Doubao IME on your phone or another PC, sign in to the same account and turn on its cross-device transfer.")));
+            Loc.T("在開啟的瀏覽器視窗中登入豆包賬號。", "Sign in to your Doubao account in the browser window that opens."),
+            Loc.T("在手機或另一臺電腦的豆包輸入法中登入同一賬號，並開啟“超級互傳”。", "In Doubao IME on your phone or another PC, sign in to the same account and turn on its cross-device transfer.")));
         status = SyncStatusLine(); status.Margin = new Thickness(0, 20, 0, 0); view.Children.Add(status);
-        retry = ActionButton(Loc.T("重新登录", "Sign in again"), () => { }, true);
+        retry = ActionButton(Loc.T("重新登入", "Sign in again"), () => { }, true);
         retry.HorizontalAlignment = HorizontalAlignment.Center; retry.MinWidth = 96; retry.Padding = new Thickness(16, 6, 16, 6);
         retry.Margin = new Thickness(0, 12, 0, 0); retry.Visibility = Visibility.Collapsed;
         view.Children.Add(retry);
@@ -318,7 +318,7 @@ public sealed partial class SettingsWindow
 
     private async Task ShowDoubaoLoginAsync()
     {
-        var shell = SyncDialog(Loc.T("登录豆包", "Sign in to Doubao"));
+        var shell = SyncDialog(Loc.T("登入豆包", "Sign in to Doubao"));
         shell.Body.Children.Add(DoubaoLoginView(out var status, out var retry));
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(_app.Lifetime.Token);
         var token = stop.Token;
@@ -328,7 +328,7 @@ public sealed partial class SettingsWindow
         async Task SignInAsync()
         {
             retry.Visibility = Visibility.Collapsed;
-            SetSyncStatus(status, Loc.T("正在打开浏览器…", "Opening the browser…"));
+            SetSyncStatus(status, Loc.T("正在開啟瀏覽器…", "Opening the browser…"));
             try
             {
                 await Native.DoubaoBrowserLogin.SignInAsync(_app.ClipboardSync, message => { if (!token.IsCancellationRequested) SetSyncStatus(status, message); }, token);
@@ -340,7 +340,7 @@ public sealed partial class SettingsWindow
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
                 SetSyncStatus(status, ex is Native.DoubaoSignInWindowClosedException or InvalidDataException or TimeoutException or InvalidOperationException
-                    ? ex.Message : Loc.T("登录没有完成，请检查网络。", "Sign-in was not completed. Check your network."), true);
+                    ? ex.Message : Loc.T("登入沒有完成，請檢查網路。", "Sign-in was not completed. Check your network."), true);
                 retry.Visibility = Visibility.Visible;
             }
         }
@@ -358,20 +358,20 @@ public sealed partial class SettingsWindow
     {
         var root = new StackPanel();
         root.Children.Add(SyncSteps(
-            Loc.T("两台电脑连接同一网络，都在 BrimDeck 的“剪贴板同步”设置中点击局域网的“配对”。", "Connect both PCs to the same network and choose Pair under Local network in BrimDeck's clipboard sync settings on each."),
-            Loc.T("在其中一台输入另一台显示的配对码。", "On either PC, enter the code the other one shows.")));
+            Loc.T("兩臺電腦連線同一網路，都在 BrimDeck 的“剪貼簿同步”設定中點選區域網的“配對”。", "Connect both PCs to the same network and choose Pair under Local network in BrimDeck's clipboard sync settings on each."),
+            Loc.T("在其中一臺輸入另一臺顯示的配對碼。", "On either PC, enter the code the other one shows.")));
         TextBlock Caption(string text)
         {
             var caption = TextLine(text, 12, TextSecondary); caption.HorizontalAlignment = HorizontalAlignment.Center; caption.Margin = new Thickness(0, 22, 0, 8);
             return caption;
         }
-        root.Children.Add(Caption(Loc.T("本机配对码", "This PC's code")));
-        var own = new SyncCodeBox { ReadOnly = true, Label = Loc.T("本机配对码", "This PC's code") };
+        root.Children.Add(Caption(Loc.T("本機配對碼", "This PC's code")));
+        var own = new SyncCodeBox { ReadOnly = true, Label = Loc.T("本機配對碼", "This PC's code") };
         root.Children.Add(own);
         var ownNote = TextLine("", 12, TextSecondary); ownNote.HorizontalAlignment = HorizontalAlignment.Center; ownNote.Margin = new Thickness(0, 8, 0, 0);
         ownNote.Visibility = Visibility.Collapsed; root.Children.Add(ownNote);
-        root.Children.Add(Caption(Loc.T("输入另一台电脑的配对码", "Enter the other PC's code")));
-        var entry = new SyncCodeBox { Label = Loc.T("另一台电脑的配对码", "The other PC's code") };
+        root.Children.Add(Caption(Loc.T("輸入另一臺電腦的配對碼", "Enter the other PC's code")));
+        var entry = new SyncCodeBox { Label = Loc.T("另一臺電腦的配對碼", "The other PC's code") };
         root.Children.Add(entry);
         var status = SyncStatusLine(); root.Children.Add(status);
         var devices = new StackPanel { Margin = new Thickness(0, 4, 0, 0), Visibility = Visibility.Collapsed };
@@ -383,7 +383,7 @@ public sealed partial class SettingsWindow
     {
         var service = _app.ClipboardSync;
         string name = service.Accounts.DeviceName;
-        var shell = SyncDialog(Loc.T("配对另一台电脑", "Pair another PC"));
+        var shell = SyncDialog(Loc.T("配對另一臺電腦", "Pair another PC"));
         var view = LanPairView();
         shell.Body.Children.Add(view.Root);
         view.Entry.Loaded += (_, _) => view.Entry.Focus();
@@ -400,7 +400,7 @@ public sealed partial class SettingsWindow
             try { service.SetLanPeer(peer); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or CryptographicException)
             {
-                SetSyncStatus(view.Status, Loc.T("无法保存配对信息，请重试。", "The pairing could not be saved. Try again."), true);
+                SetSyncStatus(view.Status, Loc.T("無法儲存配對資訊，請重試。", "The pairing could not be saved. Try again."), true);
                 return false;
             }
             Change(s => s.LanClipboardSync = true);
@@ -428,7 +428,7 @@ public sealed partial class SettingsWindow
                 {
                     view.Own.Text = "";
                     if (ex is LanHostAddressUnavailableException or LanNetworkChangedException)
-                    { view.OwnNote.Text = Loc.T("本机没有连接到局域网", "This PC is not on a local network"); view.OwnNote.Visibility = Visibility.Visible; }
+                    { view.OwnNote.Text = Loc.T("本機沒有連線到區域網", "This PC is not on a local network"); view.OwnNote.Visibility = Visibility.Visible; }
                     try { await Task.Delay(2000, token); } catch (OperationCanceledException) { return; }
                 }
             }
@@ -440,7 +440,7 @@ public sealed partial class SettingsWindow
         }
         async Task<LanPairingDevice> ChooseAsync(IReadOnlyList<LanPairingDevice> found, CancellationToken token)
         {
-            SetSyncStatus(view.Status, Loc.T("找到多台电脑，选择要配对的一台：", "Several PCs were found. Choose the one to pair:"));
+            SetSyncStatus(view.Status, Loc.T("找到多臺電腦，選擇要配對的一臺：", "Several PCs were found. Choose the one to pair:"));
             var chosen = new TaskCompletionSource<LanPairingDevice>(TaskCreationOptions.RunContinuationsAsynchronously);
             view.Devices.Children.Clear(); view.Devices.Visibility = Visibility.Visible;
             foreach (var device in found)
@@ -462,7 +462,7 @@ public sealed partial class SettingsWindow
                 {
                     string code = await NextCodeAsync(view.Entry, token);
                     view.Entry.IsEnabled = false;
-                    SetSyncStatus(view.Status, Loc.T("正在查找另一台电脑…", "Looking for the other PC…"));
+                    SetSyncStatus(view.Status, Loc.T("正在查詢另一臺電腦…", "Looking for the other PC…"));
                     hosting?.Cancel(); await hosted;
                     view.Own.Text = "";
                     try
@@ -470,24 +470,24 @@ public sealed partial class SettingsWindow
                         var found = await LanClipboardLink.DiscoverPairingDevicesAsync(token);
                         token.ThrowIfCancellationRequested();
                         if (found.Count == 0)
-                            SetSyncStatus(view.Status, Loc.T("没有找到另一台电脑。确认它也打开了这个窗口，并且两台电脑在同一网络。",
+                            SetSyncStatus(view.Status, Loc.T("沒有找到另一臺電腦。確認它也開啟了這個視窗，並且兩臺電腦在同一網路。",
                                 "The other PC was not found. Make sure it has this window open and both PCs are on the same network."), true);
                         else
                         {
                             var device = found.Count == 1 ? found[0] : await ChooseAsync(found, token);
-                            SetSyncStatus(view.Status, Loc.T("正在配对…", "Pairing…"));
+                            SetSyncStatus(view.Status, Loc.T("正在配對…", "Pairing…"));
                             var peer = await LanClipboardLink.JoinPairingAsync(device, code, name, Approve, token);
                             if (Paired(peer)) return;
                         }
                     }
                     catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
                     catch (LanPairingRateLimitedException)
-                    { SetSyncStatus(view.Status, Loc.T("尝试次数过多，请 5 分钟后再试。", "Too many attempts. Try again in 5 minutes."), true); }
+                    { SetSyncStatus(view.Status, Loc.T("嘗試次數過多，請 5 分鐘後再試。", "Too many attempts. Try again in 5 minutes."), true); }
                     catch (AuthenticationException)
-                    { SetSyncStatus(view.Status, Loc.T("配对码不正确。", "The code is wrong."), true); }
+                    { SetSyncStatus(view.Status, Loc.T("配對碼不正確。", "The code is wrong."), true); }
                     catch (Exception ex) when (ex is IOException or InvalidDataException or SocketException or CryptographicException or UnauthorizedAccessException
                         or NetworkInformationException or OperationCanceledException)
-                    { SetSyncStatus(view.Status, Loc.T("配对没有完成，请重新输入。", "Pairing was not completed. Enter the code again."), true); }
+                    { SetSyncStatus(view.Status, Loc.T("配對沒有完成，請重新輸入。", "Pairing was not completed. Enter the code again."), true); }
                     view.Entry.Text = ""; view.Entry.IsEnabled = true; view.Entry.Focus();
                     StartHost();
                 }

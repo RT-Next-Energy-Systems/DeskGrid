@@ -97,7 +97,7 @@ public static partial class PanelThemes
     private static string SetMember(string text, IReadOnlyList<string> path, string value)
     {
         int open = SkipSpace(text, 0);
-        if (open >= text.Length || text[open] != '{') throw new JsonException(Loc.T("主题文件不是 JSON 对象", "The theme file is not a JSON object"));
+        if (open >= text.Length || text[open] != '{') throw new JsonException(Loc.T("主題檔案不是 JSON 物件", "The theme file is not a JSON object"));
         for (int depth = 0; ; depth++)
         {
             var (members, close) = Members(text, open);
@@ -135,17 +135,17 @@ public static partial class PanelThemes
         while (i < text.Length && text[i] != '}')
         {
             if (text[i] == ',') { i = SkipSpace(text, i + 1); continue; }
-            if (text[i] != '"') throw new JsonException(Loc.T("主题文件的格式有误", "The theme file is not well formed"));
+            if (text[i] != '"') throw new JsonException(Loc.T("主題檔案的格式有誤", "The theme file is not well formed"));
             int keyEnd = StringEnd(text, i);
             int colon = SkipSpace(text, keyEnd + 1);
-            if (colon >= text.Length || text[colon] != ':') throw new JsonException(Loc.T("主题文件的格式有误", "The theme file is not well formed"));
+            if (colon >= text.Length || text[colon] != ':') throw new JsonException(Loc.T("主題檔案的格式有誤", "The theme file is not well formed"));
             int value = SkipSpace(text, colon + 1);
-            if (value >= text.Length) throw new JsonException(Loc.T("主题文件的格式有误", "The theme file is not well formed"));
+            if (value >= text.Length) throw new JsonException(Loc.T("主題檔案的格式有誤", "The theme file is not well formed"));
             int end = ValueEnd(text, value);
             members.Add((text[(i + 1)..keyEnd], i, value, end));
             i = SkipSpace(text, end);
         }
-        if (i >= text.Length) throw new JsonException(Loc.T("主题文件的格式有误", "The theme file is not well formed"));
+        if (i >= text.Length) throw new JsonException(Loc.T("主題檔案的格式有誤", "The theme file is not well formed"));
         return (members, i);
     }
 

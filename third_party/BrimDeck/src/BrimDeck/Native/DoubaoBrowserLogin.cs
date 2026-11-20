@@ -9,7 +9,7 @@ using BrimDeck.Core.ClipboardSync;
 namespace BrimDeck.Native;
 
 internal sealed class DoubaoSignInWindowClosedException()
-    : IOException(Loc.T("登录窗口已关闭。", "The sign-in window was closed."));
+    : IOException(Loc.T("登入視窗已關閉。", "The sign-in window was closed."));
 
 // A dedicated profile in the installed browser, as used by MiMoAccount. No installed IME
 // or normal browser profile is inspected, and no browser runtime is distributed.
@@ -17,7 +17,7 @@ internal static class DoubaoBrowserLogin
 {
     internal static async Task SignInAsync(ClipboardSyncService service, Action<string> status, CancellationToken ct)
     {
-        string browser = MiMoAccount.FindBrowser() ?? throw new InvalidOperationException(Loc.T("登录需要 Chrome 或 Edge 浏览器。", "Signing in needs Chrome or Edge."));
+        string browser = MiMoAccount.FindBrowser() ?? throw new InvalidOperationException(Loc.T("登入需要 Chrome 或 Edge 瀏覽器。", "Signing in needs Chrome or Edge."));
         string root = Path.GetFullPath(Path.Combine(service.Folder, "browser-login"));
         string profile = Path.Combine(root, Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(profile);
@@ -29,12 +29,12 @@ internal static class DoubaoBrowserLogin
         try
         {
             process = Process.Start(start) ?? throw new IOException("Cannot open browser.");
-            status(Loc.T("正在等待登录…", "Waiting for you to sign in…"));
+            status(Loc.T("正在等待登入…", "Waiting for you to sign in…"));
             var portWait = Stopwatch.StartNew(); Uri? socket = null;
             while (socket is null)
             {
                 if (process.HasExited) throw new DoubaoSignInWindowClosedException();
-                if (portWait.Elapsed > TimeSpan.FromSeconds(30)) throw new IOException(Loc.T("浏览器没有打开登录窗口。", "The browser did not open the sign-in window."));
+                if (portWait.Elapsed > TimeSpan.FromSeconds(30)) throw new IOException(Loc.T("瀏覽器沒有開啟登入視窗。", "The browser did not open the sign-in window."));
                 try
                 {
                     string[] lines = await File.ReadAllLinesAsync(Path.Combine(profile, "DevToolsActivePort"), deadline.Token);
@@ -62,18 +62,18 @@ internal static class DoubaoBrowserLogin
                         if (value.Length is > 0 and < 8192 && !value.Any(c => c is '\r' or '\n' or ';')) identity.Cookies[name] = value;
                 }
                 if (!identity.Cookies.ContainsKey("sessionid")) continue;
-                status(Loc.T("已登录，正在连接…", "Signed in. Connecting…"));
+                status(Loc.T("已登入，正在連線…", "Signed in. Connecting…"));
                 try { await service.ConnectDoubaoAsync(identity, deadline.Token); return; }
                 catch (Exception ex) when (ex is InvalidDataException or DoubaoRequestException)
                 {
                     rejectedSince ??= DateTime.UtcNow;
                     if (DateTime.UtcNow - rejectedSince.Value > TimeSpan.FromSeconds(20))
-                        throw new InvalidDataException(Loc.T("豆包没有接受这次登录。", "Doubao did not accept this sign-in."));
+                        throw new InvalidDataException(Loc.T("豆包沒有接受這次登入。", "Doubao did not accept this sign-in."));
                 }
             }
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-        { throw new TimeoutException(Loc.T("等待登录超时。", "Timed out waiting for sign-in.")); }
+        { throw new TimeoutException(Loc.T("等待登入超時。", "Timed out waiting for sign-in.")); }
         catch (WebSocketException) when (process is { HasExited: true })
         { throw new DoubaoSignInWindowClosedException(); }
         finally

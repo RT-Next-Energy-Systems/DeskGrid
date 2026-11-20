@@ -33,7 +33,7 @@ public sealed partial class LyricsService
     {
         var reply = await Get($"https://lyrics.kugou.com/download?ver=1&client=pc&id={id}&accesskey={key}&fmt=lrc&charset=utf8", token);
         if (reply is not { ValueKind: JsonValueKind.Object } value || Str(value, "content") is not { Length: > 0 } content) return Lyrics.Empty;
-        try { return Lyrics.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(content)), null, duration, "酷狗音乐"); }
+        try { return Lyrics.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(content)), null, duration, "酷狗音樂"); }
         catch (FormatException) { return Lyrics.Empty; }
     }
 }

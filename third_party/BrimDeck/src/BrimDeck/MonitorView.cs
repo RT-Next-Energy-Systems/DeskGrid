@@ -98,8 +98,8 @@ internal sealed class MonitorView : Grid
         // A lone gauge is the large one whatever the setting says.
         bool cpuMain = hasCpu && (!hasGpu || main == MonitorMain.Cpu);
         _main = cpuMain ? MonitorMain.Cpu : MonitorMain.Gpu;
-        string swapToGpu = Loc.T("切换为以 GPU 为主", "Show the GPU large"), swapToCpu = Loc.T("切换为以 CPU 为主", "Show the CPU large");
-        string cores = Loc.T("CPU 各核心占用", "CPU usage by core");
+        string swapToGpu = Loc.T("切換為以 GPU 為主", "Show the GPU large"), swapToCpu = Loc.T("切換為以 CPU 為主", "Show the CPU large");
+        string cores = Loc.T("CPU 各核心佔用", "CPU usage by core");
         var readings = _readings;
         // The bands, each with the kind that decides its place and its height: the gauges' band takes what the others leave.
         var bands = new List<(ExpandedItem Kind, FrameworkElement Element)>();
@@ -155,7 +155,7 @@ internal sealed class MonitorView : Grid
             else
             {
                 // The engines spread over the room the graph has, so a wide page leaves no gap between them and the processor's columns.
-                _gpuGraph = new ColumnGraph(EngineColumn, layout.Caption, !layout.CompactMetrics, gap: 6, name: Loc.T("GPU 各引擎占用", "GPU usage by engine"));
+                _gpuGraph = new ColumnGraph(EngineColumn, layout.Caption, !layout.CompactMetrics, gap: 6, name: Loc.T("GPU 各引擎佔用", "GPU usage by engine"));
                 graphs.Children.Add(_gpuGraph);
                 if (pair)
                 {
@@ -291,7 +291,7 @@ internal sealed class MonitorView : Grid
     // few kinds of engine an adapter has always fill it.
     public const double EngineColumn = 1000;
 
-    // The small gauge's widest line with a temperature, "(G) 100 % 独显 105 °C" (the kind only for the graphics adapter, when its
+    // The small gauge's widest line with a temperature, "(G) 100 % 獨顯 105 °C" (the kind only for the graphics adapter, when its
     // temperature is another adapter's), as FigureGauge lays it out (its dial, the gaps, the figure in the display face, the unit
     // and the detail), so no reading is ever cut.
     private static double SmallLine(MonitorLayout layout, bool gpu)
@@ -332,19 +332,19 @@ internal sealed class MonitorView : Grid
             double? heat = _temperatures ? cpu.Temperature : null;
             string temperature = heat is { } celsius ? Temperatures.Format(celsius) + " °C" : "";
             _cpuGauge.Set(cpu.Usage, MonitorFormat.Percent(cpu.Usage), "%", temperature,
-                "CPU " + MonitorFormat.Percent(cpu.Usage) + "%" + (frequency.Length > 0 ? " · " + frequency : "") + Loc.T($" · {cpu.Cores.Count} 个逻辑处理器", $" · {cpu.Cores.Count} logical processors")
+                "CPU " + MonitorFormat.Percent(cpu.Usage) + "%" + (frequency.Length > 0 ? " · " + frequency : "") + Loc.T($" · {cpu.Cores.Count} 個邏輯處理器", $" · {cpu.Cores.Count} logical processors")
                 + (temperature.Length > 0 ? "\n" + TemperatureLine(cpu, temperature) : ""),
                 motion, heat is { } c ? Hot(Temperatures.OfCpu(c)) : null);
             int groups = Math.Max(1, cpu.GroupCount);
             _cpuGraph?.Set(cpu.Cores.Select(core => new GraphColumn(core.Usage, cpuMain ? core.FrequencyFraction : null, _colors.Core(core.Group, groups), core.Group, core.Describe(), Hot: _colors.Level(ReadingLevels.OfShare(core.Usage), _colors.Core(core.Group, groups)))).ToList(), motion);
         }
-        else { _cpuGauge.Set(null, "—", "", "", Loc.T("暂无读数：", "No reading: ") + snapshot.Cpu.Reason, motion); _cpuGraph?.Set([], motion); }
+        else { _cpuGauge.Set(null, "—", "", "", Loc.T("暫無讀數：", "No reading: ") + snapshot.Cpu.Reason, motion); _cpuGraph?.Set([], motion); }
 
         if (_gpuGauge is null) { }
         else if (snapshot.Gpu.TryGet(out var gpu))
         {
             string memory = gpu.DedicatedBytes.TryGet(out var used)
-                ? Loc.T("显存 ", "VRAM ") + MonitorFormat.Gigabytes(used) + (gpu.DedicatedTotal is { } total ? " / " + MonitorFormat.GigabytesCompact(total) : "") + " GB" : "";
+                ? Loc.T("視訊記憶體 ", "VRAM ") + MonitorFormat.Gigabytes(used) + (gpu.DedicatedTotal is { } total ? " / " + MonitorFormat.GigabytesCompact(total) : "") + " GB" : "";
             // With more than one adapter each is named with its kind, and the large gauge says which kind it shows.
             bool several = snapshot.Gpus.Count > 1;
             _nextGpu = several && !cpuMain ? GpuChoice.Next(snapshot.Gpus, gpu) : null;
@@ -354,13 +354,13 @@ internal sealed class MonitorView : Grid
             bool idle = gpu.NoReadings;
             // The usage says where it was read when its driver gave it; the engines' columns are always Windows' own.
             string usage = MonitorFormat.Percent(gpu.Usage) + "%" + (gpu.UsageSource is { } source ? Loc.T($"（{source}）", $" ({source})") : "");
-            string tip = (several ? GpuChoice.Describe(gpu.Name, gpu.Kind) : gpu.Name ?? "GPU") + " · " + (idle ? Loc.T("暂无读数", "No reading") : usage) + (memory.Length > 0 ? " · " + memory : "")
+            string tip = (several ? GpuChoice.Describe(gpu.Name, gpu.Kind) : gpu.Name ?? "GPU") + " · " + (idle ? Loc.T("暫無讀數", "No reading") : usage) + (memory.Length > 0 ? " · " + memory : "")
                 + (gpu.SharedBytes.TryGet(out var shared) ? Loc.T(" · 共享 ", " · shared ") + MonitorFormat.Gigabytes(shared) + " GB" : "")
-                + (temperature.Length > 0 ? " · " + temperature + (gpu.TemperatureFrom is { } from ? Loc.T($"（{from} 的温度）", $" ({from}'s temperature)") : "") : "");
-            string switchTo = _nextGpu is { } next ? Loc.T("点击切换到 ", "Click to show ") + GpuChoice.Describe(next.Name, next.Kind) : "";
-            if (!cpuMain) _gpuGauge.Button = switchTo.Length > 0 ? Loc.T("切换显卡", "Switch GPU") : null;
+                + (temperature.Length > 0 ? " · " + temperature + (gpu.TemperatureFrom is { } from ? Loc.T($"（{from} 的溫度）", $" ({from}'s temperature)") : "") : "");
+            string switchTo = _nextGpu is { } next ? Loc.T("點選切換到 ", "Click to show ") + GpuChoice.Describe(next.Name, next.Kind) : "";
+            if (!cpuMain) _gpuGauge.Button = switchTo.Length > 0 ? Loc.T("切換顯示卡", "Switch GPU") : null;
             // The adapter's name and its memory are in the tooltip and in the block's line, not spelled out beside the figure. After the
-            // figure: the adapter's kind where there is more than one ("独显"), and its temperature, "独显 · 48 °C"; a temperature read
+            // figure: the adapter's kind where there is more than one ("獨顯"), and its temperature, "獨顯 · 48 °C"; a temperature read
             // from another adapter (this one has no sensor) carries that adapter's kind instead.
             string kind = several && !cpuMain ? GpuChoice.KindName(gpu.Kind) : "";
             string heatText = temperature.Length > 0 && gpu.TemperatureKind is { } from2 ? from2 + " " + temperature : temperature;
@@ -368,7 +368,7 @@ internal sealed class MonitorView : Grid
             // The memory in use, in the large gauge's line after the temperature (the small one's room is kept for the temperature; its
             // block carries the memory), in its own level's color as in the collapsed row, not the temperature's.
             var memoryShare = !cpuMain && !idle ? gpu.DedicatedFraction : null;
-            string memoryText = memoryShare is { } m ? Loc.T("显存 ", "VRAM ") + MonitorFormat.Percent(m) + "%" : "";
+            string memoryText = memoryShare is { } m ? Loc.T("視訊記憶體 ", "VRAM ") + MonitorFormat.Percent(m) + "%" : "";
             _gpuGauge.Set(idle ? null : gpu.Usage, idle ? "—" : MonitorFormat.Percent(gpu.Usage), idle ? "" : "%", detail, switchTo.Length > 0 ? tip + "\n" + switchTo : tip, motion,
                 heat is { } c ? Hot(Temperatures.OfGpu(c)) : null, memoryText, memoryShare is { } level ? Hot(ReadingLevels.OfShare(level)) : null);
             _gpuBlock?.Set(idle ? null : gpu.Usage, idle ? null : gpu.DedicatedFraction, tip, motion);
@@ -377,7 +377,7 @@ internal sealed class MonitorView : Grid
         }
         else
         {
-            string reason = Loc.T("暂无读数：", "No reading: ") + snapshot.Gpu.Reason;
+            string reason = Loc.T("暫無讀數：", "No reading: ") + snapshot.Gpu.Reason;
             _nextGpu = null;
             if (!cpuMain) _gpuGauge.Button = null;
             _gpuGauge.Set(null, "—", "", "", reason, motion);
@@ -414,10 +414,10 @@ internal sealed class MonitorView : Grid
             : Loc.T(" · 各核心 ", " · cores ") + Temperatures.Format(cpu.CoreTemperatures.Min()) + "–" + Temperatures.Format(cpu.CoreTemperatures.Max()) + " °C";
         return cpu.TemperatureSource switch
         {
-            CpuTemperatureSource.Processor => Loc.T($"温度 {temperature}（处理器传感器）", $"Temperature {temperature} (processor sensors)") + cores,
-            CpuTemperatureSource.HwInfo => Loc.T($"温度 {temperature}（HWiNFO）", $"Temperature {temperature} (HWiNFO)"),
-            CpuTemperatureSource.LibreHardwareMonitor => Loc.T($"温度 {temperature}（LibreHardwareMonitor）", $"Temperature {temperature} (LibreHardwareMonitor)"),
-            _ => Loc.T($"温度 {temperature}（ACPI 热区 {cpu.TemperatureZone}，可能是主板而非 CPU 本身）", $"Temperature {temperature} (ACPI thermal zone {cpu.TemperatureZone}, possibly the board rather than the CPU itself)")
+            CpuTemperatureSource.Processor => Loc.T($"溫度 {temperature}（處理器感測器）", $"Temperature {temperature} (processor sensors)") + cores,
+            CpuTemperatureSource.HwInfo => Loc.T($"溫度 {temperature}（HWiNFO）", $"Temperature {temperature} (HWiNFO)"),
+            CpuTemperatureSource.LibreHardwareMonitor => Loc.T($"溫度 {temperature}（LibreHardwareMonitor）", $"Temperature {temperature} (LibreHardwareMonitor)"),
+            _ => Loc.T($"溫度 {temperature}（ACPI 熱區 {cpu.TemperatureZone}，可能是主機板而非 CPU 本身）", $"Temperature {temperature} (ACPI thermal zone {cpu.TemperatureZone}, possibly the board rather than the CPU itself)")
         };
     }
 

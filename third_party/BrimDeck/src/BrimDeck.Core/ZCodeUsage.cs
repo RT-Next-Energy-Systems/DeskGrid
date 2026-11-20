@@ -93,7 +93,7 @@ public static class ZCodeUsage
             if (fields.Length != 3 || fields[0] is not ("os" or "env")) throw Unrecognized();
             // The fingerprint tells a key that belongs to these credentials from another one, before anything is decrypted.
             if (keyV2?.Invoke(fields[0]) is not { Length: 32 } stored || Convert.ToHexStringLower(SHA256.HashData(stored))[..24] != fields[1])
-                throw new InvalidDataException(Loc.T("未能取得 ZCode 凭据的密钥。", "The key of the ZCode credentials is not available."));
+                throw new InvalidDataException(Loc.T("未能取得 ZCode 憑據的金鑰。", "The key of the ZCode credentials is not available."));
             return Open(fields[2], stored);
         }
         if (value.StartsWith(Encrypted, StringComparison.Ordinal)) return Open(value[Encrypted.Length..], key);
@@ -101,7 +101,7 @@ public static class ZCodeUsage
         return value;
     }
 
-    private static InvalidDataException Unrecognized() => new(Loc.T("ZCode 凭据格式无法识别。", "The ZCode credential format is not recognized."));
+    private static InvalidDataException Unrecognized() => new(Loc.T("ZCode 憑據格式無法識別。", "The ZCode credential format is not recognized."));
 
     private static string Open(string text, byte[] key)
     {
@@ -111,7 +111,7 @@ public static class ZCodeUsage
         if (iv.Length != 12 || tag.Length != 16) throw Unrecognized();
         using var aes = new AesGcm(key, tag.Length);
         try { aes.Decrypt(iv, data, tag, plain); }
-        catch (CryptographicException) { throw new InvalidDataException(Loc.T("ZCode 凭据无法解密。", "The ZCode credentials cannot be decrypted.")); }
+        catch (CryptographicException) { throw new InvalidDataException(Loc.T("ZCode 憑據無法解密。", "The ZCode credentials cannot be decrypted.")); }
         return Encoding.UTF8.GetString(plain);
     }
 
@@ -169,13 +169,13 @@ public static class ZCodeUsage
     {
         var database = Database(home);
         snapshot.UsageAvailable = File.Exists(database);
-        if (!snapshot.UsageAvailable) { snapshot.UsageNote = Loc.T("未找到本机 ZCode 记录。", "No local ZCode records were found."); return; }
+        if (!snapshot.UsageAvailable) { snapshot.UsageNote = Loc.T("未找到本機 ZCode 記錄。", "No local ZCode records were found."); return; }
         var rows = desktop.QueryDatabase(database,
             "SELECT id, model_id, COALESCE(completed_at, started_at), input_tokens, output_tokens, cache_read_input_tokens, cache_creation_input_tokens " +
             "FROM model_usage WHERE status <> 'running' AND started_at >= " + start.ToUnixTimeMilliseconds().ToString(CultureInfo.InvariantCulture));
-        if (rows is null) { snapshot.UsageComplete = false; snapshot.UsageNote = Loc.T("ZCode 记录暂时无法读取。", "The ZCode records cannot be read right now."); return; }
+        if (rows is null) { snapshot.UsageComplete = false; snapshot.UsageNote = Loc.T("ZCode 記錄暫時無法讀取。", "The ZCode records cannot be read right now."); return; }
         snapshot.Entries = Parse(rows).Where(e => e.Time >= start && e.Time <= now && e.Total > 0).OrderBy(e => e.Time).ToList();
-        snapshot.UsageNote = Loc.T($"本机 ZCode {start.LocalDateTime:yyyy-MM-dd} 起 · {snapshot.Entries.Count} 次模型请求", $"Local ZCode since {start.LocalDateTime:yyyy-MM-dd} · " + Loc.Count(snapshot.Entries.Count, "model request", "model requests"));
+        snapshot.UsageNote = Loc.T($"本機 ZCode {start.LocalDateTime:yyyy-MM-dd} 起 · {snapshot.Entries.Count} 次模型請求", $"Local ZCode since {start.LocalDateTime:yyyy-MM-dd} · " + Loc.Count(snapshot.Entries.Count, "model request", "model requests"));
     }
 
     public static IEnumerable<TokenEntry> Parse(IEnumerable<string?[]> rows)

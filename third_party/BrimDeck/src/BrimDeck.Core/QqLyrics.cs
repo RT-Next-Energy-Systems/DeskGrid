@@ -118,7 +118,7 @@ public sealed partial class LyricsService
 
     private static Lyrics ParseQq(string text, MediaTrack track)
     {
-        var lyrics = Lyrics.Parse(WebUtility.HtmlDecode(text), null, track.Duration.TotalSeconds, "QQ 音乐");
+        var lyrics = Lyrics.Parse(WebUtility.HtmlDecode(text), null, track.Duration.TotalSeconds, "QQ 音樂");
         // Empty timestamp placeholders are not a usable lyric result and must not be cached.
         return lyrics.Instrumental || lyrics.Lines.Any(l => !string.IsNullOrWhiteSpace(l.Text)) ? lyrics : Lyrics.Empty;
     }

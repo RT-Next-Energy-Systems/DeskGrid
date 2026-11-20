@@ -11,7 +11,7 @@ public static class GpuDriverReadings
 
     public static string? SourceName(uint vendor) => vendor switch
     {
-        Nvidia => Loc.T("NVIDIA 驱动", "NVIDIA driver"), Amd => Loc.T("AMD 驱动", "AMD driver"), Intel => Loc.T("Intel 驱动", "Intel driver"), _ => null
+        Nvidia => Loc.T("NVIDIA 驅動", "NVIDIA driver"), Amd => Loc.T("AMD 驅動", "AMD driver"), Intel => Loc.T("Intel 驅動", "Intel driver"), _ => null
     };
 
     // The adapter with the driver's usage (percent, unless the usage is to be Windows'), board power (watts) and temperature (°C)

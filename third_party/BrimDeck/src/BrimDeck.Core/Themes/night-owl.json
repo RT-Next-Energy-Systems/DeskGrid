@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "id": "night-owl",
   "name": "Night Owl",
-  "description": "Night Owl：为深夜编码设计的深海蓝底色，柔和不刺眼。",
+  "description": "Night Owl：為深夜編碼設計的深海藍底色，柔和不刺眼。",
   "descriptionEn": "Night Owl: a deep-sea blue made for coding late at night, easy on the eyes.",
   "author": "Sarah Drasner",
   "license": "MIT",
@@ -59,7 +59,7 @@
     "gradients": [
       { "name": "日落", "nameEn": "Sunset", "stops": ["#ECC48D", "#F78C6C", "#FF5874"] },
       { "name": "海洋", "nameEn": "Ocean", "stops": ["#7FDBCA", "#82AAFF", "#C792EA"] },
-      { "name": "极光", "nameEn": "Aurora", "stops": ["#ADDB67", "#7FDBCA", "#82AAFF"] },
+      { "name": "極光", "nameEn": "Aurora", "stops": ["#ADDB67", "#7FDBCA", "#82AAFF"] },
       { "name": "火焰", "nameEn": "Ember", "stops": ["#FFCB8B", "#F78C6C", "#EF5350"] },
       { "name": "霓虹", "nameEn": "Neon", "stops": ["#C792EA", "#82AAFF", "#7FDBCA"] }
     ]

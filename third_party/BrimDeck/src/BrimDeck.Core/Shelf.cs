@@ -441,12 +441,12 @@ public static class Shelf
         return (value < 10 ? value.ToString("0.#", CultureInfo.InvariantCulture) : value.ToString("0", CultureInfo.InvariantCulture)) + " " + units[unit];
     }
 
-    // A time on a row: "刚刚", minutes and hours today, "昨天", then the date.
+    // A time on a row: "剛剛", minutes and hours today, "昨天", then the date.
     public static string When(DateTimeOffset time, DateTimeOffset now)
     {
         var span = now - time;
-        if (span < TimeSpan.FromMinutes(1)) return Loc.T("刚刚", "Now");
-        if (span < TimeSpan.FromHours(1)) return Loc.T($"{(int)span.TotalMinutes} 分钟前", $"{(int)span.TotalMinutes} min");
+        if (span < TimeSpan.FromMinutes(1)) return Loc.T("剛剛", "Now");
+        if (span < TimeSpan.FromHours(1)) return Loc.T($"{(int)span.TotalMinutes} 分鐘前", $"{(int)span.TotalMinutes} min");
         var local = time.ToLocalTime(); var today = now.ToLocalTime().Date;
         if (local.Date == today) return local.ToString("HH:mm", CultureInfo.InvariantCulture);
         if (local.Date == today.AddDays(-1)) return Loc.T("昨天", "Yesterday");

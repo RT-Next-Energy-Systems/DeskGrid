@@ -94,7 +94,7 @@ internal sealed class SystemSampler : IDisposable
     private readonly Queue<double> _cpuHistory = new(HistoryLength);
     // Each graphics adapter's usage, by LUID, so the page shows the history of whichever adapter it shows.
     private readonly Dictionary<ulong, Queue<double>> _gpuHistories = [];
-    // The saved choice of graphics adapter (DeckSettings.MonitorGpu and MonitorGpuName), and the adapter 自动 showed last, so that
+    // The saved choice of graphics adapter (DeckSettings.MonitorGpu and MonitorGpuName), and the adapter 自動 showed last, so that
     // it stays (GpuChoice.Auto). The LUID is written on the sampling thread and read on the UI thread by ShowGpuChoice.
     private readonly Func<(string? Key, string? Name)> _gpuChoice;
     private ulong _autoGpu;
@@ -541,7 +541,7 @@ internal sealed class SystemSampler : IDisposable
         return adapters;
     }
     // The snapshot showing the chosen graphics adapter, or why no adapter can be shown.
-    // automatic: 自动 chose it, as asked or because the chosen adapter is not there.
+    // automatic: 自動 chose it, as asked or because the chosen adapter is not there.
     private MonitorSnapshot WithGpu(MonitorSnapshot snapshot, ulong previousAuto, out bool automatic)
     {
         var (key, name) = _gpuChoice();

@@ -62,9 +62,9 @@ public sealed partial class SettingsWindow
         _palette.Apply(dialog.Resources); Native.SettingsChrome.Apply(dialog); dialog.ResizeMode = ResizeMode.NoResize;
         dialog.SourceInitialized += (_, _) => Native.SettingsChrome.SetTheme(dialog, _palette.Dark);
         var panel = new StackPanel { Margin = new Thickness(26, 22, 26, 24) };
-        var title = TextLine(Loc.T("软件更新", "Software update"), 21, TextPrimary, FontWeights.SemiBold); title.Margin = new Thickness(0, 0, 0, 22); panel.Children.Add(title);
+        var title = TextLine(Loc.T("軟體更新", "Software update"), 21, TextPrimary, FontWeights.SemiBold); title.Margin = new Thickness(0, 0, 0, 22); panel.Children.Add(title);
         var view = CreateUpdateView(false); panel.Children.Add(view.Root);
-        var close = ActionButton(Loc.T("稍后", "Later"), dialog.Close); close.HorizontalAlignment = HorizontalAlignment.Right;
+        var close = ActionButton(Loc.T("稍後", "Later"), dialog.Close); close.HorizontalAlignment = HorizontalAlignment.Right;
         close.Margin = new Thickness(0, 18, 0, 0); close.IsCancel = true; panel.Children.Add(close);
         void Refresh() { if (!dialog.Dispatcher.HasShutdownStarted) dialog.Dispatcher.InvokeAsync(view.Refresh); }
         void Theme()
@@ -92,18 +92,18 @@ public sealed partial class SettingsWindow
         var notes = new StackPanel { Margin = new Thickness(0, 0, 10, 0) }; string? notesText = null;
         var noteScroll = new ScrollViewer { Content = notes, MaxHeight = 170, Margin = inline ? new Thickness(0, 2, 0, 16) : new Thickness(0, 16, 0, 0), Style = (Style)FindResource("SettingsScrollViewer") };
         var progress = new ProgressBar { Minimum = 0, Maximum = 100, Height = 5, Margin = inline ? new Thickness(0, 2, 0, 16) : new Thickness(0, 18, 0, 0), Style = (Style)FindResource("SettingsUpdateProgress") };
-        AutomationProperties.SetName(progress, Loc.T("更新下载进度", "Update download progress"));
+        AutomationProperties.SetName(progress, Loc.T("更新下載進度", "Update download progress"));
         var error = TextLine("", 12, _palette.Dark ? "#F0A6AA" : "#B12E3A"); error.Margin = inline ? new Thickness(0, 0, 0, 14) : new Thickness(0, 12, 0, 0); error.TextWrapping = TextWrapping.Wrap;
         AutomationProperties.SetLiveSetting(error, AutomationLiveSetting.Assertive);
-        var primary = ActionButton(Loc.T("下载更新", "Download update"), () =>
+        var primary = ActionButton(Loc.T("下載更新", "Download update"), () =>
         {
             if (updates.Stage == AppUpdateStage.Ready) _app.InstallUpdate();
             else if (updates.CanInstall) _ = updates.DownloadAsync(_app.Lifetime.Token);
             else UI.OpenUrl(Updates.GitHubUpdates.RepositoryUrl + "/releases/latest");
         }, true);
-        var check = ActionButton(Loc.T("检查更新", "Check for updates"), () => { _ = updates.CheckAsync(true, _app.Lifetime.Token); });
-        var skip = ActionButton(Loc.T("跳过此版本", "Skip this version"), updates.SkipVersion);
-        var cancel = ActionButton(Loc.T("取消下载", "Cancel download"), updates.CancelDownload);
+        var check = ActionButton(Loc.T("檢查更新", "Check for updates"), () => { _ = updates.CheckAsync(true, _app.Lifetime.Token); });
+        var skip = ActionButton(Loc.T("跳過此版本", "Skip this version"), updates.SkipVersion);
+        var cancel = ActionButton(Loc.T("取消下載", "Cancel download"), updates.CancelDownload);
         check.Style = cancel.Style = skip.Style = (Style)FindResource("SettingsOutlineButton");
         foreach (var button in new[] { primary, check, cancel, skip }) { button.Padding = new Thickness(14, 6, 14, 6); button.MinWidth = 96; }
         var actions = new StackPanel { Orientation = Orientation.Horizontal };
@@ -119,12 +119,12 @@ public sealed partial class SettingsWindow
             actions.VerticalAlignment = VerticalAlignment.Center; Grid.SetColumn(actions, 1); header.Children.Add(actions);
             var panel = new StackPanel(); panel.Children.Add(header); panel.Children.Add(progress); panel.Children.Add(error); panel.Children.Add(noteScroll);
             panel.Children.Add(new Border { Height = 1, Background = UI.Brush(_palette.RowDivider) });
-            panel.Children.Add(Toggle(Loc.T("自动检查更新", "Check for updates automatically"), updates.AutoCheck, value => updates.AutoCheck = value));
-            panel.Children.Add(Toggle(Loc.T("接收测试版更新", "Receive beta updates"), updates.Beta, value =>
+            panel.Children.Add(Toggle(Loc.T("自動檢查更新", "Check for updates automatically"), updates.AutoCheck, value => updates.AutoCheck = value));
+            panel.Children.Add(Toggle(Loc.T("接收測試版更新", "Receive beta updates"), updates.Beta, value =>
             {
                 updates.Beta = value;
                 if (value) _ = updates.CheckAsync(true, _app.Lifetime.Token);
-            }, help: Loc.T("接收正式版更新的同时，也接收测试版更新。测试版可能不够稳定。",
+            }, help: Loc.T("接收正式版更新的同時，也接收測試版更新。測試版可能不夠穩定。",
                 "Receives beta updates as well as releases. Betas may be less stable.")));
             root = panel;
         }
@@ -144,23 +144,23 @@ public sealed partial class SettingsWindow
             var stage = updates.Stage; var release = updates.Release;
             title.Text = stage switch
             {
-                AppUpdateStage.Checking => Loc.T("正在检查更新…", "Checking for updates…"), AppUpdateStage.Downloading => Loc.T($"正在下载 {release?.Version}", $"Downloading {release?.Version}"),
-                AppUpdateStage.Ready => Loc.T("更新已准备就绪", "The update is ready"), AppUpdateStage.Installing => Loc.T("正在安装更新…", "Installing the update…"),
-                _ when release is not null => Loc.T($"发现新版本 {release.Version}", $"Version {release.Version} is available"),
-                _ when updates.LastChecked is not null && updates.Error is null && updates.NoticeVersion is null => Loc.T("已是最新版本", "BrimDeck is up to date"), _ => Loc.T("保持 BrimDeck 为最新版本", "Keep BrimDeck up to date")
+                AppUpdateStage.Checking => Loc.T("正在檢查更新…", "Checking for updates…"), AppUpdateStage.Downloading => Loc.T($"正在下載 {release?.Version}", $"Downloading {release?.Version}"),
+                AppUpdateStage.Ready => Loc.T("更新已準備就緒", "The update is ready"), AppUpdateStage.Installing => Loc.T("正在安裝更新…", "Installing the update…"),
+                _ when release is not null => Loc.T($"發現新版本 {release.Version}", $"Version {release.Version} is available"),
+                _ when updates.LastChecked is not null && updates.Error is null && updates.NoticeVersion is null => Loc.T("已是最新版本", "BrimDeck is up to date"), _ => Loc.T("保持 BrimDeck 為最新版本", "Keep BrimDeck up to date")
             };
             detail.Text = stage switch
             {
-                AppUpdateStage.Downloading => Loc.T($"{updates.Progress}% · 下载完成后可安装并重启。", $"{updates.Progress}% · When the download finishes, BrimDeck can install it and restart."),
-                AppUpdateStage.Ready => Loc.T($"{updates.CurrentVersion} → {release?.Version} · 重启后生效，现有设置将保留。", $"{updates.CurrentVersion} → {release?.Version} · Takes effect after a restart. Your settings are kept."),
-                AppUpdateStage.Installing => Loc.T("正在退出 BrimDeck，完成后将重新打开。", "BrimDeck is closing and will open again when the update is done."),
-                _ when release is not null && updates.IsSkipped(release.Version) => Loc.T("已跳过此版本，不再提示；仍可手动下载。", "This version is skipped and will not be announced again. You can still download it."),
-                _ when release is not null && !updates.CanInstall => Loc.T("当前程序不是通过安装包或免安装压缩包获得的，无法在应用内更新。请前往下载页面下载新版本。",
+                AppUpdateStage.Downloading => Loc.T($"{updates.Progress}% · 下載完成後可安裝並重啟。", $"{updates.Progress}% · When the download finishes, BrimDeck can install it and restart."),
+                AppUpdateStage.Ready => Loc.T($"{updates.CurrentVersion} → {release?.Version} · 重啟後生效，現有設定將保留。", $"{updates.CurrentVersion} → {release?.Version} · Takes effect after a restart. Your settings are kept."),
+                AppUpdateStage.Installing => Loc.T("正在退出 BrimDeck，完成後將重新開啟。", "BrimDeck is closing and will open again when the update is done."),
+                _ when release is not null && updates.IsSkipped(release.Version) => Loc.T("已跳過此版本，不再提示；仍可手動下載。", "This version is skipped and will not be announced again. You can still download it."),
+                _ when release is not null && !updates.CanInstall => Loc.T("當前程式不是透過安裝包或免安裝壓縮包獲得的，無法在應用內更新。請前往下載頁面下載新版本。",
                     "This copy did not come from the installer or the portable package and cannot update itself. Download the new version from the download page."),
-                _ when release is not null => Loc.T($"{updates.CurrentVersion} → {release.Version} · 约 {release.Size / 1048576d:0.#} MB", $"{updates.CurrentVersion} → {release.Version} · About {release.Size / 1048576d:0.#} MB"),
-                _ when updates.LastChecked is { } time => Loc.T("上次检查 ", "Last checked ") + time.ToLocalTime().ToString("MM-dd HH:mm"),
-                _ => updates.AutoCheck ? Loc.T("BrimDeck 会在启动后和每 6 小时于后台检查一次新版本，打开设置时也会检查；也可以随时手动检查。", "BrimDeck checks for a new version in the background after startup and every 6 hours, and when settings open. You can also check at any time.")
-                    : Loc.T("自动检查更新已关闭，可以随时手动检查。", "Automatic update checks are off. You can check at any time.")
+                _ when release is not null => Loc.T($"{updates.CurrentVersion} → {release.Version} · 約 {release.Size / 1048576d:0.#} MB", $"{updates.CurrentVersion} → {release.Version} · About {release.Size / 1048576d:0.#} MB"),
+                _ when updates.LastChecked is { } time => Loc.T("上次檢查 ", "Last checked ") + time.ToLocalTime().ToString("MM-dd HH:mm"),
+                _ => updates.AutoCheck ? Loc.T("BrimDeck 會在啟動後和每 6 小時於後臺檢查一次新版本，開啟設定時也會檢查；也可以隨時手動檢查。", "BrimDeck checks for a new version in the background after startup and every 6 hours, and when settings open. You can also check at any time.")
+                    : Loc.T("自動檢查更新已關閉，可以隨時手動檢查。", "Automatic update checks are off. You can check at any time.")
             };
             // Release notes laid out as in the What's new window (FillNotes), only as text: remote release content cannot run
             // HTML or scripts. Rebuilt only when the notes change, not on every download progress report.
@@ -169,7 +169,7 @@ public sealed partial class SettingsWindow
             noteScroll.Visibility = text.Length > 0 && stage is not AppUpdateStage.Checking ? Visibility.Visible : Visibility.Collapsed;
             progress.Value = updates.Progress; progress.Visibility = stage == AppUpdateStage.Downloading ? Visibility.Visible : Visibility.Collapsed;
             error.Text = updates.Error ?? ""; error.Visibility = updates.Error is null ? Visibility.Collapsed : Visibility.Visible;
-            primary.Content = stage == AppUpdateStage.Ready ? Loc.T("安装并重启", "Install and restart") : updates.CanInstall ? Loc.T("下载更新", "Download update") : Loc.T("前往下载页面", "Open download page");
+            primary.Content = stage == AppUpdateStage.Ready ? Loc.T("安裝並重啟", "Install and restart") : updates.CanInstall ? Loc.T("下載更新", "Download update") : Loc.T("前往下載頁面", "Open download page");
             primary.Visibility = release is not null && stage != AppUpdateStage.Downloading ? Visibility.Visible : Visibility.Collapsed; primary.IsEnabled = !updates.IsBusy;
             check.IsEnabled = !updates.IsBusy; check.Visibility = stage is AppUpdateStage.Downloading or AppUpdateStage.Ready or AppUpdateStage.Installing ? Visibility.Collapsed : Visibility.Visible;
             // On the About page checking is the main action until a found release hands that role to the download button.

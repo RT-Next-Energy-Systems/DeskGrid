@@ -6,7 +6,7 @@ using BrimDeck.Core;
 
 namespace BrimDeck;
 
-// The diagrams on the cards that choose how each column of the clipboard and file transfer page shows its entries ("页面布局":
+// The diagrams on the cards that choose how each column of the clipboard and file transfer page shows its entries ("頁面佈局":
 // ClipView, FileView). As the arrangement's diagrams (ShelfArrangementPreview) they are not pictures of the panel: bars stand for
 // text and squares for icons, in the settings' own colors, and they stand still. The clipboard's three fill a third of the row
 // each and the file transfer's five a fifth, so the two kinds are drawn on fields of different widths and one height.

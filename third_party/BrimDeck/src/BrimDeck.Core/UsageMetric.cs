@@ -46,9 +46,9 @@ public sealed record UsageMetric(MetricKind Kind, string Label)
     public string ValueSuffix => Kind switch { MetricKind.Text => Value.Length > 0 ? Suffix : "", MetricKind.Balance => Loc.T("可用", "left"), _ => Loc.T("已用", "used") };
     public string CountText => Kind == MetricKind.Count ? $"{Used:N0} / {Total:N0}" : "";
     public string Description => string.Join("\n", new[] { Kind == MetricKind.Text ? Label : Loc.Label(Label), (ValueText + " " + ValueSuffix).Trim(), Note, ResetText,
-        Total is { } total ? (TotalIsTarget ? Kind == MetricKind.Spend ? Loc.T("目标金额：", "Target: ") : Loc.T("目标余额：", "Target balance: ") : Loc.T("总额：", "Total: ")) + (Kind == MetricKind.Count ? total.ToString("N0") + " " + Loc.Label(Unit) : Money(total, Currency)) : "",
-        CountText, Unlimited ? Loc.T("无上限", "No limit") : "", ResetAt is { } reset ? Loc.T("重置时间：", "Resets: ") + $"{reset.LocalDateTime:yyyy-MM-dd HH:mm:ss}" : "",
-        ExpiresAt is { } expiry ? Loc.T("到期时间：", "Expires: ") + $"{expiry.LocalDateTime:yyyy-MM-dd HH:mm:ss}" : "" }.Where(x => x.Length > 0));
+        Total is { } total ? (TotalIsTarget ? Kind == MetricKind.Spend ? Loc.T("目標金額：", "Target: ") : Loc.T("目標餘額：", "Target balance: ") : Loc.T("總額：", "Total: ")) + (Kind == MetricKind.Count ? total.ToString("N0") + " " + Loc.Label(Unit) : Money(total, Currency)) : "",
+        CountText, Unlimited ? Loc.T("無上限", "No limit") : "", ResetAt is { } reset ? Loc.T("重置時間：", "Resets: ") + $"{reset.LocalDateTime:yyyy-MM-dd HH:mm:ss}" : "",
+        ExpiresAt is { } expiry ? Loc.T("到期時間：", "Expires: ") + $"{expiry.LocalDateTime:yyyy-MM-dd HH:mm:ss}" : "" }.Where(x => x.Length > 0));
     public static string Money(decimal amount, string currency) => (amount < 0 ? "−" : "") + (currency switch { "USD" => "$", "CNY" => "¥", "" => "", _ => currency + " " }) + Math.Abs(amount).ToString("N2", CultureInfo.InvariantCulture);
     public static UsageMetric FromQuota(Quota quota) => new(MetricKind.Percent, quota.Label)
     { Id = quota.Label, Percent = quota.UsedPercent, ResetAt = quota.ResetAt, Window = quota.Minutes };
@@ -68,17 +68,17 @@ public static class MetricParser
     {
         if (root.ValueKind == JsonValueKind.Array) return ParseText(root);
         // Objects with metrics are the typed format the built-in services still use.
-        if (root.Get("metrics").ValueKind != JsonValueKind.Array) throw new InvalidDataException(Loc.T("fetchUsage 必须返回数组，每一项是一条配额。", "fetchUsage must return an array in which each item is one quota."));
+        if (root.Get("metrics").ValueKind != JsonValueKind.Array) throw new InvalidDataException(Loc.T("fetchUsage 必須返回陣列，每一項是一條配額。", "fetchUsage must return an array in which each item is one quota."));
         var metrics = new List<UsageMetric>(); var warnings = new List<string>();
         int index = 0;
         foreach (var item in root.Get("metrics").EnumerateArray())
         {
-            if (index >= 100) { warnings.Add(Loc.T("最多显示 100 项指标。", "At most 100 metrics are shown.")); break; }
+            if (index >= 100) { warnings.Add(Loc.T("最多顯示 100 項指標。", "At most 100 metrics are shown.")); break; }
             try { metrics.Add(ParseMetric(item, index)); }
             catch (InvalidDataException ex) { warnings.Add($"metrics[{index}].{ex.Message}"); }
             index++;
         }
-        if (metrics.Count == 0) throw new InvalidDataException(warnings.FirstOrDefault() ?? Loc.T("metrics 为空，未返回可显示的额度。", "metrics is empty; no quota to show was returned."));
+        if (metrics.Count == 0) throw new InvalidDataException(warnings.FirstOrDefault() ?? Loc.T("metrics 為空，未返回可顯示的額度。", "metrics is empty; no quota to show was returned."));
         var details = new Dictionary<string, string>();
         if (root.Get("details").ValueKind == JsonValueKind.Object)
             foreach (var field in root.Get("details").EnumerateObject().Take(30)) details[Short(field.Name)] = Short(field.Value.ToString());
@@ -89,14 +89,14 @@ public static class MetricParser
     // The custom format: an array whose items are shown as they are, in order, two per page.
     private static ProviderResult ParseText(JsonElement root)
     {
-        if (root.GetArrayLength() == 0) throw new InvalidDataException(Loc.T("返回的数组为空，至少需要一项。", "The returned array is empty; at least one item is needed."));
+        if (root.GetArrayLength() == 0) throw new InvalidDataException(Loc.T("返回的陣列為空，至少需要一項。", "The returned array is empty; at least one item is needed."));
         var metrics = new List<UsageMetric>(); var warnings = new List<string>();
         int index = 0;
         foreach (var item in root.EnumerateArray())
         {
-            if (index >= 100) { warnings.Add(Loc.T("最多显示 100 项。", "At most 100 items are shown.")); break; }
+            if (index >= 100) { warnings.Add(Loc.T("最多顯示 100 項。", "At most 100 items are shown.")); break; }
             try { metrics.Add(ParseTextItem(item, index)); }
-            catch (InvalidDataException ex) { warnings.Add(Loc.T($"第 {index + 1} 项：{ex.Message}", $"Item {index + 1}: {ex.Message}")); }
+            catch (InvalidDataException ex) { warnings.Add(Loc.T($"第 {index + 1} 項：{ex.Message}", $"Item {index + 1}: {ex.Message}")); }
             index++;
         }
         if (metrics.Count == 0) throw new InvalidDataException(warnings[0]);
@@ -104,15 +104,15 @@ public static class MetricParser
     }
     private static UsageMetric ParseTextItem(JsonElement item, int index)
     {
-        if (item.ValueKind != JsonValueKind.Object) throw new InvalidDataException(Loc.T("必须是对象。", "It must be an object."));
+        if (item.ValueKind != JsonValueKind.Object) throw new InvalidDataException(Loc.T("必須是物件。", "It must be an object."));
         string Text(string key, bool required = false)
         {
             var value = item.Get(key);
             if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
-                return required ? throw new InvalidDataException(key + Loc.T(" 为必填项。", " is required.")) : "";
-            if (value.ValueKind != JsonValueKind.String) throw new InvalidDataException(key + Loc.T(" 必须是字符串。", " must be a string."));
+                return required ? throw new InvalidDataException(key + Loc.T(" 為必填項。", " is required.")) : "";
+            if (value.ValueKind != JsonValueKind.String) throw new InvalidDataException(key + Loc.T(" 必須是字串。", " must be a string."));
             var text = value.GetString()!.Trim();
-            if (required && text.Length == 0) throw new InvalidDataException(key + Loc.T(" 为必填项，不能为空。", " is required and cannot be empty."));
+            if (required && text.Length == 0) throw new InvalidDataException(key + Loc.T(" 為必填項，不能為空。", " is required and cannot be empty."));
             return Short(text);
         }
         var title = Text("title", true);
@@ -121,8 +121,8 @@ public static class MetricParser
         if (number.ValueKind is not (JsonValueKind.Null or JsonValueKind.Undefined))
         {
             if (number.ValueKind != JsonValueKind.Number || !number.TryGetDouble(out var value) || !double.IsFinite(value))
-                throw new InvalidDataException(Loc.T("percent 必须是数字。", "percent must be a number."));
-            if (value is < 0 or > 100) throw new InvalidDataException(Loc.T("percent 必须在 0 到 100 之间。", "percent must be between 0 and 100."));
+                throw new InvalidDataException(Loc.T("percent 必須是數字。", "percent must be a number."));
+            if (value is < 0 or > 100) throw new InvalidDataException(Loc.T("percent 必須在 0 到 100 之間。", "percent must be between 0 and 100."));
             percent = value;
         }
         return new(MetricKind.Text, title) { Id = index.ToString(CultureInfo.InvariantCulture), Percent = percent,
@@ -132,7 +132,7 @@ public static class MetricParser
     private static UsageMetric ParseMetric(JsonElement item, int index)
     {
         var kind = item.Get("kind").Text() switch
-        { "percent" => MetricKind.Percent, "balance" => MetricKind.Balance, "spend" => MetricKind.Spend, "count" => MetricKind.Count, _ => throw new InvalidDataException(Loc.T("kind 必须是 percent、balance、spend 或 count。", "kind must be percent, balance, spend or count.")) };
+        { "percent" => MetricKind.Percent, "balance" => MetricKind.Balance, "spend" => MetricKind.Spend, "count" => MetricKind.Count, _ => throw new InvalidDataException(Loc.T("kind 必須是 percent、balance、spend 或 count。", "kind must be percent, balance, spend or count.")) };
         var label = item.Get("label").Text();
         if (string.IsNullOrWhiteSpace(label)) throw new InvalidDataException(Loc.T("label 缺失。", "label is missing."));
         decimal? Number(string key, bool required = false)
@@ -140,7 +140,7 @@ public static class MetricParser
             var value = item.Get(key);
             if (!required && value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined) return null;
             if (value.ValueKind != JsonValueKind.Number || !value.TryGetDecimal(out var number) || Math.Abs(number) > 1_000_000_000_000_000_000m)
-                throw new InvalidDataException(key + Loc.T(" 缺失或不是有效数字。", " is missing or not a valid number."));
+                throw new InvalidDataException(key + Loc.T(" 缺失或不是有效數字。", " is missing or not a valid number."));
             return number;
         }
         DateTimeOffset? Date(string key)
@@ -150,22 +150,22 @@ public static class MetricParser
             if (value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var millis))
             { try { return DateTimeOffset.FromUnixTimeMilliseconds(millis); } catch (ArgumentOutOfRangeException) { } }
             else if (value.ValueKind == JsonValueKind.String && DateTimeOffset.TryParse(value.GetString(), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var date)) return date;
-            throw new InvalidDataException(key + Loc.T(" 必须是 ISO 时间或毫秒时间戳。", " must be an ISO time or a timestamp in milliseconds."));
+            throw new InvalidDataException(key + Loc.T(" 必須是 ISO 時間或毫秒時間戳。", " must be an ISO time or a timestamp in milliseconds."));
         }
         bool Flag(string key)
         {
             var value = item.Get(key);
             if (value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined or JsonValueKind.False) return false;
             if (value.ValueKind == JsonValueKind.True) return true;
-            throw new InvalidDataException(key + Loc.T(" 必须是布尔值。", " must be a Boolean value."));
+            throw new InvalidDataException(key + Loc.T(" 必須是布林值。", " must be a Boolean value."));
         }
         var percent = Number("percent", kind == MetricKind.Percent);
         var amount = Number("amount", kind is MetricKind.Balance or MetricKind.Spend);
         var total = Number("total", kind == MetricKind.Count); var used = Number("used", kind == MetricKind.Count);
         var window = Number("window");
-        if (window is { } w && (w <= 0 || w > 5256000 || decimal.Truncate(w) != w)) throw new InvalidDataException(Loc.T("window 必须是正整数分钟。", "window must be a positive whole number of minutes."));
-        if (percent < 0 || total < 0 || used < 0 || (kind == MetricKind.Spend && amount < 0)) throw new InvalidDataException(Loc.T("额度或已用量不能为负数。", "Quotas and used amounts cannot be negative."));
-        if (kind == MetricKind.Count && total == 0) throw new InvalidDataException(Loc.T("total 必须大于 0。", "total must be greater than 0."));
+        if (window is { } w && (w <= 0 || w > 5256000 || decimal.Truncate(w) != w)) throw new InvalidDataException(Loc.T("window 必須是正整數分鐘。", "window must be a positive whole number of minutes."));
+        if (percent < 0 || total < 0 || used < 0 || (kind == MetricKind.Spend && amount < 0)) throw new InvalidDataException(Loc.T("額度或已用量不能為負數。", "Quotas and used amounts cannot be negative."));
+        if (kind == MetricKind.Count && total == 0) throw new InvalidDataException(Loc.T("total 必須大於 0。", "total must be greater than 0."));
         return new(kind, Short(label)) { Id = item.Get("id").Text() is { Length: > 0 } id ? Short(id) : index.ToString(CultureInfo.InvariantCulture),
             Window = window is { } win ? (int)win : null, Percent = (double?)percent, Amount = amount, Total = total, Used = used,
             Currency = Short(item.Get("currency").Text()), Unit = Short(item.Get("unit").Text()), Unlimited = Flag("unlimited"), AtLeast = Flag("atLeast"), ResetAt = Date("resetAt"), ExpiresAt = Date("expiresAt") };

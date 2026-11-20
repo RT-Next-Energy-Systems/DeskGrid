@@ -29,7 +29,7 @@ internal sealed class ScriptSession(HttpClient http, AppEntry entry, string secr
     public bool Answered => _statuses.Any(code => code is >= 200 and < 300);
     public string Redact(string text)
     {
-        var hidden = Loc.T("[密钥已隐藏]", "[key hidden]");
+        var hidden = Loc.T("[金鑰已隱藏]", "[key hidden]");
         if (secret.Length > 0) text = text.Replace(secret, hidden, StringComparison.Ordinal).Replace(Uri.EscapeDataString(secret), hidden, StringComparison.Ordinal);
         return text.Length > 500 ? text[..500] : text;
     }
@@ -55,9 +55,9 @@ internal sealed class ScriptSession(HttpClient http, AppEntry entry, string secr
         using var remembered = memory is null ? null : JsonDocument.Parse(memory);
         var context = JsonSerializer.Serialize(new { site = entry.Site, secrets = new { key = secret }, now = now.ToString("O"), language = Loc.Language, memory = remembered?.RootElement });
         var script = entry.QuotaSource == ProviderId.Custom ? entry.Script : ProviderScripts.For(entry.QuotaSource);
-        if (string.IsNullOrWhiteSpace(script)) throw new InvalidDataException(Loc.T("请填写 fetchUsage(ctx) 函数。", "Write a fetchUsage(ctx) function."));
-        if (script.Length > 128_000) throw new InvalidDataException(Loc.T("脚本最多为 128,000 个字符。", "A script can have at most 128,000 characters."));
-        var missingFunction = Loc.T("脚本必须定义 fetchUsage(ctx)。", "The script must define fetchUsage(ctx).");
+        if (string.IsNullOrWhiteSpace(script)) throw new InvalidDataException(Loc.T("請填寫 fetchUsage(ctx) 函式。", "Write a fetchUsage(ctx) function."));
+        if (script.Length > 128_000) throw new InvalidDataException(Loc.T("指令碼最多為 128,000 個字元。", "A script can have at most 128,000 characters."));
+        var missingFunction = Loc.T("指令碼必須定義 fetchUsage(ctx)。", "The script must define fetchUsage(ctx).");
         var source = $$$"""
             (async function(send, logger) {
               delete globalThis.__request; delete globalThis.__log;
@@ -80,13 +80,13 @@ internal sealed class ScriptSession(HttpClient http, AppEntry entry, string secr
             })(__request, __log)
             """;
         var result = await engine.EvaluateAsync(source, cancellationToken: cancellation);
-        if (!result.IsString()) throw new InvalidDataException(Loc.T("fetchUsage 必须返回数组，每一项是一条配额。", "fetchUsage must return an array in which each item is one quota."));
+        if (!result.IsString()) throw new InvalidDataException(Loc.T("fetchUsage 必須返回陣列，每一項是一條配額。", "fetchUsage must return an array in which each item is one quota."));
         var json = result.AsString();
-        if (json.Length > 1_000_000) throw new InvalidDataException(Loc.T("返回内容超过 1 MB。", "The returned content exceeds 1 MB."));
+        if (json.Length > 1_000_000) throw new InvalidDataException(Loc.T("返回內容超過 1 MB。", "The returned content exceeds 1 MB."));
         using var doc = JsonDocument.Parse(json);
         var parsed = MetricParser.Parse(doc.RootElement);
         var next = doc.RootElement.Get("memory") is { ValueKind: JsonValueKind.Object } kept ? kept.GetRawText() : null;
-        if (next?.Length > 16_000) { parsed.Warnings.Add(Loc.T("memory 超过 16 KB，未保留。", "memory exceeds 16 KB and was not kept.")); next = null; }
+        if (next?.Length > 16_000) { parsed.Warnings.Add(Loc.T("memory 超過 16 KB，未保留。", "memory exceeds 16 KB and was not kept.")); next = null; }
         return parsed with { Plan = Redact(parsed.Plan), Details = parsed.Details.ToDictionary(p => Redact(p.Key), p => Redact(p.Value)),
             Metrics = parsed.Metrics.Select(m => m with { Label = Redact(m.Label), Currency = Redact(m.Currency), Unit = Redact(m.Unit), Id = Redact(m.Id),
                 Value = Redact(m.Value), Suffix = Redact(m.Suffix), Note = Redact(m.Note), ResetText = Redact(m.ResetText) }).ToList(),
@@ -95,7 +95,7 @@ internal sealed class ScriptSession(HttpClient http, AppEntry entry, string secr
 
     private async Task<string> SendAsync(string method, string argument)
     {
-        if (Interlocked.Increment(ref _requestCount) > 16) return Error(Loc.T("一次刷新最多请求 16 次。", "A refresh can make at most 16 requests."));
+        if (Interlocked.Increment(ref _requestCount) > 16) return Error(Loc.T("一次重新整理最多請求 16 次。", "A refresh can make at most 16 requests."));
         try
         {
             await _requests.WaitAsync(cancellation);
@@ -111,16 +111,16 @@ internal sealed class ScriptSession(HttpClient http, AppEntry entry, string secr
                 {
                     var body = options.Get("body");
                     var text = body.ValueKind == JsonValueKind.String ? body.GetString()! : body.GetRawText();
-                    if (Encoding.UTF8.GetByteCount(text) > 1_000_000) return Error(Loc.T("请求正文超过 1 MB。", "The request body exceeds 1 MB."));
+                    if (Encoding.UTF8.GetByteCount(text) > 1_000_000) return Error(Loc.T("請求正文超過 1 MB。", "The request body exceeds 1 MB."));
                     request.Content = new StringContent(text, Encoding.UTF8, body.ValueKind == JsonValueKind.String ? "text/plain" : "application/json");
                 }
                 if (options.Get("headers").ValueKind == JsonValueKind.Object)
                     foreach (var header in options.Get("headers").EnumerateObject())
                     {
                         if (header.Value.ValueKind != JsonValueKind.String || header.Name.Equals("Host", StringComparison.OrdinalIgnoreCase) ||
-                            header.Name.Equals("Content-Length", StringComparison.OrdinalIgnoreCase)) return Error(Loc.T("请求头无效。", "A request header is not valid."));
+                            header.Name.Equals("Content-Length", StringComparison.OrdinalIgnoreCase)) return Error(Loc.T("請求頭無效。", "A request header is not valid."));
                         var value = header.Value.GetString()!;
-                        if (value.Contains('\r') || value.Contains('\n')) return Error(Loc.T("请求头不能包含换行。", "Request headers cannot contain line breaks."));
+                        if (value.Contains('\r') || value.Contains('\n')) return Error(Loc.T("請求頭不能包含換行。", "Request headers cannot contain line breaks."));
                         if (!request.Headers.TryAddWithoutValidation(header.Name, value) && request.Content is not null)
                         { request.Content.Headers.Remove(header.Name); request.Content.Headers.TryAddWithoutValidation(header.Name, value); }
                     }
@@ -133,18 +133,18 @@ internal sealed class ScriptSession(HttpClient http, AppEntry entry, string secr
                 }
                 if ((int)response.StatusCode is >= 300 and < 400)
                     return Error(response.Headers.Location is { IsAbsoluteUri: true } moved
-                        ? Loc.T($"地址跳转到了 {moved.GetLeftPart(UriPartial.Authority)}，请填写这个地址。", $"The address redirects to {moved.GetLeftPart(UriPartial.Authority)}. Enter that address instead.")
-                        : Loc.T("站点发生重定向，请填写最终站点地址。", "The site redirects. Enter the final site address."));
+                        ? Loc.T($"地址跳轉到了 {moved.GetLeftPart(UriPartial.Authority)}，請填寫這個地址。", $"The address redirects to {moved.GetLeftPart(UriPartial.Authority)}. Enter that address instead.")
+                        : Loc.T("站點發生重定向，請填寫最終站點地址。", "The site redirects. Enter the final site address."));
                 // A picked response is reduced here, so the script only ever holds the requested fields.
                 var pick = options.Get("pick");
                 int limit = pick.ValueKind == JsonValueKind.Object ? 8_000_000 : 1_000_000;
-                if (response.Content.Headers.ContentLength > limit) return Error(Loc.T($"响应超过 {limit / 1_000_000} MB。", $"The response exceeds {limit / 1_000_000} MB."));
+                if (response.Content.Headers.ContentLength > limit) return Error(Loc.T($"響應超過 {limit / 1_000_000} MB。", $"The response exceeds {limit / 1_000_000} MB."));
                 await using var stream = await response.Content.ReadAsStreamAsync(timeout.Token);
                 using var buffer = new MemoryStream(); var bytes = new byte[8192];
                 int length;
                 while ((length = await stream.ReadAsync(bytes, timeout.Token)) > 0)
                 {
-                    if (buffer.Length + length > limit) return Error(Loc.T($"响应超过 {limit / 1_000_000} MB。", $"The response exceeds {limit / 1_000_000} MB."));
+                    if (buffer.Length + length > limit) return Error(Loc.T($"響應超過 {limit / 1_000_000} MB。", $"The response exceeds {limit / 1_000_000} MB."));
                     buffer.Write(bytes, 0, length);
                 }
                 var headers = response.Headers.Concat(response.Content.Headers).ToDictionary(h => h.Key.ToLowerInvariant(), h => string.Join(", ", h.Value));
@@ -153,10 +153,10 @@ internal sealed class ScriptSession(HttpClient http, AppEntry entry, string secr
             }
             finally { _requests.Release(); }
         }
-        catch (OperationCanceledException) { return Error(Loc.T("读取超时或已取消。", "Reading timed out or was canceled.")); }
+        catch (OperationCanceledException) { return Error(Loc.T("讀取超時或已取消。", "Reading timed out or was canceled.")); }
         catch (Exception ex) when (ex is HttpRequestException or IOException or InvalidDataException or JsonException or ArgumentException or InvalidOperationException)
-        { return Error(ex is InvalidDataException ? ex.Message : ex is HttpRequestException ? Loc.T("无法连接到站点。", "Cannot connect to the site.")
-            : Loc.T("无法读取接口，请检查地址、网络和凭据。", "The API cannot be read. Check the address, the network and the credentials.")); }
+        { return Error(ex is InvalidDataException ? ex.Message : ex is HttpRequestException ? Loc.T("無法連線到站點。", "Cannot connect to the site.")
+            : Loc.T("無法讀取介面，請檢查地址、網路和憑據。", "The API cannot be read. Check the address, the network and the credentials.")); }
     }
     // A Kimi Code API key (sk-kimi-…) reads the same GET {base}/usages and {base}/me as the Kimi Code sign-in, and the replies
     // are read by KimiUsage as for that source. kimi.com is asked first; a key it rejects is tried on kimi.ai. The region
@@ -181,18 +181,18 @@ internal sealed class ScriptSession(HttpClient http, AppEntry entry, string secr
             // Only the second answer describes the key; the first is just the other region's.
             if (usages.Status != 401) _statuses.Clear();
         }
-        if (usages.Status == 401) throw new InvalidDataException(t("Kimi Code 拒绝了这个 API 密钥，请确认它是在 Kimi Code 控制台创建的密钥（sk-kimi-…），且未被删除。",
+        if (usages.Status == 401) throw new InvalidDataException(t("Kimi Code 拒絕了這個 API 金鑰，請確認它是在 Kimi Code 控制檯建立的金鑰（sk-kimi-…），且未被刪除。",
             "Kimi Code rejected this API key. Check that it was created in the Kimi Code console (sk-kimi-…) and has not been deleted."));
         if (usages.Status != 200) throw new HttpRequestException("HTTP " + usages.Status);
         var root = Json(usages.Body);
-        if (root.ValueKind != JsonValueKind.Object) throw new InvalidDataException(t("Kimi Code 返回的额度无法识别。", "The quota Kimi Code returned is not recognized."));
+        if (root.ValueKind != JsonValueKind.Object) throw new InvalidDataException(t("Kimi Code 返回的額度無法識別。", "The quota Kimi Code returned is not recognized."));
         // The membership only adds the plan name and region; the quota still shows without it.
         JsonElement me = default;
         try { if (await Get(baseUrl + "/me") is { Status: 200 } reply) me = Json(reply.Body); }
         catch (InvalidDataException) { }
         bool global = KimiUsage.GlobalRegion(me) ?? baseUrl == KimiUsage.GlobalBaseUrl;
         var metrics = KimiUsage.Usages(root, global ? "USD" : "CNY");
-        if (metrics.Count == 0) throw new InvalidDataException(t("这个密钥所属的账户没有 Kimi Code 会员套餐额度。", "The account of this key has no Kimi Code plan quota."));
+        if (metrics.Count == 0) throw new InvalidDataException(t("這個金鑰所屬的賬戶沒有 Kimi Code 會員套餐額度。", "The account of this key has no Kimi Code plan quota."));
         return new(metrics, KimiUsage.Plan(me), "plan", [], []) { Source = KimiUsage.Source(ProviderCatalog.Name(ProviderId.KimiApi), global) };
     }
     // A Kimi Open Platform key reads the account balance (KimiUsage.PlatformBalance). api.moonshot.cn is asked first; a key it
@@ -216,14 +216,14 @@ internal sealed class ScriptSession(HttpClient http, AppEntry entry, string secr
             // Only the second answer describes the key; the first is just the other region's.
             if (balance.Status != 401) _statuses.Clear();
         }
-        if (balance.Status == 401) throw new InvalidDataException(t("Kimi 开放平台拒绝了这个 API 密钥，请确认它是在 Kimi 开放平台（platform.kimi.com 或 platform.kimi.ai）创建的密钥，且未被删除。Kimi Code 控制台的密钥（sk-kimi-…）请选择 Kimi Code API。",
+        if (balance.Status == 401) throw new InvalidDataException(t("Kimi 開放平臺拒絕了這個 API 金鑰，請確認它是在 Kimi 開放平臺（platform.kimi.com 或 platform.kimi.ai）建立的金鑰，且未被刪除。Kimi Code 控制檯的金鑰（sk-kimi-…）請選擇 Kimi Code API。",
             "The Kimi Open Platform rejected this API key. Check that it was created on the Kimi Open Platform (platform.kimi.com or platform.kimi.ai) and has not been deleted. For a Kimi Code console key (sk-kimi-…), choose Kimi Code API."));
         if (balance.Status != 200) throw new HttpRequestException("HTTP " + balance.Status);
         List<UsageMetric> metrics; bool available;
         try { using var doc = JsonDocument.Parse(balance.Body); metrics = KimiUsage.PlatformBalance(doc.RootElement, global ? "USD" : "CNY", out available); }
         catch (Exception ex) when (ex is JsonException or InvalidDataException)
-        { throw new InvalidDataException(t("Kimi 开放平台返回的余额无法识别。", "The balance the Kimi Open Platform returned is not recognized.")); }
-        List<string> warnings = available ? [] : [t("余额不足，Kimi 开放平台暂时无法调用。", "The balance is insufficient, so the Kimi Open Platform cannot be called for now.")];
+        { throw new InvalidDataException(t("Kimi 開放平臺返回的餘額無法識別。", "The balance the Kimi Open Platform returned is not recognized.")); }
+        List<string> warnings = available ? [] : [t("餘額不足，Kimi 開放平臺暫時無法呼叫。", "The balance is insufficient, so the Kimi Open Platform cannot be called for now.")];
         return new(metrics, "", "account", [], warnings) { Source = KimiUsage.Source(ProviderCatalog.Name(ProviderId.KimiPlatform), global) };
     }
     // An OpenCode Console API key (oc_sk_…) reads the same Go allowance as OpenCode's own sign-in, read by OpenCodeUsage. A key
@@ -238,17 +238,17 @@ internal sealed class ScriptSession(HttpClient http, AppEntry entry, string secr
         if (reply.RootElement.Get("error").Text() is { Length: > 0 } error) throw new InvalidDataException(error);
         int status = (int)(reply.RootElement.Get("status").Number() ?? 0);
         var body = reply.RootElement.Get("body").Text();
-        if (status == 401) throw new InvalidDataException(t("OpenCode 拒绝了这个 API 密钥，请确认它是在 OpenCode Console 创建的密钥（oc_sk_…），且未被撤销或过期。",
+        if (status == 401) throw new InvalidDataException(t("OpenCode 拒絕了這個 API 金鑰，請確認它是在 OpenCode Console 建立的金鑰（oc_sk_…），且未被撤銷或過期。",
             "OpenCode rejected this API key. Check that it was created in OpenCode Console (oc_sk_…) and has not been revoked or expired."));
         if (status == 403 && !body.Contains("\"cloudflare_error\"", StringComparison.Ordinal))
-            throw new InvalidDataException(t("这个密钥所属的工作区没有订阅 OpenCode Go，或密钥没有读取用量的权限。", "The workspace of this key has no OpenCode Go plan, or the key may not read usage."));
+            throw new InvalidDataException(t("這個金鑰所屬的工作區沒有訂閱 OpenCode Go，或金鑰沒有讀取用量的許可權。", "The workspace of this key has no OpenCode Go plan, or the key may not read usage."));
         if (status != 200) throw new HttpRequestException("HTTP " + status);
         JsonElement root;
         try { using var doc = JsonDocument.Parse(body); root = doc.RootElement.Clone(); }
         catch (JsonException) { root = default; }
         var quotas = OpenCodeUsage.Allowance(root, out bool limited);
-        if (quotas.Count == 0) throw new InvalidDataException(t("OpenCode 返回的 Go 用量无法识别。", "The Go usage OpenCode returned is not recognized."));
-        List<string> warnings = limited ? [t("已达到 OpenCode Go 的用量上限，重置前请求会被拒绝", "The OpenCode Go limit is reached; requests are refused until it resets.")] : [];
+        if (quotas.Count == 0) throw new InvalidDataException(t("OpenCode 返回的 Go 用量無法識別。", "The Go usage OpenCode returned is not recognized."));
+        List<string> warnings = limited ? [t("已達到 OpenCode Go 的用量上限，重置前請求會被拒絕", "The OpenCode Go limit is reached; requests are refused until it resets.")] : [];
         return new(quotas.Select(UsageMetric.FromQuota).ToList(), "", "plan", [], warnings) { Source = "OpenCode Go" };
     }
     // A Command Code API key (created in Command Code Studio) reads the same plan quota as Command Code's own sign-in, read by
@@ -266,7 +266,7 @@ internal sealed class ScriptSession(HttpClient http, AppEntry entry, string secr
         try { reading = await CommandCodeUsage.ReadAsync(Get); }
         catch (CommandCodeUsage.RejectedException)
         {
-            throw new InvalidDataException(Loc.T("Command Code 拒绝了这个 API 密钥，请确认它是在 Command Code Studio 中创建的密钥，且未被删除。",
+            throw new InvalidDataException(Loc.T("Command Code 拒絕了這個 API 金鑰，請確認它是在 Command Code Studio 中建立的金鑰，且未被刪除。",
                 "Command Code rejected this API key. Check that it was created in Command Code Studio and has not been deleted."));
         }
         return new(reading.Metrics, reading.Plan, "account", [], reading.Warnings) { Source = ProviderCatalog.Name(ProviderId.CommandCodeApi) };
@@ -288,31 +288,31 @@ internal sealed class ScriptSession(HttpClient http, AppEntry entry, string secr
             catch (JsonException) { body = default; }
             return (status, body);
         }
-        var rejected = t("小米 MiMo 开放平台拒绝了这个 API 密钥，请确认密钥正确，且未被删除。",
+        var rejected = t("小米 MiMo 開放平臺拒絕了這個 API 金鑰，請確認金鑰正確，且未被刪除。",
             "The Xiaomi MiMo Open Platform rejected this API key. Check that it is correct and has not been deleted.");
         bool planKey = MiMoUsage.IsTokenPlanKey(secret);
         if (entry.QuotaSource == ProviderId.MiMoTokenPlan)
         {
-            if (!planKey) throw new InvalidDataException(t("这不是 Token Plan 密钥（tp-…），按量计费密钥请选择 Xiaomi MiMo API。", "This is not a Token Plan key (tp-…). Choose Xiaomi MiMo API for a pay-as-you-go key."));
+            if (!planKey) throw new InvalidDataException(t("這不是 Token Plan 金鑰（tp-…），按量計費金鑰請選擇 Xiaomi MiMo API。", "This is not a Token Plan key (tp-…). Choose Xiaomi MiMo API for a pay-as-you-go key."));
             foreach (var host in MiMoUsage.TokenPlanHosts)
             {
                 var (status, body) = await Get(host + "/v1/platform/token_plan");
                 if (status is 401 or 403) continue;
                 if (status != 200) throw new HttpRequestException("HTTP " + status);
-                var (plan, quota) = MiMoUsage.TokenPlan(body) ?? throw new InvalidDataException(t("这个密钥所属的账户没有生效中的 Token Plan。", "The account of this key has no Token Plan in force."));
+                var (plan, quota) = MiMoUsage.TokenPlan(body) ?? throw new InvalidDataException(t("這個金鑰所屬的賬戶沒有生效中的 Token Plan。", "The account of this key has no Token Plan in force."));
                 return new([quota], plan, "plan", [], []) { Source = ProviderCatalog.Name(ProviderId.MiMoTokenPlan) };
             }
             throw new InvalidDataException(rejected);
         }
-        if (planKey) throw new InvalidDataException(t("这是 Token Plan 密钥，请选择 Xiaomi MiMo Token Plan。", "This is a Token Plan key. Choose Xiaomi MiMo Token Plan."));
+        if (planKey) throw new InvalidDataException(t("這是 Token Plan 金鑰，請選擇 Xiaomi MiMo Token Plan。", "This is a Token Plan key. Choose Xiaomi MiMo Token Plan."));
         var (balanceStatus, balanceBody) = await Get(MiMoUsage.PlatformApi + "/v1/platform/balance");
         if (balanceStatus is 401 or 403) throw new InvalidDataException(rejected);
         if (balanceStatus != 200) throw new HttpRequestException("HTTP " + balanceStatus);
         var metrics = MiMoUsage.Balance(balanceBody, out bool available);
-        List<string> warnings = available ? [] : [t("余额不足，小米 MiMo 开放平台暂时无法调用。", "The balance is insufficient, so the Xiaomi MiMo Open Platform cannot be called for now.")];
+        List<string> warnings = available ? [] : [t("餘額不足，小米 MiMo 開放平臺暫時無法呼叫。", "The balance is insufficient, so the Xiaomi MiMo Open Platform cannot be called for now.")];
         var (usageStatus, usageBody) = await Get(MiMoUsage.PlatformApi + "/v1/platform/usage/daily?" + MiMoUsage.UsageQuery(now));
         if (usageStatus == 200) metrics.Add(MiMoUsage.MonthSpend(usageBody, metrics[0].Currency, now));
-        else warnings.Add(t("本月扣费暂时无法读取", "This month's charges cannot be read right now"));
+        else warnings.Add(t("本月扣費暫時無法讀取", "This month's charges cannot be read right now"));
         return new(metrics, "", "account", [], warnings) { Source = ProviderCatalog.Name(ProviderId.MiMoApi) };
     }
     private static string Error(string error) => JsonSerializer.Serialize(new { error });
@@ -321,7 +321,7 @@ internal sealed class ScriptSession(HttpClient http, AppEntry entry, string secr
     {
         var path = pick.Get("path").Text(); var fields = pick.Get("fields");
         if (fields.ValueKind != JsonValueKind.Array || fields.GetArrayLength() is 0 or > 20 || fields.EnumerateArray().Any(f => f.ValueKind != JsonValueKind.String))
-            throw new InvalidDataException(Loc.T("pick.fields 必须是 1 到 20 个字段名。", "pick.fields must be 1 to 20 field names."));
+            throw new InvalidDataException(Loc.T("pick.fields 必須是 1 到 20 個欄位名。", "pick.fields must be 1 to 20 field names."));
         var names = fields.EnumerateArray().Select(f => f.GetString()!).ToArray();
         try
         {
@@ -408,20 +408,20 @@ public sealed class ConfiguredProviders : IDisposable
                 ProviderSnapshot snapshot = new(entry.QuotaSource) { Configurations = [entry.ConfigurationKey], Source = ProviderCatalog.Name(entry.QuotaSource) };
                 try
                 {
-                    if (_retryAt.TryGetValue(requestKey, out var retry) && now < retry) throw new ProviderReadException(Loc.T("请求频繁", "Too many requests"), Loc.T($"站点要求在 {retry.LocalDateTime:HH:mm:ss} 后重试。", $"The site asks to retry after {retry.LocalDateTime:HH:mm:ss}."));
-                    if (secret.Length == 0 && entry.QuotaSource != ProviderId.Custom) throw new ProviderReadException(Loc.T("未配置", "Not configured"), Loc.T("请在设置中填写此来源的 API 密钥。", "Enter this source's API key in settings."));
+                    if (_retryAt.TryGetValue(requestKey, out var retry) && now < retry) throw new ProviderReadException(Loc.T("請求頻繁", "Too many requests"), Loc.T($"站點要求在 {retry.LocalDateTime:HH:mm:ss} 後重試。", $"The site asks to retry after {retry.LocalDateTime:HH:mm:ss}."));
+                    if (secret.Length == 0 && entry.QuotaSource != ProviderId.Custom) throw new ProviderReadException(Loc.T("未配置", "Not configured"), Loc.T("請在設定中填寫此來源的 API 金鑰。", "Enter this source's API key in settings."));
                     if (ProviderCatalog.NeedsSite(entry.QuotaSource) && (entry.Site.Length > 0 || entry.QuotaSource != ProviderId.Custom))
                     {
                         // An HTTP address saved by an earlier version, or kept after HTTP was turned off, stops here, before any request.
                         if (Uri.TryCreate(entry.Site, UriKind.Absolute, out var saved) && ProviderCatalog.NeedsHttps(saved, entry.AllowHttp))
                             throw new ProviderReadException(Loc.T("需要 HTTPS", "HTTPS required"), ProviderCatalog.HttpsRequired);
-                        var uri = ProviderCatalog.ValidateUrl(entry.Site, entry.AllowHttp); if (uri.Query.Length > 0) throw new InvalidDataException(Loc.T("站点地址只需填写域名或部署子路径，不要包含查询参数。", "Enter only the domain or deployment path in the site address, without query parameters.")); }
+                        var uri = ProviderCatalog.ValidateUrl(entry.Site, entry.AllowHttp); if (uri.Query.Length > 0) throw new InvalidDataException(Loc.T("站點地址只需填寫域名或部署子路徑，不要包含查詢引數。", "Enter only the domain or deployment path in the site address, without query parameters.")); }
                     var result = await Task.Run(session.RunAsync, deadline.Token);
                     snapshot.Metrics = result.Metrics; snapshot.Plan = result.Plan; snapshot.Scope = result.Scope;
                     snapshot.Details = result.Details; snapshot.QuotaTime = now; snapshot.LiveQuota = true;
                     if (result.Source.Length > 0) snapshot.Source = result.Source;
                     // Warnings follow the state after the separator the settings test reads back (SettingsProviders).
-                    snapshot.StatusLabel = Loc.T("已连接", "Connected");
+                    snapshot.StatusLabel = Loc.T("已連線", "Connected");
                     snapshot.Status = result.Warnings.Count == 0 ? snapshot.StatusLabel : snapshot.StatusLabel + Loc.T("；", "; ") + string.Join(Loc.T("；", "; "), result.Warnings);
                     _lastGood[requestKey] = Clone(snapshot);
                     if (result.Memory is { } kept) _memory[requestKey] = kept; else _memory.TryRemove(requestKey, out _);
@@ -434,16 +434,16 @@ public sealed class ConfiguredProviders : IDisposable
                     snapshot.Configurations = [entry.ConfigurationKey]; snapshot.LiveQuota = false; snapshot.IsStale = snapshot.Metrics.Count > 0;
                     var code = session.FailureStatus;
                     snapshot.StatusLabel = ex is ProviderReadException read ? read.Label : code switch
-                    { 401 => Loc.T("密钥无效", "Invalid key"), 403 => Loc.T("访问受限", "Access denied"), 429 => Loc.T("请求频繁", "Too many requests"), >= 400 => Loc.T("读取失败", "Read failed"),
-                        _ => deadline.IsCancellationRequested ? Loc.T("读取超时", "Timed out") : entry.QuotaSource == ProviderId.Custom && ex is not InvalidDataException ? Loc.T("脚本出错", "Script error") : Loc.T("数据不可用", "Data unavailable") };
+                    { 401 => Loc.T("金鑰無效", "Invalid key"), 403 => Loc.T("訪問受限", "Access denied"), 429 => Loc.T("請求頻繁", "Too many requests"), >= 400 => Loc.T("讀取失敗", "Read failed"),
+                        _ => deadline.IsCancellationRequested ? Loc.T("讀取超時", "Timed out") : entry.QuotaSource == ProviderId.Custom && ex is not InvalidDataException ? Loc.T("指令碼出錯", "Script error") : Loc.T("資料不可用", "Data unavailable") };
                     // A reason the script wrote itself is shown as is; only bare "HTTP nnn" messages are replaced by the generic wording.
                     var message = ScriptMessage(ex);
                     bool explained = ex is ProviderReadException or InvalidDataException || ex is Jint.Runtime.JavaScriptException or Jint.Runtime.PromiseRejectedException && !System.Text.RegularExpressions.Regex.IsMatch(message, @"^HTTP \d+$");
                     snapshot.Status = explained ? session.Redact(message) : code switch
-                    { 401 => Loc.T("站点拒绝了这个密钥，请在设置中更新。", "The site rejected this key. Update it in settings."), 403 => Loc.T("站点拒绝访问，请检查密钥权限。", "The site refused access. Check the key's permissions."),
-                        429 => Loc.T("请求频繁，稍后自动重试。", "Too many requests. Retrying automatically later."), _ => deadline.IsCancellationRequested ? Loc.T("读取超时，稍后重试。", "Reading timed out. Retrying later.") : session.Redact(message) };
+                    { 401 => Loc.T("站點拒絕了這個金鑰，請在設定中更新。", "The site rejected this key. Update it in settings."), 403 => Loc.T("站點拒絕訪問，請檢查金鑰許可權。", "The site refused access. Check the key's permissions."),
+                        429 => Loc.T("請求頻繁，稍後自動重試。", "Too many requests. Retrying automatically later."), _ => deadline.IsCancellationRequested ? Loc.T("讀取超時，稍後重試。", "Reading timed out. Retrying later.") : session.Redact(message) };
                     if (snapshot.Status.Length > 200) snapshot.Status = snapshot.Status[..200];
-                    if (snapshot.IsStale) snapshot.Status += Loc.T($" 显示 {snapshot.QuotaTime?.LocalDateTime:MM-dd HH:mm} 读取的数据。", $" Showing the data read at {snapshot.QuotaTime?.LocalDateTime:MM-dd HH:mm}.");
+                    if (snapshot.IsStale) snapshot.Status += Loc.T($" 顯示 {snapshot.QuotaTime?.LocalDateTime:MM-dd HH:mm} 讀取的資料。", $" Showing the data read at {snapshot.QuotaTime?.LocalDateTime:MM-dd HH:mm}.");
                 }
                 if (session.RetryAt is { } next) _retryAt[requestKey] = next;
                 return new(snapshot, timer.Elapsed.TotalSeconds, session.Logs);

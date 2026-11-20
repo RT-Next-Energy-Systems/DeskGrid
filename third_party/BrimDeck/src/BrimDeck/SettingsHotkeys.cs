@@ -29,12 +29,12 @@ public sealed partial class SettingsWindow
 
     private void HotkeysSettings()
     {
-        SectionTitle(Loc.T("展开与显示", "Expand and show"));
+        SectionTitle(Loc.T("展開與顯示", "Expand and show"));
         Group([.. new[] { HotkeyKind.Hide, HotkeyKind.Expand, HotkeyKind.CycleStyle, HotkeyKind.LineStyle }.Select(HotkeyRow)]);
         // Counted in the order of the page switch; a page that is not shown has no place, so its shortcut does nothing.
-        SectionTitle(Loc.T("切换页面", "Switch pages"));
+        SectionTitle(Loc.T("切換頁面", "Switch pages"));
         Group([.. Enumerable.Range(0, 10).Select(place => HotkeyRow(HotkeyKind.Page1 + place))]);
-        SectionTitle(Loc.T("位置与大小", "Position and size"));
+        SectionTitle(Loc.T("位置與大小", "Position and size"));
         Group([.. new[] { HotkeyKind.Move, HotkeyKind.Resize }.Select(HotkeyRow)]);
         SectionTitle(Loc.T("其他", "Other"));
         Group([.. new[] { HotkeyKind.ClickThrough, HotkeyKind.OpenSettings, HotkeyKind.Refresh, HotkeyKind.NextProfile }.Select(HotkeyRow)]);
@@ -42,31 +42,31 @@ public sealed partial class SettingsWindow
 
     private static string HotkeyTitle(HotkeyKind kind) => kind switch
     {
-        HotkeyKind.Hide => Loc.T("隐藏/显示刘海、胶囊或指示条", "Hide/show notch, capsule or bar"),
-        HotkeyKind.Expand => Loc.T("展开/收起面板", "Expand/collapse panel"),
-        HotkeyKind.Resize => Loc.T("调整面板大小", "Resize panel"),
-        HotkeyKind.Move => Loc.T("移动刘海、胶囊或指示条", "Move notch, capsule or bar"),
-        HotkeyKind.ClickThrough => Loc.T("开启/关闭鼠标穿透", "Mouse pass-through on/off"),
-        HotkeyKind.OpenSettings => Loc.T("打开/关闭设置", "Open/close settings"),
+        HotkeyKind.Hide => Loc.T("隱藏/顯示劉海、膠囊或指示條", "Hide/show notch, capsule or bar"),
+        HotkeyKind.Expand => Loc.T("展開/收起面板", "Expand/collapse panel"),
+        HotkeyKind.Resize => Loc.T("調整面板大小", "Resize panel"),
+        HotkeyKind.Move => Loc.T("移動劉海、膠囊或指示條", "Move notch, capsule or bar"),
+        HotkeyKind.ClickThrough => Loc.T("開啟/關閉滑鼠穿透", "Mouse pass-through on/off"),
+        HotkeyKind.OpenSettings => Loc.T("開啟/關閉設定", "Open/close settings"),
         HotkeyKind.Refresh => Loc.T("立即同步用量", "Sync usage now"),
-        HotkeyKind.CycleStyle => Loc.T("切换刘海、胶囊或指示条", "Switch notch, capsule or bar"),
-        HotkeyKind.LineStyle => Loc.T("切换指示条与刘海或胶囊", "Switch between bar and notch or capsule"),
-        HotkeyKind.NextProfile => Loc.T("切换到下一个配置", "Switch to the next profile"),
-        _ => Loc.T($"展开/收起第 {PagePlace(kind) + 1} 个页面", $"Expand/collapse page {PagePlace(kind) + 1}")
+        HotkeyKind.CycleStyle => Loc.T("切換劉海、膠囊或指示條", "Switch notch, capsule or bar"),
+        HotkeyKind.LineStyle => Loc.T("切換指示條與劉海或膠囊", "Switch between bar and notch or capsule"),
+        HotkeyKind.NextProfile => Loc.T("切換到下一個配置", "Switch to the next profile"),
+        _ => Loc.T($"展開/收起第 {PagePlace(kind) + 1} 個頁面", $"Expand/collapse page {PagePlace(kind) + 1}")
     };
 
     // The hide, expand and page shortcuts need none: their names say it.
     private static string? HotkeyHelp(HotkeyKind kind) => kind switch
     {
-        HotkeyKind.Resize => Loc.T("展开时调整当前页面的宽度和高度，收起时调整刘海、胶囊或指示条的长度。",
+        HotkeyKind.Resize => Loc.T("展開時調整當前頁面的寬度和高度，收起時調整劉海、膠囊或指示條的長度。",
             "When expanded, changes the current page's width and height; when collapsed, the length of the notch, capsule or indicator bar."),
-        HotkeyKind.Move => Loc.T("刘海和指示条沿屏幕边缘移动，胶囊可以上下左右移动。", "The notch and the bar move along their screen edge, the capsule in any direction."),
-        HotkeyKind.ClickThrough => Loc.T("开启或关闭鼠标穿透模式。", "Turns mouse pass-through on or off."),
-        HotkeyKind.OpenSettings => Loc.T("打开设置窗口，再按一次关闭。", "Opens the settings window; press again to close it."),
-        HotkeyKind.Refresh => Loc.T("立即读取一次 AI 用量与模型消耗。", "Reads AI usage and model consumption once, now."),
-        HotkeyKind.CycleStyle => Loc.T("按刘海、胶囊、指示条的顺序循环切换收起样式。", "Cycles the collapsed style: notch, capsule, bar."),
-        HotkeyKind.LineStyle => Loc.T("刘海或胶囊切换为指示条，再按一次切换回原来的样式。", "Turns the notch or capsule into the bar; press again to turn it back."),
-        HotkeyKind.NextProfile => Loc.T("按“显示器与配置”页的列表顺序，切换到下一个配置。", "Switches to the next profile, in the order of the Displays and profiles page."),
+        HotkeyKind.Move => Loc.T("劉海和指示條沿螢幕邊緣移動，膠囊可以上下左右移動。", "The notch and the bar move along their screen edge, the capsule in any direction."),
+        HotkeyKind.ClickThrough => Loc.T("開啟或關閉滑鼠穿透模式。", "Turns mouse pass-through on or off."),
+        HotkeyKind.OpenSettings => Loc.T("開啟設定視窗，再按一次關閉。", "Opens the settings window; press again to close it."),
+        HotkeyKind.Refresh => Loc.T("立即讀取一次 AI 用量與模型消耗。", "Reads AI usage and model consumption once, now."),
+        HotkeyKind.CycleStyle => Loc.T("按劉海、膠囊、指示條的順序迴圈切換收起樣式。", "Cycles the collapsed style: notch, capsule, bar."),
+        HotkeyKind.LineStyle => Loc.T("劉海或膠囊切換為指示條，再按一次切換回原來的樣式。", "Turns the notch or capsule into the bar; press again to turn it back."),
+        HotkeyKind.NextProfile => Loc.T("按“顯示器與配置”頁的列表順序，切換到下一個配置。", "Switches to the next profile, in the order of the Displays and profiles page."),
         _ => null
     };
 
@@ -81,7 +81,7 @@ public sealed partial class SettingsWindow
         Func<string>? help = HotkeyHelp(kind) is { } helpText ? () => helpText : null;
         // An arrow box records only the modifiers that go with Alt; Alt and the arrow keys are written beside it.
         bool arrows = HotkeyText.IsArrows(kind);
-        string waiting = arrows ? Loc.T("请按 Ctrl、Shift 或 Win…", "Press Ctrl, Shift or Win…") : Loc.T("请按下组合键…", "Press a combination…");
+        string waiting = arrows ? Loc.T("請按 Ctrl、Shift 或 Win…", "Press Ctrl, Shift or Win…") : Loc.T("請按下組合鍵…", "Press a combination…");
         string Saved() => S.Hotkey(kind);
         // The other shortcuts, with the names a clash message gives them. The arrow shortcuts yield to the single combinations
         // (HotkeyText.Priority), so only an arrow row speaks of a clash with those.
@@ -100,7 +100,7 @@ public sealed partial class SettingsWindow
             FocusVisualStyle = (Style)FindResource("SettingsFocus")
         };
         Grid.SetColumnSpan(box, 2);
-        AutomationProperties.SetName(box, arrows ? Loc.T(title + "的其他修饰键", "Other modifiers of " + title) : title);
+        AutomationProperties.SetName(box, arrows ? Loc.T(title + "的其他修飾鍵", "Other modifiers of " + title) : title);
         var cross = new Path { Data = System.Windows.Media.Geometry.Parse("M 1,1 L 9,9 M 9,1 L 1,9"), StrokeThickness = 1.3, Width = 10, Height = 10 };
         cross.SetBinding(Shape.StrokeProperty, new Binding(nameof(Control.Foreground)) { RelativeSource = new RelativeSource(RelativeSourceMode.FindAncestor, typeof(Button), 1) });
         var clear = new Button { Style = (Style)FindResource("SettingsGlyphButton"), Content = cross, Width = 24, Height = 24, Margin = new Thickness(0, 0, 3, 0), VerticalAlignment = VerticalAlignment.Center };
@@ -133,7 +133,7 @@ public sealed partial class SettingsWindow
         {
             string saved = Saved();
             text.Text = recording ? waiting
-                : saved.Length == 0 ? (arrows ? Loc.T("点击后按 Ctrl、Shift 或 Win", "Click, then Ctrl, Shift or Win") : Loc.T("未设置", "Not set"))
+                : saved.Length == 0 ? (arrows ? Loc.T("點選後按 Ctrl、Shift 或 Win", "Click, then Ctrl, Shift or Win") : Loc.T("未設定", "Not set"))
                 : arrows && HotkeyText.ArrowExtras(saved) is { Length: > 0 } extras ? extras : HotkeyDisplay(saved);
             text.Foreground = UI.Brush(recording ? TextSecondary : saved.Length == 0 ? TextTertiary : TextPrimary);
             // A long combination is trimmed in the box; hovering shows it whole.
@@ -141,7 +141,7 @@ public sealed partial class SettingsWindow
             chrome.BorderBrush = UI.Brush(recording ? _palette.Accent : _palette.InputBorder);
             clear.IsEnabled = saved.Length > 0; clear.Opacity = clear.IsEnabled ? 1 : .35;
             if (!recording) Note(HotkeyProblem(kind, saved, Others()));
-            AutomationProperties.SetHelpText(box, (saved.Length == 0 ? Loc.T("未设置。", "Not set. ") : HotkeyDisplay(saved) + Loc.T("。", ". ")) + help?.Invoke());
+            AutomationProperties.SetHelpText(box, (saved.Length == 0 ? Loc.T("未設定。", "Not set. ") : HotkeyDisplay(saved) + Loc.T("。", ". ")) + help?.Invoke());
         }
         Action stop = null!;
         void Start()
@@ -167,7 +167,7 @@ public sealed partial class SettingsWindow
         {
             if (Others().FirstOrDefault(other => SameHotkey(gesture, other.Text)) is { Name: { } clash })
             {
-                Note(Loc.T("与" + clash + "重复，请换一个组合键。", "This is already " + clash + ". Choose another combination."));
+                Note(Loc.T("與" + clash + "重複，請換一個組合鍵。", "This is already " + clash + ". Choose another combination."));
                 text.Text = waiting; text.Foreground = UI.Brush(TextSecondary); held = HotkeyModifiers.None;
                 return false;
             }
@@ -196,7 +196,7 @@ public sealed partial class SettingsWindow
                 // Another key with the modifiers held (an arrow, out of habit) saves them at once; without them it is a mistake.
                 if (held == HotkeyModifiers.None)
                 {
-                    Note(Loc.T("请按 Ctrl、Shift 或 Win（可多选）；Alt 和方向键已固定，不用录入。", "Press Ctrl, Shift or Win (one or more); Alt and the arrow keys are fixed."));
+                    Note(Loc.T("請按 Ctrl、Shift 或 Win（可多選）；Alt 和方向鍵已固定，不用錄入。", "Press Ctrl, Shift or Win (one or more); Alt and the arrow keys are fixed."));
                     text.Text = waiting; text.Foreground = UI.Brush(TextSecondary);
                     return;
                 }
@@ -210,14 +210,14 @@ public sealed partial class SettingsWindow
             }
             if (IsCharacterKey(key) && (modifiers & (ModifierKeys.Control | ModifierKeys.Alt | ModifierKeys.Windows)) == 0)
             {
-                Note(Loc.T("字母、数字等按键需要搭配 Ctrl、Alt 或 Win。", "Letter, digit and other character keys need Ctrl, Alt or Win."));
+                Note(Loc.T("字母、數字等按鍵需要搭配 Ctrl、Alt 或 Win。", "Letter, digit and other character keys need Ctrl, Alt or Win."));
                 text.Text = waiting; text.Foreground = UI.Brush(TextSecondary);
                 return;
             }
             string gesture = FormatHotkey(modifiers, key);
             if (gesture.Length == 0)
             {
-                Note(Loc.T("请同时按住 Ctrl、Alt、Shift 或 Win；F1–F24 可以单独使用。", "Hold Ctrl, Alt, Shift or Win as well; F1–F24 can be used alone."));
+                Note(Loc.T("請同時按住 Ctrl、Alt、Shift 或 Win；F1–F24 可以單獨使用。", "Hold Ctrl, Alt, Shift or Win as well; F1–F24 can be used alone."));
                 text.Text = waiting; text.Foreground = UI.Brush(TextSecondary);
                 return;
             }
@@ -254,7 +254,7 @@ public sealed partial class SettingsWindow
         if (arrows)
         {
             var before = TextLine("Alt +", 12, TextSecondary); before.VerticalAlignment = VerticalAlignment.Center; before.Margin = new Thickness(0, 0, 8, 0);
-            var after = TextLine(Loc.T("+ 方向键", "+ arrow keys"), 12, TextSecondary); after.VerticalAlignment = VerticalAlignment.Center; after.Margin = new Thickness(8, 0, 0, 0);
+            var after = TextLine(Loc.T("+ 方向鍵", "+ arrow keys"), 12, TextSecondary); after.VerticalAlignment = VerticalAlignment.Center; after.Margin = new Thickness(8, 0, 0, 0);
             var parts = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
             parts.Children.Add(before); parts.Children.Add(chrome); parts.Children.Add(after);
             control = parts;
@@ -281,12 +281,12 @@ public sealed partial class SettingsWindow
     {
         if (saved.Length == 0) return "";
         if (others.FirstOrDefault(other => SameHotkey(saved, other.Text)) is { Name: { } clash })
-            return Loc.T("与" + clash + "重复，请换一个组合键。", "This is already " + clash + ". Choose another combination.");
+            return Loc.T("與" + clash + "重複，請換一個組合鍵。", "This is already " + clash + ". Choose another combination.");
         return AppHotkeyState(kind) switch
         {
-            HotkeyStatus.InUse => Loc.T("这个组合键已被其他程序占用，未能生效。", "Another program already uses this combination, so it is not active."),
-            HotkeyStatus.Invalid => Loc.T("无法识别这个组合键，请重新录制。", "This combination is not recognized. Record it again."),
-            HotkeyStatus.Duplicate => Loc.T("与其他快捷键重复，请换一个组合键。", "This is already another shortcut. Choose another combination."),
+            HotkeyStatus.InUse => Loc.T("這個組合鍵已被其他程式佔用，未能生效。", "Another program already uses this combination, so it is not active."),
+            HotkeyStatus.Invalid => Loc.T("無法識別這個組合鍵，請重新錄製。", "This combination is not recognized. Record it again."),
+            HotkeyStatus.Duplicate => Loc.T("與其他快捷鍵重複，請換一個組合鍵。", "This is already another shortcut. Choose another combination."),
             _ => ""
         };
     }
@@ -315,7 +315,7 @@ public sealed partial class SettingsWindow
     private static string HotkeyDisplay(string saved)
     {
         if (HotkeyText.TryParseArrows(saved, out var arrowModifiers))
-            return HotkeyText.Format(arrowModifiers, Loc.T("方向键", "Arrow keys"));
+            return HotkeyText.Format(arrowModifiers, Loc.T("方向鍵", "Arrow keys"));
         if (!ParseHotkey(saved, out var modifiers, out var key)) return saved;
         string name = key switch
         {

@@ -247,7 +247,7 @@ public partial class MainWindow
         // An open menu keeps its rows; only the entry's availability follows the restart.
         if (MediaSourceButton.ContextMenu is { IsOpen: true } open)
             foreach (var item in open.Items.OfType<MenuItem>().Where(item => Equals(item.Tag, "action"))) item.IsEnabled = _media?.RestartingNetease != true;
-        AutomationProperties.SetName(MediaSourceButton, alone ? FullControlButtonLabel : Loc.T("切换播放来源", "Switch playback source"));
+        AutomationProperties.SetName(MediaSourceButton, alone ? FullControlButtonLabel : Loc.T("切換播放來源", "Switch playback source"));
         MediaSourceLabel.Text = _mediaTrack is { } playing ? Loc.Label(playing.Source) : alone ? FullControlButtonLabel : "";
         MediaSourcePin.Visibility = _pinnedMedia is not null && _pinnedMedia == _mediaTrack?.Id ? Visibility.Visible : Visibility.Collapsed;
         MediaSourceChevron.Visibility = _mediaTrack is not null && (_mediaTracks.Count > 1 || entry) ? Visibility.Visible : Visibility.Collapsed;
@@ -359,9 +359,9 @@ public partial class MainWindow
     }
     // The heart of a liked song, in the theme's color for it (NetEase Cloud Music's red in the dark theme).
     private string LikedColor => Look.Hex("liked");
-    internal static string FullControlEntryLabel => Loc.T("网易云音乐 · 完整控制", "NetEase Cloud Music · Full control");
+    internal static string FullControlEntryLabel => Loc.T("網易雲音樂 · 完整控制", "NetEase Cloud Music · Full control");
     // Alone in the toolbar the entry has at most 150 DIP; the full English name would lose "Full control" to the ellipsis.
-    internal static string FullControlButtonLabel => Loc.T("网易云音乐 · 完整控制", "NetEase full control");
+    internal static string FullControlButtonLabel => Loc.T("網易雲音樂 · 完整控制", "NetEase full control");
     private bool FullControlEntryShown => Settings.NeteaseFullControlEntry && _media?.NeteaseInstalled == true;
     // Started from the source menu or the lone button. Only the disabled entry shows that it is under way;
     // neither progress nor a failure is reported, and a later click is ignored until it ends.
@@ -385,8 +385,8 @@ public partial class MainWindow
         menu.SetValue(SuppressMusicToolTipsProperty, true);
         foreach (var track in _mediaTracks)
         {
-            var state = track.State switch { MediaState.Playing => Loc.T("播放中", "Playing"), MediaState.Paused => Loc.T("已暂停", "Paused"),
-                MediaState.Stopped => Loc.T("已停止", "Stopped"), _ => Loc.T("状态未知", "Unknown state") };
+            var state = track.State switch { MediaState.Playing => Loc.T("播放中", "Playing"), MediaState.Paused => Loc.T("已暫停", "Paused"),
+                MediaState.Stopped => Loc.T("已停止", "Stopped"), _ => Loc.T("狀態未知", "Unknown state") };
             var label = $"{Loc.Label(track.Source)} · {track.Title} · {state}";
             // The menu's viewport clip would turn the row grayscale; the menu's background beneath it is opaque.
             var row = new Grid(); RenderOptions.SetClearTypeHint(row, ClearTypeHint.Enabled);
@@ -423,9 +423,9 @@ public partial class MainWindow
     }
     // Guidance shown in place of the transport when Netease runs without SMTC. Both sentences stay at every size:
     // what is required and where to switch it on. Only the type size and the entry's label adapt to the row.
-    internal static string SmtcHintWhy => Loc.T("开启网易云的 SMTC 后，才能在这里控制播放", "Turn on SMTC in NetEase to control playback here");
+    internal static string SmtcHintWhy => Loc.T("開啟網易雲的 SMTC 後，才能在這裡控制播放", "Turn on SMTC in NetEase to control playback here");
     // The English hint names the menu items as NetEase Cloud Music's Chinese interface shows them.
-    internal static string SmtcHintHow => Loc.T("位置：网易云音乐 › 设置 › 系统 › 开启 SMTC", "Where: NetEase Cloud Music › 设置 › 系统 › 开启 SMTC");
+    internal static string SmtcHintHow => Loc.T("位置：網易雲音樂 › 設定 › 系統 › 開啟 SMTC", "Where: NetEase Cloud Music › 設定 › 系統 › 開啟 SMTC");
     // The song and the form (PageHandover) the media page was last built with: a new song swaps in, a new form (the lyric lines
     // the room holds, the title merged with the artist, the message or the entry shown) morphs in, as when a drag crosses a size step.
     private string _musicSong = "", _musicForm = "";
@@ -464,9 +464,9 @@ public partial class MainWindow
         bool kugouEntry = track is { IsKugou: true } && (_media?.CanEnableKugouFullControl == true || _media?.RestartingKugou == true);
         bool showSmtcHint = logMode && track is { CanToggle: false, CanPrevious: false, CanNext: false }
             && _media?.RestartingNetease != true && _media?.Error is null;
-        string message = _media?.RestartingNetease == true ? Loc.T("正在重启网易云…", "Restarting NetEase Cloud Music…")
-            : _media?.RestartingKugou == true ? Loc.T("正在重启酷狗…", "Restarting KuGou Music…")
-            : _media?.Error ?? (track is { IsKugou: true } && _media?.KugouError is { } kugouError ? Loc.T("未能启用酷狗完整控制：", "KuGou full control could not be enabled: ") + kugouError : "");
+        string message = _media?.RestartingNetease == true ? Loc.T("正在重啟網易雲…", "Restarting NetEase Cloud Music…")
+            : _media?.RestartingKugou == true ? Loc.T("正在重啟酷狗…", "Restarting KuGou Music…")
+            : _media?.Error ?? (track is { IsKugou: true } && _media?.KugouError is { } kugouError ? Loc.T("未能啟用酷狗完整控制：", "KuGou full control could not be enabled: ") + kugouError : "");
         var modes = track is null ? [] : MusicPlaybackModes.Supported(track);
         // While the timeline is held (MusicTimelineHold) the bar stays in its place, empty and without times.
         bool timeline = track?.HasTimeline == true || track is not null && _timelineHold.Holds(DateTimeOffset.UtcNow);
@@ -519,7 +519,7 @@ public partial class MainWindow
             MusicContent.Children.Clear(); _musicControls = null; _musicFullControl = null; _musicSmtcHint = null; _musicControlButtons.Clear();
             var empty = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, MaxWidth = Math.Max(200, w - 60) };
             var icon = MusicVisuals.Icon("music", 26, look: Look); icon.Margin = new Thickness(0, 0, 0, 8); empty.Children.Add(icon);
-            empty.Children.Add(UI.Fixed(Loc.T("没有正在播放的媒体", "Nothing is playing"), 14, 22, Look.Secondary));
+            empty.Children.Add(UI.Fixed(Loc.T("沒有正在播放的媒體", "Nothing is playing"), 14, 22, Look.Secondary));
             if (_media?.Error is { } error)
             {
                 var hint = UI.Line(error, 11.5, Look.Tertiary); hint.TextWrapping = TextWrapping.Wrap; hint.TextAlignment = TextAlignment.Center; empty.Children.Add(hint);
@@ -543,7 +543,7 @@ public partial class MainWindow
             art.RenderTransformOrigin = new Point(.5, .5); art.RenderTransform = _musicCoverScale;
             Soft.Glide(_musicCoverScale, ScaleTransform.ScaleXProperty, track.State == MediaState.Paused ? .94 : 1, animate, Soft.Move);
             Soft.Glide(_musicCoverScale, ScaleTransform.ScaleYProperty, track.State == MediaState.Paused ? .94 : 1, animate, Soft.Move);
-            AutomationProperties.SetName(art, Loc.T("专辑封面", "Album cover")); upper.Children.Add(art);
+            AutomationProperties.SetName(art, Loc.T("專輯封面", "Album cover")); upper.Children.Add(art);
             AttachCoverFocus(art);
             if (newCover && animate) { var fade = Soft.Fade(0, 1, Soft.Move, Soft.Follow); fade.FillBehavior = System.Windows.Media.Animation.FillBehavior.Stop; art.BeginAnimation(OpacityProperty, fade); }
             var right = new Grid(); Grid.SetColumn(right, 2); upper.Children.Add(right);
@@ -608,7 +608,7 @@ public partial class MainWindow
                     VerticalAlignment = VerticalAlignment.Center, Height = lyricLines * c.LyricLine, CanContentScroll = false, Visibility = layout.ShowMessage ? Visibility.Collapsed : Visibility.Visible };
                 // The viewport clip would turn the lyrics grayscale; they lie over the island's opaque surface.
                 RenderOptions.SetClearTypeHint(text, ClearTypeHint.Enabled);
-                AutomationProperties.SetName(lyrics, Loc.T("歌词", "Lyrics")); middle.Children.Add(lyrics);
+                AutomationProperties.SetName(lyrics, Loc.T("歌詞", "Lyrics")); middle.Children.Add(lyrics);
             }
             if (lyricsArrive) { var fade = Soft.Fade(0, 1, Soft.Move, Soft.Follow); fade.FillBehavior = System.Windows.Media.Animation.FillBehavior.Stop; middle.BeginAnimation(OpacityProperty, fade); }
             if (layout.MiddleHeight >= c.MiddleGap + c.LyricLine)
@@ -630,7 +630,7 @@ public partial class MainWindow
             _musicSeek = new MusicSeekSlider { Style = (Style)FindResource("MusicSeek"), RestHeight = c.Bar, HoverHeight = c.BarHover, BarHeight = c.Bar,
                 Accent = ((SolidColorBrush)_musicAccent).Color, DurationSeconds = track.Duration.TotalSeconds, Height = c.SeekRow, AnimationsEnabled = animate, IsEnabled = track.CanSeek && track.HasTimeline,
                 VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, layout.ProgressY, 0, 0) };
-            AutomationProperties.SetName(_musicSeek, Loc.T("播放进度", "Playback position"));
+            AutomationProperties.SetName(_musicSeek, Loc.T("播放進度", "Playback position"));
             // Slider handles move-to-point before instance handlers; observe that handled event too.
             _musicSeek.AddHandler(PreviewMouseLeftButtonDownEvent, new MouseButtonEventHandler((sender, _) =>
             {
@@ -715,10 +715,10 @@ public partial class MainWindow
             // Two switches instead of the mode button: shuffle in its place left of previous, repeat in the heart's place
             // right of next. A switch that is on is drawn in the primary color, one that is off in the tertiary.
             string On(bool on) => on ? Look.Primary : Look.Tertiary;
-            Add(MediaCommand.Shuffle, Loc.T("随机播放 · ", "Shuffle · ") + (track.Shuffle ? Loc.T("开", "on") : Loc.T("关", "off")), "shuffle",
+            Add(MediaCommand.Shuffle, Loc.T("隨機播放 · ", "Shuffle · ") + (track.Shuffle ? Loc.T("開", "on") : Loc.T("關", "off")), "shuffle",
                 c.Mode, layout.ModeX, track.CanShuffle, () => RunMediaCommand(track, MediaCommand.Shuffle), true, color: On(track.Shuffle));
-            Add(MediaCommand.Repeat, Loc.T("重复 · ", "Repeat · ") + (track.Repeat switch
-                { MediaRepeat.List => Loc.T("全部", "all"), MediaRepeat.Track => Loc.T("单曲", "one"), _ => Loc.T("关", "off") }), "repeat",
+            Add(MediaCommand.Repeat, Loc.T("重複 · ", "Repeat · ") + (track.Repeat switch
+                { MediaRepeat.List => Loc.T("全部", "all"), MediaRepeat.Track => Loc.T("單曲", "one"), _ => Loc.T("關", "off") }), "repeat",
                 c.Mode, layout.TripletX + layout.TripletWidth + (layout.TripletX - layout.ModeX - c.Mode), track.CanRepeat,
                 () => RunMediaCommand(track, MediaCommand.Repeat), true, track.Repeat == MediaRepeat.Track, On(track.Repeat != MediaRepeat.None));
         }
@@ -771,12 +771,12 @@ public partial class MainWindow
             if (_musicSmtcHint is not null) _musicSmtcHint.Visibility = Visibility.Collapsed;
             double gx = layout.TripletX;
             Add(MediaCommand.Previous, Loc.T("上一首", "Previous"), "previous", c.Skip, gx, track.CanPrevious, () => RunMediaCommand(track, MediaCommand.Previous)); gx += c.Skip + layout.ControlGap;
-            Add(MediaCommand.PlayPause, track.State == MediaState.Playing ? Loc.T("暂停", "Pause") : Loc.T("播放", "Play"), track.State == MediaState.Playing ? "pause" : "play", c.Play, gx, track.CanToggle, () => RunMediaCommand(track, MediaCommand.PlayPause)); gx += c.Play + layout.ControlGap;
+            Add(MediaCommand.PlayPause, track.State == MediaState.Playing ? Loc.T("暫停", "Pause") : Loc.T("播放", "Play"), track.State == MediaState.Playing ? "pause" : "play", c.Play, gx, track.CanToggle, () => RunMediaCommand(track, MediaCommand.PlayPause)); gx += c.Play + layout.ControlGap;
             Add(MediaCommand.Next, Loc.T("下一首", "Next"), "next", c.Skip, gx, track.CanNext, () => RunMediaCommand(track, MediaCommand.Next));
             // The heart mirrors the mode button: right of next, as far from it as the mode button is from previous. Only
             // full control offers it, and the full-control entry, which shares this side, appears only without full control.
             if (track.CanLike)
-                Add(MediaCommand.Like, track.Liked ? Loc.T("取消喜欢", "Unlike") : Loc.T("喜欢", "Like"), track.Liked ? "liked" : "like", c.Mode,
+                Add(MediaCommand.Like, track.Liked ? Loc.T("取消喜歡", "Unlike") : Loc.T("喜歡", "Like"), track.Liked ? "liked" : "like", c.Mode,
                     layout.TripletX + layout.TripletWidth + (layout.TripletX - layout.ModeX - c.Mode), true, () => RunMediaCommand(track, MediaCommand.Like), mode: true, color: track.Liked ? LikedColor : null);
             if (layout.ShowFullControl)
                 foreach (var label in MusicLayout.FullControlLabels)
@@ -852,7 +852,7 @@ public partial class MainWindow
             art.HorizontalAlignment = over ? HorizontalAlignment.Center : HorizontalAlignment.Left;
             art.VerticalAlignment = over ? VerticalAlignment.Top : VerticalAlignment.Center;
             if (over) art.Margin = new Thickness(0, 0, 0, c.MiddleGap);
-            AutomationProperties.SetName(art, Loc.T("专辑封面", "Album cover"));
+            AutomationProperties.SetName(art, Loc.T("專輯封面", "Album cover"));
             AttachCoverFocus(art);
             return art;
         }
@@ -945,7 +945,7 @@ public partial class MainWindow
             // The viewport clip would turn the lyrics grayscale; they lie over the island's opaque surface.
             RenderOptions.SetClearTypeHint(text, ClearTypeHint.Enabled);
             if (MeetsBars((columns.Height - lyrics.Height) / 2, lyrics.Height)) lyrics.Margin = clearOfBars;
-            AutomationProperties.SetName(lyrics, Loc.T("歌词", "Lyrics")); middle.Children.Add(lyrics);
+            AutomationProperties.SetName(lyrics, Loc.T("歌詞", "Lyrics")); middle.Children.Add(lyrics);
         }
         middle.Children.Add(_musicMessage);
         if (lyricsArrive) { var fade = Soft.Fade(0, 1, Soft.Move, Soft.Follow); fade.FillBehavior = System.Windows.Media.Animation.FillBehavior.Stop; middle.BeginAnimation(OpacityProperty, fade); }
@@ -972,7 +972,7 @@ public partial class MainWindow
         try
         {
             var next = MusicPlaybackModes.Next(_mediaTrack);
-            if (!await _media.SetPlaybackModeAsync(track.Id, next)) ShowMusicError(Loc.T("播放器未接受此操作，请在原应用中重试。", "The player did not accept this action. Try again in the player."));
+            if (!await _media.SetPlaybackModeAsync(track.Id, next)) ShowMusicError(Loc.T("播放器未接受此操作，請在原應用中重試。", "The player did not accept this action. Try again in the player."));
             await _media.RefreshAsync();
         }
         finally { _commandBusy = false; }
@@ -1013,14 +1013,14 @@ public partial class MainWindow
         bool succeeded = await pending;
         if (_media != media) return;
         await media.RefreshAsync(); _musicRenderKey = ""; RenderMusic();
-        if (!succeeded) ShowMusicError(media.Error ?? Loc.T("未能启用完整控制，请重试。", "Full control could not be enabled. Try again."));
+        if (!succeeded) ShowMusicError(media.Error ?? Loc.T("未能啟用完整控制，請重試。", "Full control could not be enabled. Try again."));
     }
 
     private async Task RunMediaCommand(MediaTrack track, MediaCommand command)
     {
         if (_commandBusy || _mediaTrack?.Id != track.Id) return;
         _commandBusy = true;
-        try { if (_media is not null && !await _media.CommandAsync(track.Id, command)) ShowMusicError(Loc.T("播放器未接受此操作，请在原应用中重试。", "The player did not accept this action. Try again in the player.")); }
+        try { if (_media is not null && !await _media.CommandAsync(track.Id, command)) ShowMusicError(Loc.T("播放器未接受此操作，請在原應用中重試。", "The player did not accept this action. Try again in the player.")); }
         finally { _commandBusy = false; }
     }
     private void BeginSeek(Slider seek)
@@ -1044,7 +1044,7 @@ public partial class MainWindow
             if (!await _media.SeekAsync(track, value) && _seekPreview.Cancel(request))
             {
                 UpdateMusicPosition();
-                ShowMusicError(Loc.T("播放器未接受进度调整。", "The player did not accept the new position."));
+                ShowMusicError(Loc.T("播放器未接受進度調整。", "The player did not accept the new position."));
             }
         }
         RenderMusic();
@@ -1065,7 +1065,7 @@ public partial class MainWindow
         _musicElapsed.Text = MusicTime(position);
         _musicDuration.Text = MusicTime(track.Duration);
         AutomationProperties.SetName(_musicElapsed, Loc.T("已播放 ", "Elapsed ") + _musicElapsed.Text);
-        AutomationProperties.SetName(_musicDuration, Loc.T("总时长 ", "Duration ") + _musicDuration.Text);
+        AutomationProperties.SetName(_musicDuration, Loc.T("總時長 ", "Duration ") + _musicDuration.Text);
     }
     private void UpdateMusicPosition()
     {

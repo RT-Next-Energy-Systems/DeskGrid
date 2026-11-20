@@ -108,7 +108,7 @@ public sealed record Lyrics(IReadOnlyList<LyricLine> Lines, bool Synced, string 
         return kept;
     }
     // QQ Music, NetEase and KuGou give a song without words a lyric of only credits ("作曲 : Yiruma") and a notice such as
-    // "纯音乐，请欣赏" or "此歌曲为没有填词的纯音乐，请您欣赏"; such a lyric is the song's mark as instrumental. A notice worded
+    // "純音樂，請欣賞" or "此歌曲為沒有填詞的純音樂，請您欣賞"; such a lyric is the song's mark as instrumental. A notice worded
     // otherwise is not recognised, and its lines are shown as a lyric.
     private static bool InstrumentalNotice(IEnumerable<string> lines)
     {
@@ -270,7 +270,7 @@ public sealed partial class LyricsService : IDisposable
     private static string Str(JsonElement element, string name) => element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() ?? "" : "";
     private static double Num(JsonElement element, string name) => element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number) ? number : 0;
     private static string Normalize(string value) => Regex.Replace(value, @"[\s\p{P}\p{S}]", "").ToUpperInvariant();
-    // Apple Music shows names in the storefront's script (李耀陽); the other providers may use another (李耀阳).
+    // Apple Music shows names in the storefront's script (李耀陽); the other providers may use another (李耀陽).
     private static string MatchText(MediaTrack track, string value) => Normalize(track.IsAppleMusic ? SimplifyAppleText(value) : value);
     private static bool Matches(MediaTrack track, string title, string artist, double seconds)
         => MatchText(track, track.Title) == MatchText(track, title) && Regex.Split(track.Artist, @"\s*[/、,，&;；]\s*").Where(a => a.Length > 0).All(a => MatchText(track, artist).Contains(MatchText(track, a), StringComparison.Ordinal))
@@ -283,8 +283,8 @@ public sealed partial class LyricsService : IDisposable
         var data = await Get($"https://music.163.com/api/song/lyric?id={id}&lv=-1&kv=-1&tv=-1", token);
         if (data is not { ValueKind: JsonValueKind.Object } value) return Lyrics.Empty;
         // NetEase marks a song without words; its lyric then holds only credits and a notice.
-        if (value.TryGetProperty("pureMusic", out var pure) && pure.ValueKind == JsonValueKind.True) return new([], true, "网易云音乐", true);
-        return value.TryGetProperty("lrc", out var lrc) ? Lyrics.Parse(Str(lrc, "lyric"), null, duration, "网易云音乐") : Lyrics.Empty;
+        if (value.TryGetProperty("pureMusic", out var pure) && pure.ValueKind == JsonValueKind.True) return new([], true, "網易雲音樂", true);
+        return value.TryGetProperty("lrc", out var lrc) ? Lyrics.Parse(Str(lrc, "lyric"), null, duration, "網易雲音樂") : Lyrics.Empty;
     }
     private async Task<Lyrics> FindLrclib(MediaTrack track, CancellationToken token)
     {

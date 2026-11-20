@@ -2,9 +2,9 @@
   // The light counterpart of the dark theme: a near-white surface with dark text and darker app colors.
   "formatVersion": 1,
   "id": "light",
-  "name": "浅色",
+  "name": "淺色",
   "nameEn": "Light",
-  "description": "近白表面配深色文字，适合浅色桌面。",
+  "description": "近白表面配深色文字，適合淺色桌面。",
   "descriptionEn": "A near-white surface with dark text, for light desktops.",
   "author": "BrimDeck",
   "license": "Apache-2.0",
@@ -59,7 +59,7 @@
     "gradients": [
       { "name": "日落", "nameEn": "Sunset", "stops": ["#B8510F", "#B8326F", "#6E4BD1"] },
       { "name": "海洋", "nameEn": "Ocean", "stops": ["#0B7A82", "#1F64C8", "#5B4BD1"] },
-      { "name": "极光", "nameEn": "Aurora", "stops": ["#2E7D32", "#0B7A82", "#1F64C8"] },
+      { "name": "極光", "nameEn": "Aurora", "stops": ["#2E7D32", "#0B7A82", "#1F64C8"] },
       { "name": "火焰", "nameEn": "Ember", "stops": ["#A35F00", "#B8510F", "#C42B38"] },
       { "name": "霓虹", "nameEn": "Neon", "stops": ["#B02E9E", "#6E4BD1", "#0B7A82"] }
     ]

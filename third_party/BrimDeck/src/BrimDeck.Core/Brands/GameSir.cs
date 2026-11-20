@@ -1,6 +1,6 @@
 namespace BrimDeck.Core;
 
-// GameSir (盖世小鸡) controllers on their 2.4 GHz receivers and cables, vendor 0x3537 (GameSir's own), read by the collection
+// GameSir (蓋世小雞) controllers on their 2.4 GHz receivers and cables, vendor 0x3537 (GameSir's own), read by the collection
 // they answer on rather than by model; both pages are as measured on Windows (HidP_GetCaps), the byte-swapped order is taken
 // too.
 // - Status (Nova 2, Nova 2 Lite, T4N2): the vendor collection on page 0xFF7A, usage 1, 65-byte reports both ways, takes the

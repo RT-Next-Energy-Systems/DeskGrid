@@ -8,7 +8,7 @@ public sealed record UsageDateRange
     public DateTime End { get; }
     public UsageDateRange(DateTime start, DateTime end)
     {
-        if (start.Date > end.Date) throw new ArgumentException(Loc.T("开始日期不能晚于结束日期。", "The start date cannot be later than the end date."));
+        if (start.Date > end.Date) throw new ArgumentException(Loc.T("開始日期不能晚於結束日期。", "The start date cannot be later than the end date."));
         Start = start.Date; End = end.Date;
     }
     public bool Contains(DateTimeOffset time) => time.LocalDateTime.Date >= Start && time.LocalDateTime.Date <= End;

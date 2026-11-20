@@ -60,8 +60,8 @@ public static class WorkBuddyUsage
         using var doc = await SendAsync(http, request, ct);
         var data = doc.RootElement.Get("data");
         string state = data.Get("state").Text(), link = data.Get("authUrl").Text();
-        if (doc.RootElement.Get("code").Number() != 0 || state.Length == 0) throw new InvalidDataException(Loc.T("WorkBuddy 官网暂时无法创建登录请求", "The WorkBuddy website cannot start a sign-in right now"));
-        if (!LoginUrlMatches(edition, link, state)) throw new InvalidDataException(Loc.T("WorkBuddy 官网返回的登录地址无效", "The WorkBuddy website returned an invalid sign-in address"));
+        if (doc.RootElement.Get("code").Number() != 0 || state.Length == 0) throw new InvalidDataException(Loc.T("WorkBuddy 官網暫時無法建立登入請求", "The WorkBuddy website cannot start a sign-in right now"));
+        if (!LoginUrlMatches(edition, link, state)) throw new InvalidDataException(Loc.T("WorkBuddy 官網返回的登入地址無效", "The WorkBuddy website returned an invalid sign-in address"));
         return (state, link);
     }
 
@@ -86,10 +86,10 @@ public static class WorkBuddyUsage
             using (doc)
             {
                 if (doc.RootElement.Get("code").Number() == 11217) continue;
-                if (doc.RootElement.Get("code").Number() != 0) throw new InvalidDataException(Loc.T("WorkBuddy 登录请求已失效，请重新登录", "The WorkBuddy sign-in request has expired. Sign in again."));
+                if (doc.RootElement.Get("code").Number() != 0) throw new InvalidDataException(Loc.T("WorkBuddy 登入請求已失效，請重新登入", "The WorkBuddy sign-in request has expired. Sign in again."));
                 var auth = doc.RootElement.Get("data");
                 string token = auth.Get("accessToken").Text(), refresh = auth.Get("refreshToken").Text(), domain = auth.Get("domain").Text();
-                if (token.Length == 0) throw new InvalidDataException(Loc.T("WorkBuddy 官网没有返回登录凭据", "The WorkBuddy website returned no sign-in"));
+                if (token.Length == 0) throw new InvalidDataException(Loc.T("WorkBuddy 官網沒有返回登入憑據", "The WorkBuddy website returned no sign-in"));
                 var uid = await PersonalAccountAsync(http, edition, token, domain, ct);
                 return new Session(token, refresh, uid, domain);
             }
@@ -105,7 +105,7 @@ public static class WorkBuddyUsage
             if (account.Get("enterpriseId").Text().Length == 0 && account.Get("isCurrentOneIdEnterprise").ValueKind != JsonValueKind.True
                 && account.Get("uid").Text() is { Length: > 0 } uid)
                 return uid;
-        throw new InvalidDataException(Loc.T("请使用 WorkBuddy 个人账号登录", "Sign in with a personal WorkBuddy account"));
+        throw new InvalidDataException(Loc.T("請使用 WorkBuddy 個人賬號登入", "Sign in with a personal WorkBuddy account"));
     }
 
     // Reads the credits with the session; a refused token is renewed once and the new session handed to save before the credits
@@ -147,7 +147,7 @@ public static class WorkBuddyUsage
     {
         using var request = Authorized(edition, HttpMethod.Post, "/billing/meter/get-user-resource-summary", session.AccessToken, session.Uid, session.Domain, "{}");
         using var summary = await SendAsync(http, request, ct);
-        if (summary.RootElement.Get("code").Number() != 0) throw new InvalidDataException(Loc.T("WorkBuddy 没有返回积分", "WorkBuddy returned no credits"));
+        if (summary.RootElement.Get("code").Number() != 0) throw new InvalidDataException(Loc.T("WorkBuddy 沒有返回積分", "WorkBuddy returned no credits"));
         var data = summary.RootElement.Get("data");
         var codes = data.Get("Packages").Items().Select(p => p.Get("PackageCode").Text()).Where(edition.PackageKinds.ContainsKey).Distinct().ToList();
         var times = new Dictionary<string, KindTime>();
@@ -160,7 +160,7 @@ public static class WorkBuddyUsage
 
     // Which kind of credits (CreditGroups' Kind) each package is, as the WorkBuddy 5.9 clients sort them: the plan itself (monthly and
     // yearly plans and their trials, the youth, advanced, flagship and BuddyOne plans, and the international free plan), the plan's
-    // bonus, credit packs bought, and growth and activity credits. The China edition counts the trial plan (体验版, 008) as the plan;
+    // bonus, credit packs bought, and growth and activity credits. The China edition counts the trial plan (體驗版, 008) as the plan;
     // the international edition counts it, and the gift package (006), as reward credits. Packages sorted into none, such as the
     // China edition's daily free credits, are left out.
     private static Dictionary<string, string> KindsFor(bool international)
@@ -228,14 +228,14 @@ public static class WorkBuddyUsage
         {
             if (total <= 0 && left <= 0) return;
             total = Math.Max(total, left);
-            metrics.Add(new UsageMetric(MetricKind.Count, label) { Id = id, Unit = "积分", Total = total, Used = total - left, ResetAt = time?.Reset, ExpiresAt = time?.Expires });
+            metrics.Add(new UsageMetric(MetricKind.Count, label) { Id = id, Unit = "積分", Total = total, Used = total - left, ResetAt = time?.Reset, ExpiresAt = time?.Expires });
         }
         var groups = data.Get("CreditGroups");
         if (groups.ValueKind == JsonValueKind.Array)
             foreach (var group in groups.EnumerateArray())
             {
                 var kind = group.Get("Kind").Text();
-                var label = kind switch { "plan_base" => "套餐积分", "plan_bonus" => "套餐赠送积分", "addon" => "购买积分", "benefit" => "奖励积分", _ => group.Get("Name").Text() };
+                var label = kind switch { "plan_base" => "套餐積分", "plan_bonus" => "套餐贈送積分", "addon" => "購買積分", "benefit" => "獎勵積分", _ => group.Get("Name").Text() };
                 if (label.Length == 0) continue;
                 Add(kind.Length > 0 ? kind : label, label, Amount(group, "CycleTotalCapacity"), Amount(group, "CycleRemainCapacity"), times?.GetValueOrDefault(kind));
             }
@@ -243,7 +243,7 @@ public static class WorkBuddyUsage
         {
             decimal total = 0, left = 0;
             foreach (var row in data.Get("Packages").Items()) { total += Amount(row, "CycleTotalCapacity"); left += Amount(row, "CycleRemainCapacity"); }
-            Add("credits", "积分", total, left);
+            Add("credits", "積分", total, left);
         }
         return new(metrics, data.Get("SubscriptionPackageName").Text());
     }
@@ -273,7 +273,7 @@ public static class WorkBuddyUsage
         if (!response.IsSuccessStatusCode && !(allowBadRequest && response.StatusCode == HttpStatusCode.BadRequest))
             throw new HttpRequestException($"HTTP {(int)response.StatusCode}", null, response.StatusCode);
         var bytes = await response.Content.ReadAsByteArrayAsync(deadline.Token);
-        if (bytes.Length > 2 << 20) throw new InvalidDataException(Loc.T("WorkBuddy 返回的数据过大", "WorkBuddy returned too much data"));
+        if (bytes.Length > 2 << 20) throw new InvalidDataException(Loc.T("WorkBuddy 返回的資料過大", "WorkBuddy returned too much data"));
         return JsonDocument.Parse(bytes);
     }
 }

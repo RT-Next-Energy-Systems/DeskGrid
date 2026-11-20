@@ -40,7 +40,7 @@ internal sealed partial class NeteaseCdpConnection(NeteaseProcess process) : IMe
                 await ConnectAsync(_stop.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (_stop.IsCancellationRequested) { break; }
-            catch { Error ??= Loc.T("网易云完整控制连接暂时不可用。", "The full control connection to NetEase Cloud Music is temporarily unavailable."); }
+            catch { Error ??= Loc.T("網易雲完整控制連線暫時不可用。", "The full control connection to NetEase Cloud Music is temporarily unavailable."); }
             finally
             {
                 bool wasReady = _ready;
@@ -66,7 +66,7 @@ internal sealed partial class NeteaseCdpConnection(NeteaseProcess process) : IMe
 
     private async Task ConnectAsync(CancellationToken token)
     {
-        if (!OwnsPort(process)) { Error = Loc.T("调试端口未就绪或监听进程不匹配。", "The debugging port is not ready or is held by a different process."); throw new IOException("Debug port is not owned by the player."); }
+        if (!OwnsPort(process)) { Error = Loc.T("除錯埠未就緒或監聽程序不匹配。", "The debugging port is not ready or is held by a different process."); throw new IOException("Debug port is not owned by the player."); }
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token); timeout.CancelAfter(TimeSpan.FromSeconds(5));
         using var http = new HttpClient(new HttpClientHandler { UseProxy = false, AllowAutoRedirect = false }) { MaxResponseContentBufferSize = 1_048_576 };
         string json = await http.GetStringAsync($"http://127.0.0.1:{process.DebugPort}/json", timeout.Token).ConfigureAwait(false);
@@ -115,7 +115,7 @@ internal sealed partial class NeteaseCdpConnection(NeteaseProcess process) : IMe
                 _requests.Clear();
             }
         }
-        Error = Loc.T("未找到兼容的网易云播放页面。", "No compatible NetEase Cloud Music player page was found.");
+        Error = Loc.T("未找到相容的網易雲播放頁面。", "No compatible NetEase Cloud Music player page was found.");
         throw new IOException("No compatible playback page.");
     }
 

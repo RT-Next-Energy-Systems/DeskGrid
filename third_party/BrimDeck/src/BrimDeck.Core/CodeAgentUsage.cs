@@ -73,22 +73,22 @@ public static class CodeAgentUsage
     public static List<UsageMetric> Quotas(JsonElement root, CreditHours? hours = null)
     {
         var result = new List<UsageMetric>();
-        foreach (var (field, group) in new[] { ("quotas", ""), ("external_quotas", "外部模型"), ("internal_quotas", "内部模型") })
+        foreach (var (field, group) in new[] { ("quotas", ""), ("external_quotas", "外部模型"), ("internal_quotas", "內部模型") })
             foreach (var item in root.Get(field).Items().OrderBy(item => Order(item.Get("type").Text())))
             {
                 var type = item.Get("type").Text();
                 if (item.Get("total_quota").Number() is not { } total || total <= 0 || item.Get("used_quota").Number() is not { } used) continue;
                 var (name, window) = type switch
                 {
-                    "CPM" => ("每月额度", (int?)null),
-                    "CPD_Peak" => ("忙时每日额度", 1440),
-                    "CPD_Valley" => ("闲时每日额度", 1440),
+                    "CPM" => ("每月額度", (int?)null),
+                    "CPD_Peak" => ("忙時每日額度", 1440),
+                    "CPD_Valley" => ("閒時每日額度", 1440),
                     _ => (type, (int?)null)
                 };
                 var label = group.Length == 0 ? name : group + " · " + name;
                 result.Add(new UsageMetric(MetricKind.Count, label)
                 {
-                    Id = (field + ":" + type).ToLowerInvariant(), Window = window, Unit = "积分",
+                    Id = (field + ":" + type).ToLowerInvariant(), Window = window, Unit = "積分",
                     Used = (decimal)Math.Max(0, used), Total = (decimal)total, ResetAt = ResetAt(item.Get("reset_at").Text()),
                     Hours = hours, Period = type switch { "CPD_Peak" => CreditPeriod.Busy, "CPD_Valley" => CreditPeriod.Idle, _ => null }
                 });
@@ -108,7 +108,7 @@ public enum CreditPeriod { Busy, Normal, Idle }
 // When CodeAgent credits cost more or less. The busy-idle definition answers { busy_period, normal_period, idle_period }, each with
 // a coefficient ("3x") and weekday_coeff and weekend_coeff: lists of { min, max, value, label }, hours of the day in China Standard
 // Time from min up to max. An hour that no busy or normal list covers is idle: idle_period lists the same idle hours, and its
-// description names the days off ("非工作日0-24点") that no list covers. Weekdays are Monday to Friday; public holidays are not
+// description names the days off ("非工作日0-24點") that no list covers. Weekdays are Monday to Friday; public holidays are not
 // known to the definition.
 public sealed class CreditHours
 {

@@ -39,9 +39,9 @@ public sealed record CoreSample(int Id, int Group, CoreTier Tier, int Number, do
         {
             CoreTier.Performance => Loc.T("性能核", "Performance core"),
             CoreTier.Efficiency => Loc.T("能效核", "Efficiency core"),
-            _ => Loc.T("逻辑处理器", "Logical processor")
+            _ => Loc.T("邏輯處理器", "Logical processor")
         };
-        string thread = Thread is { } t ? Loc.T($" · 线程 {t}", $" · thread {t}") : "";
+        string thread = Thread is { } t ? Loc.T($" · 執行緒 {t}", $" · thread {t}") : "";
         string frequency = FrequencyMhz.TryGet(out var mhz) ? " · " + MonitorFormat.Gigahertz(mhz) + " GHz" : "";
         return $"{kind} {Number}{thread} · {MonitorFormat.Percent(Usage)}%{frequency}";
     }
@@ -174,7 +174,7 @@ public sealed record GpuSample(double Usage, Reading<ulong> DedicatedBytes)
     public uint VendorId { get; init; }
     public string? Location { get; init; }
     // In degrees Celsius as Task Manager reads it; null without a sensor. TemperatureFrom names the adapter it was read from
-    // when that is not this one (this adapter has no sensor and another has), and TemperatureKind says its kind ("独显").
+    // when that is not this one (this adapter has no sensor and another has), and TemperatureKind says its kind ("獨顯").
     public double? Temperature { get; init; }
     public string? TemperatureFrom { get; init; }
     public string? TemperatureKind { get; init; }
@@ -188,7 +188,7 @@ public sealed record GpuSample(double Usage, Reading<ulong> DedicatedBytes)
     public string LegacyKey { get; init; } = "";
     public GpuKind Kind { get; init; }
     // A connected adapter without engine readings at the moment (a laptop's discrete GPU asleep, a driver between readings): it
-    // stays listed and choosable, and shows "暂无读数" in place of its figures.
+    // stays listed and choosable, and shows "暫無讀數" in place of its figures.
     public bool NoReadings { get; init; }
     public IReadOnlyList<double> History { get; init; } = [];
     public double? DedicatedFraction => DedicatedBytes.TryGet(out var used) && DedicatedTotal is { } total && total > 0 ? Math.Clamp((double)used / total, 0, 1) : null;
@@ -210,8 +210,8 @@ public static class GpuEngines
         .ThenBy(engine => engine.Kind, StringComparer.OrdinalIgnoreCase).ToList();
     public static string Label(string kind) => kind switch
     {
-        "3D" => "3D", "Compute" => Loc.T("计算", "Compute"), "Copy" => Loc.T("复制", "Copy"), "VideoDecode" => Loc.T("视频解码", "Video decode"),
-        "VideoEncode" => Loc.T("视频编码", "Video encode"), "VideoProcessing" => Loc.T("视频处理", "Video processing"), _ => kind
+        "3D" => "3D", "Compute" => Loc.T("計算", "Compute"), "Copy" => Loc.T("複製", "Copy"), "VideoDecode" => Loc.T("影片解碼", "Video decode"),
+        "VideoEncode" => Loc.T("影片編碼", "Video encode"), "VideoProcessing" => Loc.T("影片處理", "Video processing"), _ => kind
     };
     // Two or three letters under a narrow column.
     public static string Short(string kind) => kind switch
@@ -296,15 +296,15 @@ public sealed record MonitorSnapshot(DateTimeOffset Time, int LogicalProcessors,
     public IReadOnlyList<StorageDrive> Storage { get; init; } = [];
     // The whole machine's power draw and its own battery, read only while something shows them (SystemSampler.SetExtras); PowerHistory
     // is the last readings in watts, oldest first, and PowerSummary their peak and average (PowerStats).
-    public Reading<PowerSample> Power { get; init; } = Reading<PowerSample>.Unavailable(Loc.T("正在读取", "Reading"));
-    public Reading<BatterySample> Battery { get; init; } = Reading<BatterySample>.Unavailable(Loc.T("正在读取", "Reading"));
+    public Reading<PowerSample> Power { get; init; } = Reading<PowerSample>.Unavailable(Loc.T("正在讀取", "Reading"));
+    public Reading<BatterySample> Battery { get; init; } = Reading<BatterySample>.Unavailable(Loc.T("正在讀取", "Reading"));
     public IReadOnlyList<double> PowerHistory { get; init; } = [];
     public PowerSummary? PowerSummary { get; init; }
     // The processor's and the graphics' own power over the same readings, for the page's power line when it shows one of them.
     public PowerTrack CpuPower { get; init; } = PowerTrack.None;
     public PowerTrack GpuPower { get; init; } = PowerTrack.None;
     // The frame rate of the program in front, read only while something shows it (SystemSampler.SetExtras).
-    public Reading<FrameSample> Frames { get; init; } = Reading<FrameSample>.Unavailable(Loc.T("正在读取", "Reading"));
+    public Reading<FrameSample> Frames { get; init; } = Reading<FrameSample>.Unavailable(Loc.T("正在讀取", "Reading"));
     public static MonitorSnapshot Empty(int logicalProcessors, string reason) => new(DateTimeOffset.Now, logicalProcessors,
         Reading<CpuSample>.Unavailable(reason), Reading<MemorySample>.Unavailable(reason), Reading<NetworkSample>.Unavailable(reason),
         Reading<GpuSample>.Unavailable(reason), Reading<ProcessList>.Unavailable(reason));

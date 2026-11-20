@@ -689,11 +689,11 @@ public partial class MainWindow : Window
     private void ApplyLanguage()
     {
         System.Windows.Automation.AutomationProperties.SetName(AIUsageButton, Loc.T("AI 用量", "AI usage"));
-        System.Windows.Automation.AutomationProperties.SetName(MonitorPageButton, Loc.T("系统监控", "System monitor"));
+        System.Windows.Automation.AutomationProperties.SetName(MonitorPageButton, Loc.T("系統監控", "System monitor"));
         UpdateShelfPageButton();
-        System.Windows.Automation.AutomationProperties.SetName(DevicesPageButton, Loc.T("设备电量", "Device batteries"));
-        System.Windows.Automation.AutomationProperties.SetName(MusicPageButton, Loc.T("音乐", "Music"));
-        System.Windows.Automation.AutomationProperties.SetName(SettingsButton, Loc.T("设置", "Settings"));
+        System.Windows.Automation.AutomationProperties.SetName(DevicesPageButton, Loc.T("裝置電量", "Device batteries"));
+        System.Windows.Automation.AutomationProperties.SetName(MusicPageButton, Loc.T("音樂", "Music"));
+        System.Windows.Automation.AutomationProperties.SetName(SettingsButton, Loc.T("設定", "Settings"));
     }
     public void Preview(bool enabled, bool expanded = true)
     { _preview = enabled; _previewExpanded = enabled && expanded; if (enabled) _pageSwitchHold.Stop(); ApplySettings(); SetExpanded(enabled && expanded, true); }

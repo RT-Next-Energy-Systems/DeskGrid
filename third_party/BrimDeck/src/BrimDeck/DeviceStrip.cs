@@ -79,8 +79,8 @@ internal sealed class DeviceStrip : FrameworkElement
 
     // For screen readers: each device, its charge and its state.
     protected override System.Windows.Automation.Peers.AutomationPeer OnCreateAutomationPeer() => new SpokenPeer(this, () => string.Join(Loc.T("；", "; "),
-        _devices.Devices.Select(device => device.Name + " " + Devices.Figure(device.Percent) + (device.Charging ? Loc.T("，充电中", ", charging")
-            : device.Level == MemoryLevel.Critical ? Loc.T("，低电量", ", low") : device.Level == MemoryLevel.Elevated ? Loc.T("，电量偏低", ", getting low") : ""))));
+        _devices.Devices.Select(device => device.Name + " " + Devices.Figure(device.Percent) + (device.Charging ? Loc.T("，充電中", ", charging")
+            : device.Level == MemoryLevel.Critical ? Loc.T("，低電量", ", low") : device.Level == MemoryLevel.Elevated ? Loc.T("，電量偏低", ", getting low") : ""))));
 }
 
 // A device as the collapsed row shows it: its name (spoken only), its kind for the icon, its lowest charge, whether it charges (only

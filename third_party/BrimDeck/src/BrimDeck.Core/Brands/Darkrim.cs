@@ -1,6 +1,6 @@
 namespace BrimDeck.Core;
 
-// The DARKRIM SHADOW (寸渊影弑) headset's dongle, 3654:6901 (a Jieli design; the id's owner is not known, so only this product).
+// The DARKRIM SHADOW (寸淵影弒) headset's dongle, 3654:6901 (a Jieli design; the id's owner is not known, so only this product).
 // The only collection that answers is interface 3's (usage page 0xFF02 usage 2, 65-byte reports numbered 0): the official
 // client's GetBasicInfo, FE 00 10 00 02 00 00 03 00 09 01 00 E2 3C, is answered by notices FE <seq> 11 00 03 00 00 <payload
 // length> 00 <payload> <CRC-16/CCITT-FALSE of the frame, big endian>; the battery is the notice whose payload is 01 <length>

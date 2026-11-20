@@ -752,7 +752,7 @@ internal sealed class QuotaCarousel : GlideCarousel
         // so rings scrolled in from the right would render blank.
         var host = new Canvas(); host.Children.Add(_strip); Children.Add(host);
         ToolTip = string.Join("\n", items.Select(i => i.Tip));
-        AutomationProperties.SetName(this, Loc.T("配额环 ", "Quota rings ") + ToolTip);
+        AutomationProperties.SetName(this, Loc.T("配額環 ", "Quota rings ") + ToolTip);
         if (!Rotates && !cutting) return;
         Margin = new Thickness(-edge, 0, -edge, 0);
         OpacityMask = Rotates ? EdgeFades(Width, edge) : CutFades(Width, edge, window, Math.Min(Snap(cut), Snap(gap)));

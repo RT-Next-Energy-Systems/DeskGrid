@@ -104,17 +104,17 @@ public partial class MainWindow
     // Solid: the icon is filled, for a state that is on ("常用" on an entry that is in it).
     private readonly record struct RowDeed(string Icon, string Note, Action Act, bool Solid = false);
     // A file's buttons before "›": open it, show it in its folder, take it off the list. `room` is how many buttons the place has
-    // room for, "›" among them: short of it "在文件夹中显示" goes first, then "打开". A file that is gone can only be taken off.
+    // room for, "›" among them: short of it "在資料夾中顯示" goes first, then "開啟". A file that is gone can only be taken off.
     private List<RowDeed> FileDeeds(TransferFile file, bool exists, int room)
     {
         var deeds = new List<RowDeed>();
-        if (exists && room >= 3) deeds.Add(new(MenuIcons.Open, Loc.T("打开", "Open"), () => OpenFile(file.Path)));
-        if (exists && room >= 4) deeds.Add(new(MenuIcons.Folder, Loc.T("在文件夹中显示", "Show in folder"), () => ShowInFolder(file.Path)));
-        deeds.Add(new(BinIcon, Loc.T("从文件中转中移除", "Remove from the file transfer"), () => RemoveFiles([file])));
+        if (exists && room >= 3) deeds.Add(new(MenuIcons.Open, Loc.T("開啟", "Open"), () => OpenFile(file.Path)));
+        if (exists && room >= 4) deeds.Add(new(MenuIcons.Folder, Loc.T("在資料夾中顯示", "Show in folder"), () => ShowInFolder(file.Path)));
+        deeds.Add(new(BinIcon, Loc.T("從檔案中轉中移除", "Remove from the file transfer"), () => RemoveFiles([file])));
         return deeds;
     }
     // A clipboard entry's buttons before "›": into or out of "常用" (the star, filled while the entry is in it), and, for
-    // anything but a picture, "粘贴为纯文本".
+    // anything but a picture, "貼上為純文字".
     private List<RowDeed> ClipDeeds(ClipEntry clip)
     {
         bool favorite = clip.Categories.Contains(ShelfData.Favorites);
@@ -123,7 +123,7 @@ public partial class MainWindow
             new(StarData, favorite ? Loc.T("移出常用", "Remove from favorites") : Loc.T("加入常用", "Add to favorites"),
                 () => SetCategory(ShelfSide.Clipboard, [clip.Id], ShelfData.Favorites, add: !favorite), favorite)
         };
-        if (clip.Kind != ClipKind.Image) deeds.Add(new(MenuIcons.PlainText, Loc.T("粘贴为纯文本", "Paste as plain text"), () => PasteClip(clip, plain: true)));
+        if (clip.Kind != ClipKind.Image) deeds.Add(new(MenuIcons.PlainText, Loc.T("貼上為純文字", "Paste as plain text"), () => PasteClip(clip, plain: true)));
         return deeds;
     }
     // The buttons in a line: small faces side by side, "›" (the details) last. Where they stand in a line of text they are only
@@ -149,7 +149,7 @@ public partial class MainWindow
         chevron.HorizontalAlignment = HorizontalAlignment.Center; chevron.VerticalAlignment = VerticalAlignment.Center;
         chevron.RenderTransformOrigin = new Point(.5, .5); chevron.RenderTransform = new RotateTransform(-90);
         var open = DeedButton(chevron, width, height, detail);
-        AutomationProperties.SetName(open, Loc.T("查看详情", "Details"));
+        AutomationProperties.SetName(open, Loc.T("檢視詳情", "Details"));
         strip.Children.Add(open);
         return strip;
     }
@@ -165,7 +165,7 @@ public partial class MainWindow
         return button;
     }
     // The line that gives way to the buttons: its text (the size, the time, "已不存在") and, in its place under the pointer, the
-    // buttons, at the side given. It is the row's end as the one-line row has one (RowEnd), so the row lights, flashes "已粘贴"
+    // buttons, at the side given. It is the row's end as the one-line row has one (RowEnd), so the row lights, flashes "已貼上"
     // and takes a folder's figures as that row does.
     private static Grid DeedLine(TextBlock label, StackPanel strip, double height, HorizontalAlignment side)
     {
@@ -179,7 +179,7 @@ public partial class MainWindow
 
     // ---- A file under a large icon (FileView.Grid, Row and Column) ----
     // The icon, at the size ShelfLayout gives the page's step, and under it the name on two lines, cut at the end of its stem with
-    // the extension kept (Shelf.TileName). The second line gives way: to the buttons under the pointer, to "已粘贴" after a paste,
+    // the extension kept (Shelf.TileName). The second line gives way: to the buttons under the pointer, to "已貼上" after a paste,
     // and for good to "已不存在" when the file is gone; the name then stands on the first line alone. `width` is the cell's width,
     // which says how many buttons it has room for; in the one row it is also the tile's own width.
     private Border FileTile(TransferFile file, ShelfLayout layout, double width, bool across)
@@ -345,8 +345,8 @@ public partial class MainWindow
         if (TextWidth(file.Name, layout.Body, FontWeights.Normal) > room) WholeNameTip(name, () => file.Name);
         var facts = Label(Facts(), layout.Aux, exists ? Look.Tertiary : WarnColor, HorizontalAlignment.Left);
         Typography.SetNumeralAlignment(facts, FontNumeralAlignment.Tabular);
-        // The row's end as the one-line row has it: empty at rest, the buttons under the pointer, "已粘贴" after a paste. In a
-        // column too narrow for all four buttons beside a name, "在文件夹中显示" goes first.
+        // The row's end as the one-line row has it: empty at rest, the buttons under the pointer, "已貼上" after a paste. In a
+        // column too narrow for all four buttons beside a name, "在資料夾中顯示" goes first.
         var aux = AuxSlot("", layout, () => OpenDetail(ShelfSide.Files, file.Id), extras: FileDeeds(file, exists, layout.FileColumn >= 200 ? 4 : 3));
         // A folder's figures arrive after the row is built (FolderFiguresChanged), a picture's own picture likewise.
         ((RowEnd)aux.Tag).Refresh = () =>
@@ -515,14 +515,14 @@ public partial class MainWindow
             Typography.SetNumeralAlignment(fact, FontNumeralAlignment.Tabular);
             return fact;
         }
-        var when = Fact(clip.Manual ? Loc.T("常用语", "Phrase") : Shelf.WhenExact(clip.Copied, DateTimeOffset.Now));
+        var when = Fact(clip.Manual ? Loc.T("常用語", "Phrase") : Shelf.WhenExact(clip.Copied, DateTimeOffset.Now));
         // Under the pointer nothing of the three lines stays: the buttons take their place, at the size of the one-line row's.
         var strip = DeedStrip(ClipDeeds(clip), () => OpenDetail(ShelfSide.Clipboard, clip.Id), 26, 24, 14);
         strip.Margin = new Thickness(0, 0, -4, 0);
         var more = new Border { Child = strip, HorizontalAlignment = HorizontalAlignment.Right, VerticalAlignment = VerticalAlignment.Center, Visibility = Visibility.Hidden };
         // The second and third lines, which go with the first under the pointer (RowEnd.Others).
         var side = new StackPanel();
-        string holds = clip.Kind == ClipKind.Image ? $"{clip.PixelWidth}×{clip.PixelHeight}" : clip.Kind == ClipKind.Color ? Loc.T("颜色", "Color") : Shelf.Count(clip.Text);
+        string holds = clip.Kind == ClipKind.Image ? $"{clip.PixelWidth}×{clip.PixelHeight}" : clip.Kind == ClipKind.Color ? Loc.T("顏色", "Color") : Shelf.Count(clip.Text);
         side.Children.Add(new Grid { Height = line, Children = { Fact(holds) } });
         // The application the entry was copied from, as its details name it; a phrase has none.
         if (!clip.Manual && clip.Source.Length > 0) side.Children.Add(new Grid { Height = line, Children = { Fact(clip.Source) } });
@@ -573,7 +573,7 @@ public partial class MainWindow
         frame.MouseEnter += (_, _) => Rules(true);
         frame.MouseLeave += (_, _) => Rules(false);
         frame.Child = body;
-        AutomationProperties.SetName(frame, clip.Kind == ClipKind.Image ? Loc.T("图片", "Picture") : Shelf.FirstLine(clip.Text).First);
+        AutomationProperties.SetName(frame, clip.Kind == ClipKind.Image ? Loc.T("圖片", "Picture") : Shelf.FirstLine(clip.Text).First);
         _shelfRows[clip.Id] = (frame, slot);
         AttachRow(frame, slot, ShelfSide.Clipboard, clip.Id, picked: _picked.Contains(clip.Id), click: () => ClickClip(clip), menu: () => ClipMenu(clip), drag: () => ClipDrag(clip));
         if (_flash is { } flash && flash.Id == clip.Id && flash.Until > Environment.TickCount64) ShowFlash(frame, slot, flash.Text);
@@ -622,7 +622,7 @@ public partial class MainWindow
         }
         // The bottom line has room for the note and the time together or for one of them: a color keeps its value, which is what
         // it is, and anything else keeps its time.
-        string time = clip.Manual ? Loc.T("常用语", "Phrase") : Shelf.When(clip.Copied, DateTimeOffset.Now);
+        string time = clip.Manual ? Loc.T("常用語", "Phrase") : Shelf.When(clip.Copied, DateTimeOffset.Now);
         var marked = ClipMarks(clip);
         if (left.Length > 0)
         {
@@ -666,7 +666,7 @@ public partial class MainWindow
         Grid.SetColumn(slot, 2); bottom.Children.Add(slot);
         Grid.SetRow(bottom, 1); body.Children.Add(bottom);
         frame.Child = body;
-        AutomationProperties.SetName(frame, picture ? Loc.T("图片", "Picture") : Shelf.FirstLine(clip.Text).First);
+        AutomationProperties.SetName(frame, picture ? Loc.T("圖片", "Picture") : Shelf.FirstLine(clip.Text).First);
         _shelfRows[clip.Id] = (frame, slot);
         AttachRow(frame, slot, ShelfSide.Clipboard, clip.Id, picked: picked, click: () => ClickClip(clip), menu: () => ClipMenu(clip), drag: () => ClipDrag(clip), rest: rest);
         if (_flash is { } flash && flash.Id == clip.Id && flash.Until > Environment.TickCount64) ShowFlash(frame, slot, flash.Text);

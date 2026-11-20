@@ -81,7 +81,7 @@ public partial class MainWindow
             () => SetCategory(ShelfSide.Clipboard, ids, ShelfData.Favorites, add: !favorite), StarData));
         if (FilingMenu(ShelfSide.Clipboard, ids) is { } filing) menu.Items.Add(filing);
         menu.Items.Add(Separator());
-        menu.Items.Add(Item(Loc.T($"删除 {clips.Count} 条", $"Delete {clips.Count} entries"), () => DeleteClips(clips), MenuIcons.Delete, danger: true));
+        menu.Items.Add(Item(Loc.T($"刪除 {clips.Count} 條", $"Delete {clips.Count} entries"), () => DeleteClips(clips), MenuIcons.Delete, danger: true));
         return menu;
     }
 

@@ -110,7 +110,7 @@ public static class ClockColors
     [
         (Loc.T("日落", "Sunset"), Sunset),
         (Loc.T("海洋", "Ocean"), ["#7CF3FF", "#4FA8FF", "#6A6CFF"]),
-        (Loc.T("极光", "Aurora"), ["#8BFFB0", "#5CE1E6", "#B69CFF"]),
+        (Loc.T("極光", "Aurora"), ["#8BFFB0", "#5CE1E6", "#B69CFF"]),
         (Loc.T("火焰", "Ember"), ["#FFE27A", "#FF9F43", "#FF5E5E"]),
         (Loc.T("霓虹", "Neon"), ["#FF5CF0", "#A66BFF", "#5CE1E6"])
     ];
@@ -306,7 +306,7 @@ public static class PanelSizes
         };
         return (Math.Clamp(width, 440, 1200), Math.Clamp(height, 140, 400));
     }
-    public static string Name(PanelSize size) => size switch { PanelSize.Compact => Loc.T("紧凑", "Compact"), PanelSize.Spacious => Loc.T("宽敞", "Spacious"), _ => Loc.T("标准", "Standard") };
+    public static string Name(PanelSize size) => size switch { PanelSize.Compact => Loc.T("緊湊", "Compact"), PanelSize.Spacious => Loc.T("寬敞", "Spacious"), _ => Loc.T("標準", "Standard") };
 }
 
 // The system monitor page's quick sizes. Unlike the usage page's they do not depend on the applications.
@@ -543,7 +543,7 @@ public sealed class DeckSettings
     // The music page's current lyric, its color chosen as the equalizer's is (EqualizerColor): White is the theme's primary text color.
     public ClockColor MusicLyricColor { get; set; } = ClockColor.Cover;
     public string MusicLyricCustomColor { get; set; } = ClockColors.DefaultCustom;
-    // Offers "网易云音乐 · 完整控制" in the source menu, or alone in its place when nothing plays.
+    // Offers "網易雲音樂 · 完整控制" in the source menu, or alone in its place when nothing plays.
     public bool NeteaseFullControlEntry { get; set; }
     // Restarts a player started the normal way with full control, without asking again; switching it on asks once.
     public bool NeteaseAutoFullControl { get; set; }
@@ -675,7 +675,7 @@ public sealed class DeckSettings
     public ProcessSort MonitorSort { get; set; }
     public MonitorMain MonitorMain { get; set; }
     // The graphics adapter the monitor shows, by its key (GpuSample.Key), and its name to find it by should its ids change and to
-    // name it while it is not connected; null for 自动 (GpuChoice.Auto). Files saved before there was a choice read as 自动.
+    // name it while it is not connected; null for 自動 (GpuChoice.Auto). Files saved before there was a choice read as 自動.
     public string? MonitorGpu { get; set; }
     public string? MonitorGpuName { get; set; }
     // Where the graphics adapters' usage comes from, on the page and the collapsed row alike (GpuUsageSource).
@@ -1086,9 +1086,9 @@ public sealed class SettingsStore(string directory, string? appVersion = null)
                 var own = snapshots.Where(pair => pair.Value is JsonObject && ApplicationVersion.Parse(pair.Key) <= running)
                     .OrderByDescending(pair => ApplicationVersion.Parse(pair.Key)).Select(pair => (JsonObject)pair.Value!.DeepClone()).FirstOrDefault();
                 _loadWarning = own is null
-                    ? () => Loc.T($"设置文件由 BrimDeck {saved.ToString(3)} 保存。当前版本 {_appVersion} 读取其中能识别的设置，之后的修改只保存给 {_appVersion}，不影响 {saved.ToString(3)} 的设置。",
+                    ? () => Loc.T($"設定檔案由 BrimDeck {saved.ToString(3)} 儲存。當前版本 {_appVersion} 讀取其中能識別的設定，之後的修改只儲存給 {_appVersion}，不影響 {saved.ToString(3)} 的設定。",
                         $"The settings file was saved by BrimDeck {saved.ToString(3)}. Version {_appVersion} reads the settings it recognizes; later changes are saved for {_appVersion} only and leave the settings of {saved.ToString(3)} unchanged.")
-                    : () => Loc.T($"设置文件由 BrimDeck {saved.ToString(3)} 保存。当前版本 {_appVersion} 使用自己上次保存的设置，修改不影响 {saved.ToString(3)} 的设置。",
+                    : () => Loc.T($"設定檔案由 BrimDeck {saved.ToString(3)} 儲存。當前版本 {_appVersion} 使用自己上次儲存的設定，修改不影響 {saved.ToString(3)} 的設定。",
                         $"The settings file was saved by BrimDeck {saved.ToString(3)}. Version {_appVersion} uses the settings it saved last; changes leave the settings of {saved.ToString(3)} unchanged.");
                 return SettingsMigrations.Read(own ?? root, running, out _);
             }
@@ -1109,8 +1109,8 @@ public sealed class SettingsStore(string directory, string? appVersion = null)
         {
             var kept = KeepUnreadable();
             _loadWarning = kept is null
-                ? () => Loc.T("无法读取已保存的设置，本次使用默认值。", "The saved settings could not be read. Default settings are used this time.")
-                : () => Loc.T($"无法读取已保存的设置，本次使用默认值。原文件已另存为 {kept}。", $"The saved settings could not be read. Default settings are used this time. The original file is kept as {kept}.");
+                ? () => Loc.T("無法讀取已儲存的設定，本次使用預設值。", "The saved settings could not be read. Default settings are used this time.")
+                : () => Loc.T($"無法讀取已儲存的設定，本次使用預設值。原檔案已另存為 {kept}。", $"The saved settings could not be read. Default settings are used this time. The original file is kept as {kept}.");
             return FirstStart();
         }
     }

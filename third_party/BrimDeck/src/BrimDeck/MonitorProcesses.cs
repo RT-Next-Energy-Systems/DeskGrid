@@ -50,22 +50,22 @@ internal sealed class ProcessListView : FrameworkElement
     {
         _layout = layout; _sort = sort; _view = view; _sortChanged = sortChanged; _hold = hold; _open = open;
         _chosen = new Eased((int)sort, Eased.Seconds * .75);
-        AutomationProperties.SetName(this, Loc.T("进程列表", "Process list"));
+        AutomationProperties.SetName(this, Loc.T("程序列表", "Process list"));
         ClipToBounds = true;
     }
 
     private (int Rows, int Columns) Grid => MonitorLayout.ListGrid(ActualWidth, ActualHeight, _layout.RowHeight);
 
-    // For screen readers: the two sort pills, then each app's row as it shows ("Chrome，CPU 12%，内存 1.2 GB"); invoking a row
+    // For screen readers: the two sort pills, then each app's row as it shows ("Chrome，CPU 12%，記憶體 1.2 GB"); invoking a row
     // opens its card, as a click does.
-    protected override AutomationPeer OnCreateAutomationPeer() => new DrawnPeer(this, AutomationControlType.List, () => Loc.T("进程列表", "Process list"), parts: Parts);
+    protected override AutomationPeer OnCreateAutomationPeer() => new DrawnPeer(this, AutomationControlType.List, () => Loc.T("程序列表", "Process list"), parts: Parts);
     private IEnumerable<DrawnPart> Parts()
     {
-        string[] sorts = [Loc.T("按 CPU 排序", "Sort by CPU"), Loc.T("按内存排序", "Sort by memory")];
+        string[] sorts = [Loc.T("按 CPU 排序", "Sort by CPU"), Loc.T("按記憶體排序", "Sort by memory")];
         for (int i = 0; i < _sortRects.Length && i < sorts.Length; i++)
         {
             var sort = (ProcessSort)i;
-            yield return new DrawnPart("sort " + i, sorts[i] + ((int)_sort == i ? Loc.T("（当前）", " (current)") : ""), _sortRects[i], AutomationControlType.Button,
+            yield return new DrawnPart("sort " + i, sorts[i] + ((int)_sort == i ? Loc.T("（當前）", " (current)") : ""), _sortRects[i], AutomationControlType.Button,
                 () => { if (sort != _sort) _sortChanged(sort); });
         }
         var (rows, columns) = Grid;
@@ -75,7 +75,7 @@ internal sealed class ProcessListView : FrameworkElement
             var box = RowRect(i, rows, columns);
             if (box.Bottom > ActualHeight + .5) continue;
             yield return new DrawnPart(sample.Id, sample.Name + Loc.T("，CPU ", ", CPU ") + MonitorFormat.ProcessShare(sample.CpuPercent, _cores) + "%"
-                + Loc.T("，内存 ", ", memory ") + MonitorFormat.ProcessMemory(sample.MemoryBytes), box, Invoke: () => _open(sample, box));
+                + Loc.T("，記憶體 ", ", memory ") + MonitorFormat.ProcessMemory(sample.MemoryBytes), box, Invoke: () => _open(sample, box));
         }
     }
     private double ColumnWidth(int columns) => columns <= 1 ? ActualWidth : (ActualWidth - ColumnGap * (columns - 1)) / columns;
@@ -97,9 +97,9 @@ internal sealed class ProcessListView : FrameworkElement
         _cores = Math.Max(1, cores);
         var (rows, columns) = Grid;
         int capacity = Math.Max(rows * columns, MonitorLayout.MaximumRows * MonitorLayout.MaximumColumns);
-        if (!reading.TryGet(out var list)) { _rows = []; _message = Loc.T("正在读取进程…", "Reading processes…"); _motion.Clear(); InvalidateVisual(); DrawnPeer.Refresh(this); return; }
+        if (!reading.TryGet(out var list)) { _rows = []; _message = Loc.T("正在讀取程序…", "Reading processes…"); _motion.Clear(); InvalidateVisual(); DrawnPeer.Refresh(this); return; }
         var ranked = list.Ranked(_sort).Take(capacity).ToList();
-        _message = ranked.Count == 0 ? Loc.T("没有进程", "No processes") : "";
+        _message = ranked.Count == 0 ? Loc.T("沒有程序", "No processes") : "";
         bool moving = false;
         var seen = new HashSet<string>();
         for (int slot = 0; slot < ranked.Count; slot++)
@@ -212,7 +212,7 @@ internal sealed class ProcessListView : FrameworkElement
         // The sort pills name the list; the rows speak for themselves.
         double line = MonitorLayout.ListHead - 6, baseline = Math.Round(line / 2 + _layout.Caption * .38);
         // Two pills at the right: CPU and memory, the chosen one filled.
-        string[] names = ["CPU", Loc.T("内存", "Memory")];
+        string[] names = ["CPU", Loc.T("記憶體", "Memory")];
         var texts = names.Select(name => MonitorDraw.Text(name, _layout.Caption, Look.Secondary, ppd)).ToArray();
         double pad = 8, x = w;
         _sortRects = new Rect[2];
@@ -361,7 +361,7 @@ internal sealed class ProcessCard : Border
 
     // For screen readers: the card's app and its figures; the busiest processes follow as its text shows them.
     protected override AutomationPeer OnCreateAutomationPeer() => new DrawnPeer(this, AutomationControlType.Group,
-        () => Loc.T("进程详情：", "Process details: ") + _spoken);
+        () => Loc.T("程序詳情：", "Process details: ") + _spoken);
 
     // look: the look of the panel the card opens on.
     public ProcessCard(double body, double caption, PanelLook? look = null)
@@ -369,14 +369,14 @@ internal sealed class ProcessCard : Border
         var Look = look ?? PanelTheme.Main;
         Width = 248; Padding = new Thickness(14, 12, 14, 12); CornerRadius = new CornerRadius(Look.Corner(12));
         Background = UI.Brush(Look.Hex("popup")); BorderBrush = UI.Brush(Look.Hex("popupBorder")); BorderThickness = new Thickness(1);
-        Cursor = Cursors.Hand; AutomationProperties.SetName(this, Loc.T("进程详情", "Process details"));
+        Cursor = Cursors.Hand; AutomationProperties.SetName(this, Loc.T("程序詳情", "Process details"));
         var stack = new StackPanel();
         var head = new DockPanel { Margin = new Thickness(0, 0, 0, 10) };
         // At the top right, beside the name, which gives up the room it takes.
-        _switch = new Button { Content = Loc.T("打开", "Open"), FontFamily = UI.PanelFont, FontSize = caption, Height = 22, Padding = new Thickness(8, 0, 8, 0),
+        _switch = new Button { Content = Loc.T("開啟", "Open"), FontFamily = UI.PanelFont, FontSize = caption, Height = 22, Padding = new Thickness(8, 0, 8, 0),
             Margin = new Thickness(8, 0, 0, 0), VerticalAlignment = VerticalAlignment.Top, Visibility = Visibility.Collapsed };
         _switch.SetResourceReference(StyleProperty, "PanelOutlineButton");
-        AutomationProperties.SetName(_switch, Loc.T("打开应用窗口", "Open the app's window"));
+        AutomationProperties.SetName(_switch, Loc.T("開啟應用視窗", "Open the app's window"));
         // Looked up again on the click, since the window may have changed since the card last looked; synchronous on purpose:
         // the foreground can only be handed over while this click is being handled.
         _switch.Click += (_, _) => { if (ProcessWindows.Activate(ProcessWindows.Find(_executable))) Switched?.Invoke(); };
@@ -390,7 +390,7 @@ internal sealed class ProcessCard : Border
         titles.Children.Add(_name); titles.Children.Add(_where); head.Children.Add(titles);
         stack.Children.Add(head);
         var figures = new System.Windows.Controls.Primitives.UniformGrid { Columns = 3, Margin = new Thickness(0, 0, 0, 8) };
-        (_cpu, _memory, _count) = (Cell(figures, "CPU", body, caption, Look), Cell(figures, Loc.T("内存", "Memory"), body, caption, Look), Cell(figures, Loc.T("进程", "Processes"), body, caption, Look));
+        (_cpu, _memory, _count) = (Cell(figures, "CPU", body, caption, Look), Cell(figures, Loc.T("記憶體", "Memory"), body, caption, Look), Cell(figures, Loc.T("程序", "Processes"), body, caption, Look));
         stack.Children.Add(figures);
         _members = new StackPanel();
         stack.Children.Add(_members);
@@ -426,7 +426,7 @@ internal sealed class ProcessCard : Border
         _cpu.Text = MonitorFormat.ProcessShare(sample.CpuPercent, cores) + "%";
         _memory.Text = MonitorFormat.ProcessMemory(sample.MemoryBytes);
         _count.Text = Math.Max(1, sample.Members.Count).ToString();
-        _spoken = sample.Name + " · CPU " + _cpu.Text + Loc.T(" · 内存 ", " · memory ") + _memory.Text + Loc.T($" · {_count.Text} 个进程", $" · {_count.Text} processes");
+        _spoken = sample.Name + " · CPU " + _cpu.Text + Loc.T(" · 記憶體 ", " · memory ") + _memory.Text + Loc.T($" · {_count.Text} 個程序", $" · {_count.Text} processes");
         _members.Children.Clear();
         // The busiest of the app's processes, up to five.
         foreach (var member in sample.Members.Take(5))

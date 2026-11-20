@@ -36,13 +36,13 @@ internal static class FramePermission
         Process? process;
         try { process = Process.Start(info); }
         catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
-        { throw new InvalidOperationException(Loc.T("未取得管理员权限", "Administrator rights were not given")); }
+        { throw new InvalidOperationException(Loc.T("未取得管理員許可權", "Administrator rights were not given")); }
         using (process)
         {
-            if (process is null) throw new InvalidOperationException(Loc.T("无法以管理员身份运行", "Could not run as administrator"));
+            if (process is null) throw new InvalidOperationException(Loc.T("無法以管理員身份執行", "Could not run as administrator"));
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
             await process.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
-            if (process.ExitCode != 0) throw new InvalidOperationException(Loc.T("无法加入用户组", "Could not join the group"));
+            if (process.ExitCode != 0) throw new InvalidOperationException(Loc.T("無法加入使用者組", "Could not join the group"));
         }
     }
 

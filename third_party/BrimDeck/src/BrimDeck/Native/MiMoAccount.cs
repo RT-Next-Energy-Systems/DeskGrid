@@ -88,7 +88,7 @@ public sealed class MiMoAccount(string folder)
     // Closing the browser window ends the wait.
     public async Task SignInAsync(CancellationToken cancellation)
     {
-        var browser = FindBrowser() ?? throw new SignInException(Loc.T("未找到 Chrome 或 Edge，无法打开登录页", "Chrome or Edge was not found, so the sign-in page cannot be opened."));
+        var browser = FindBrowser() ?? throw new SignInException(Loc.T("未找到 Chrome 或 Edge，無法開啟登入頁", "Chrome or Edge was not found, so the sign-in page cannot be opened."));
         var profile = Path.Combine(folder, "mimo-sign-in", Convert.ToHexString(RandomNumberGenerator.GetBytes(8)));
         Directory.CreateDirectory(profile);
         var start = new ProcessStartInfo(browser) { UseShellExecute = false };
@@ -97,14 +97,14 @@ public sealed class MiMoAccount(string folder)
         Process? process = null;
         try
         {
-            process = Process.Start(start) ?? throw new SignInException(Loc.T("无法打开登录页", "The sign-in page cannot be opened."));
+            process = Process.Start(start) ?? throw new SignInException(Loc.T("無法開啟登入頁", "The sign-in page cannot be opened."));
             using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
             deadline.CancelAfter(TimeSpan.FromMinutes(10));
             var session = await WaitAsync(process, profile, deadline.Token, cancellation);
             Save(session.Serialize());
         }
         catch (OperationCanceledException) when (!cancellation.IsCancellationRequested)
-        { throw new SignInException(Loc.T("登录等待超时，请重新登录", "Signing in took too long. Sign in again.")); }
+        { throw new SignInException(Loc.T("登入等待超時，請重新登入", "Signing in took too long. Sign in again.")); }
         finally
         {
             try { if (process is { HasExited: false }) process.Kill(true); } catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception) { }
@@ -130,8 +130,8 @@ public sealed class MiMoAccount(string folder)
         var waitPort = Stopwatch.StartNew();
         while (socket is null)
         {
-            if (process.HasExited) throw new SignInException(Loc.T("登录窗口已关闭", "The sign-in window was closed."));
-            if (waitPort.Elapsed > TimeSpan.FromSeconds(30)) throw new SignInException(Loc.T("无法连接登录窗口，请关闭浏览器窗口后重试", "The sign-in window cannot be reached. Close the browser window and try again."));
+            if (process.HasExited) throw new SignInException(Loc.T("登入視窗已關閉", "The sign-in window was closed."));
+            if (waitPort.Elapsed > TimeSpan.FromSeconds(30)) throw new SignInException(Loc.T("無法連線登入視窗，請關閉瀏覽器視窗後重試", "The sign-in window cannot be reached. Close the browser window and try again."));
             try
             {
                 var lines = File.ReadAllLines(Path.Combine(profile, "DevToolsActivePort"));
@@ -148,7 +148,7 @@ public sealed class MiMoAccount(string folder)
         for (int id = 1; ; id++)
         {
             await Task.Delay(1000, deadline);
-            if (process.HasExited) throw new SignInException(Loc.T("登录窗口已关闭，未保存登录", "The sign-in window was closed before signing in."));
+            if (process.HasExited) throw new SignInException(Loc.T("登入視窗已關閉，未儲存登入", "The sign-in window was closed before signing in."));
             var cookies = (await CallAsync(client, id, "Storage.getCookies", deadline)).Get("cookies").Items()
                 .Select(c => (c.Get("name").Text(), c.Get("value").Text(), c.Get("domain").Text())).ToList();
             var session = MiMoUsage.Session(cookies);
@@ -188,9 +188,9 @@ public sealed class MiMoAccount(string folder)
             do
             {
                 result = await client.ReceiveAsync(buffer, cancellation);
-                if (result.MessageType == WebSocketMessageType.Close) throw new SignInException(Loc.T("登录窗口已关闭", "The sign-in window was closed."));
+                if (result.MessageType == WebSocketMessageType.Close) throw new SignInException(Loc.T("登入視窗已關閉", "The sign-in window was closed."));
                 message.Write(buffer, 0, result.Count);
-                if (message.Length > 8 * 1024 * 1024) throw new SignInException(Loc.T("无法读取登录结果", "The sign-in cannot be read."));
+                if (message.Length > 8 * 1024 * 1024) throw new SignInException(Loc.T("無法讀取登入結果", "The sign-in cannot be read."));
             } while (!result.EndOfMessage);
             using var doc = JsonDocument.Parse(message.ToArray());
             if (doc.RootElement.Get("id").Number() != id) continue;

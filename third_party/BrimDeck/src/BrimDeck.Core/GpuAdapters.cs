@@ -189,7 +189,7 @@ public static class GpuReadings
 // Which adapter the monitor shows.
 public static class GpuChoice
 {
-    // 自动: the discrete adapter with the most dedicated memory, the one games and renders run on. Without one, the adapter shown
+    // 自動: the discrete adapter with the most dedicated memory, the one games and renders run on. Without one, the adapter shown
     // before while it is there, else the busiest at the time. It never moves to another adapter because that one became busier:
     // on a laptop the integrated adapter draws the desktop and is busy whenever the discrete one rests, so following the load
     // would bring back the jumping between adapters this choice is for. The other adapters are a click away on the page.
@@ -239,8 +239,8 @@ public static class GpuChoice
         return count == 1 ? named : -1;
     }
 
-    // The adapter to show for a saved choice (null for 自动), falling back to 自动 while the chosen one is not there. automatic:
-    // 自动 chose it, so it is the adapter to keep (previousAuto) next time. upgrade: the key to save the choice under now, when it
+    // The adapter to show for a saved choice (null for 自動), falling back to 自動 while the chosen one is not there. automatic:
+    // 自動 chose it, so it is the adapter to keep (previousAuto) next time. upgrade: the key to save the choice under now, when it
     // was found by an older or weaker mark than its key; null otherwise.
     public static GpuSample? Resolve(IReadOnlyList<GpuSample> gpus, string? key, string? name, ulong previousAuto, out bool automatic, out string? upgrade)
     {
@@ -261,9 +261,9 @@ public static class GpuChoice
 
     public static string KindName(GpuKind kind) => kind switch
     {
-        GpuKind.Discrete => Loc.T("独显", "Discrete"), GpuKind.Integrated => Loc.T("核显", "Integrated"), _ => ""
+        GpuKind.Discrete => Loc.T("獨顯", "Discrete"), GpuKind.Integrated => Loc.T("核顯", "Integrated"), _ => ""
     };
-    // "NVIDIA GeForce RTX 4060 Laptop GPU（独显）", for lists and tooltips.
+    // "NVIDIA GeForce RTX 4060 Laptop GPU（獨顯）", for lists and tooltips.
     public static string Describe(string? name, GpuKind kind)
     {
         string shown = name is { Length: > 0 } ? name : "GPU", word = KindName(kind);

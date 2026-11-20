@@ -46,8 +46,8 @@ public sealed record MusicLayout(MusicMetrics Metrics, double Density, double Bo
     double ModeX, bool ShowFullControl, double FullControlRoom)
 {
     // The entry label shortens step by step to the room right of the transport.
-    // In English the second step keeps the meaning in two words; "En…" in Segoe UI is narrower than "启…".
-    public static string[] FullControlLabels => Loc.IsEnglish ? ["Enable full control", "Full control", "Enable…", "En…"] : ["启用完整控制", "启用完整…", "启用…", "启…"];
+    // In English the second step keeps the meaning in two words; "En…" in Segoe UI is narrower than "啟…".
+    public static string[] FullControlLabels => Loc.IsEnglish ? ["Enable full control", "Full control", "Enable…", "En…"] : ["啟用完整控制", "啟用完整…", "啟用…", "啟…"];
     // The chrome is 6 padding and a 1 border on each side. The minimum holds the shortest label at the largest (13) type.
     public const double FullControlGap = 8, FullControlChrome = 14, FullControlMinimum = 38;
     // Height sets the density, from the smallest preset (0) to the largest panel (3). Width caps it: the narrowest
@@ -209,5 +209,5 @@ public static class MusicPlaybackModes
         return modes.Count == 0 ? Current(track) : modes[(modes.IndexOf(Current(track)) + 1) % modes.Count];
     }
     public static string Label(MusicPlaybackMode mode) => mode switch
-    { MusicPlaybackMode.List => Loc.T("列表循环", "Repeat all"), MusicPlaybackMode.Track => Loc.T("单曲循环", "Repeat one"), MusicPlaybackMode.Shuffle => Loc.T("随机播放", "Shuffle"), _ => Loc.T("顺序播放", "In order") };
+    { MusicPlaybackMode.List => Loc.T("列表迴圈", "Repeat all"), MusicPlaybackMode.Track => Loc.T("單曲迴圈", "Repeat one"), MusicPlaybackMode.Shuffle => Loc.T("隨機播放", "Shuffle"), _ => Loc.T("順序播放", "In order") };
 }

@@ -202,7 +202,7 @@ public static class Profiles
     // A new profile with every setting of its own at its default, as a new user starts.
     public static DeckProfile Blank(string name) => new() { Name = name, Values = (JsonObject)Defaults.Value.DeepClone() };
 
-    // A name not yet taken: "专注", then "专注 2", "专注 3" and so on.
+    // A name not yet taken: "專注", then "專注 2", "專注 3" and so on.
     public static string FreeName(DeckSettings settings, string name, Guid? except = null)
     {
         name = Clean(name);

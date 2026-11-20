@@ -7,7 +7,7 @@ namespace BrimDeck;
 
 // How the panel's drawn parts read to UI Automation (Narrator, Windows' other screen readers). An element that draws itself has
 // no automation peer, so a screen reader passes over it even when it has a name. DrawnPeer gives it one: what it shows now as its
-// name ("CPU 占用 47% · 62 °C"), what kind of thing it is (a button, a progress bar, a list), a share as a read-only value from
+// name ("CPU 佔用 47% · 62 °C"), what kind of thing it is (a button, a progress bar, a list), a share as a read-only value from
 // 0 to 100, and, for one that takes clicks, the click. Its tooltip stays its help text. Parts drawn inside one element (a list's
 // rows, a graph's columns) are its children (DrawnPart); each is read in turn and placed where it is drawn.
 internal sealed class DrawnPeer : FrameworkElementAutomationPeer, IInvokeProvider, IRangeValueProvider

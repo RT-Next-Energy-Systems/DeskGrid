@@ -54,15 +54,15 @@ internal sealed class FramesBlock : FrameworkElement
     {
         if (_frames is not { } frames)
         {
-            ToolTip = Loc.T("帧率：暂无读数。一直没有读数时，请在设置的“系统监控”页授权读取帧率。",
+            ToolTip = Loc.T("幀率：暫無讀數。一直沒有讀數時，請在設定的“系統監控”頁授權讀取幀率。",
                 "Frame rate: no reading. If none comes, allow reading frame rates on the System monitor page of the settings.");
-            AutomationProperties.SetName(this, Loc.T("帧率", "Frame rate"));
+            AutomationProperties.SetName(this, Loc.T("幀率", "Frame rate"));
             return;
         }
-        ToolTip = Loc.T($"{frames.Program}：每秒 {Figure} 帧", $"{frames.Program}: {Figure} frames a second")
-            + Loc.T("\n前台程序的帧率；前台程序不在绘制时，显示最近一个在绘制的程序。", "\nThe frame rate of the program in front; while it draws nothing, of the last program that did.")
-            + (frames.Refresh is { } hertz ? Loc.T($"\n所在显示器刷新率 {Hertz(hertz)}", $"\nIts display's refresh rate: {Hertz(hertz)}") : "");
-        AutomationProperties.SetName(this, Loc.T($"帧率 {Figure} FPS，{frames.Program}", $"Frame rate {Figure} FPS, {frames.Program}"));
+        ToolTip = Loc.T($"{frames.Program}：每秒 {Figure} 幀", $"{frames.Program}: {Figure} frames a second")
+            + Loc.T("\n前臺程式的幀率；前臺程式不在繪製時，顯示最近一個在繪製的程式。", "\nThe frame rate of the program in front; while it draws nothing, of the last program that did.")
+            + (frames.Refresh is { } hertz ? Loc.T($"\n所在顯示器重新整理率 {Hertz(hertz)}", $"\nIts display's refresh rate: {Hertz(hertz)}") : "");
+        AutomationProperties.SetName(this, Loc.T($"幀率 {Figure} FPS，{frames.Program}", $"Frame rate {Figure} FPS, {frames.Program}"));
     }
 
     protected override Size MeasureOverride(Size availableSize) => new(0, Height);
@@ -130,7 +130,7 @@ internal sealed class FigureGauge : FrameworkElement
     private Eased _share, _hover = new(0, Eased.Hover);
     private bool _hasShare, _pressed;
     private string _number = "—", _unit = "", _detail = "", _tip = "", _detailColor = PanelTheme.Main.Tertiary;
-    // The graphics memory's share after the detail ("显存 26%"), in its own level's color, apart from the temperature's.
+    // The graphics memory's share after the detail ("視訊記憶體 26%"), in its own level's color, apart from the temperature's.
     private string _memory = "", _memoryColor = PanelTheme.Main.Tertiary;
     private readonly DrawingCache<(string, string, string, string, string, string, string, double, double, double)> _text = new();
     private readonly DrawingCache<(IReadOnlyList<double>, double, double)> _trend = new();
@@ -161,14 +161,14 @@ internal sealed class FigureGauge : FrameworkElement
         }
     }
 
-    // For screen readers: the reading and what it shows after the figure, "CPU 占用 47% · 62 °C", and on the small gauge what a
+    // For screen readers: the reading and what it shows after the figure, "CPU 佔用 47% · 62 °C", and on the small gauge what a
     // click does (its Button name, which can change); the tooltip stays the help text.
     protected override AutomationPeer OnCreateAutomationPeer() => new DrawnPeer(this, AutomationControlType.ProgressBar, Spoken,
         () => Clicked?.Invoke(), () => _button, () => _hasShare ? _share.Target : null);
     private string Spoken()
     {
         string name = _letter switch { "C" => "CPU", "G" => "GPU", _ => _letter };
-        string reading = _hasShare ? Loc.T($"{name} 占用 {_number}{_unit}", $"{name} usage {_number}{_unit}") : name + " · " + DrawnPeer.FirstLine(ToolTip);
+        string reading = _hasShare ? Loc.T($"{name} 佔用 {_number}{_unit}", $"{name} usage {_number}{_unit}") : name + " · " + DrawnPeer.FirstLine(ToolTip);
         return reading + (_detail.Length > 0 ? " · " + _detail : "") + (_memory.Length > 0 ? " · " + _memory : "") + (_button && !string.IsNullOrEmpty(_buttonName) ? Loc.T("，", ", ") + _buttonName : "");
     }
 
@@ -304,7 +304,7 @@ internal sealed class ColumnGraph : FrameworkElement
     private readonly string _name, _action;
     public event Action? Clicked;
 
-    // name: what the graph shows, for screen readers ("CPU 各核心占用").
+    // name: what the graph shows, for screen readers ("CPU 各核心佔用").
     // display: columns, or a dot matrix of the cores as chosen in the settings (CoreDisplay); only the processor's graph takes it.
     public ColumnGraph(double maxColumn, double label, bool labels, double gap = 3, string? button = null, string name = "", CoreDisplay display = CoreDisplay.Columns)
     {
@@ -499,7 +499,7 @@ internal sealed class ColumnGraph : FrameworkElement
 }
 
 // One wide column, as ftop draws the GPU beside the cores: the fill is usage, the line its memory in use against its size, which
-// is also written at the top ("显存 18%", or the share alone where the column is too narrow for the words, or nothing where it is too short),
+// is also written at the top ("視訊記憶體 18%", or the share alone where the column is too narrow for the words, or nothing where it is too short),
 // so the memory shows without pointing at the block.
 internal sealed class BlockGauge : FrameworkElement
 {
@@ -522,7 +522,7 @@ internal sealed class BlockGauge : FrameworkElement
 
     protected override AutomationPeer OnCreateAutomationPeer() => new DrawnPeer(this, AutomationControlType.Button, Spoken, () => Clicked?.Invoke());
     // For screen readers, named as the block it is, with the memory its line shows, so it never reads the same as the small GPU figure beside the main
-    // gauge that does the same thing (I-02): "GPU 占用块：占用 12% · 显存 18%，切换为以 GPU 为主".
+    // gauge that does the same thing (I-02): "GPU 佔用塊：佔用 12% · 視訊記憶體 18%，切換為以 GPU 為主".
     // Without a reading it says what the tooltip says (the adapter has none, and why), never a usage of zero.
     private string Spoken() => MonitorSpeech.GpuBlock(_hasValue ? _value.Target : null, _hasTick ? _tick.Target : null, DrawnPeer.FirstLine(ToolTip), _action);
 
@@ -535,7 +535,7 @@ internal sealed class BlockGauge : FrameworkElement
         if (tick is { } t) moving |= _tick.Set(t, motion && _hasTick);
         _hasTick = tick is not null;
         _short = tick is { } share ? MonitorFormat.Percent(share) + "%" : "";
-        _label = tick is null ? "" : Loc.T("显存 ", "VRAM ") + _short;
+        _label = tick is null ? "" : Loc.T("視訊記憶體 ", "VRAM ") + _short;
         if (moving) Motion.Start(this, Step); else InvalidateVisual();
     }
     private bool Step(double now) { InvalidateVisual(); return _value.Moving(now) || _tick.Moving(now) || _hover.Moving(now); }
@@ -602,7 +602,7 @@ internal sealed class MemoryBlock : FrameworkElement
         Height = compact ? Math.Ceiling(body * 1.7) : Math.Ceiling(body * 1.7 + 6 + 5 + 5 + 3);
     }
 
-    // For screen readers: "物理内存 63% · 正常", the memory in use as its value.
+    // For screen readers: "實體記憶體 63% · 正常", the memory in use as its value.
     protected override AutomationPeer OnCreateAutomationPeer() => new DrawnPeer(this, AutomationControlType.ProgressBar, () => DrawnPeer.FirstLine(ToolTip),
         share: () => _memory?.UsedFraction);
 
@@ -613,17 +613,17 @@ internal sealed class MemoryBlock : FrameworkElement
         {
             moving |= _used.Set(memory.UsedFraction, motion); moving |= _cached.Set(memory.CachedFraction, motion); moving |= _commit.Set(memory.CommitFraction, motion);
             _memory = memory;
-            ToolTip = Loc.T("物理内存 ", "Physical memory ") + MonitorFormat.Percent(memory.UsedFraction) + "% · " + Level(memory.Level) + "\n" + Loc.T("缓存 ", "Cached ") + MonitorFormat.Gigabytes(memory.Cached)
-                + " GB\n" + Loc.T("已提交 ", "Committed ") + MonitorFormat.Gigabytes(memory.CommitUsed) + " / " + MonitorFormat.Gigabytes(memory.CommitLimit) + " GB" + Loc.T("（下方细线）", " (the thin line)");
+            ToolTip = Loc.T("實體記憶體 ", "Physical memory ") + MonitorFormat.Percent(memory.UsedFraction) + "% · " + Level(memory.Level) + "\n" + Loc.T("快取 ", "Cached ") + MonitorFormat.Gigabytes(memory.Cached)
+                + " GB\n" + Loc.T("已提交 ", "Committed ") + MonitorFormat.Gigabytes(memory.CommitUsed) + " / " + MonitorFormat.Gigabytes(memory.CommitLimit) + " GB" + Loc.T("（下方細線）", " (the thin line)");
         }
-        else { _memory = null; ToolTip = Loc.T("暂无读数：", "No reading: ") + reading.Reason; }
+        else { _memory = null; ToolTip = Loc.T("暫無讀數：", "No reading: ") + reading.Reason; }
         if (moving) Motion.Start(this, now => { InvalidateVisual(); return _used.Moving(now) || _cached.Moving(now) || _commit.Moving(now); }); else InvalidateVisual();
     }
 
     protected override Size MeasureOverride(Size availableSize) => new(0, Height);
 
     private static string Level(MemoryLevel level) => level switch
-    { MemoryLevel.Critical => Loc.T("紧张", "Critical"), MemoryLevel.Elevated => Loc.T("偏高", "Elevated"), _ => Loc.T("正常", "Normal") };
+    { MemoryLevel.Critical => Loc.T("緊張", "Critical"), MemoryLevel.Elevated => Loc.T("偏高", "Elevated"), _ => Loc.T("正常", "Normal") };
 
     protected override void OnRender(DrawingContext drawing)
     {
@@ -703,18 +703,18 @@ internal sealed class NetworkBlock : FrameworkElement
         Height = Math.Ceiling(body * 1.7);
     }
 
-    // For screen readers: "网络 · 下载 1.2 MB/s · 上传 85 KB/s".
-    protected override AutomationPeer OnCreateAutomationPeer() => new DrawnPeer(this, AutomationControlType.Text, () => Loc.T("网络 · ", "Network · ") + DrawnPeer.FirstLine(ToolTip));
+    // For screen readers: "網路 · 下載 1.2 MB/s · 上傳 85 KB/s".
+    protected override AutomationPeer OnCreateAutomationPeer() => new DrawnPeer(this, AutomationControlType.Text, () => Loc.T("網路 · ", "Network · ") + DrawnPeer.FirstLine(ToolTip));
 
     public void Set(Reading<NetworkSample> reading, IReadOnlyList<double> down, IReadOnlyList<double> up)
     {
         _rates = reading.OrDefault; _reason = reading.HasValue ? "" : reading.Reason; _down = down; _up = up;
-        // The traffic over the period chosen after each rate: "下载 1.2 MB/s，当天 2.31 GB".
+        // The traffic over the period chosen after each rate: "下載 1.2 MB/s，當天 2.31 GB".
         string Total(double? bytes) => bytes is { } moved ? Loc.T("，", ", ") + TrafficPeriods.Name(_rates!.TotalPeriod) + " " + MonitorFormat.Total(moved).Text : "";
-        string? downText = _rates is { } d && _download ? Loc.T("下载 ", "Download ") + MonitorFormat.Rate(d.DownBytesPerSecond).Text + Total(d.DownTotalBytes) : null;
-        string? upText = _rates is { } u && _upload ? Loc.T("上传 ", "Upload ") + MonitorFormat.Rate(u.UpBytesPerSecond).Text + Total(u.UpTotalBytes) : null;
+        string? downText = _rates is { } d && _download ? Loc.T("下載 ", "Download ") + MonitorFormat.Rate(d.DownBytesPerSecond).Text + Total(d.DownTotalBytes) : null;
+        string? upText = _rates is { } u && _upload ? Loc.T("上傳 ", "Upload ") + MonitorFormat.Rate(u.UpBytesPerSecond).Text + Total(u.UpTotalBytes) : null;
         ToolTip = _rates is not null ? string.Join(" · ", (_uploadFirst ? new[] { upText, downText } : [downText, upText]).OfType<string>())
-            : Loc.T("暂无读数：", "No reading: ") + _reason;
+            : Loc.T("暫無讀數：", "No reading: ") + _reason;
         InvalidateVisual();
     }
 
@@ -810,7 +810,7 @@ internal sealed class StorageBlock : FrameworkElement
 
     // For screen readers: a list of the volumes' entries, each read as its line shows it; the entries lie as OnRender places them,
     // filled left to right across the columns.
-    protected override AutomationPeer OnCreateAutomationPeer() => new DrawnPeer(this, AutomationControlType.List, () => Loc.T("硬盘", "Drives"), parts: Parts);
+    protected override AutomationPeer OnCreateAutomationPeer() => new DrawnPeer(this, AutomationControlType.List, () => Loc.T("硬碟", "Drives"), parts: Parts);
     private IEnumerable<DrawnPart> Parts()
     {
         if (_shown.Target <= 0) yield break;

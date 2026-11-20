@@ -16,6 +16,12 @@ The code is BrimDeck's own. Only what the integration needs was changed:
 - **Added** `App.DeskGrid.cs`: when started with `--deskgrid <pid>` BrimDeck ends when that process ends, does not register itself
   to start with Windows (`StartupRegistration`), does not check for updates on its own (`StartBackgroundUpdates`), and a second
   start with `--quit` makes the running copy leave cleanly (`App.xaml.cs`, `OnStartup`).
+- **Traditional Chinese**: every Simplified Chinese text of the copied source (interface texts, labels, comments, the built-in
+  themes' names) was converted to Traditional Chinese with OpenCC (`s2twp`), so the Chinese interface of NotiLand is Traditional.
+  Left as they are, because they match text of other programs: NetEase Cloud Music's log lines and its registry display name,
+  the lyric notices of NetEase, and the quotes of NetEase and KuGou's own (Simplified) menus. The keyword tables of
+  `Devices.cs` and `PhoneLinkCard.cs` keep the Simplified words and got the Traditional ones added. The settings tag for the
+  Chinese interface is still `zh-CN` (it is stored in BrimDeck's settings), the text is Traditional.
 - **Not copied**: BrimDeck's tests, documentation, installer and scripts.
 - `Directory.Build.props` and `.editorconfig` keep DeskGrid's build rules (warnings as errors, style) off this folder.
 

@@ -88,7 +88,7 @@ public partial class MainWindow
     private PowerOptions PowerBlockFor(bool animate) => Native.BatteryProvider.SystemHasBattery
         ? new(PowerStyle.For(MonitorThemeColors.For(Settings, Look), Look), BatteryModel.LowPercent, true, Native.BatteryProvider.Quick(), animate)
         : new(PowerStyle.For(MonitorThemeColors.For(Settings, Look), Look), BatteryModel.LowPercent, false, default, animate);
-    private static MonitorSnapshot WaitingSnapshot => MonitorSnapshot.Empty(Environment.ProcessorCount, Loc.T("正在读取", "Reading"));
+    private static MonitorSnapshot WaitingSnapshot => MonitorSnapshot.Empty(Environment.ProcessorCount, Loc.T("正在讀取", "Reading"));
 
     private bool MonitorMotion => Animates;
 
@@ -183,13 +183,13 @@ public partial class MainWindow
     {
         if (plan.Kind is not (ExpandedKind.Empty or ExpandedKind.Unavailable)) return null;
         bool none = plan.Kind == ExpandedKind.Empty;
-        string title = none ? Loc.T("还没有选择要显示的监控项", "No readings chosen") : Loc.T("选中的监控项在这台电脑上读不到", "The chosen readings are not available on this PC");
-        string note = none ? Loc.T("在设置中选择展开时显示的项目。选择之前展开页不会读取任何数据。", "Choose what the expanded page shows in settings. The expanded page reads nothing until you do.")
-            : Loc.T("可以在设置中换成其他监控项。", "You can choose other readings in settings.");
+        string title = none ? Loc.T("還沒有選擇要顯示的監控項", "No readings chosen") : Loc.T("選中的監控項在這臺電腦上讀不到", "The chosen readings are not available on this PC");
+        string note = none ? Loc.T("在設定中選擇展開時顯示的專案。選擇之前展開頁不會讀取任何資料。", "Choose what the expanded page shows in settings. The expanded page reads nothing until you do.")
+            : Loc.T("可以在設定中換成其他監控項。", "You can choose other readings in settings.");
         var panel = new StackPanel { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
         panel.Children.Add(Label(title, plan.Body + 1, Look.Secondary, HorizontalAlignment.Center));
         panel.Children.Add(Label(note, plan.Caption + .5, Look.Tertiary, HorizontalAlignment.Center, top: 4));
-        var open = PillButton(Loc.T("打开设置", "Open settings"), primary: false, () => _app.OpenSettingsPage(SettingsWindow.MonitorSettingsPage));
+        var open = PillButton(Loc.T("開啟設定", "Open settings"), primary: false, () => _app.OpenSettingsPage(SettingsWindow.MonitorSettingsPage));
         open.Margin = new Thickness(0, 10, 0, 0); open.HorizontalAlignment = HorizontalAlignment.Center; panel.Children.Add(open);
         AutomationProperties.SetName(panel, title + ". " + note);
         return panel;

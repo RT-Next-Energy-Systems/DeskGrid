@@ -36,7 +36,7 @@ internal sealed class HsvColorPicker : StackPanel
         var square = new Grid { Width = width, Height = height, Background = Brushes.Transparent, Focusable = true, FocusVisualStyle = null, Cursor = Cursors.Cross };
         square.Children.Add(layers);
         var squareCanvas = new Canvas { IsHitTestVisible = false }; squareCanvas.Children.Add(_squareThumb); square.Children.Add(squareCanvas);
-        AutomationProperties.SetName(square, Loc.T("饱和度和亮度", "Saturation and brightness"));
+        AutomationProperties.SetName(square, Loc.T("飽和度和亮度", "Saturation and brightness"));
         Drag(square, p => { _s = Math.Clamp(p.X / width, 0, 1); _v = 1 - Math.Clamp(p.Y / height, 0, 1); });
         square.KeyDown += (_, e) =>
         {

@@ -38,7 +38,7 @@ public sealed partial class SettingsWindow
     }
 
     // An info mark (ⓘ). A Border has no automation peer, so a screen reader would find the mark's name and description empty:
-    // this one reads as a button named for its setting ("开机自启动说明") with the description as its help text (AttachSettingHelp),
+    // this one reads as a button named for its setting ("開機自啟動說明") with the description as its help text (AttachSettingHelp),
     // and invoking it opens or closes the description, as hovering or focusing it does.
     private sealed class HelpMark : Border
     {
@@ -62,7 +62,7 @@ public sealed partial class SettingsWindow
             AutomationProperties.SetHelpText(info, description.Text);
         }
         UpdateHelp();
-        AutomationProperties.SetName(info, Loc.T(title + "说明", "About " + title));
+        AutomationProperties.SetName(info, Loc.T(title + "說明", "About " + title));
         info.ToolTipOpening += (_, _) => UpdateHelp();
         // WPF normally keeps a tooltip open over the popup and the gap below its owner.
         // Help icons own the hover boundary; reopening here also handles immediate re-entry.
@@ -134,11 +134,11 @@ public sealed partial class SettingsWindow
         var slider = new Slider { Style=(Style)FindResource("SettingsSlider"),Minimum=min,Maximum=max,Value=Math.Clamp(value,min,max),
             SmallChange=tick,LargeChange=tick*2,TickFrequency=tick,IsSnapToTickEnabled=true,IsMoveToPointEnabled=true,VerticalAlignment=VerticalAlignment.Center };
         var input = new TextBox { Style=(Style)FindResource("SettingsNumber"),Width=40,Text=slider.Value.ToString("0",CultureInfo.InvariantCulture),VerticalAlignment=VerticalAlignment.Center };
-        AutomationProperties.SetName(slider,title); AutomationProperties.SetName(input,Loc.T(title+"数值", title+" value"));
+        AutomationProperties.SetName(slider,title); AutomationProperties.SetName(input,Loc.T(title+"數值", title+" value"));
         var units=TextLine(unit,10,TextTertiary);units.Margin=new Thickness(4,0,6,0);units.VerticalAlignment=VerticalAlignment.Center;
         var minus=new RepeatButton { Style=(Style)FindResource("SettingsStepper"),Content="−" };
         var plus=new RepeatButton { Style=(Style)FindResource("SettingsStepper"),Content="+" };
-        AutomationProperties.SetName(minus,Loc.T("减少"+title, "Decrease "+title));AutomationProperties.SetName(plus,Loc.T("增加"+title, "Increase "+title));
+        AutomationProperties.SetName(minus,Loc.T("減少"+title, "Decrease "+title));AutomationProperties.SetName(plus,Loc.T("增加"+title, "Increase "+title));
         // The framed box: the number, its unit, a divider and the steppers (NumberBox).
         var chip=NumberBox.Create(input,units,minus,plus,UI.Brush(Divider),UI.Brush(_palette.Input),UI.Brush(_palette.InputBorder));
         FieldFocus(chip, input, () => UI.Brush(_palette.InputBorder));

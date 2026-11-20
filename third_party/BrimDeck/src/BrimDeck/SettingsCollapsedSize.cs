@@ -30,8 +30,8 @@ public sealed partial class SettingsWindow
     private bool Across(CompactStyle style) => style != CompactStyle.Capsule && S.CompactEdge(style) is ScreenEdge.Left or ScreenEdge.Right;
 
     // The edge the notch or the line hangs from. A new edge builds the page again, for the names of the rows and the anchor row.
-    private FrameworkElement EdgeRow(CompactStyle style) => MusicChoice(Loc.T("贴靠位置", "Edge"), S.CompactEdge(style),
-        [(ScreenEdge.Top, Loc.T("顶部", "Top")), (ScreenEdge.Bottom, Loc.T("底部", "Bottom")), (ScreenEdge.Left, Loc.T("左侧", "Left")), (ScreenEdge.Right, Loc.T("右侧", "Right"))],
+    private FrameworkElement EdgeRow(CompactStyle style) => MusicChoice(Loc.T("貼靠位置", "Edge"), S.CompactEdge(style),
+        [(ScreenEdge.Top, Loc.T("頂部", "Top")), (ScreenEdge.Bottom, Loc.T("底部", "Bottom")), (ScreenEdge.Left, Loc.T("左側", "Left")), (ScreenEdge.Right, Loc.T("右側", "Right"))],
         value =>
         {
             if (S.CompactEdge(style) == value) return;
@@ -46,7 +46,7 @@ public sealed partial class SettingsWindow
         var edge = S.CompactEdge(style);
         if (!_app.PreviewDeck.TaskbarOn(edge)) return null;
         var chosen = DeckSettings.Anchor(style, edge, style == CompactStyle.Line ? S.LineAnchor : S.NotchAnchor);
-        return MusicChoice(Loc.T("贴在", "Hang from"), chosen, [(EdgeAnchor.Screen, Loc.T("屏幕边缘", "Screen edge")), (EdgeAnchor.Taskbar, Loc.T("任务栏边缘", "Taskbar edge"))],
+        return MusicChoice(Loc.T("貼在", "Hang from"), chosen, [(EdgeAnchor.Screen, Loc.T("螢幕邊緣", "Screen edge")), (EdgeAnchor.Taskbar, Loc.T("工作列邊緣", "Taskbar edge"))],
             value =>
             {
                 _builtDock = (style, S.CompactEdge(style), value);
@@ -56,9 +56,9 @@ public sealed partial class SettingsWindow
 
     private void CollapsedSizeOptions(CompactStyle style)
     {
-        var reset = KeepPreview(ActionButton(Loc.T("恢复默认尺寸", "Reset to default size"), () => ResetCollapsedSize(style))); reset.FontSize = 11;
-        AutomationProperties.SetName(reset, Loc.T("恢复" + StyleName(style) + "的默认尺寸", "Reset " + StyleName(style) + " to default size"));
-        SectionTitle(Loc.T("尺寸与位置 · ", "Size and position · ") + StyleName(style), reset);
+        var reset = KeepPreview(ActionButton(Loc.T("恢復預設尺寸", "Reset to default size"), () => ResetCollapsedSize(style))); reset.FontSize = 11;
+        AutomationProperties.SetName(reset, Loc.T("恢復" + StyleName(style) + "的預設尺寸", "Reset " + StyleName(style) + " to default size"));
+        SectionTitle(Loc.T("尺寸與位置 · ", "Size and position · ") + StyleName(style), reset);
         switch (style)
         {
             case CompactStyle.Notch:
@@ -66,9 +66,9 @@ public sealed partial class SettingsWindow
                 bool across = Across(style);
                 var edge = EdgeRow(style);
                 var auto = AutoWidthRow(style);
-                var width = SizeRow(across ? Loc.T("长度", "Length") : Loc.T("宽度", "Width"), S.NotchWidth, CollapsedLimits.NotchWidthMin, CollapsedLimits.NotchWidthMax, 1, v => ChangeCollapsed(s => { s.NotchWidth = v; s.NotchAutoWidth = false; }));
-                var height = SizeRow(across ? Loc.T("内容大小", "Content size") : Loc.T("高度", "Height"), S.NotchHeight, CollapsedLimits.NotchHeightMin, CollapsedLimits.NotchHeightMax, 1, v => ChangeCollapsed(s => s.NotchHeight = v),
-                    help: across ? Loc.T("贴靠左侧或右侧时，此项决定内容的大小；刘海的宽度随内容自动调整。", "At the left or right edge this sets the size of the content; the notch's width follows the content.") : null);
+                var width = SizeRow(across ? Loc.T("長度", "Length") : Loc.T("寬度", "Width"), S.NotchWidth, CollapsedLimits.NotchWidthMin, CollapsedLimits.NotchWidthMax, 1, v => ChangeCollapsed(s => { s.NotchWidth = v; s.NotchAutoWidth = false; }));
+                var height = SizeRow(across ? Loc.T("內容大小", "Content size") : Loc.T("高度", "Height"), S.NotchHeight, CollapsedLimits.NotchHeightMin, CollapsedLimits.NotchHeightMax, 1, v => ChangeCollapsed(s => s.NotchHeight = v),
+                    help: across ? Loc.T("貼靠左側或右側時，此項決定內容的大小；劉海的寬度隨內容自動調整。", "At the left or right edge this sets the size of the content; the notch's width follows the content.") : null);
                 var offset = SizeRow(across ? Loc.T("垂直偏移", "Vertical offset") : Loc.T("水平偏移", "Horizontal offset"), S.NotchOffsetX, 0, 0, 1, v => ChangeCollapsed(s => s.NotchOffsetX = v), centered: true, vertical: across);
                 _refreshCollapsedRanges = () =>
                 {
@@ -85,10 +85,10 @@ public sealed partial class SettingsWindow
             case CompactStyle.Capsule:
             {
                 var auto = AutoWidthRow(style);
-                var width = SizeRow(Loc.T("宽度", "Width"), S.CapsuleWidth, CollapsedLimits.CapsuleWidthMin, CollapsedLimits.CapsuleWidthMax, 1, v => ChangeCollapsed(s => { s.CapsuleWidth = v; s.CapsuleAutoWidth = false; }));
+                var width = SizeRow(Loc.T("寬度", "Width"), S.CapsuleWidth, CollapsedLimits.CapsuleWidthMin, CollapsedLimits.CapsuleWidthMax, 1, v => ChangeCollapsed(s => { s.CapsuleWidth = v; s.CapsuleAutoWidth = false; }));
                 var height = SizeRow(Loc.T("高度", "Height"), S.CapsuleHeight, CollapsedLimits.CapsuleHeightMin, CollapsedLimits.CapsuleHeightMax, 1, v => ChangeCollapsed(s => s.CapsuleHeight = v));
                 var top = SizeRow(Loc.T("垂直偏移", "Vertical offset"), S.CapsuleTop, CollapsedLimits.CapsuleTopMin, Math.Max(CollapsedLimits.CapsuleTopMin, S.CapsuleTop), 1, v => ChangeCollapsed(s => s.CapsuleTop = v),
-                    help: Loc.T("胶囊距屏幕顶部的距离。不超过 10 DIP 时，展开后的面板将会吸附在屏幕顶端。", "Distance between the capsule and the top of the screen. At 10 DIP or less, the expanded panel snaps to the top of the screen."));
+                    help: Loc.T("膠囊距螢幕頂部的距離。不超過 10 DIP 時，展開後的面板將會吸附在螢幕頂端。", "Distance between the capsule and the top of the screen. At 10 DIP or less, the expanded panel snaps to the top of the screen."));
                 var offset = SizeRow(Loc.T("水平偏移", "Horizontal offset"), S.CapsuleOffsetX, 0, 0, 1, v => ChangeCollapsed(s => s.CapsuleOffsetX = v), centered: true);
                 _refreshCollapsedRanges = () =>
                 {
@@ -106,11 +106,11 @@ public sealed partial class SettingsWindow
             }
             default:
             {
-                var length = SizeRow(Loc.T("长度", "Length"), S.LineLength, CollapsedLimits.LineLengthMin, CollapsedLimits.LineLengthMax, 1, v => ChangeCollapsed(s => s.LineLength = v));
-                var thickness = SizeRow(Loc.T("粗细", "Thickness"), S.LineThickness, CollapsedLimits.LineThicknessMin, CollapsedLimits.LineThicknessMax, CollapsedLimits.LineThicknessStep, v => ChangeCollapsed(s => s.LineThickness = CollapsedGeometry.RoundLineThickness(v)));
+                var length = SizeRow(Loc.T("長度", "Length"), S.LineLength, CollapsedLimits.LineLengthMin, CollapsedLimits.LineLengthMax, 1, v => ChangeCollapsed(s => s.LineLength = v));
+                var thickness = SizeRow(Loc.T("粗細", "Thickness"), S.LineThickness, CollapsedLimits.LineThicknessMin, CollapsedLimits.LineThicknessMax, CollapsedLimits.LineThicknessStep, v => ChangeCollapsed(s => s.LineThickness = CollapsedGeometry.RoundLineThickness(v)));
                 bool across = Across(style);
                 var edge = EdgeRow(style);
-                var top = SizeRow(Loc.T("离边距离", "Distance from edge"), S.LineTop, CollapsedLimits.LineTopMin, CollapsedLimits.LineTopMax, 1, v => ChangeCollapsed(s => s.LineTop = v));
+                var top = SizeRow(Loc.T("離邊距離", "Distance from edge"), S.LineTop, CollapsedLimits.LineTopMin, CollapsedLimits.LineTopMax, 1, v => ChangeCollapsed(s => s.LineTop = v));
                 var offset = SizeRow(across ? Loc.T("垂直偏移", "Vertical offset") : Loc.T("水平偏移", "Horizontal offset"), S.LineOffsetX, 0, 0, 1, v => ChangeCollapsed(s => s.LineOffsetX = v), centered: true, vertical: across);
                 _refreshCollapsedRanges = () =>
                 {
@@ -154,7 +154,7 @@ public sealed partial class SettingsWindow
     private FrameworkElement AutoWidthRow(CompactStyle style)
     {
         // On a side edge the notch's width runs down the screen, where the rows call it its length.
-        string title = Across(style) ? Loc.T("自适应长度", "Fit length to content") : Loc.T("自适应宽度", "Fit width to content");
+        string title = Across(style) ? Loc.T("自適應長度", "Fit length to content") : Loc.T("自適應寬度", "Fit width to content");
         var toggle = new CheckBox { Style = (Style)FindResource("SettingsToggle"), IsChecked = S.CompactAutoWidth(style), VerticalAlignment = VerticalAlignment.Center, Padding = new Thickness(0) };
         AutomationProperties.SetName(toggle, title);
         toggle.Checked += (_, _) => ChangeCollapsed(s => s.SetCompactAutoWidth(style, true));
@@ -194,12 +194,12 @@ public sealed partial class SettingsWindow
     private static FrameworkElement[] Rows(params FrameworkElement?[] rows) => [.. rows.OfType<FrameworkElement>()];
 
     // What a double click on the resize handle at an end of the collapsed panel does (MainWindow.Move.cs), for every style.
-    private FrameworkElement GripDoubleClickRow() => MusicChoice(Loc.T("双击调整把手", "Double-click a resize handle"), S.GripDoubleClick,
-        [(GripDoubleClick.AutoWidth, Loc.T("切换自适应宽度", "Toggle auto width")), (GripDoubleClick.Move, Loc.T("移动位置", "Move")), (GripDoubleClick.Off, Loc.T("不显示把手", "Hide handles"))],
+    private FrameworkElement GripDoubleClickRow() => MusicChoice(Loc.T("雙擊調整把手", "Double-click a resize handle"), S.GripDoubleClick,
+        [(GripDoubleClick.AutoWidth, Loc.T("切換自適應寬度", "Toggle auto width")), (GripDoubleClick.Move, Loc.T("移動位置", "Move")), (GripDoubleClick.Off, Loc.T("不顯示把手", "Hide handles"))],
         value => Change(s => s.GripDoubleClick = value),
-        help: Loc.T("鼠标移到刘海、胶囊或指示条的两端时，旁边会出现调整把手。移动位置：双击把手，边缘亮起后，可拖动整个区域调整位置。切换自适应宽度：双击把手，宽度在“跟随内容”和“固定”之间切换。不显示把手：鼠标移到两端时不出现把手，也不能拖动两端调整宽度。",
+        help: Loc.T("滑鼠移到劉海、膠囊或指示條的兩端時，旁邊會出現調整把手。移動位置：雙擊把手，邊緣亮起後，可拖動整個區域調整位置。切換自適應寬度：雙擊把手，寬度在“跟隨內容”和“固定”之間切換。不顯示把手：滑鼠移到兩端時不出現把手，也不能拖動兩端調整寬度。",
             "Pointing at either end of the notch, capsule or indicator shows a resize handle beside it. Move: double-click the handle, and once the edge lights up, drag the whole area to a new place. Toggle auto width: double-click the handle to switch the width between following the content and staying fixed. Hide handles: no handle shows at the ends, and the ends cannot be dragged to change the width."),
-        // Three options; the longest label ("切换自适应宽度", "Toggle auto width") fits its third on one line.
+        // Three options; the longest label ("切換自適應寬度", "Toggle auto width") fits its third on one line.
         width: Loc.IsEnglish ? 360 : 324);
 
     private void ChangeCollapsed(Action<DeckSettings> edit)
@@ -251,12 +251,12 @@ public sealed partial class SettingsWindow
             VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 18, 0)
         });
         var input = new TextBox { Style = (Style)FindResource("SettingsNumber"), Width = 44, Text = Text(slider.Value), VerticalAlignment = VerticalAlignment.Center };
-        AutomationProperties.SetName(slider, title); AutomationProperties.SetName(input, Loc.T(title + "数值", title + " value"));
+        AutomationProperties.SetName(slider, title); AutomationProperties.SetName(input, Loc.T(title + "數值", title + " value"));
         var line = new StackPanel { Orientation = Orientation.Horizontal }; line.Children.Add(input);
         var units = TextLine("DIP", 10, TextTertiary); units.Margin = new Thickness(4, 0, 6, 0); units.VerticalAlignment = VerticalAlignment.Center; line.Children.Add(units);
         var minus = new RepeatButton { Style = (Style)FindResource("SettingsStepper"), Content = "−" };
         var plus = new RepeatButton { Style = (Style)FindResource("SettingsStepper"), Content = "+" };
-        AutomationProperties.SetName(minus, Loc.T("减少" + title, "Decrease " + title)); AutomationProperties.SetName(plus, Loc.T("增加" + title, "Increase " + title));
+        AutomationProperties.SetName(minus, Loc.T("減少" + title, "Decrease " + title)); AutomationProperties.SetName(plus, Loc.T("增加" + title, "Increase " + title));
         line.Children.Add(new Border { Width = 1, Background = UI.Brush(Divider), Margin = new Thickness(2, 5, 3, 5) }); line.Children.Add(minus); line.Children.Add(plus);
         var chip = KeepPreview(new Border
         {
@@ -293,10 +293,10 @@ public sealed partial class SettingsWindow
             if (!centered) return;
             bool left = slider.Maximum > 0 && slider.Value <= slider.Minimum, right = slider.Maximum > 0 && slider.Value >= slider.Maximum;
             note.Text = vertical
-                ? left ? Loc.T("已到达屏幕上边缘，不能再向上移动。", "At the top edge of the screen; it cannot move further up.")
-                    : right ? Loc.T("已到达屏幕下边缘，不能再向下移动。", "At the bottom edge of the screen; it cannot move further down.") : ""
-                : left ? Loc.T("已到达屏幕左边缘，不能再向左移动。", "At the left edge of the screen; it cannot move further left.")
-                    : right ? Loc.T("已到达屏幕右边缘，不能再向右移动。", "At the right edge of the screen; it cannot move further right.") : "";
+                ? left ? Loc.T("已到達螢幕上邊緣，不能再向上移動。", "At the top edge of the screen; it cannot move further up.")
+                    : right ? Loc.T("已到達螢幕下邊緣，不能再向下移動。", "At the bottom edge of the screen; it cannot move further down.") : ""
+                : left ? Loc.T("已到達螢幕左邊緣，不能再向左移動。", "At the left edge of the screen; it cannot move further left.")
+                    : right ? Loc.T("已到達螢幕右邊緣，不能再向右移動。", "At the right edge of the screen; it cannot move further right.") : "";
             note.Visibility = note.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
         control.Refresh = () => { input.Text = Text(slider.Value); UpdateFill(); UpdateEdge(); };
