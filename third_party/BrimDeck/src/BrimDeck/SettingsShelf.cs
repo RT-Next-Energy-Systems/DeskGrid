@@ -15,7 +15,7 @@ namespace BrimDeck;
 // past an exit, for the length chosen), its categories and the phrases; "檔案中轉": its categories. The panel only uses the categories and
 // phrases; they are made and changed here, each category with what goes in by itself (SettingsShelfRules) and, on the clipboard,
 // whether what is in it is kept. "檔案中轉" also sets whether files dragged out are copied or moved.
-public partial class SettingsWindow
+public partial class SettingsPages
 {
     internal const int ClipboardSettingsPage = 13, TransferSettingsPage = 14;
 
@@ -147,7 +147,7 @@ public partial class SettingsWindow
         if (_shelfWatching) return;
         _shelfWatching = true;
         _app.Shelf.Changed += ShelfDataChanged;
-        Closed += (_, _) => _app.Shelf.Changed -= ShelfDataChanged;
+        Released += () => _app.Shelf.Changed -= ShelfDataChanged;
     }
     private void ShelfDataChanged()
     {

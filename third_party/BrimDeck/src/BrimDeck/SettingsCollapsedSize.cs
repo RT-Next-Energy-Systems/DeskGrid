@@ -11,7 +11,7 @@ namespace BrimDeck;
 // Size and position of the collapsed notch, capsule and indicator. The group sits under the chosen style's content
 // options and slides with them when another style card is chosen. The panel at the top of the screen is the preview:
 // while a value is adjusted it stays collapsed in the chosen style, even where window rules would show the indicator.
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     // Updates the offset and top limits of the group on screen; replaced each time the group is built.
     private Action? _refreshCollapsedRanges;

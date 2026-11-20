@@ -5,10 +5,11 @@
 ### Changed
 
 - **NotiLand now runs inside DeskGrid.** BrimDeck was run as a second program beside DeskGrid; its code is now part of DeskGrid's own process: one program in the task manager, no second copy inside the exe (**DeskGrid.exe is about 79 MB again, down from 163 MB**), and starting and stopping it with **Show NotiLand** is instant. BrimDeck's styles apply only to its own windows, so DeskGrid's windows look as before. Its tray icon, settings and data (`%LOCALAPPDATA%\BrimDeck`) are unchanged.
+- **NotiLand's settings are part of DeskGrid's Settings.** BrimDeck's own settings window is gone: its pages (general, collapsed and expanded look, panel theme, shortcuts, displays and profiles, AI usage, model prices, music, system monitor, shelf layout, clipboard, file transfer, clipboard sync, device batteries) are entries below **NotiLand** in the list on the left of DeskGrid's Settings, in DeskGrid's look (the system's light or dark theme), while NotiLand runs. NotiLand speaks the language chosen in DeskGrid. What DeskGrid already has was taken out of BrimDeck's pages: its About page with its update check, its Start with Windows switch, its Exit button and its language choice. The settings window is wider (980 by 720) to fit them.
 
 ### How to use
 
-- Nothing to do: settings → **NotiLand** → **Show NotiLand** works as before.
+- Settings → **NotiLand** → **Show NotiLand** works as before. Once it runs (after **Apply**) its pages are listed below it: choose one to set what NotiLand shows and how it looks. NotiLand's gear and its tray menu open them too.
 
 ## 0.8.0
 

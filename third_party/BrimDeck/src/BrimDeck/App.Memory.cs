@@ -51,7 +51,7 @@ public partial class App
         _trim?.Stop();
         if (Exiting || MemoryPlan.TrimDue(_usedAt, _trimmedAt) is null) return;
         // Someone is using a panel or the settings: try again after the next quiet stretch.
-        if (Decks.Any(deck => deck.IsExpanded || deck.IsResizing) || _settingsWindow is { WindowState: not WindowState.Minimized }) { RequestTrim(); return; }
+        if (Decks.Any(deck => deck.IsExpanded || deck.IsResizing) || _settingsPages is { IsVisible: true }) { RequestTrim(); return; }
         _trimmedAt = DateTime.UtcNow;
         GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
         // Aggressive also returns the memory the heap no longer uses to the system.

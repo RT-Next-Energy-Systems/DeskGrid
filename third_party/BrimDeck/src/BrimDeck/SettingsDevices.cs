@@ -13,7 +13,7 @@ namespace BrimDeck;
 // handle to reorder it, its name (click to rename it) and where it shows, in the collapsed row and on the page. A device the
 // user changed anything for is remembered (DeviceLists.Remember) and stays listed, dimmed, while it is not connected, with a
 // button to forget it. Whether the page shows, and its size, are set with the other pages under 展開外觀.
-public partial class SettingsWindow
+public partial class SettingsPages
 {
     private const int DevicesSettingsPage = 12;
     private const double DeviceRowHeight = 56;
@@ -29,7 +29,7 @@ public partial class SettingsWindow
         {
             _devicesClosing = true;
             _app.DevicesChanged += RefreshDeviceRows;
-            Closed += (_, _) => { _app.DevicesChanged -= RefreshDeviceRows; _app.WatchDevicesForSettings(false); };
+            Released += () => { _app.DevicesChanged -= RefreshDeviceRows; _app.WatchDevicesForSettings(false); };
         }
         Target.Children.Add(holder);
 

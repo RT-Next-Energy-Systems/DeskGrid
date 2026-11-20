@@ -12,7 +12,7 @@ namespace BrimDeck;
 // The displays and profiles page: the named profiles (DeckProfile), where the panels show and the profile each display shows
 // (DisplayProfiles), and the rules that switch profiles while an app runs or is in front (ProfileRule). What it changes is shared by
 // every profile, so it edits the app's settings directly (ChangeShared) rather than the profile being edited.
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     internal const int ProfilesPage = 16;
 

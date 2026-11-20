@@ -12,7 +12,7 @@ namespace BrimDeck;
 // the box cancels, and only the cross inside the box clears it. An arrow shortcut's row (resize, move) reads "Alt + [box] + arrow
 // keys": Alt and the arrows are fixed, so its box records only the other modifiers. While a box records, the app's registered
 // shortcuts are suspended so pressing the current combination records it instead of acting on the panel.
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     // Stops the box that is recording, if any; only one records at a time.
     private Action? _stopHotkeyRecording;

@@ -124,6 +124,8 @@ public partial class App : Application
         _panels.FolderRenamer = RenameFolder;
         _tray = new TrayIcon(Strings.AppName, TrayMenu);
         _noti = new NotiLandHost();
+        _noti.SettingsRequested += page => ShowSettings(page);
+        _noti.StateChanged += () => _settings?.RefreshNotiLandPages();
         _noti.Apply(_configStore.Config.NotiLandEnabled);
         _hotkeys = new HotkeyService();
         _hotkeys.Pressed += (_, id) => RunHotkey(id);
@@ -191,7 +193,7 @@ public partial class App : Application
     private IReadOnlyList<TrayMenuItem> TrayMenu() =>
     [
         new(Strings.TrayNewFolder, CreateFolder),
-        new(Strings.TraySettings, ShowSettings),
+        new(Strings.TraySettings, () => ShowSettings()),
         TrayMenuItem.Separator,
         new(Strings.TrayAutoStart, ToggleAutoStart, _autoStart!.IsEnabled),
         TrayMenuItem.Separator,
@@ -683,11 +685,13 @@ public partial class App : Application
         }
     }
 
-    private void ShowSettings()
+    // NotiLandPage: one of NotiLand's pages (a request from NotiLand itself: -1 for the first) is chosen too.
+    private void ShowSettings(int notiLandPage = int.MinValue)
     {
         if (_settings is { } open)
         {
             open.Activate();
+            ChooseNotiLandPage(open, notiLandPage);
             return;
         }
 
@@ -695,15 +699,24 @@ public partial class App : Application
         settings.Applied += (_, choice) => ApplySettings(choice);
         settings.CheckForUpdates = () => CheckForUpdatesAsync(manual: true, settings);
         settings.PinAllFolders = PinAllFoldersToTaskbar;
-        settings.OpenNotiLandSettings = () => _noti?.OpenSettings();
         settings.EditHotkeys = () => EditHotkeys(settings);
         settings.ExportSettings = () => ExportSettings(settings);
         settings.ImportSettings = () => ImportSettings(settings);
         settings.RestoreBackup = path => RestoreFromFile(settings, path, confirm: true); // One click on a date must not replace every setting unasked.
         settings.Closed += (_, _) => _settings = null;
         _settings = settings;
+        settings.NotiLand = _noti;
         settings.Show();
         settings.Activate();
+        ChooseNotiLandPage(settings, notiLandPage);
+    }
+
+    private static void ChooseNotiLandPage(SettingsWindow settings, int notiLandPage)
+    {
+        if (notiLandPage != int.MinValue)
+        {
+            settings.ShowNotiLandPage(notiLandPage);
+        }
     }
 
     private void CheckAutoBackup()

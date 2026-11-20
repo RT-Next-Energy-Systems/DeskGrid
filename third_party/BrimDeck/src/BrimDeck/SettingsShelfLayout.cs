@@ -15,7 +15,7 @@ namespace BrimDeck;
 // dragging the divider on the panel also sets; stacked, the further ways of bringing the other card forward
 // (MainWindow.ShelfArrange.cs). Below them, for each column the page shows, the way that column shows its entries (ClipView,
 // FileView), chosen on cards as well (ShelfViewPreview).
-public partial class SettingsWindow
+public partial class SettingsPages
 {
     internal const int ShelfLayoutSettingsPage = 17;
 

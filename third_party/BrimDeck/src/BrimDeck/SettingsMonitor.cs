@@ -12,7 +12,7 @@ namespace BrimDeck;
 // The system monitor's own settings page ("系統監控 › 顯示與讀數"), as AI usage and music have theirs: how the expanded page looks
 // and what the collapsed notch or capsule shows. The page's size stays with the other pages' sizes under "展開外觀", and the
 // switches that show the readings in the notch or the capsule stay under "收起外觀 › 顯示內容", next to the quota rings.
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     // The colors come first on their own, as they color both the collapsed readings and the expanded page: a color per reading,
     // with ftop's schemes and the panel theme's colors under them as quick presets. Then what the collapsed row shows and how the

@@ -8,7 +8,7 @@ using BrimDeck.Core;
 
 namespace BrimDeck;
 
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     private readonly List<(RadioButton Tile, ClockStyle Style)> _clockTiles = [];
     private readonly Dictionary<CompactStyle, RadioButton> _styleCards = [];

@@ -18,7 +18,7 @@ namespace BrimDeck;
 // the panel nor the theme cards show it. Saving goes through the custom section's cards: the new-theme card turns into "Save
 // current theme" (a new theme of the user's, chosen at once), and a chosen theme of the user's offers "Overwrite current theme"
 // in place of its own card (the changed values written into its file).
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     private bool _themeAdvancedOpen, _themeReadabilityOpen, _themeRebuildQueued;
 

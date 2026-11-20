@@ -27,7 +27,7 @@ internal static class FieldBox
     public static bool Owns(DependencyObject element) => element.GetValue(FieldProperty) is not null;
 }
 
-// The framed number box of the settings window (SettingsWindow.NumericControls builds it through Create): the number, its unit, a
+// The framed number box of the settings window (SettingsPages.NumericControls builds it through Create): the number, its unit, a
 // divider and two steppers. The whole box is the number's click target, not only the 16 DIP line of text in it (SW-08); the
 // steppers take their own clicks.
 internal static class NumberBox

@@ -10,7 +10,7 @@ using BrimDeck.Core;
 
 namespace BrimDeck;
 
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     private sealed record PriceRow(ModelPrice Model)
     {
@@ -69,7 +69,7 @@ public sealed partial class SettingsWindow
         var factory=new FrameworkElementFactory(typeof(Button));factory.SetValue(StyleProperty,FindResource("SettingsButton"));factory.SetValue(ContentControl.ContentProperty,Loc.T("編輯", "Edit"));factory.SetValue(FontSizeProperty,11d);factory.SetValue(Control.PaddingProperty,new Thickness(4,5,4,5));
         factory.SetValue(AutomationProperties.NameProperty,Loc.T("編輯模型價格", "Edit model price"));
         factory.AddHandler(Button.ClickEvent,new RoutedEventHandler((sender,_)=>{if(((FrameworkElement)sender).DataContext is PriceRow item)CreatePriceEditor(item.Model).ShowDialog();}));
-        _priceTable.Columns.Add(new DataGridTemplateColumn {Width=50,CellTemplate=new DataTemplate {VisualTree=factory}});
+        _priceTable.Columns.Add(new DataGridTemplateColumn {Width=50,CellTemplate=new DataTemplate {VisualTree=factory},HeaderStyle=_priceTable.ColumnHeaderStyle});
         _priceTable.SizeChanged+=(_,_)=>
         {
             var available=Math.Max(400,_priceTable.ActualWidth-64);
@@ -116,7 +116,7 @@ public sealed partial class SettingsWindow
     internal Window CreatePriceEditor(ModelPrice? model)
     {
         bool adding=model is null;
-        var dialog=new Window {Title=adding?Loc.T("新增模型", "Add model"):Loc.T("編輯模型價格", "Edit model price"),Owner=this,Width=500,SizeToContent=SizeToContent.Height,ResizeMode=ResizeMode.NoResize,
+        var dialog=new Window {Title=adding?Loc.T("新增模型", "Add model"):Loc.T("編輯模型價格", "Edit model price"),Owner = DialogOwner,Width=500,SizeToContent=SizeToContent.Height,ResizeMode=ResizeMode.NoResize,
             WindowStartupLocation=WindowStartupLocation.CenterOwner,Background=UI.Brush(Surface),Foreground=UI.Brush(TextPrimary),FontFamily=SettingsFont(UiFontRole.Panel),ShowInTaskbar=false};
         dialog.Resources.MergedDictionaries.Add(new ResourceDictionary {Source=new Uri("/BrimDeck;component/SettingsResources.xaml",UriKind.Relative)});_palette.Apply(dialog.Resources);
         void UpdateDialogTheme()
@@ -179,9 +179,9 @@ public sealed partial class SettingsWindow
         var done=ActionButton(adding?Loc.T("新增模型", "Add model"):Loc.T("完成", "Done"),()=>{if(Commit())dialog.Close();},true);done.Margin=new Thickness(0,10,0,0);done.HorizontalAlignment=HorizontalAlignment.Right;done.MinWidth=84;AutomationProperties.SetName(done,adding?Loc.T("確認新增模型", "Confirm adding the model"):Loc.T("完成價格編輯", "Finish editing the price"));DockPanel.SetDock(done,Dock.Bottom);panel.Children.Add(done);
         panel.Children.Add(new ScrollViewer {Content=body,VerticalScrollBarVisibility=ScrollBarVisibility.Auto,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled,Focusable=false});
         // Opened over the settings window, on its screen; the dialog grows with its content up to that screen's work area.
-        var screen=Native.WindowsHost.WindowScreen(this);dialog.MaxHeight=screen.Work.Height/screen.Scale-24;
+        var screen=Native.WindowsHost.WindowScreen(DialogOwner??Application.Current.MainWindow);dialog.MaxHeight=screen.Work.Height/screen.Scale-24;
         var frame=new Border {Child=panel,BorderThickness=new Thickness(1),Focusable=true,FocusVisualStyle=null};
-        KeyboardNavigation.SetIsTabStop(frame,false);ReleaseFocusOnEmptyClick(dialog,()=>frame);
+        KeyboardNavigation.SetIsTabStop(frame,false);EmptyClickFocus.Attach(dialog,()=>frame);
         frame.SetResourceReference(Border.BackgroundProperty,"SettingsSurface");frame.SetResourceReference(Border.BorderBrushProperty,"SettingsBorder");dialog.Content=frame;
         dialog.PreviewKeyDown+=(_,e)=>{if(e.Key==Key.Escape){dialog.Close();e.Handled=true;}};
         dialog.Loaded+=(_,_)=>{if(adding)id.Focus();else fields[values[0].Name].Focus();};

@@ -7,7 +7,7 @@ namespace BrimDeck;
 // DeskGrid build: the "enhanced sensors" page (a PawnIO driver and an administrator service) is not part of this copy of
 // BrimDeck. Only what other pages still use remains: the page number (left out of PageOrder, so it is never shown) and
 // the inline link helper.
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     internal const int SensorsPage = 10;
     private Action? _refreshSensors;

@@ -182,7 +182,7 @@ public partial class App
             UpdateSettings(settings);
         }
         else ArrangePanels();
-        _settingsWindow?.ProfilesChanged();
+        _settingsPages?.ProfilesChanged();
     }
 
     // The displays and their profiles again, after a rule changed them; every panel takes its settings.

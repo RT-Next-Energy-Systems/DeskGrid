@@ -187,9 +187,9 @@ JSON（`{"command":"list","args":["Work"]}`），其他程式也可以直接使�
 ### NotiLand
 
 NotiLand 就是 [BrimDeck](https://github.com/MoFeng2223/BrimDeck)：螢幕頂端的提示島，展開後可看 AI 程式工具的額度、
-正在播放的音樂、系統讀數、無線裝置電量，還有剪貼簿歷史與檔案暫存。DeskGrid 帶著它，並在自己旁邊執行：到
+正在播放的音樂、系統讀數、無線裝置電量，還有剪貼簿歷史與檔案暫存。DeskGrid 帶著它，並在自己裡面執行：到
 設定 → NotiLand 勾選 **顯示 NotiLand**（預設關閉），DeskGrid 就會啟動它；取消勾選就停止；DeskGrid 結束時它也會結束。
-**開啟 NotiLand 設定…** 會開啟 BrimDeck 自己的設定視窗，顯示內容、外觀、快速鍵都在那裡設定；BrimDeck 的
+它執行時，它的設定（顯示內容、外觀、快速鍵）是設定中 **NotiLand** 底下的各頁；BrimDeck 的
 [README](https://github.com/MoFeng2223/BrimDeck#readme) 有完整說明。
 
 - 這是 BrimDeck 的程式碼（`third_party/BrimDeck`，Apache License 2.0），但拿掉了會修改其他程式檔案或以系統管理員權限

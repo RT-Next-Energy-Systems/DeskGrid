@@ -645,26 +645,22 @@ public sealed class SettingsWindowTests : IDisposable
     [InlineData(true)]
     public async Task NotiLandSwitch_ShowsTheSetting_AndApplyReportsItFlipped(bool initial)
     {
-        var (shown, applied, buttonOpens) = await _ui.InvokeAsync(() =>
+        var (shown, applied) = await _ui.InvokeAsync(() =>
         {
             EnsureApplication();
             var window = new SettingsWindow(new AppConfig { RootPath = _root.Path, NotiLandEnabled = initial });
             SettingsChoice? choice = null;
             window.Applied += (_, c) => choice = c;
-            var opened = 0;
-            window.OpenNotiLandSettings = () => opened++;
             window.Show();
             window.ShowPage(SettingsWindow.Page.Island);
             var shownNow = window.IslandBox.IsChecked == true;
             window.IslandBox.IsChecked = !initial;
-            window.NotiLandSettingsButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             window.ApplyButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             window.CloseDiscarding();
-            return (shownNow, choice?.NotiLandEnabled, opened);
+            return (shownNow, choice?.NotiLandEnabled);
         });
 
         Assert.Equal(initial, shown);
         Assert.Equal(!initial, applied);
-        Assert.Equal(1, buttonOpens);
     }
 }

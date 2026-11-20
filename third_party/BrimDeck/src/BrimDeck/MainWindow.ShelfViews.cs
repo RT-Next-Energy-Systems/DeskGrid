@@ -145,7 +145,7 @@ public partial class MainWindow
             button.Visibility = Visibility.Collapsed;
             strip.Children.Add(button);
         }
-        var chevron = SettingsWindow.Chevron(); chevron.FontSize = icon > 12 ? 11 : 10; chevron.Margin = new Thickness(0); chevron.Foreground = UI.Brush(Look.Secondary);
+        var chevron = SettingsPages.Chevron(); chevron.FontSize = icon > 12 ? 11 : 10; chevron.Margin = new Thickness(0); chevron.Foreground = UI.Brush(Look.Secondary);
         chevron.HorizontalAlignment = HorizontalAlignment.Center; chevron.VerticalAlignment = VerticalAlignment.Center;
         chevron.RenderTransformOrigin = new Point(.5, .5); chevron.RenderTransform = new RotateTransform(-90);
         var open = DeedButton(chevron, width, height, detail);

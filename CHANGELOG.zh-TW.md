@@ -7,10 +7,11 @@
 ### 變更
 
 - **NotiLand 現在在 DeskGrid 裡面執行。** BrimDeck 原本是在 DeskGrid 旁邊的第二個程式；現在它的程式碼成為 DeskGrid 自己程序的一部分：工作管理員只有一個程式、exe 裡不再內嵌第二份（**DeskGrid.exe 約 79 MB，從 163 MB 縮小**），用「顯示 NotiLand」開關也是即時的。BrimDeck 的樣式只作用在它自己的視窗，所以 DeskGrid 的視窗外觀不變。它的系統匣圖示、設定與資料（`%LOCALAPPDATA%\BrimDeck`）都沒變。
+- **NotiLand 的設定併進 DeskGrid 的設定。** BrimDeck 自己的設定視窗不見了：它的各頁（常規、收起外觀、展開外觀、面板主題、快捷鍵、顯示器與配置、AI 用量、模型價格、音樂、系統監控、頁面佈局、剪貼簿、檔案中轉、剪貼簿同步、裝置電量）在 NotiLand 執行時，成為 DeskGrid 設定左側清單中 **NotiLand** 底下的項目，外觀跟 DeskGrid 一致（跟隨系統淺色或深色）。NotiLand 使用 DeskGrid 設定的語言。DeskGrid 已經有的東西從 BrimDeck 的頁面拿掉：關於頁與檢查更新、開機自啟動開關、退出按鈕和語言選項。設定視窗因此加寬為 980 × 720。
 
 ### 使用方法
 
-- 不用做任何事：設定 → **NotiLand** → **顯示 NotiLand** 和以前一樣。
+- 設定 → **NotiLand** → **顯示 NotiLand** 和以前一樣。它執行後（按 **套用** 之後），它的各頁會列在下面：選一頁設定 NotiLand 顯示的內容與外觀。NotiLand 的齒輪與系統匣選單也會開啟這些頁面。
 
 ## 0.8.0
 

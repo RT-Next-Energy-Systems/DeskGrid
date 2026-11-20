@@ -1,5 +1,8 @@
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using DeskGrid.Config;
+using DeskGrid.Settings;
 using DeskGrid.Threading;
 
 namespace DeskGrid.Tests;
@@ -8,9 +11,14 @@ namespace DeskGrid.Tests;
 [Collection(nameof(ShellCollection))]
 public sealed class NotiLandTests : IDisposable
 {
-    private readonly DispatcherThread _ui = new("Test UI");
+    // One thread for all of them: the Application, BrimDeck's resources and the windows that hold them must not be spread over threads.
+    private static readonly DispatcherThread SharedUi = new("NotiLand test UI");
+    private readonly DispatcherThread _ui = SharedUi;
 
-    public void Dispose() => _ui.Dispose();
+    public void Dispose()
+    {
+        // SharedUi lives until the test run ends.
+    }
 
     [Fact]
     public async Task BrimDeckStyles_AreMergedIntoItsOwnWindows_AndNotIntoTheApplication()
@@ -42,7 +50,7 @@ public sealed class NotiLandTests : IDisposable
         var windowsAfterStart = await _ui.InvokeAsync(() =>
         {
             TestApplication.Ensure();
-            var app = global::BrimDeck.App.StartHosted();
+            var app = global::BrimDeck.App.StartHosted(true);
             Assert.NotNull(app);
             app.Stopped += () => stopped.TrySetResult();
             return Application.Current.Windows.OfType<global::BrimDeck.DeckWindow>().Count();
@@ -55,5 +63,62 @@ public sealed class NotiLandTests : IDisposable
         Assert.True(done);
         Assert.Equal(0, left);
         Assert.True(gone);
+    }
+
+    // NotiLand's own settings (BrimDeck's pages) are entries of the list below "NotiLand" while it runs, shown on the right, and gone when it stops.
+    [Fact]
+    public async Task NotiLandPages_AreListedBelowNotiLand_WhileItRuns_AndGoWhenItStops()
+    {
+        var (whileRunning, afterStop) = await _ui.InvokeAsync(() =>
+        {
+            TestApplication.Ensure();
+            var host = new DeskGrid.NotiLand.NotiLandHost();
+            host.Apply(true);
+            Assert.True(host.IsRunning);
+            var window = new SettingsWindow(new AppConfig { RootPath = Path.GetTempPath(), NotiLandEnabled = true }) { NotiLand = host };
+            window.Show();
+
+            string[] Entries() => [.. window.Pages.Items.OfType<System.Windows.Controls.ListBoxItem>().Select(item => item.Tag switch
+            {
+                DeskGrid.NotiLand.NotiLandPage => "page",
+                string => "caption",
+                _ => "own",
+            })];
+            var expectedPages = global::BrimDeck.SettingsPages.Pages().Count;
+            var entries = Entries();
+            var pageItems = window.Pages.Items.OfType<System.Windows.Controls.ListBoxItem>().Where(item => item.Tag is DeskGrid.NotiLand.NotiLandPage).ToList();
+
+            // A page of NotiLand is shown in its own place, and counts as the NotiLand page.
+            window.Pages.SelectedItem = pageItems[1];
+            var shown = (window.PageNotiLand.Visibility, window.PageNotiLand.Child is not null, window.CurrentPage, window.PageGeneral.Visibility, window.PageIsland.Visibility);
+
+            // Choosing a caption (arrowing down onto it) goes on to the page under it.
+            window.ShowPage(SettingsWindow.Page.Island);
+            var caption = window.Pages.Items.OfType<System.Windows.Controls.ListBoxItem>().First(item => item.Tag is string);
+            window.Pages.SelectedItem = caption;
+            var afterCaption = window.Pages.SelectedItem is System.Windows.Controls.ListBoxItem { Tag: DeskGrid.NotiLand.NotiLandPage };
+
+            window.ShowPage(SettingsWindow.Page.General);
+            var left = window.PageNotiLand.Visibility;
+
+            window.Pages.SelectedItem = pageItems[0];
+            host.Apply(false);
+            window.RefreshNotiLandPages();
+            var after = (Entries(), window.CurrentPage, window.PageNotiLand.Visibility, window.PageNotiLand.Child);
+            window.CloseDiscarding();
+            host.Dispose();
+            return (new { entries, expectedPages, shown, afterCaption, left }, after);
+        });
+
+        Assert.Equal(["own", "own", "own", "own", "caption"], whileRunning.entries[..5]);
+        Assert.Equal("own", whileRunning.entries[^1]);
+        Assert.Equal(whileRunning.expectedPages, whileRunning.entries.Count(entry => entry == "page"));
+        Assert.Equal((Visibility.Visible, true, SettingsWindow.Page.Island, Visibility.Collapsed, Visibility.Collapsed), whileRunning.shown);
+        Assert.True(whileRunning.afterCaption);
+        Assert.Equal(Visibility.Collapsed, whileRunning.left);
+        Assert.Equal(["own", "own", "own", "own", "own"], afterStop.Item1);
+        Assert.Equal(SettingsWindow.Page.Island, afterStop.CurrentPage);
+        Assert.Equal(Visibility.Collapsed, afterStop.Item3);
+        Assert.Null(afterStop.Item4);
     }
 }

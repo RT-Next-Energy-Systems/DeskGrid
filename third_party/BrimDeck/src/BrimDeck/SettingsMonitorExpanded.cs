@@ -14,7 +14,7 @@ namespace BrimDeck;
 // page with a block for each part it keeps together (ExpandedMonitor.Blocks: CPU and GPU, memory with the network, the frame rate,
 // the drives, power), stacked as the page stacks them. Dragging a block, or Alt+Up/Down on it, moves that part on the page. The
 // process list is drawn beside them and does not move: the page's size places it.
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     private const double SketchGap = 6;
 

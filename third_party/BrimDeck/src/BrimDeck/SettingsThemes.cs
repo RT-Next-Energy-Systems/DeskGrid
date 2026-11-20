@@ -15,7 +15,7 @@ namespace BrimDeck;
 // do: a fixed miniature that does not follow later changes to the panel. Choosing a card applies it at once and holds the panel
 // open as a preview; what the user changed under the theme being left is kept for it (ThemeChoices). While the page is shown,
 // saving a file in the themes folder reloads it, so a theme can be edited with the panel beside it.
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     internal const int ThemePage = 8, MonitorSettingsPage = 9;
     private FileSystemWatcher? _themeWatcher;

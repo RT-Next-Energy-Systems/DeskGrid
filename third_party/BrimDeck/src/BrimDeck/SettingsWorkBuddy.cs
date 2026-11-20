@@ -9,7 +9,7 @@ using BrimDeck.Core;
 
 namespace BrimDeck;
 
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     // The sign-in under way for each edition, kept across rebuilt rows so the row keeps showing it.
     private static readonly Dictionary<ProviderId, CancellationTokenSource> _workBuddyLogins = [];

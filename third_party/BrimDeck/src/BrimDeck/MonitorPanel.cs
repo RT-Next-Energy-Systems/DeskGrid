@@ -189,7 +189,7 @@ public partial class MainWindow
         var panel = new StackPanel { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
         panel.Children.Add(Label(title, plan.Body + 1, Look.Secondary, HorizontalAlignment.Center));
         panel.Children.Add(Label(note, plan.Caption + .5, Look.Tertiary, HorizontalAlignment.Center, top: 4));
-        var open = PillButton(Loc.T("開啟設定", "Open settings"), primary: false, () => _app.OpenSettingsPage(SettingsWindow.MonitorSettingsPage));
+        var open = PillButton(Loc.T("開啟設定", "Open settings"), primary: false, () => _app.OpenSettingsPage(SettingsPages.MonitorSettingsPage));
         open.Margin = new Thickness(0, 10, 0, 0); open.HorizontalAlignment = HorizontalAlignment.Center; panel.Children.Add(open);
         AutomationProperties.SetName(panel, title + ". " + note);
         return panel;

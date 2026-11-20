@@ -13,7 +13,7 @@ using BrimDeck.Core;
 
 namespace BrimDeck;
 
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     private Guid? _expandedSource;
     private CancellationTokenSource? _sourceTestCancellation;

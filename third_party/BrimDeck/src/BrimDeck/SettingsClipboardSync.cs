@@ -12,7 +12,7 @@ namespace BrimDeck;
 
 // The "剪貼簿同步" page: this device's name, then one card for each way to sync. A card says where it stands with a coloured
 // dot and a few words, has the one button that connects or disconnects it and, once connected, the switch that syncs.
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     internal const int ClipboardSyncSettingsPage = 18;
     private enum SyncKind { Lan, WeType, Doubao }
@@ -28,7 +28,7 @@ public sealed partial class SettingsWindow
         if (!_syncWatching)
         {
             _syncWatching = true; _app.ClipboardSync.Changed += RefreshSyncStatus;
-            Closed += (_, _) => { _app.ClipboardSync.Changed -= RefreshSyncStatus; _syncNameTimer?.Stop(); };
+            Released += () => { _app.ClipboardSync.Changed -= RefreshSyncStatus; _syncNameTimer?.Stop(); };
         }
         _syncCards.Clear();
         Target.Children.Add(SyncDeviceName());

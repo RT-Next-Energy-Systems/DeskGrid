@@ -1,3 +1,4 @@
+using BrimDeck.Core;
 using BrimDeck.Native;
 
 namespace BrimDeck;
@@ -12,11 +13,24 @@ public sealed partial class App
 
     private EventWaitHandle? _quitEvent;
 
-    /// <summary>Starts BrimDeck on the calling (UI) thread of the host; <see langword="null"/> when a BrimDeck of its own already runs.</summary>
-    public static App? StartHosted(params string[] args)
+    private string? _hostLanguage;
+
+    /// <summary>
+    /// Starts BrimDeck on the calling (UI) thread of the host, in the host's language (<paramref name="english"/>: English, else Traditional
+    /// Chinese); <see langword="null"/> when a BrimDeck of its own already runs.
+    /// </summary>
+    public static App? StartHosted(bool english, params string[] args)
     {
-        var app = new App();
+        var app = new App { _hostLanguage = english ? Loc.English : Loc.Chinese };
         return app.Start(args) ? app : null;
+    }
+
+    /// <summary>The host's language changed (<paramref name="english"/>: English, else Traditional Chinese): everything of BrimDeck follows.</summary>
+    public void FollowLanguage(bool english)
+    {
+        string language = english ? Loc.English : Loc.Chinese;
+        if (Exiting || Loc.Normalize(Settings.Language) == language) return;
+        var settings = Settings.Copy(); settings.Language = language; UpdateSettings(settings);
     }
 
     /// <summary>Stops at once, without the panels' power-off animation (the host is ending).</summary>
@@ -24,7 +38,7 @@ public sealed partial class App
     {
         if (Exiting) { Shutdown(); return; }
         Exiting = true; Lifetime.Cancel();
-        try { _settingsWindow?.RememberSize(); FlushSettings(); FinishWriting(); } catch (Exception ex) when (ex is not OutOfMemoryException) { _recordCrash?.Invoke(ex); }
+        try { FlushSettings(); FinishWriting(); } catch (Exception ex) when (ex is not OutOfMemoryException) { _recordCrash?.Invoke(ex); }
         Shutdown();
     }
 

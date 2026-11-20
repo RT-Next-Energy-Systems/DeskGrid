@@ -10,7 +10,7 @@ namespace BrimDeck;
 // draws no outline and is skipped by Tab. A frame given to FieldBox is a control in this sense: its click puts the focus in its field.
 internal static class EmptyClickFocus
 {
-    public static void Attach(Window window, Func<UIElement> holder)
+    public static void Attach(FrameworkElement window, Func<UIElement> holder)
     {
         window.AddHandler(UIElement.MouseDownEvent, new MouseButtonEventHandler((_, e) =>
         {

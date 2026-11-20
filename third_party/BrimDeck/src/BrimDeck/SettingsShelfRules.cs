@@ -11,7 +11,7 @@ namespace BrimDeck;
 // A category's options: in its row, on the clipboard, whether what is in it is kept; under its row, what goes in by itself
 // (ShelfRules). Changes are saved as they are made; a text box is saved when it is left, and the row's summary and the count of
 // what is already on the page follow it while typing.
-public partial class SettingsWindow
+public partial class SettingsPages
 {
     private Guid? _openCategory;
     private readonly Dictionary<Guid, TextBlock> _categorySummaries = [];
@@ -302,7 +302,7 @@ public partial class SettingsWindow
                     var browse = ActionButton(Loc.T("選擇…", "Choose…"), () =>
                     {
                         var dialog = new Microsoft.Win32.OpenFolderDialog { Title = Loc.T("選擇資料夾", "Choose a folder") };
-                        if (dialog.ShowDialog(this) == true) box.Text = dialog.FolderName;
+                        if (dialog.ShowDialog(DialogOwner) == true) box.Text = dialog.FolderName;
                         ShelfEdited();
                     });
                     browse.Margin = new Thickness(6, 0, 0, 0); DockPanel.SetDock(browse, Dock.Right);

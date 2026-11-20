@@ -16,6 +16,8 @@ internal sealed class OffPeakBar : FrameworkElement
     private const double Knob = 14, Line = 4, Middle = 9;
     private int _start, _end, _active;
     private bool _dragging;
+    // The settings pages this bar is on, which keep the font the settings use.
+    private SettingsPages? Pages() { for (DependencyObject? node = this; node is not null; node = VisualTreeHelper.GetParent(node)) if (node is SettingsPages pages) return pages; return null; }
     public Brush Track { get; init; } = Brushes.Gray;
     public Brush Range { get; init; } = Brushes.Teal;
     public Brush Knobs { get; init; } = Brushes.White;
@@ -111,7 +113,7 @@ internal sealed class OffPeakBar : FrameworkElement
         if (Wrapped) { Piece(0, _end); Piece(_start, Day); } else Piece(_start, _end);
 
         double dip = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-        var typeface = new Typeface((Window.GetWindow(this) as SettingsWindow)?.SettingsFont(BrimDeck.Core.UiFontRole.Label) ?? Fonts.PlainOf(BrimDeck.Core.UiFontRole.Label), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+        var typeface = new Typeface(Pages()?.SettingsFont(BrimDeck.Core.UiFontRole.Label) ?? Fonts.PlainOf(BrimDeck.Core.UiFontRole.Label), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
         foreach (var (position, label) in new[] { (0, "12:00"), (Day / 4, "18:00"), (Day / 2, "00:00"), (Day * 3 / 4, "06:00"), (Day, "12:00") })
         {
             var text = new FormattedText(label, CultureInfo.InvariantCulture, FlowDirection.LeftToRight, typeface, 10.5, Scale, dip);

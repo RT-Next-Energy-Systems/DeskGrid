@@ -8,7 +8,7 @@ namespace BrimDeck;
 
 // Rows that list applications: the music's ignored apps and the clipboard's apps not recorded. The row shows the count and the
 // "Add app" button at the right; a click on the row or its arrow shows the apps under the title, as the app rules row does.
-public partial class SettingsWindow
+public partial class SettingsPages
 {
     private FrameworkElement AppListRow(string title, Func<string> help, string showName, string addName, IReadOnlyList<FrameworkElement> lines,
         Action<Button> menu, bool open, Action<bool> opened, bool enabled = true)
@@ -94,6 +94,6 @@ public partial class SettingsWindow
             Filter = Loc.T("應用程式 (*.exe)|*.exe", "Applications (*.exe)|*.exe"),
             CheckFileExists = true
         };
-        return dialog.ShowDialog(this) == true ? dialog.FileName : null;
+        return dialog.ShowDialog(DialogOwner) == true ? dialog.FileName : null;
     }
 }

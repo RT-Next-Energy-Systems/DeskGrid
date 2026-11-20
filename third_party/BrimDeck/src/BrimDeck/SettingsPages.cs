@@ -13,7 +13,11 @@ using BrimDeck.Core;
 
 namespace BrimDeck;
 
-public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
+/// <summary>
+/// BrimDeck's settings pages, one at a time, as a control the host (DeskGrid's settings window) shows in its own window:
+/// the host has the list of pages (<see cref="Pages"/>) and calls <see cref="ShowPage"/>. It was BrimDeck's own settings window.
+/// </summary>
+public sealed partial class SettingsPages : UserControl, IDeckSurface
 {
     private SettingsPalette _palette = new(false);
     private string Surface => _palette.Surface;
@@ -24,7 +28,6 @@ public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
     private string TextSecondary => _palette.Secondary;
     private string TextTertiary => _palette.Tertiary;
     private readonly App _app;
-    private readonly StackPanel _navigation = new();
     private readonly StackPanel _content = new();
     private readonly TextBlock _status = new() { Visibility = Visibility.Collapsed, TextWrapping = TextWrapping.Wrap };
     private ScrollViewer _scroll = null!;
@@ -34,77 +37,35 @@ public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
     // The order of the pages in the navigation; the theme page (ThemePage) and the shortcuts (HotkeysPage) are listed with the
     // basic pages, and the system monitor's page (MonitorSettingsPage) has its own group after music, then the clipboard's
     // pages (the layout first), before About. The profiles page (ProfilesPage) closes the basic pages.
-    private static readonly int[] PageOrder = [0, 1, 2, ThemePage, HotkeysPage, ProfilesPage, 3, 4, 5, 6, MusicGesturesPage, MonitorSettingsPage, ShelfLayoutSettingsPage, ClipboardSettingsPage, TransferSettingsPage, ClipboardSyncSettingsPage, DevicesSettingsPage, 7];
+    private static readonly int[] PageOrder = [0, 1, 2, ThemePage, HotkeysPage, ProfilesPage, 3, 4, 5, 6, MusicGesturesPage, MonitorSettingsPage, ShelfLayoutSettingsPage, ClipboardSettingsPage, TransferSettingsPage, ClipboardSyncSettingsPage, DevicesSettingsPage];
     private int _page;
     private bool _preview;
     private StackPanel? _appRows;
-    public FrameworkElement RootVisual { get; private set; } = null!;
     // The whole page, including the part scrolled out of view.
     private DeckSettings S => _app.Settings;
     private event Action? PaletteChanged;
+    // The host is done with the pages (Release): what a page registered for is let go.
+    private event Action? Released;
 
     public static string StyleName(CompactStyle style) => style switch { CompactStyle.Notch => Loc.T("劉海", "Notch"), CompactStyle.Capsule => Loc.T("膠囊", "Capsule"), _ => Loc.T("指示條", "Indicator") };
     public static string BehaviorName(WindowBehavior behavior) => behavior switch { WindowBehavior.Normal => Loc.T("保持原有樣式", "Keep style"), WindowBehavior.Line => Loc.T("顯示為指示條", "As indicator"), _ => Loc.T("隱藏", "Hide") };
 
-    private const double DefaultWidth = 960, DefaultHeight = 780;
-    // The minimum size is 840 x 640, reduced where the screen's work area (less a 24 margin) is smaller. Returns the
-    // largest size that fits.
-    private (double Width, double Height) FitMinimumSize(Rect work, double scale)
-    {
-        double fitWidth = work.Width / scale - 24, fitHeight = work.Height / scale - 24;
-        MinWidth = Math.Min(840, fitWidth); MinHeight = Math.Min(640, fitHeight);
-        return (fitWidth, fitHeight);
-    }
-    // Keeps the size to open with next time: the normal size, also when the window is maximized or minimized.
-    internal void RememberSize()
-    {
-        var size = WindowState == WindowState.Normal ? new Size(ActualWidth, ActualHeight) : RestoreBounds.Size;
-        if (size.IsEmpty || size.Width <= 0 || size.Height <= 0) return;
-        bool maximized = WindowState == WindowState.Maximized;
-        if (S.SettingsWindowWidth == size.Width && S.SettingsWindowHeight == size.Height && S.SettingsWindowMaximized == maximized) return;
-        Change(s => { s.SettingsWindowWidth = size.Width; s.SettingsWindowHeight = size.Height; s.SettingsWindowMaximized = maximized; });
-    }
-    public SettingsWindow(App app)
+    public SettingsPages(App app)
     {
         _app = app;
+        Resources.MergedDictionaries.Add(DeckResources.Dictionary);
         Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("/BrimDeck;component/SettingsResources.xaml", UriKind.Relative) });
         using (OwnFonts()) Fonts.Publish(Resources);
-        Style =(Style)FindResource(typeof(Window));
-        // Sizes are DIPs, so the window looks the same at any scale factor. The default fits the page layout (the content
-        // column is at most 858 wide); the last closed size replaces it. Either is fitted to the work area of the screen
-        // the window opens on, which CenterScreen takes as the one under the mouse pointer.
-        var (_, work, scale) = Native.WindowsHost.CursorScreen();
-        var (fitWidth, fitHeight) = FitMinimumSize(work, scale);
-        Width = Math.Clamp(S.SettingsWindowWidth ?? DefaultWidth, MinWidth, fitWidth);
-        Height = Math.Clamp(S.SettingsWindowHeight ?? DefaultHeight, MinHeight, fitHeight);
-        // Dragged to a smaller screen, such as a portrait one, the window must still be able to shrink to fit it.
-        IntPtr monitor = IntPtr.Zero;
-        void ScreenMaybeChanged()
-        {
-            if (PresentationSource.FromVisual(this) is null) return;
-            var screen = Native.WindowsHost.WindowScreen(this);
-            if (screen.Monitor == monitor) return;
-            monitor = screen.Monitor; FitMinimumSize(screen.Work, screen.Scale);
-        }
-        SourceInitialized += (_, _) => ScreenMaybeChanged();
-        LocationChanged += (_, _) => ScreenMaybeChanged();
-        // WPF also raises DpiChanged with equal old and new values after a move; only a real change needs the sizes again.
-        DpiChanged += (_, e) => { if (e.OldDpi.DpiScaleX == e.NewDpi.DpiScaleX) return; monitor = IntPtr.Zero; ScreenMaybeChanged(); };
-        WindowStartupLocation = WindowStartupLocation.CenterScreen;
-        if (S.SettingsWindowMaximized) WindowState = WindowState.Maximized;
-        Closing += (_, _) => { if (!_app.Exiting) RememberSize(); };
+        KeepHostThemeOut();
+        ToolTipService.SetInitialShowDelay(this, 120);
+        ToolTipService.SetBetweenShowDelay(this, 400);
+        ToolTipService.SetShowDuration(this, 20000);
         UseLayoutRounding = true; SnapsToDevicePixels = true;
         TextOptions.SetTextFormattingMode(this, TextFormattingMode.Display);
-        Native.SettingsChrome.Apply(this);
-        SourceInitialized += (_, _) => Native.SettingsChrome.SetTheme(this, _palette.Dark);
         SystemEvents.UserPreferenceChanged += SystemThemeChanged;
-        Deactivated += (_, _) => { EndAppDrag(false); QueuePreviewDismissal(); };
-        // Back from PawnIO's installer or uninstaller: the enhanced sensors page shows what changed.
-        Activated += (_, _) => _refreshSensors?.Invoke();
         PreviewMouseDown += (_, e) => DismissPreviewOutsideControl(e.OriginalSource);
-        DismissPreviewOnCaptionPress();
         PreviewKeyDown += (_, e) => { if (e.Key == Key.Escape && _appDrag is not null) { EndAppDrag(false); e.Handled = true; } };
-        ReleaseFocusOnEmptyClick(this, () => RootVisual);
+        ReleaseFocusOnEmptyClick(() => RootVisual);
         // Moving focus scrolls the control just into view; a little more keeps its focus outline visible at the edges.
         bool widening = false;
         _content.AddHandler(RequestBringIntoViewEvent, new RequestBringIntoViewEventHandler((_, e) =>
@@ -115,30 +76,84 @@ public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
             finally { widening = false; }
         }));
         _app.Prices.Changed += PricesChanged;
-        _app.Updates.Changed += UpdatesChanged;
-        Native.SensorGuard.Changed += SensorStopsChanged;
         SizeChanged += (_, _) => { if (_priceTable is not null) _priceTable.Height = Math.Max(220, ActualHeight - PriceTableReserve); };
-        Closed += (_, _) => { WatchThemeFolder(false); EndAppDrag(false, false); _updateOpenGeneration++; _app.Updates.Changed -= UpdatesChanged; Native.SensorGuard.Changed -= SensorStopsChanged; SystemEvents.UserPreferenceChanged -= SystemThemeChanged; _app.Prices.Changed -= PricesChanged; _exceptionsReservedHeight = 0; _exceptionsOpen = false; _exceptionsHost = null; _scroll.ScrollChanged -= ExceptionsScrollChanged; if (!_app.Exiting) { _app.PreviewDeck.Preview(false); _app.FlushSettings(); } };
-        StateChanged += (_, _) =>
-        {
-            UpdateCaption();
-            if (WindowState == WindowState.Minimized) { _preview = false; _app.PreviewDeck.Preview(false); }
-        };
         RebuildTheme();
     }
 
-    private Button? _maximize;
-    private void UpdateCaption()
+    // The host's window may be themed (DeskGrid's settings window is Fluent): the theme's styles for the controls the pages' own
+    // templates are made of (the arrow button inside a combo box, a slider's thumb, ...) would change how those templates lay out.
+    // An empty implicit style for each type that has none of BrimDeck's own keeps the plain controls these templates were made for.
+    private void KeepHostThemeOut()
     {
-        if (_maximize is null) return;
-        _maximize.Content = CaptionIcon(WindowState == WindowState.Maximized ? "restore" : "maximize");
-        _maximize.ToolTip = WindowState == WindowState.Maximized ? Loc.T("還原", "Restore") : Loc.T("最大化", "Maximize");
-        AutomationProperties.SetName(_maximize, (string)_maximize.ToolTip);
+        foreach (var type in new[]
+        {
+            typeof(System.Windows.Controls.Primitives.ToggleButton), typeof(RadioButton), typeof(System.Windows.Controls.Primitives.RepeatButton),
+            typeof(System.Windows.Controls.Primitives.Thumb), typeof(ProgressBar), typeof(ComboBox), typeof(ComboBoxItem), typeof(Separator),
+            typeof(ListBox), typeof(ListBoxItem), typeof(DataGrid), typeof(DataGridRow), typeof(DataGridCell), typeof(DataGridColumnHeader),
+            typeof(System.Windows.Controls.Primitives.Popup),
+        })
+        {
+            if (!Resources.Contains(type)) Resources[type] = new Style(type);
+        }
     }
+
+    /// <summary>The pages the host lists, in order: the page number to give <see cref="ShowPage"/>, the group it sits under (empty when it starts none) and its title, in the interface language.</summary>
+    public static IReadOnlyList<(int Page, string Group, string Title)> Pages()
+    {
+        var list = new List<(int, string, string)>();
+        string group = "";
+        foreach (int i in PageOrder)
+        {
+            if (GroupOf(i) is { } caption) group = caption;
+            list.Add((i, group, _pages[i]));
+            group = "";
+        }
+        return list;
+    }
+
+    // The caption of the group a page starts, if it starts one.
+    private static string? GroupOf(int page) => page switch
+    {
+        0 => Loc.T("基礎設定", "Basics"),
+        3 => Loc.T("AI 用量", "AI usage"),
+        5 => Loc.T("音樂", "Music"),
+        MonitorSettingsPage => Loc.T("系統監控", "System monitor"),
+        ShelfLayoutSettingsPage => Loc.T("中轉站", "Shelf"),
+        DevicesSettingsPage => Loc.T("裝置電量", "Device batteries"),
+        _ => null
+    };
+
+    /// <summary>The page being shown.</summary>
+    public int CurrentPage => _page;
+
+    /// <summary>Builds the page again, in the language and look now in force.</summary>
+    public void Refresh() => RebuildTheme();
+
+    /// <summary>The window of the host, the owner of the dialogs a page opens.</summary>
+    private Window? DialogOwner => Window.GetWindow(this);
+
+    /// <summary>The host's window lost the focus: a preview of the panel ends.</summary>
+    public void HostDeactivated() { EndAppDrag(false); QueuePreviewDismissal(); }
+
+    /// <summary>The user left these pages for another page of the host, or the host closes: the preview ends, and what the pages hold is let go (<see cref="IDisposable"/>).</summary>
+    public void Leave() { EndPreview(); EndAppDrag(false, false); }
+
+    /// <summary>Lets go of everything the pages hold (events, folder watchers, a preview) once the host is done with them.</summary>
+    public void Release()
+    {
+        WatchThemeFolder(false); EndAppDrag(false, false); SystemEvents.UserPreferenceChanged -= SystemThemeChanged; _app.Prices.Changed -= PricesChanged;
+        _exceptionsReservedHeight = 0; _exceptionsOpen = false; _exceptionsHost = null; _scroll.ScrollChanged -= ExceptionsScrollChanged;
+        if (!_app.Exiting) { _app.PreviewDeck.Preview(false); _app.FlushSettings(); }
+        Released?.Invoke(); Released = null; _app.ReleaseSettingsPages(this);
+    }
+
+    // The pages are drawn for the host's own look: the system's light or dark theme, whatever look BrimDeck's panels were given.
+    private static bool HostIsDark => SettingsPalette.IsDark(SettingsTheme.System);
+
     private void SystemThemeChanged(object sender, UserPreferenceChangedEventArgs e)
     {
         if (!Dispatcher.HasShutdownStarted) Dispatcher.BeginInvoke(() =>
-        { if (IsLoaded && S.Theme == SettingsTheme.System && SettingsPalette.IsDark(S.Theme) != _palette.Dark) RebuildTheme(); });
+        { if (IsLoaded && HostIsDark != _palette.Dark) RebuildTheme(); });
     }
     private void PricesChanged()
     { if (!Dispatcher.HasShutdownStarted) Dispatcher.BeginInvoke(() => { if (IsLoaded) RefreshPriceRows(); }); }
@@ -154,77 +169,31 @@ public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
         RememberFocus();
         EndAppDrag(false, false);
         _keptOffset = _scroll?.VerticalOffset ?? 0;
-        // A language change rebuilds the window the same way.
-        Title = Loc.T("BrimDeck 設定", "BrimDeck Settings");
-        _palette = new(SettingsPalette.IsDark(S.Theme)); _palette.Apply(Resources);
-        Background = UI.Brush(Surface); Foreground = UI.Brush(TextPrimary); FontFamily = SettingsFont(UiFontRole.Panel);
-        // Detach reused panels before rebuilding the window's theme-specific surfaces.
-        _navigation.Children.Clear(); _content.Children.Clear();
-        if (_navigation.Parent is ScrollViewer oldNavigation) oldNavigation.Content = null;
+        _palette = new(HostIsDark); _palette.Apply(Resources);
+        Foreground = UI.Brush(TextPrimary); FontFamily = SettingsFont(UiFontRole.Panel);
+        // Detach reused panels before rebuilding the surfaces that depend on the look.
+        _content.Children.Clear();
         if (_scroll is not null) _scroll.Content = null;
         if (_status.Parent is Panel oldStatus) oldStatus.Children.Remove(_status);
-        var outer = new Grid { Background = UI.Brush(Surface) };
-        outer.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(190) }); outer.ColumnDefinitions.Add(new ColumnDefinition());
-        var sidebar = new Grid { Background = UI.Brush(Sidebar) };
-        sidebar.RowDefinitions.Add(new RowDefinition { Height = new GridLength(100) }); sidebar.RowDefinitions.Add(new RowDefinition());
-        sidebar.Children.Add(Brand(24, new Thickness(24, 0, 22, 0)));
-        // The list of pages scrolls once it is taller than the window, so the last pages (About) stay reachable in a short window.
-        // Like the page, it always keeps the scroll bar's 16 DIP column, here in place of its right margin, so the buttons and the
-        // selected one's background keep their width when the bar appears. The scroll area clips at its edges, so the list keeps a
-        // 4 DIP inset at the top, left and right for the keyboard focus outline, which reaches 2 DIP past a button; the scroll
-        // area's own margin gives the top and left back, and the buttons stay where they were.
-        _navigation.Margin = new Thickness(8, 4, 4, 12);
-        var navigationScroll = new ScrollViewer { Style = (Style)FindResource("SettingsPageScrollViewer"), Content = _navigation, Focusable = false,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Margin = new Thickness(4, -4, 0, 0) };
-        Grid.SetRow(navigationScroll, 1); sidebar.Children.Add(navigationScroll);
-        outer.Children.Add(sidebar); outer.Children.Add(new Border { Width = 1, Background = UI.Brush(Divider), HorizontalAlignment = HorizontalAlignment.Right });
         // The scroll area clips at its edges, so the content keeps a 4 DIP inset inside it for keyboard focus outlines
         // that extend past a control; the outer margins give those 4 DIP back and the page stays where it was.
-        var main = new DockPanel { Margin = new Thickness(32, 56, 32, 22), MaxWidth = 858 }; Grid.SetColumn(main, 1); outer.Children.Add(main);
+        var main = new DockPanel { MaxWidth = 858 };
         _status.Margin = new Thickness(4, 4, 4, 14); _status.FontSize = 12; DockPanel.SetDock(_status, Dock.Top); main.Children.Add(_status);
         _content.Margin = new Thickness(4);
         // Only the controls inside take focus; a focusable scroll area would draw the system outline around the whole page.
         // The page's scroll bar always keeps its 16 DIP column, taken from the right margin, so no page changes width when it starts scrolling.
         _scroll = new ScrollViewer { Style = (Style)FindResource("SettingsPageScrollViewer"), Content = _content, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, Padding = new Thickness(0,0,4,0), Margin = new Thickness(0,0,-16,0), Focusable = false }; main.Children.Add(_scroll);
-        var caption = new DockPanel { Height = 40, VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(18, 0, 6, 0), LastChildFill = false }; Grid.SetColumn(caption, 1); outer.Children.Add(caption);
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal }; DockPanel.SetDock(buttons, Dock.Right); caption.Children.Add(buttons);
-        buttons.Children.Add(WindowButton("minimize", Loc.T("最小化", "Minimize"), () => SystemCommands.MinimizeWindow(this)));
-        _maximize = WindowButton("maximize", Loc.T("最大化", "Maximize"), () => { if (WindowState == WindowState.Maximized) SystemCommands.RestoreWindow(this); else SystemCommands.MaximizeWindow(this); }); buttons.Children.Add(_maximize);
-        buttons.Children.Add(WindowButton("close", Loc.T("關閉設定", "Close settings"), Close, true));
         // Focusable only to hold focus after a click on empty space; Tab never stops on it and it draws no outline.
-        var frame = new Border { Child = outer, BorderBrush = UI.Brush(_palette.Border), BorderThickness = new Thickness(1), Focusable = true, FocusVisualStyle = null };
+        var frame = new Border { Child = main, Focusable = true, FocusVisualStyle = null };
         KeyboardNavigation.SetIsTabStop(frame, false);
         RadioGroups.Use(); RadioGroups.SetEnabled(frame, true);
-        Content = frame; RootVisual = frame; UpdateCaption(); Native.SettingsChrome.SetTheme(this, _palette.Dark); ShowPage(_page);
+        Content = frame; ShowPage(_page);
         _status.SetResourceReference(TextBlock.ForegroundProperty, "SettingsError"); PaletteChanged?.Invoke();
     }
     // Clicking anything that is not a control takes focus off a text field, as elsewhere in Windows (EmptyClickFocus).
-    private static void ReleaseFocusOnEmptyClick(Window window, Func<UIElement> holder) => EmptyClickFocus.Attach(window, holder);
-    private StackPanel Brand(double size, Thickness margin)
-    {
-        var brand = new StackPanel { Margin = margin, VerticalAlignment = VerticalAlignment.Center };
-        // The wordmark carries the application icon's status dot at its top right: 7 px at the 24 px size, centred on the cap line,
-        // 4 px clear of the final letter. The brim line underneath stays.
-        var name = Wordmark(size);
-        double dot = Math.Round(size * .3), gap = Math.Round(size * .17);
-        name.Margin = new Thickness(0, 0, dot + gap, 0);
-        var mark = new Grid { HorizontalAlignment = HorizontalAlignment.Left };
-        mark.Children.Add(name);
-        mark.Children.Add(new Ellipse { Width = dot, Height = dot, Fill = UI.Brush("#E5A385"), HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Top, Margin = new Thickness(0, Math.Round(size * .12), 0, 0), IsHitTestVisible = false });
-        brand.Children.Add(mark);
-        brand.Children.Add(new Border { Width = 30, Height = 1, Margin = new Thickness(1,7,0,0), HorizontalAlignment = HorizontalAlignment.Left,
-            Background = new LinearGradientBrush((Color)ColorConverter.ConvertFromString(TextTertiary), Colors.Transparent, 0) });
-        return brand;
-    }
-    // The product name on one line: a heavier "Brim" followed by a light "Deck".
-    private TextBlock Wordmark(double size)
-    {
-        var name = new TextBlock { FontFamily = SettingsFont(UiFontRole.Text), FontSize = size, Foreground = UI.Brush(TextPrimary) };
-        name.Inlines.Add(new Run("Brim") { FontWeight = FontWeights.SemiBold });
-        name.Inlines.Add(new Run("Deck") { FontWeight = FontWeights.Light, Foreground = UI.Brush(_palette.Dark ? "#C5C5CB" : "#565661") });
-        AutomationProperties.SetName(name, "BrimDeck"); return name;
-    }
+    private void ReleaseFocusOnEmptyClick(Func<UIElement> holder) => EmptyClickFocus.Attach(this, holder);
+    // The focusable frame that holds the focus after a click on empty space.
+    private FrameworkElement RootVisual => (FrameworkElement)Content;
     private TextBlock TextLine(string text, double size = 13, string color = "#F1F1F4", FontWeight? weight = null)
     {
         var block = UI.Line(text, size, color, weight); block.FontFamily = SettingsFont(UiFontRole.Panel);
@@ -282,7 +251,7 @@ public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
     private static string FocusKey(DependencyObject element) =>
         AutomationProperties.GetAutomationId(element) is { Length: > 0 } id ? "#" + id : AutomationProperties.GetName(element);
     private IEnumerable<FrameworkElement> FocusCandidates(string key) =>
-        new DependencyObject[] { _navigation, _content }.SelectMany(Descendants).OfType<FrameworkElement>().Where(e => e.Focusable && FocusKey(e) == key);
+        new DependencyObject[] { _content }.SelectMany(Descendants).OfType<FrameworkElement>().Where(e => e.Focusable && FocusKey(e) == key);
     private static IEnumerable<DependencyObject> Descendants(DependencyObject root)
     {
         yield return root;
@@ -292,7 +261,7 @@ public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
     private void RememberFocus()
     {
         if (_focusToRestore is not null || Keyboard.FocusedElement is not FrameworkElement focused) return;
-        if (!_navigation.IsAncestorOf(focused) && !_content.IsAncestorOf(focused)) return;
+        if (!_content.IsAncestorOf(focused)) return;
         var key = FocusKey(focused);
         if (key.Length == 0) return;
         int index = FocusCandidates(key).ToList().IndexOf(focused);
@@ -329,33 +298,16 @@ public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
         _ignoredOpen = false; _ignoredHost = null;
         _scroll.ScrollChanged -= ExceptionsScrollChanged;
         _refreshSensors = null;
-        _page = page; _navigation.Children.Clear(); _content.Children.Clear(); _aboutUpdateView = null; _scroll.ScrollToTop();
-        foreach (int i in PageOrder)
-        {
-            if (i is 0 or 3 or 5 or 7 or MonitorSettingsPage or ShelfLayoutSettingsPage or DevicesSettingsPage)
-            {
-                var group = TextLine(i switch { 0 => Loc.T("基礎設定", "Basics"), 3 => Loc.T("AI 用量", "AI usage"), MonitorSettingsPage => Loc.T("系統監控", "System monitor"), ShelfLayoutSettingsPage => Loc.T("中轉站", "Shelf"), DevicesSettingsPage => Loc.T("裝置電量", "Device batteries"), 5 => Loc.T("音樂", "Music"), _ => Loc.T("關於", "About") },10.5,TextTertiary);
-                group.Margin = new Thickness(12, i == 0 ? 0 : 24, 0, 8); _navigation.Children.Add(group);
-            }
-            int target=i; bool selected=page==i;
-            var row = new StackPanel { Orientation = Orientation.Horizontal };
-            var icon = NavigationIcon(i, selected ? TextPrimary : TextSecondary); icon.Margin = new Thickness(0,0,10,0); row.Children.Add(icon);
-            row.Children.Add(TextLine(i == 7 ? "BrimDeck" : _pages[i],12.5,selected ? TextPrimary : TextSecondary,selected ? FontWeights.Medium : FontWeights.Normal));
-            if (i == 7) { _updateBadge = UpdateBadge(); row.Children.Add(_updateBadge); }
-            var button=new Button { Style=(Style)FindResource("SettingsNav"),Content=row,Margin=new Thickness(0,0,0,4),Tag=selected ? "Selected" : null };
-            button.Click+=(_,_)=>ShowPage(target); AutomationProperties.SetName(button,_pages[i]); _navigation.Children.Add(button);
-            // The rebuilt list keeps its scroll position; a page opened from elsewhere (the tray, a link) is brought into view.
-            if (selected) Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, () => { if (button.IsLoaded) button.BringIntoView(); });
-        }
+        _page = page; _content.Children.Clear(); _scroll.ScrollToTop();
         // The About page is titled by the wordmark itself, so the name does not appear twice.
-        var head = new DockPanel { Margin = new Thickness(0,0,0,page == 7 ? 10 : 20) };
+        var head = new DockPanel { Margin = new Thickness(0,0,0,20) };
         if (page is < 4 or 5 or 6 or ThemePage or MonitorSettingsPage or HotkeysPage or DevicesSettingsPage or ClipboardSettingsPage or ShelfLayoutSettingsPage or MusicGesturesPage)
         {
             // Resets every setting on the page, so it asks first (SW-09, S-03); it keeps the look of the other "restore defaults" links.
             var reset=ActionButton(Loc.T("恢復預設", "Restore defaults"),()=>{ if(Confirm(Loc.T("恢復預設", "Restore defaults"),ResetConfirmText(page),Loc.T("恢復預設", "Restore defaults")))ResetPage(); }); reset.FontSize=11; DockPanel.SetDock(reset,Dock.Right); head.Children.Add(reset);
         }
-        head.Children.Add(page == 7 ? Wordmark(28) : TextLine(_pages[page],24,TextPrimary,FontWeights.SemiBold)); _content.Children.Add(head);
-        switch(page) { case 0: General(); break; case 1: Compact(); break; case 2: Expanded(); break; case 3: Pages(); break; case 4: ModelPrices(); break; case 5: MusicStyle(); break; case 6: Players(); break; case 7: About(); break; case ThemePage: ThemesPage(); break; case MonitorSettingsPage: MonitorSettings(); break; case SensorsPage: SensorsSettings(); break; case HotkeysPage: HotkeysSettings(); break; case DevicesSettingsPage: DevicesSettings(); break; case ClipboardSettingsPage: ClipboardSettings(); break; case TransferSettingsPage: TransferSettings(); break; case ClipboardSyncSettingsPage: ClipboardSyncSettings(); break; case ShelfLayoutSettingsPage: ShelfLayoutSettings(); break; case MusicGesturesPage: MusicGesturesSettings(); break; case ProfilesPage: ProfilesSettings(); break; }
+        head.Children.Add(TextLine(_pages[page],24,TextPrimary,FontWeights.SemiBold)); _content.Children.Add(head);
+        switch(page) { case 0: General(); break; case 1: Compact(); break; case 2: Expanded(); break; case 3: QuotaPages(); break; case 4: ModelPrices(); break; case 5: MusicStyle(); break; case 6: Players(); break; case ThemePage: ThemesPage(); break; case MonitorSettingsPage: MonitorSettings(); break; case SensorsPage: SensorsSettings(); break; case HotkeysPage: HotkeysSettings(); break; case DevicesSettingsPage: DevicesSettings(); break; case ClipboardSettingsPage: ClipboardSettings(); break; case TransferSettingsPage: TransferSettings(); break; case ClipboardSyncSettingsPage: ClipboardSyncSettings(); break; case ShelfLayoutSettingsPage: ShelfLayoutSettings(); break; case MusicGesturesPage: MusicGesturesSettings(); break; case ProfilesPage: ProfilesSettings(); break; }
         if (_content.Children[^1] is Border lastGroup) lastGroup.Margin = new Thickness(lastGroup.Margin.Left, lastGroup.Margin.Top, lastGroup.Margin.Right, 0);
         // Apply the offset before the frame is drawn, so the rebuilt page never shows its top for a frame.
         if (keep > 0) { _scroll.UpdateLayout(); _scroll.ScrollToVerticalOffset(keep); _scroll.UpdateLayout(); }
@@ -389,20 +341,14 @@ public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
     },16,16,color);
     private void General()
     {
-        SectionTitle(Loc.T("啟動與資源佔用", "Startup and resources")); Group(Toggle(Loc.T("開機自啟動", "Start with Windows"),S.LaunchAtStartup,value =>
-        {
-            try { Native.StartupRegistration.SetEnabled(value); Change(s=>s.LaunchAtStartup=value); }
-            catch(Exception ex) when(ex is System.IO.IOException or UnauthorizedAccessException or System.Security.SecurityException)
-            { SaveStatus(Loc.T("無法設定自啟動：", "Could not change the startup setting: ")+ex.Message,true); ShowPage(0); }
-        }),
+        SectionTitle(Loc.T("啟動與資源佔用", "Startup and resources")); Group(
             Toggle(Loc.T("顯示托盤圖示", "Show tray icon"), S.ShowTrayIcon, value => Change(s => s.ShowTrayIcon = value),
-                help: Loc.T("關閉後，再次開啟 BrimDeck 即可顯示隱藏的面板並開啟設定。",
-                    "When off, open BrimDeck again to show hidden panels and open the settings.")),
+                help: Loc.T("關閉後，NotiLand 不顯示系統匣圖示；設定仍在 DeskGrid 的設定視窗中。",
+                    "When off, NotiLand shows no tray icon; its settings stay in DeskGrid's settings window.")),
             Row(Loc.T("資源佔用", "Resource use"), SegmentBorder(MemoryModes()), help: () => Loc.T(
                 "省資源：收起後很快回收暫時不用的記憶體，並在空閒期間持續回收，佔用最少；再次使用時需要重新讀取，部分操作可能稍有卡頓。\n平衡：幾分鐘沒有使用後回收不用的記憶體，兼顧佔用與流暢。\n流暢：收起後不回收記憶體，常用的資料保留更久，展開和切換頁面更流暢，佔用較多。\n在設定中關閉的頁面，其佔用的資源會在一段時間後釋放。",
-                "Saver: frees memory not in use soon after the panel closes and keeps freeing it while idle, using the least. It is read again when needed, so some actions may stutter slightly.\nBalanced: frees unused memory after a few minutes without use, balancing resource use and smoothness.\nSmooth: frees no memory after the panel closes and keeps frequently used data longer, so opening the panel and switching pages feel smoother, using more resources.\nThe resources of a page switched off in the settings are released a while later.")),
-            Row(Loc.T("退出 BrimDeck", "Exit BrimDeck"), ActionButton(Loc.T("退出", "Exit"), _app.ExitApplication)));
-        SectionTitle(Loc.T("外觀與語言", "Appearance and language"));
+                "Saver: frees memory not in use soon after the panel closes and keeps freeing it while idle, using the least. It is read again when needed, so some actions may stutter slightly.\nBalanced: frees unused memory after a few minutes without use, balancing resource use and smoothness.\nSmooth: frees no memory after the panel closes and keeps frequently used data longer, so opening the panel and switching pages feel smoother, using more resources.\nThe resources of a page switched off in the settings are released a while later.")));
+        SectionTitle(Loc.T("外觀", "Appearance"));
         var themes = new UniformGrid { Columns=3,Width=292 };
         foreach(var theme in Enum.GetValues<SettingsTheme>())
         {
@@ -410,16 +356,6 @@ public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
             var choice=new RadioButton { Style=(Style)FindResource("SettingsSegment"),Content=name,IsChecked=S.Theme==theme,GroupName="Theme" };
             AutomationProperties.SetName(choice,name); choice.Checked+=(_,_)=> { Change(s=>s.Theme=theme); RebuildTheme(); }; themes.Children.Add(choice);
         }
-        // Each language is named in itself. Choosing one rebuilds the window in it, as a theme change does.
-        (string Value, string Name)[] languages = [(Loc.Chinese, "繁體中文"), (Loc.English, "English")];
-        var language = new ComboBox { Width=150,Style=(Style)FindResource("SettingsCombo"),ItemsSource=languages.Select(l=>l.Name).ToList(),
-            SelectedIndex=Math.Max(0,Array.FindIndex(languages,l=>l.Value==S.Language)) };
-        AutomationProperties.SetName(language,Loc.T("語言", "Language")); AutomationProperties.SetAutomationId(language,"language"); PopupMotion.Attach(language);
-        language.SelectionChanged+=(_,_)=>
-        {
-            if(language.SelectedIndex<0||languages[language.SelectedIndex].Value==S.Language) return;
-            var value=languages[language.SelectedIndex].Value; Change(s=>s.Language=value); RebuildTheme();
-        };
         // The scale BrimDeck is drawn at, collapsed and expanded alike (PanelScales); sizes set elsewhere are before it.
         var scales = PanelScales.Choices;
         var scale = new ComboBox { Width=150,Style=(Style)FindResource("SettingsCombo"),ItemsSource=scales.Select(value=>value+"%").ToList(),
@@ -465,7 +401,7 @@ public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
             followRow = Toggle(Loc.T("字型應用到設定視窗", "Apply font to settings window"), S.SettingsFollowsFont,
                 on => { Change(s => s.SettingsFollowsFont = on); RebuildTheme(); });
         }
-        Group(Row(Loc.T("主題", "Theme"),SegmentBorder(themes)),Row(Loc.T("語言", "Language"),language),Row(Loc.T("縮放", "Scale"),scale),transparency,
+        Group(Row(Loc.T("主題", "Theme"),SegmentBorder(themes)),Row(Loc.T("縮放", "Scale"),scale),transparency,
             fontRow,followRow,Row(Loc.T("字型預覽", "Font preview"),fontSample));
         Interaction(); WindowRules();
     }
@@ -774,7 +710,7 @@ public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
     }
 
     // Each row independently chooses its quota source, statistics source and dashboard name.
-    private void Pages()
+    private void QuotaPages()
     {
         SectionTitle(Loc.T("提示", "Notifications"));
         Group(Toggle(Loc.T("預警和告警提示", "Warning and critical notices"), S.QuotaAlerts, v => Change(s => s.QuotaAlerts = v), help:
@@ -1165,27 +1101,6 @@ public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
     {
         for (int i = 0; i < rows.Children.Count; i++)
             if (rows.Children[i] is Border border) border.BorderThickness = new Thickness(0, i == 0 ? 0 : 1, 0, 0);
-    }
-
-    private void About()
-    {
-        var description=TextLine(Loc.T("Windows 頂部懸浮面板。", "A floating panel at the top of the Windows screen."),13,TextSecondary);description.Margin=new Thickness(0,0,0,30);_content.Children.Add(description);
-        SectionTitle(Loc.T("軟體更新", "Software update"));
-        _aboutUpdateView = CreateUpdateView(true); Group(_aboutUpdateView.Root);
-        SectionTitle(Loc.T("專案資訊", "Project"));
-        // What's new sits beside the version number, where someone looking for this version's changes looks first.
-        var version = new StackPanel { Orientation = Orientation.Horizontal };
-        var current = TextLine(_app.Updates.CurrentVersion,12,TextSecondary); current.VerticalAlignment = VerticalAlignment.Center; version.Children.Add(current);
-        var notes = ActionButton(Loc.T("更新內容", "What's new"), ShowReleaseNotes); notes.Style = (Style)FindResource("SettingsLink"); notes.Margin = new Thickness(14, 0, 0, 0);
-        version.Children.Add(notes);
-        Group(Row(Loc.T("當前版本", "Current version"),version),
-            Row(Loc.T("開源許可證", "License"),TextLine("Apache License 2.0",12,TextSecondary)),
-            Row(Loc.T("專案主頁", "Homepage"),Link("GitHub ↗","https://github.com/MoFeng2223/BrimDeck")),
-            Row(Loc.T("問題與建議", "Issues and suggestions"),Link(Loc.T("提交反饋 ↗", "Send feedback ↗"),"https://github.com/MoFeng2223/BrimDeck/issues")),
-            // The README's community section in the interface language, so the ways to reach us can change without a new version.
-            Row(Loc.T("交流", "Community"),Link(Loc.T("查看交流方式 ↗", "Join the community ↗"),Loc.T(
-                "https://github.com/MoFeng2223/BrimDeck/blob/main/README.zh-CN.md#%E4%BA%A4%E6%B5%81",
-                "https://github.com/MoFeng2223/BrimDeck/blob/main/README.md#community"))));
     }
 
     // External links are plain text, so their right edge lines up with the values in the rows above.

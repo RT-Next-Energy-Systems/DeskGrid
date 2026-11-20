@@ -319,9 +319,9 @@ public partial class MainWindow
     private FrameworkElement LinkText(string text, double size, Action<FrameworkElement> click)
     {
         var label = Label(text, size, Look.Secondary, HorizontalAlignment.Left);
-        var chevron = SettingsWindow.Chevron();
+        var chevron = SettingsPages.Chevron();
         chevron.FontSize = size; chevron.Foreground = UI.Brush(Look.Secondary);
-        chevron.Margin = new Thickness(4, SettingsWindow.ChevronDrop.Top, 0, SettingsWindow.ChevronDrop.Bottom);
+        chevron.Margin = new Thickness(4, SettingsPages.ChevronDrop.Top, 0, SettingsPages.ChevronDrop.Bottom);
         var link = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Center, Background = Brushes.Transparent, Cursor = Cursors.Hand };
         link.Children.Add(label); link.Children.Add(chevron);
         void Paint(string color) { label.Foreground = UI.Brush(color); chevron.Foreground = UI.Brush(color); }

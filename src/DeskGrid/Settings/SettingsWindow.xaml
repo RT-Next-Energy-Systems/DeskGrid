@@ -5,8 +5,8 @@
         ThemeMode="System"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True"
-        Width="780"
-        Height="680"
+        Width="980"
+        Height="720"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen">
   <!-- A list of pages on the left, the chosen page on the right (each page scrolls if it is too tall, MaxHeight is set in
@@ -218,7 +218,7 @@
           </Border>
         </StackPanel>
       </ScrollViewer>
-      <!-- NotiLand is BrimDeck, which runs beside DeskGrid: the switch starts and stops it, the button opens its own settings. -->
+      <!-- NotiLand is BrimDeck, which runs inside DeskGrid: the switch starts and stops it. -->
       <ScrollViewer x:Name="PageIsland" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
         <StackPanel Margin="0,0,4,0">
           <Border Style="{StaticResource Card}">
@@ -226,14 +226,10 @@
               <CheckBox x:Name="IslandBox" MinWidth="0" FontWeight="SemiBold" />
             </StackPanel>
           </Border>
-
-          <Border Style="{StaticResource Card}">
-            <DockPanel>
-              <Button Padding="12,5" x:Name="NotiLandSettingsButton" DockPanel.Dock="Right" Click="OnOpenNotiLandSettings" />
-            </DockPanel>
-          </Border>
         </StackPanel>
       </ScrollViewer>
+      <!-- The pages under NotiLand in the list are BrimDeck's own, which scroll by themselves; code puts them here while NotiLand runs. -->
+      <Border x:Name="PageNotiLand" Visibility="Collapsed" />
 
       <!-- About: version, updates and links. Version and update check on the first row, the startup check on the second,
            GitHub and the change log on the third; the buttons share a column. -->

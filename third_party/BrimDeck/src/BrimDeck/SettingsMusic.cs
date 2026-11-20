@@ -9,7 +9,7 @@ using BrimDeck.Core;
 
 namespace BrimDeck;
 
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     // keepPreview marks the segments alone as preview controls, so a press on the rest of the row still ends the preview.
     private FrameworkElement MusicChoice<T>(string title, T selected, (T Value, string Label)[] options, Action<T> change, bool enabled = true, bool keepPreview = false, string? help = null, double width = 292) where T : notnull
@@ -433,7 +433,7 @@ public sealed partial class SettingsWindow
         async Task Switch(bool on)
         {
             if (quiet) return;
-            if (on && new KugouControlWindow(S.Theme) { Owner = this }.ShowDialog() != true) { Set(false); return; }
+            if (on && new KugouControlWindow(S.Theme) { Owner = DialogOwner }.ShowDialog() != true) { Set(false); return; }
             busy = true; failure = null; Update();
             try
             {
@@ -504,7 +504,7 @@ public sealed partial class SettingsWindow
         async Task Switch(bool on)
         {
             if (quiet) return;
-            if (on && new NeteaseFileControlWindow(S.Theme) { Owner = this }.ShowDialog() != true) { Set(false); return; }
+            if (on && new NeteaseFileControlWindow(S.Theme) { Owner = DialogOwner }.ShowDialog() != true) { Set(false); return; }
             busy = true; failure = null; Update();
             try
             {
@@ -560,7 +560,7 @@ public sealed partial class SettingsWindow
     // Switching it on is confirmed with the explanation of the debugging port; declining rebuilds the page with the switch off.
     private void NeteaseAutoFullControl(bool on)
     {
-        if (on && new NeteaseControlWindow(S.Theme, NeteaseControlAction.Auto) { Owner = this }.ShowDialog() != true)
+        if (on && new NeteaseControlWindow(S.Theme, NeteaseControlAction.Auto) { Owner = DialogOwner }.ShowDialog() != true)
         {
             Dispatcher.BeginInvoke(() => ShowPage(_page)); return;
         }

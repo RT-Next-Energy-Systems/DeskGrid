@@ -156,9 +156,9 @@ public partial class MainWindow
             default: _media?.Select(NeighbourSource(action == MusicGestureAction.NextPlayer ? 1 : -1)); break;
         }
     }
-    private string GestureLabel(MusicGestureAction action) => !CanRunGesture(action) ? SettingsWindow.GestureName(MusicGestureAction.None)
+    private string GestureLabel(MusicGestureAction action) => !CanRunGesture(action) ? SettingsPages.GestureName(MusicGestureAction.None)
         : action == MusicGestureAction.PlayPause ? _mediaTrack?.State == MediaState.Playing ? Loc.T("暫停", "Pause") : Loc.T("播放", "Play")
-        : SettingsWindow.GestureName(action);
+        : SettingsPages.GestureName(action);
 
     private void StartTrail(Point start)
     {

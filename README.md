@@ -203,9 +203,9 @@ taking one line of JSON per connection (`{"command":"list","args":["Work"]}`), w
 
 NotiLand is [BrimDeck](https://github.com/MoFeng2223/BrimDeck), an island at the top of the screen that opens to show the
 quotas of your AI coding tools, the music that plays, system readings, wireless device batteries, a clipboard history and a
-file transfer. DeskGrid carries it and runs it beside itself: tick **Show NotiLand** in Settings → NotiLand (it is off by
-default) and DeskGrid starts it; untick it and DeskGrid stops it; it ends with DeskGrid. **Open NotiLand settings…** opens
-BrimDeck's own settings window, where everything about it (what it shows, its look, its shortcuts) is set; BrimDeck's
+file transfer. DeskGrid carries it and runs it inside itself: tick **Show NotiLand** in Settings → NotiLand (it is off by
+default) and DeskGrid starts it; untick it and DeskGrid stops it; it ends with DeskGrid. While it runs, its settings (what it
+shows, its look, its shortcuts) are pages listed below **NotiLand** in Settings; BrimDeck's
 [README](https://github.com/MoFeng2223/BrimDeck#readme) describes it.
 
 - It is BrimDeck's code (`third_party/BrimDeck`, Apache License 2.0), with the parts that change another program's files

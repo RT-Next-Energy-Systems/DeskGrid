@@ -11,7 +11,7 @@ using BrimDeck.Native;
 
 namespace BrimDeck;
 
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     // Whether the exception list is open. Kept while the page is rebuilt, so adding or removing an app leaves it as it was.
     private bool _exceptionsOpen;

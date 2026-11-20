@@ -500,7 +500,4 @@
   <data name="ImportDone" xml:space="preserve">
     <value>已匯入。</value>
   </data>
-  <data name="SettingsNotiLandOpen" xml:space="preserve">
-    <value>開啟 NotiLand 設定…</value>
-  </data>
 </root>

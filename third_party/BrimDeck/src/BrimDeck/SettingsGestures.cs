@@ -7,7 +7,7 @@ namespace BrimDeck;
 
 // The music page's gestures (MusicGestures), on a page of their own under music: dragging with the left button in four directions,
 // and a two-finger touchpad swipe to either side. A two-finger swipe up or down is the mouse wheel's (DeckSettings.MouseWheel).
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     internal const int MusicGesturesPage = 15;
 

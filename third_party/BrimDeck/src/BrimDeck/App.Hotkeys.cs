@@ -82,7 +82,7 @@ public partial class App
         var settings = Settings.Copy();
         settings.ClickThrough = !settings.ClickThrough;
         UpdateSettings(settings);
-        _settingsWindow?.ClickThroughChanged();
+        _settingsPages?.ClickThroughChanged();
     }
 
     // Turns the collapsed style to the next one, in the order of CompactStyle: notch, capsule, line, then the notch again.
@@ -92,7 +92,7 @@ public partial class App
         var styles = Enum.GetValues<CompactStyle>();
         settings.Style = styles[(Array.IndexOf(styles, settings.Style) + 1) % styles.Length];
         UpdateSettings(settings);
-        _settingsWindow?.CompactStyleChanged();
+        _settingsPages?.CompactStyleChanged();
     }
 
     // Turns the notch or the capsule into the line, or the line back into the notch or capsule last chosen (DeckSettings.ShapeStyle).
@@ -101,14 +101,13 @@ public partial class App
         var settings = Settings.Copy();
         settings.Style = settings.Style == CompactStyle.Line ? settings.ShapeStyle : CompactStyle.Line;
         UpdateSettings(settings);
-        _settingsWindow?.CompactStyleChanged();
+        _settingsPages?.CompactStyleChanged();
     }
 
     // Opens the settings window, or closes it when it is open and not minimized.
     private void ToggleSettingsFromHotkey()
     {
-        if (_settingsWindow is { WindowState: not System.Windows.WindowState.Minimized } open) open.Close();
-        else OpenSettings();
+        OpenSettings();
     }
 
     // The panel the hotkeys act on when none is open: the one on the monitor under the pointer, or the main panel.

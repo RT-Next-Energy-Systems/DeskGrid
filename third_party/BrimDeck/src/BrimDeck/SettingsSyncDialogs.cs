@@ -17,7 +17,7 @@ namespace BrimDeck;
 
 // The windows that connect a clipboard sync service: each says what to do on the other device, in the words that device's
 // own application uses, and takes or shows the code.
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     private sealed record SyncDialogShell(Window Window, StackPanel Body);
 
@@ -26,7 +26,7 @@ public sealed partial class SettingsWindow
 
     private SyncDialogShell SyncDialog(string title, double width = 420)
     {
-        var dialog = new Window { Owner = this, Title = title, Width = width, SizeToContent = SizeToContent.Height,
+        var dialog = new Window { Owner = DialogOwner, Title = title, Width = width, SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, ShowInTaskbar = false, FontFamily = SettingsFont(UiFontRole.Panel),
             Background = UI.Brush(Surface), Foreground = UI.Brush(TextPrimary) };
         dialog.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("/BrimDeck;component/SettingsResources.xaml", UriKind.Relative) });

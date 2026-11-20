@@ -25,7 +25,7 @@ public sealed partial class App
     private EventWaitHandle? _settingsEvent;
     private RegisteredWaitHandle? _listener;
     private TrayIcon? _tray;
-    private SettingsWindow? _settingsWindow;
+    private SettingsPages? _settingsPages;
     private readonly DispatcherTimer _save = new() { Interval = TimeSpan.FromMilliseconds(400) };
     public DeckSettings Settings { get; private set; } = new();
     public SettingsStore Store { get; private set; } = null!;
@@ -111,6 +111,8 @@ public sealed partial class App
         // So is a first try of a device's read that the last run ended in (DeviceReadStore), with the reads kept for each device.
         DeviceReadStore.Start(folder);
         DeviceReadSwitches.Use(Settings.DeviceChoices);
+        // The language is DeskGrid's (FollowLanguage): the one the host started with replaces the stored one.
+        if (_hostLanguage is { } hostLanguage) Settings.Language = hostLanguage;
         UseLanguage(); UseFont();
         PanelTheme.Use(Settings);
         ScheduleDaylight();
@@ -206,9 +208,24 @@ public sealed partial class App
         Resources["PinSourceName"] = Loc.T("固定顯示", "Pin");
         Resources["UnpinSourceName"] = Loc.T("取消固定", "Unpin");
     }
-    public void OpenSettings() => ShowSettings(false);
-    // The clipboard page's menus open the settings at its own pages (SettingsWindow.ClipboardSettingsPage, TransferSettingsPage).
-    internal void OpenSettingsPage(int page) { ShowSettings(false); _settingsWindow?.ShowPage(page); }
+    /// <summary>The settings are DeskGrid's: BrimDeck's pages (<see cref="CreateSettingsPages"/>) live in its settings window. This is raised when something here wants them shown (the gear, the tray menu, a hotkey, a link on a page); the argument is the page number, or -1 for the page last shown.</summary>
+    public event Action<int>? SettingsRequested;
+    public void OpenSettings() => SettingsRequested?.Invoke(-1);
+    // The clipboard page's menus open the settings at its own pages (SettingsPages.ClipboardSettingsPage, TransferSettingsPage).
+    internal void OpenSettingsPage(int page) => SettingsRequested?.Invoke(page);
+    /// <summary>The settings pages for the host to show; the host calls <see cref="SettingsPages.Release"/> when it is done with them.</summary>
+    public SettingsPages CreateSettingsPages()
+    {
+        _settingsPages?.Release();
+        var pages = _settingsPages = new SettingsPages(this);
+        if (Store.LoadWarning is { } warning) pages.SaveStatus(warning, true);
+        return pages;
+    }
+    internal void ReleaseSettingsPages(SettingsPages pages)
+    {
+        if (_settingsPages != pages) return;
+        _settingsPages = null; RequestTrim();
+    }
     // Starting BrimDeck while it runs shows the hidden panels as well as the settings, so the panels come back even without
     // the tray icon.
     private void ShowFromRelaunch()
@@ -227,27 +244,12 @@ public sealed partial class App
     // panel is resumed either way, in case the two disagree (ResumeAfterPreview does nothing when no preview is on).
     internal void EndPreviewFromDeck()
     {
-        _settingsWindow?.EndPreview();
+        _settingsPages?.EndPreview();
         foreach (var deck in Decks.ToList()) deck.ResumeAfterPreview();
     }
-    // The panel's update dot opens the About page with the update dialog.
-    internal void OpenUpdateSettings() => ShowSettings(true);
-    // After an update the gear's dot opens the About page with the What's new window.
-    internal void OpenReleaseNotes() => ShowSettings(false, notes: true);
-    private void ShowSettings(bool update, bool notes = false)
-    {
-        if (_settingsWindow is null)
-        {
-            _settingsWindow = new SettingsWindow(this);
-            // What the window built is garbage once it closes: given back like a panel's after it collapses.
-            _settingsWindow.Closed += (_, _) => { _settingsWindow = null; RequestTrim(); };
-            _settingsWindow.Show();
-            if (Store.LoadWarning is { } warning) _settingsWindow.SaveStatus(warning, true);
-        }
-        if (_settingsWindow.WindowState == WindowState.Minimized) _settingsWindow.WindowState = WindowState.Normal;
-        _settingsWindow.Activate();
-        _ = notes ? _settingsWindow.ShowReleaseNotesAsync() : update ? _settingsWindow.ShowUpdateNoticeAsync() : _settingsWindow.CheckUpdatesOnOpenAsync();
-    }
+    // BrimDeck does not check for updates by itself (DeskGrid does), so there is no update dot or what's-new notice to open from here.
+    internal void OpenUpdateSettings() => OpenSettings();
+    internal void OpenReleaseNotes() => OpenSettings();
     public void UpdateSettings(DeckSettings settings)
     {
         foreach (var previous in Settings.Apps)
@@ -257,7 +259,7 @@ public sealed partial class App
             {
                 try { Secrets.Delete(previous.InstanceId); }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
-                { _settingsWindow?.SaveStatus(Loc.T("金鑰檔案無法更新，請檢查本機設定目錄後重試。", "The key file could not be updated. Check the local settings folder and try again."), true); return; }
+                { _settingsPages?.SaveStatus(Loc.T("金鑰檔案無法更新，請檢查本機設定目錄後重試。", "The key file could not be updated. Check the local settings folder and try again."), true); return; }
             }
         }
         bool syncEnabled = settings.UsageAutoSync && !Settings.UsageAutoSync;
@@ -305,13 +307,13 @@ public sealed partial class App
         QueueSave();
         CollapsedChanged();
         ApplyProfileRules();
-        if (profileChanged) _settingsWindow?.ProfilesChanged();
+        if (profileChanged) _settingsPages?.ProfilesChanged();
         if (dataChanged || syncEnabled || languageChanged) _ = Deck.RefreshAutomaticallyAsync(queueIfBusy: true);
     }
     // The settings window's size group follows changes made on the panel (a drag, or content that changed the auto width).
-    internal void CollapsedChanged() => _settingsWindow?.CollapsedChanged();
-    // A new reading may bring quotas an application row's ring choices did not have yet (SettingsWindow.QuotasChanged).
-    internal void SnapshotsChanged() => _settingsWindow?.QuotasChanged();
+    internal void CollapsedChanged() => _settingsPages?.CollapsedChanged();
+    // A new reading may bring quotas an application row's ring choices did not have yet (SettingsPages.QuotasChanged).
+    internal void SnapshotsChanged() => _settingsPages?.QuotasChanged();
     private void SystemThemeChanged(object sender, Microsoft.Win32.UserPreferenceChangedEventArgs e)
     {
         if (Dispatcher.HasShutdownStarted) return;
@@ -325,7 +327,7 @@ public sealed partial class App
                 || PanelTheme.FollowsWindowsMode(Settings) || Decks.Any(deck => deck is not null && deck.Profile is not null && deck.Look.FollowsWindowsMode(deck.PanelSettings)))
                 ApplyPanelTheme(systemChanged: true);
             // The theme page's "System" card shows the Windows mode whichever theme is chosen.
-            else _settingsWindow?.PanelThemeChanged(onlyThemePage: true);
+            else _settingsPages?.PanelThemeChanged(onlyThemePage: true);
         });
     }
     // Makes the chosen panel theme current (reading the theme folder again when asked) and repaints every panel if it changed.
@@ -342,7 +344,7 @@ public sealed partial class App
         // Into or out of high contrast the theme itself has not changed, so the clock's gradient stays as the user left it.
         if (changed && systemChanged && !wasHigh && !PanelTheme.HighContrast && PanelThemes.CarryGradient(previous, PanelTheme.Current, Settings)) QueueSave();
         foreach (var deck in Decks.ToList()) if (changed || own.Contains(deck)) deck.ApplySettings();
-        if (changed && !reload) _settingsWindow?.PanelThemeChanged();
+        if (changed && !reload) _settingsPages?.PanelThemeChanged();
     }
     // A theme with a night look changes look at its hours (PanelThemes.LookAt): the timer is set for the next change, and at
     // most ten minutes ahead, so a clock changed by hand or a machine that slept past the hour catches up soon after. The switch
@@ -365,7 +367,7 @@ public sealed partial class App
     // A panel reports display changes (monitors added or removed, the primary changed, a work area or scale changed).
     // Each panel receives the same messages, so they are handled once, after Windows has moved the windows to the new layout.
     // The divider between the clipboard page's columns was dragged on a panel: an open settings page shows the new widths.
-    internal void ShelfShareChanged() => _settingsWindow?.ShelfShareChanged();
+    internal void ShelfShareChanged() => _settingsPages?.ShelfShareChanged();
     internal void DisplaysChanged()
     {
         if (_arrangePending || Exiting) return;
@@ -378,7 +380,7 @@ public sealed partial class App
             Displays = Native.Displays.Current(); AssignDisplays();
             ApplyToDecks(styles);
             StartMedia(); UpdateMonitorExtras(); Shelf.Apply(ShelfSettings());
-            _settingsWindow?.DisplaysChanged();
+            _settingsPages?.DisplaysChanged();
         });
     }
     // Gives the main panel its monitor and opens or closes the panels of the other monitors. A panel that keeps its
@@ -608,7 +610,7 @@ public sealed partial class App
             string? error = null;
             try { Store.Write(text); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { error = Loc.T("儲存失敗，請檢查設定目錄許可權。", "Saving failed. Check the permissions of the settings folder."); }
-            Dispatcher.BeginInvoke(() => { if (error is null) _settingsWindow?.SaveStatus(""); else _settingsWindow?.SaveStatus(error, true); });
+            Dispatcher.BeginInvoke(() => { if (error is null) _settingsPages?.SaveStatus(""); else _settingsPages?.SaveStatus(error, true); });
         }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
     }
     // The last usage readings (UsageLastSeen) are saved and cleared the same way, one after another in the order they were asked for:
@@ -628,8 +630,7 @@ public sealed partial class App
     public void ExitApplication()
     {
         if (Exiting) return;
-        Exiting = true; Lifetime.Cancel(); _settingsWindow?.RememberSize(); FlushSettings();
-        _settingsWindow?.Hide();
+        Exiting = true; Lifetime.Cancel(); FlushSettings();
         var decks = Decks.ToList();
         int waiting = decks.Count;
         var fallback = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(BrimDeck.MainWindow.PowerOffLength(Settings.AnimationDuration) + 500) };

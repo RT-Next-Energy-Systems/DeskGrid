@@ -343,7 +343,7 @@ public partial class MainWindow
         if (!Searching && favorites)
         {
             panel.Children.Add(Label(Loc.T("右鍵任意一條，選擇“加入常用”", "Right-click an entry and choose Add to favorites"), layout.Aux, Look.Tertiary, HorizontalAlignment.Center, top: 4));
-            var add = PillButton(Loc.T("在設定中新增常用語", "Add phrases in settings"), primary: false, () => _app.OpenSettingsPage(SettingsWindow.ClipboardSettingsPage));
+            var add = PillButton(Loc.T("在設定中新增常用語", "Add phrases in settings"), primary: false, () => _app.OpenSettingsPage(SettingsPages.ClipboardSettingsPage));
             add.Margin = new Thickness(0, 10, 0, 0); add.HorizontalAlignment = HorizontalAlignment.Center; panel.Children.Add(add);
         }
         else if (!Searching && _clipTab is null && !Settings.ClipboardRecord)
@@ -514,7 +514,7 @@ public partial class MainWindow
             DockPanel.SetDock(dot, System.Windows.Controls.Dock.Left); content.Children.Add(dot);
         }
         // Without the settings' 1 DIP drop: beside the panel's filters that put the arrow below their middle (measured on screen).
-        var chevron = SettingsWindow.Chevron(); chevron.FontSize = 11; chevron.Foreground = UI.Brush(Look.Secondary);
+        var chevron = SettingsPages.Chevron(); chevron.FontSize = 11; chevron.Foreground = UI.Brush(Look.Secondary);
         chevron.Margin = new Thickness(4, 0, 0, 0);
         DockPanel.SetDock(chevron, System.Windows.Controls.Dock.Right); content.Children.Add(chevron);
         string text = shown?.Name ?? Loc.T("分類", "Categories");
@@ -885,7 +885,7 @@ public partial class MainWindow
         var label = Label(text, layout.Aux, warn ? WarnColor : Look.Tertiary, HorizontalAlignment.Right);
         Typography.SetNumeralAlignment(label, FontNumeralAlignment.Tabular);
         // The settings' chevron (the icon font's, as the expandable rows there), turned to point right; no hover note.
-        var chevron = SettingsWindow.Chevron(); chevron.FontSize = 11; chevron.Margin = new Thickness(0); chevron.Foreground = UI.Brush(Look.Secondary);
+        var chevron = SettingsPages.Chevron(); chevron.FontSize = 11; chevron.Margin = new Thickness(0); chevron.Foreground = UI.Brush(Look.Secondary);
         chevron.RenderTransform = new RotateTransform(-90);
         // A 22 DIP face; the press is taken over the row's whole height and 36 DIP across, reaching into the row's right padding.
         // Beside "貼上為純文字" both press areas narrow, so the two faces stand 4 DIP apart.

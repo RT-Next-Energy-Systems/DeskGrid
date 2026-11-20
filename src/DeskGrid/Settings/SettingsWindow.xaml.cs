@@ -6,6 +6,7 @@ using System.Windows.Media;
 using DeskGrid.Config;
 using DeskGrid.Folders;
 using DeskGrid.Hotkeys;
+using DeskGrid.NotiLand;
 using DeskGrid.Panel;
 using DeskGrid.Resources;
 using DeskGrid.Shell;
@@ -51,6 +52,10 @@ internal partial class SettingsWindow : Window
     private PanelBackgroundStyle _shownStyle; // The style whose opacity the slider is showing.
     private string _appliedKey = ""; // What was last applied (or shown at the start): the window is "changed" when it differs.
     private bool _closeWithoutAsking;
+    private NotiLandHost? _host;
+    private NotiLandSettings? _noti; // NotiLand's pages while it runs.
+    private readonly List<ListBoxItem> _notiItems = []; // Their entries in the list on the left (captions too).
+    private int _lastIndex; // The entry that was chosen before, to step over a caption in the direction of travel.
 
     public SettingsWindow(AppConfig config)
     {
@@ -100,6 +105,7 @@ internal partial class SettingsWindow : Window
         OpacitySlider.ValueChanged += (_, _) => RefreshPreview();
         ShadeSlider.ValueChanged += (_, _) => RefreshPreview();
         Loaded += (_, _) => RefreshPreview(); // The preview needs the window's DPI.
+        Deactivated += (_, _) => _noti?.WindowDeactivated();
         _appliedKey = Key(ReadChoice());
     }
 
@@ -127,12 +133,15 @@ internal partial class SettingsWindow : Window
         About,
     }
 
-    /// <summary>The page the list on the left has chosen.</summary>
-    internal Page CurrentPage => PageItems.FindIndex(pair => pair.Item == Pages.SelectedItem) is var i and >= 0 ? (Page)i : Page.General;
+    /// <summary>The page the list on the left has chosen; any of NotiLand's own pages counts as <see cref="Page.Island"/>.</summary>
+    internal Page CurrentPage => Pages.SelectedItem is ListBoxItem { Tag: NotiLandPage }
+        ? Page.Island
+        : PageItems.FindIndex(pair => pair.Item == Pages.SelectedItem) is var i and >= 0 ? (Page)i : Page.General;
 
     internal void ShowPage(Page page) => Pages.SelectedItem = PageItems[(int)page].Item;
 
-    // Each entry of the list and the page it stands for, in <see cref="Page"/> order.
+    // Each entry of the list and the page it stands for, in <see cref="Page"/> order. NotiLand's own pages are entries after
+    // the Island one, added while it runs (<see cref="RefreshNotiLandPages"/>).
     private List<(ListBoxItem Item, FrameworkElement Content)> PageItems =>
     [
         (PageGeneralItem, PageGeneral),
@@ -144,9 +153,131 @@ internal partial class SettingsWindow : Window
 
     private void OnPageChanged(object sender, SelectionChangedEventArgs e)
     {
+        // A caption is not a page: the choice goes on in the direction it was moving.
+        if (Pages.SelectedItem is ListBoxItem { Tag: string } caption)
+        {
+            var index = Pages.Items.IndexOf(caption);
+            Pages.SelectedIndex = index > _lastIndex ? index + 1 : index - 1;
+            return;
+        }
+
+        _lastIndex = Pages.SelectedIndex;
+        var notiLand = Pages.SelectedItem is ListBoxItem { Tag: NotiLandPage page } ? page : null;
         foreach (var (item, content) in PageItems)
         {
             content.Visibility = item.IsSelected ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        PageNotiLand.Visibility = notiLand is null ? Visibility.Collapsed : Visibility.Visible;
+        if (notiLand is not null)
+        {
+            _noti?.Show(notiLand.Number);
+        }
+        else
+        {
+            _noti?.Leave();
+        }
+    }
+
+    /// <summary>NotiLand (BrimDeck) and what shows its settings: its pages are listed below "NotiLand" while it runs.</summary>
+    internal NotiLandHost? NotiLand
+    {
+        get => _host;
+        set
+        {
+            _host = value;
+            RefreshNotiLandPages();
+        }
+    }
+
+    /// <summary>Lists NotiLand's pages if it runs and takes them out of the list if it does not; <paramref name="languageChanged"/> draws them again.</summary>
+    internal void RefreshNotiLandPages(bool languageChanged = false)
+    {
+        var settings = _host?.OpenSettingsPages();
+        var same = settings is not null && ReferenceEquals(settings, _noti);
+        if (same && !languageChanged)
+        {
+            return;
+        }
+
+        // What is chosen among the entries about to go: the same page again when only the titles change, else the NotiLand entry itself.
+        var keep = Pages.SelectedItem is ListBoxItem { Tag: NotiLandPage current } ? current.Number : -1;
+        if (!same && keep >= 0)
+        {
+            Pages.SelectedItem = PageIslandItem;
+        }
+
+        PageNotiLand.Child = null;
+        _noti = settings;
+        BuildNotiLandItems();
+        if (settings is null)
+        {
+            return;
+        }
+
+        PageNotiLand.Child = settings.Element;
+        if (same)
+        {
+            settings.Refresh();
+            if (keep >= 0)
+            {
+                ShowNotiLandPage(keep);
+            }
+        }
+    }
+
+    /// <summary>Chooses one of NotiLand's pages (a request from NotiLand itself): the one numbered, or the first.</summary>
+    internal void ShowNotiLandPage(int number)
+    {
+        var target = _notiItems.FirstOrDefault(item => item.Tag is NotiLandPage page && page.Number == number)
+            ?? _notiItems.FirstOrDefault(item => item.Tag is NotiLandPage);
+        if (target is not null)
+        {
+            Pages.SelectedItem = target;
+        }
+    }
+
+    // The entries for NotiLand's pages, each group of them under a caption, between "NotiLand" and "About".
+    private void BuildNotiLandItems()
+    {
+        foreach (var item in _notiItems)
+        {
+            Pages.Items.Remove(item);
+        }
+
+        _notiItems.Clear();
+        if (_noti is null)
+        {
+            return;
+        }
+
+        var at = Pages.Items.IndexOf(PageIslandItem) + 1;
+        foreach (var page in _noti.Pages)
+        {
+            if (page.Group.Length > 0)
+            {
+                Insert(new ListBoxItem
+                {
+                    Tag = page.Group,
+                    Focusable = false,
+                    IsHitTestVisible = false,
+                    Padding = new Thickness(10, 12, 10, 2),
+                    Content = new TextBlock { Text = page.Group, FontSize = 11, Opacity = 0.6, Margin = new Thickness(26, 0, 0, 0) },
+                });
+            }
+
+            Insert(new ListBoxItem
+            {
+                Tag = page,
+                Padding = new Thickness(10, 6, 10, 6),
+                Content = new TextBlock { Text = page.Title, Margin = new Thickness(26, 0, 0, 0), TextTrimming = TextTrimming.CharacterEllipsis },
+            });
+        }
+
+        void Insert(ListBoxItem item)
+        {
+            Pages.Items.Insert(at++, item);
+            _notiItems.Add(item);
         }
     }
 
@@ -176,11 +307,6 @@ internal partial class SettingsWindow : Window
     private void OnAutoBackupSwitched(object sender, RoutedEventArgs e) => UpdateAutoBackupEnabled();
 
     private void UpdateAutoBackupEnabled() => AutoBackupOptions.IsEnabled = AutoBackupBox.IsChecked == true;
-
-    /// <summary>Opens NotiLand's own settings window (BrimDeck's).</summary>
-    public Action? OpenNotiLandSettings { get; set; }
-
-    private void OnOpenNotiLandSettings(object sender, RoutedEventArgs e) => OpenNotiLandSettings?.Invoke();
 
     private void OnExport(object sender, RoutedEventArgs e) => ExportSettings?.Invoke();
 
@@ -340,7 +466,6 @@ internal partial class SettingsWindow : Window
         ShowHotkeysHint();
         AllowControlBox.Content = Strings.SettingsAllowControl;
         IslandBox.Content = Strings.SettingsIsland;
-        NotiLandSettingsButton.Content = Strings.SettingsNotiLandOpen;
         GitHubLabel.Text = Strings.SettingsGitHub;
 
         // Only owner/name: the label already says GitHub, and the whole address would not fit beside the button.
@@ -429,6 +554,12 @@ internal partial class SettingsWindow : Window
         }
     }
 
+    protected override void OnClosed(EventArgs e)
+    {
+        base.OnClosed(e);
+        _host?.CloseSettingsPages();
+    }
+
     private void OnApply(object sender, RoutedEventArgs e) => Apply();
 
     // The panel's background for the controls as they are now.
@@ -487,6 +618,8 @@ internal partial class SettingsWindow : Window
             LanguageBox.SelectedValue = choice.Language;
         }
 
+        // NotiLand may have started or stopped, or changed language, with what was applied.
+        RefreshNotiLandPages(languageChanged);
         return true;
     }
 }

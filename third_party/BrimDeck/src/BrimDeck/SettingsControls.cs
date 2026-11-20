@@ -11,7 +11,7 @@ using System.Windows.Media;
 
 namespace BrimDeck;
 
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPages
 {
     private FrameworkElement SettingLabel(string title, Func<string>? help = null)
     {
@@ -175,7 +175,7 @@ public sealed partial class SettingsWindow
     // (in the accent color when it is not a danger).
     private bool Confirm(string title, string message, string action, bool danger = true)
     {
-        var dialog = new Window { Title = title, Owner = this, Width = 400, SizeToContent = SizeToContent.Height,
+        var dialog = new Window { Title = title, Owner = DialogOwner, Width = 400, SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterOwner, ShowInTaskbar = false, FontFamily = SettingsFont(UiFontRole.Panel),
             Background = UI.Brush(Surface), Foreground = UI.Brush(TextPrimary), ResizeMode = ResizeMode.NoResize };
         dialog.Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("/BrimDeck;component/SettingsResources.xaml", UriKind.Relative) });

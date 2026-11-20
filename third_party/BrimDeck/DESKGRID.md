@@ -19,6 +19,17 @@ The code is BrimDeck's own. Only what the integration needs was changed:
   `StopNow()`, reporting `Stopped`. `Program.cs` is gone; the two helpers BrimDeck started as copies of itself (portable update, the
   administrator one for frame rates) are run by DeskGrid's start-up through `App.TryRunHelper`. A BrimDeck of its own that already
   runs (it keeps the data folder) keeps NotiLand from starting.
+- **Settings are pages in DeskGrid's settings window** (2026-11-20): BrimDeck's `SettingsWindow` (a `Window` with its own page list, caption
+  buttons and size) is `SettingsPages`, a `UserControl` that shows one page at a time and implements `IDeckSurface` (so `DeckWindow.Holds`
+  treats it like one of BrimDeck's windows: tips and menus). The host lists the pages (`SettingsPages.Pages()`: page number, group
+  caption, title), calls `ShowPage` / `Leave` / `HostDeactivated` / `Refresh` and gives it back with `Release`; `App.CreateSettingsPages()`
+  makes it, and `App.SettingsRequested` (the gear, the tray menu, a hotkey, a link on a page) asks the host to show it. Dialogs a page opens
+  are owned by the host's window (`DialogOwner`). The pages follow the system's light or dark theme, not the Theme setting (`HostIsDark`).
+  The host's window may be Fluent-themed, whose styles would reach the controls inside BrimDeck's templates: `KeepHostThemeOut` gives the
+  types BrimDeck's resources do not style an empty implicit style. Removed because DeskGrid has them: the About page (version, update
+  check, links; `SettingsUpdates.cs` and `SettingsReleaseNotes.cs` deleted), the Start with Windows switch, the Exit row and the language
+  choice (`App.StartHosted(english)` and `App.FollowLanguage` take DeskGrid's language). The caption, the brand and the window's size and
+  position settings (`SettingsWindowWidth` ...) are no longer used.
 - **Styles stay in BrimDeck's windows** (`DeckResources.xaml`, was `App.xaml`; `DeckResources.cs`; `DeckWindow.cs`): its implicit styles
   (Button, TextBox, ScrollBar, ToolTip, ...) would restyle DeskGrid's own windows if they were the application's resources. They are
   one shared `ResourceDictionary` that every BrimDeck window merges into its own resources (`DeckWindow` is the base of all of

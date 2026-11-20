@@ -904,3 +904,12 @@
 **替代方案**：維持伴隨程式（簡單，但是兩個程式和 163 MB 的 exe）；把 BrimDeck 載入自己的 AssemblyLoadContext（沒有幫助：WPF 的 `Application` 與資源查詢由整個程序共用）。
 **後果**：BrimDeck 的程式碼被修改的地方比以前多（列在 `third_party/BrimDeck/DESKGRID.md`），所以改用較新的 BrimDeck 時要重新套用；BrimDeck 程式碼中未處理的例外現在由 DeskGrid 承擔（`NotiLandHost` 保護啟動與停止）；BrimDeck 自己的系統匣圖示仍是第二個圖示。已驗證：島顯示在 DeskGrid 的單一程序內、BrimDeck 設定視窗樣式正常而 DeskGrid 自己的設定視窗不變、啟動 / 停止 / 再啟動兩輪不留視窗（`NotiLandTests`）、發行版單一 exe 能執行它。未驗證：長時間執行（數日的記憶體）、BrimDeck 的音樂與裝置功能在這個程序內的表現。
 **作者**：Claude（Sonnet 5.5），依擁有者要求
+
+---
+
+### 2026-11-20 — NotiLand 的設定移進 DeskGrid 的設定視窗
+**決定**：BrimDeck 的設定視窗不再存在。它的頁面程式碼（`SettingsWindow`，一個 `Window`）改成 `SettingsPages`，一個由 DeskGrid 設定視窗承載的 `UserControl`：NotiLand 執行時，各頁成為左側清單中「NotiLand」底下的項目，沿用 BrimDeck 自己的群組標題；視窗從 780 × 680 加大為 980 × 720。BrimDeck 的 `App.SettingsRequested`（齒輪、系統匣選單、快速鍵、連結）請 DeskGrid 顯示它們。因 DeskGrid 已有而拿掉：關於頁與檢查更新、開機自啟動開關、退出列、語言選項（NotiLand 跟隨 DeskGrid 的語言）。頁面跟隨系統主題，不用 BrimDeck 的「主題」設定。
+**原因**：擁有者要求把兩份設定合併，只剩 DeskGrid 的設定；問過做法後，他選了「全部攤平成 DeskGrid 的頁」和「拿掉重複的」。
+**替代方案**：把 BrimDeck 整個視窗連同它自己的清單嵌進 NotiLand 一頁（改動最小，但是兩層頁面清單；當作建議選項提出，沒被選）；只併常用的頁（不採用：擁有者要全部）。
+**後果**：BrimDeck 的程式碼改得更多（列在 `third_party/BrimDeck/DESKGRID.md`），包括擋住 DeskGrid 視窗的 Fluent 主題滲入 BrimDeck 控制項範本的處理；BrimDeck 的設定仍存在 `%LOCALAPPDATA%\BrimDeck`，不在 DeskGrid 的備份中；NotiLand 的頁面只在它執行時存在。每一頁都從真實視窗畫出（深色、zh-TW）；淺色主題與手動操作頁面未驗證。462 個測試通過。
+**作者**：Claude（Sonnet 5.5），依擁有者要求
