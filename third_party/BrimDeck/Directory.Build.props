@@ -1,0 +1,10 @@
+<Project>
+
+  <!-- BrimDeck's own build settings; DeskGrid's (warnings as errors, style rules) do not apply to the vendored source. -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <NoWarn>$(NoWarn);CA1416;CS1591;CS8618;CS8625;CS8600;CS8602;CS8604;CS8603;CS8601;CS8629;CS0618;CS0649;CS0169;CS0414;CS0219</NoWarn>
+  </PropertyGroup>
+
+</Project>

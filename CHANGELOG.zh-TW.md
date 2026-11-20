@@ -4,9 +4,18 @@
 
 ## Unreleased
 
+### 變更
+
+- **NotiLand 改成 BrimDeck。** DeskGrid 自己的提示島換成 [BrimDeck](https://github.com/MoFeng2223/BrimDeck)（Apache-2.0）：**顯示 NotiLand** 開啟時，DeskGrid 帶著它並在旁邊執行，提供 AI 工具額度、音樂、系統讀數、裝置電量、剪貼簿歷史與檔案暫存。BrimDeck 中會修改其他程式檔案或以系統管理員權限安裝服務的部分已拿掉（見 `third_party/BrimDeck/DESKGRID.md`）。舊提示島的其他設定、快速鍵與 `--ctl island` 指令一併移除，改在 BrimDeck 自己的設定視窗設定。DeskGrid.exe 因為內含 BrimDeck 而大約增加 95 MB。
+
 ### 修正
 
 - 從桌面拖進資料夾的圖示，有時會在桌面上留下刪不掉的殘影（出現「找不到項目」），原因是檔案搬走時 Explorer 沒收到通知。DeskGrid 現在在把項目搬離桌面後，立刻通知 Explorer 桌面已改變，殘影會自己消失。如果已經有殘影，在桌面按 F5 即可。
+- 資料夾圖塊改為跟隨桌面圖示圖片的大小與位置。以前固定是儲存格頂端 48 個單位，桌面圖示大小或間距不同的電腦（在筆電開發後換到桌機）看起來不一致。
+
+### 使用方法
+
+- 設定 → **NotiLand** → 勾選 **顯示 NotiLand**，再按 **開啟 NotiLand 設定…** 設定顯示內容與外觀。它的系統匣圖示與資料（`%LOCALAPPDATA%\BrimDeck`）都是它自己的。
 
 ## 0.7.3
 

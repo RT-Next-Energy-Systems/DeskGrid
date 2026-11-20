@@ -3,7 +3,6 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using DeskGrid.Folders;
-using DeskGrid.Island;
 using DeskGrid.Resources;
 using DeskGrid.Tray;
 using DeskGrid.Updates;
@@ -352,46 +351,6 @@ public sealed class SettingsWindowTests : IDisposable
         Assert.Equal(!initial, applied);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task UsageOnline_ShowsTheSetting_AndApplyReportsItFlipped(bool initial)
-    {
-        var (shown, applied) = await _ui.InvokeAsync(() =>
-        {
-            EnsureApplication();
-            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path, IslandUsage = true, UsageOnline = initial });
-            SettingsChoice? choice = null;
-            window.Applied += (_, c) => choice = c;
-            window.Show();
-            var shown = window.UsageOnlineBox.IsChecked == true;
-            window.UsageOnlineBox.IsChecked = !initial;
-            window.ApplyButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
-            return (shown, choice?.UsageOnline);
-        });
-
-        Assert.Equal(initial, shown);
-        Assert.Equal(!initial, applied);
-    }
-
-    // Turning the checkbox on reads nothing by itself when Claude Code has no usable sign-in on this computer
-    // (~/.claude/.credentials.json missing, empty or expired); the window says so instead of staying silent.
-    [Fact]
-    public async Task UsageOnlineStatus_MatchesWhetherThisComputerHasAUsableClaudeCodeSignIn()
-    {
-        var (text, ready) = await _ui.InvokeAsync(() =>
-        {
-            EnsureApplication();
-            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path, IslandUsage = true });
-            window.Show();
-            var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            var ready = AnthropicUsage.ReadToken(AnthropicUsage.CredentialsFile(home), DateTimeOffset.UtcNow) is not null;
-            return (window.UsageOnlineStatus.Text, ready);
-        });
-
-        Assert.Equal(ready ? Strings.SettingsUsageOnlineReady : Strings.SettingsUsageOnlineNotReady, text);
-    }
-
     // Apply keeps the window open and counts as saved; changing a control again makes it "changed" again.
     [Fact]
     public async Task Apply_KeepsTheWindowOpen_AndClearsTheUnsavedState()
@@ -495,29 +454,6 @@ public sealed class SettingsWindowTests : IDisposable
         });
 
         Assert.NotEqual(aboutIcon, islandIcon);
-    }
-
-    [Fact]
-    public async Task QuietHours_AreScrollableDropdowns_AndApplyReportsChosenTimes()
-    {
-        var (isScrollable, choice) = await _ui.InvokeAsync(() =>
-        {
-            EnsureApplication();
-            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path, IslandQuietFrom = "22:00", IslandQuietTo = "07:00" });
-            SettingsChoice? applied = null;
-            window.Applied += (_, c) => applied = c;
-            window.Show();
-            var scrollable = window.IslandQuietFromBox.MaxDropDownHeight > 0 && window.IslandQuietFromBox.Items.Count > 24;
-            window.IslandQuietFromBox.SelectedValue = "23:30";
-            window.IslandQuietToBox.SelectedValue = "06:30";
-            window.ApplyButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
-            window.CloseDiscarding();
-            return (scrollable, applied);
-        });
-
-        Assert.True(isScrollable);
-        Assert.Equal("23:30", choice?.IslandQuietFrom);
-        Assert.Equal("06:30", choice?.IslandQuietTo);
     }
 
     [Fact]

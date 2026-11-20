@@ -219,78 +219,6 @@
   <data name="SettingsIsland" xml:space="preserve">
     <value>顯示 NotiLand</value>
   </data>
-  <data name="SettingsIslandMusic" xml:space="preserve">
-    <value>音樂與影片</value>
-  </data>
-  <data name="SettingsIslandMusicOff" xml:space="preserve">
-    <value>不顯示</value>
-  </data>
-  <data name="SettingsIslandMusicChange" xml:space="preserve">
-    <value>換歌時顯示</value>
-  </data>
-  <data name="SettingsIslandMusicWhile" xml:space="preserve">
-    <value>播放時一直顯示</value>
-  </data>
-  <data name="SettingsIslandFolders" xml:space="preserve">
-    <value>游標停在螢幕頂端時開啟資料夾</value>
-  </data>
-  <data name="SettingsIslandBattery" xml:space="preserve">
-    <value>顯示電池變化（插上／拔掉充電器、電量低）</value>
-  </data>
-  <data name="IslandBatteryCharging" xml:space="preserve">
-    <value>已連接充電器 · {0}%</value>
-  </data>
-  <data name="IslandBatteryUnplugged" xml:space="preserve">
-    <value>使用電池 · {0}%</value>
-  </data>
-  <data name="IslandBatteryLow" xml:space="preserve">
-    <value>電量偏低 · {0}%</value>
-  </data>
-  <data name="IslandBatteryCritical" xml:space="preserve">
-    <value>電量極低 · {0}%</value>
-  </data>
-  <data name="SettingsIslandUsage" xml:space="preserve">
-    <value>AI 用量告警（Claude Code）</value>
-  </data>
-  <data name="SettingsUsageLimit" xml:space="preserve">
-    <value>上限（百萬 token，0 = 之前最高）</value>
-  </data>
-  <data name="SettingsUsageOnline" xml:space="preserve">
-    <value>向 Anthropic 讀取方案用量</value>
-  </data>
-  <data name="SettingsUsageOnlineReady" xml:space="preserve">
-    <value>已登入</value>
-  </data>
-  <data name="SettingsUsageOnlineNotReady" xml:space="preserve">
-    <value>沒有可用的登入</value>
-  </data>
-  <data name="SettingsUsageHours" xml:space="preserve">
-    <value>工作階段長度（小時；Claude 是 5）</value>
-  </data>
-  <data name="SettingsUsageWarn" xml:space="preserve">
-    <value>達到上限的幾 % 時告警</value>
-  </data>
-  <data name="SettingsIslandSeconds" xml:space="preserve">
-    <value>顯示秒數（0 = 直到再按一次）</value>
-  </data>
-  <data name="SettingsIslandReset" xml:space="preserve">
-    <value>全部重設</value>
-  </data>
-  <data name="IslandUsageLine" xml:space="preserve">
-    <value>AI 用量 ≈{0}% · 已用 {1}／{2} token · {3} 後重置</value>
-  </data>
-  <data name="IslandUsageWarn" xml:space="preserve">
-    <value>AI 用量已達上限的 {0}%</value>
-  </data>
-  <data name="IslandUsageFull" xml:space="preserve">
-    <value>AI 用量已達上限（{0}%）</value>
-  </data>
-  <data name="IslandNothing" xml:space="preserve">
-    <value>沒有可顯示的內容</value>
-  </data>
-  <data name="HotkeyIslandToggle" xml:space="preserve">
-    <value>顯示／隱藏 NotiLand</value>
-  </data>
   <data name="CardFolders" xml:space="preserve">
     <value>資料夾</value>
   </data>
@@ -306,92 +234,8 @@
   <data name="CardShelfHint" xml:space="preserve">
     <value>把檔案拖到這裡</value>
   </data>
-  <data name="IslandCameraInUse" xml:space="preserve">
-    <value>相機使用中 · {0}</value>
-  </data>
-  <data name="IslandMicInUse" xml:space="preserve">
-    <value>麥克風使用中 · {0}</value>
-  </data>
-  <data name="IslandBluetooth" xml:space="preserve">
-    <value>{0} 已連線</value>
-  </data>
-  <data name="IslandBluetoothBattery" xml:space="preserve">
-    <value>{0} 已連線 · {1}%</value>
-  </data>
-  <data name="IslandDownloaded" xml:space="preserve">
-    <value>下載完成 · {0}</value>
-  </data>
-  <data name="IslandTimerDone" xml:space="preserve">
-    <value>計時結束</value>
-  </data>
-  <data name="IslandTimerLeft" xml:space="preserve">
-    <value>計時 {0}</value>
-  </data>
-  <data name="IslandAdded" xml:space="preserve">
-    <value>已加入 {0} 個項目到 {1}</value>
-  </data>
-  <data name="HotkeyIslandTimer" xml:space="preserve">
-    <value>開始／停止 NotiLand 計時器</value>
-  </data>
-  <data name="HotkeyIslandCard" xml:space="preserve">
-    <value>開啟／關閉 NotiLand 卡片</value>
-  </data>
   <data name="SettingsPageIsland" xml:space="preserve">
     <value>NotiLand</value>
-  </data>
-  <data name="SettingsIslandPrivacy" xml:space="preserve">
-    <value>有程式開始使用麥克風或相機時提示</value>
-  </data>
-  <data name="SettingsIslandBluetooth" xml:space="preserve">
-    <value>藍牙裝置連線時提示</value>
-  </data>
-  <data name="SettingsIslandDownloads" xml:space="preserve">
-    <value>「下載」資料夾中的檔案下載完成時提示</value>
-  </data>
-  <data name="SettingsIslandSystem" xml:space="preserve">
-    <value>在資訊與卡片中顯示處理器、記憶體與網路速度</value>
-  </data>
-  <data name="SettingsIslandTimer" xml:space="preserve">
-    <value>計時器長度（分鐘）</value>
-  </data>
-  <data name="SettingsIslandQuietFrom" xml:space="preserve">
-    <value>勿擾時段開始</value>
-  </data>
-  <data name="SettingsIslandQuietTo" xml:space="preserve">
-    <value>勿擾時段結束</value>
-  </data>
-  <data name="SettingsQuietNone" xml:space="preserve">
-    <value>不啟用</value>
-  </data>
-  <data name="SettingsIslandHideApps" xml:space="preserve">
-    <value>這些程式在最上層時隱藏（程式名稱，以逗號分隔）</value>
-  </data>
-  <data name="SettingsIslandShowOver" xml:space="preserve">
-    <value>這些程式即使全螢幕也照常顯示（程式名稱）</value>
-  </data>
-  <data name="SettingsIslandFollow" xml:space="preserve">
-    <value>出現在游標所在的螢幕</value>
-  </data>
-  <data name="SettingsIslandCardShow" xml:space="preserve">
-    <value>顯示的內容</value>
-  </data>
-  <data name="SettingsIslandCardShortcuts" xml:space="preserve">
-    <value>快捷鍵與計時器</value>
-  </data>
-  <data name="SettingsIslandCardAway" xml:space="preserve">
-    <value>什麼時候不出現</value>
-  </data>
-  <data name="SettingsIslandCardPlace" xml:space="preserve">
-    <value>位置與行為</value>
-  </data>
-  <data name="SettingsIslandShortcuts" xml:space="preserve">
-    <value>快捷鍵…</value>
-  </data>
-  <data name="IslandUsageIdle" xml:space="preserve">
-    <value>AI 用量：目前沒有進行中的 Claude 工作階段</value>
-  </data>
-  <data name="IslandPlaceEditing" xml:space="preserve">
-    <value>拖到「{0}」的位置 · Enter 或點兩下：完成 · Esc：取消</value>
   </data>
   <data name="SceneDefault" xml:space="preserve">
     <value>預設（其他情況）</value>
@@ -408,116 +252,14 @@
   <data name="SceneWindow" xml:space="preserve">
     <value>一般視窗</value>
   </data>
-  <data name="SettingsHoverButtons" xml:space="preserve">
-    <value>顯示播放控制按鈕（上一首、播放／暫停、下一首）</value>
-  </data>
-  <data name="SettingsHoverExpand" xml:space="preserve">
-    <value>滑鼠移上去時展開</value>
-  </data>
-  <data name="SettingsHoverFullText" xml:space="preserve">
-    <value>顯示長訊息的完整內容（最多三行）</value>
-  </data>
-  <data name="SettingsHoverTime" xml:space="preserve">
-    <value>顯示播放時間</value>
-  </data>
   <data name="CardEmpty" xml:space="preserve">
     <value>沒有可顯示的內容。可以到設定選擇卡片要顯示什麼。</value>
-  </data>
-  <data name="CardPartFolders" xml:space="preserve">
-    <value>資料夾</value>
-  </data>
-  <data name="CardPartPlayers" xml:space="preserve">
-    <value>音樂與影片</value>
-  </data>
-  <data name="CardPartShelf" xml:space="preserve">
-    <value>暫存架</value>
-  </data>
-  <data name="CardPartSystem" xml:space="preserve">
-    <value>系統狀態</value>
-  </data>
-  <data name="CardPartUsage" xml:space="preserve">
-    <value>AI 用量</value>
-  </data>
-  <data name="SettingsIslandCardContents" xml:space="preserve">
-    <value>卡片內容</value>
   </data>
   <data name="SettingsMoveDown" xml:space="preserve">
     <value>下移</value>
   </data>
   <data name="SettingsMoveUp" xml:space="preserve">
     <value>上移</value>
-  </data>
-  <data name="IslandUsagePlan" xml:space="preserve">
-    <value>AI 用量 {0}% · {1} 後重置</value>
-  </data>
-  <data name="IslandUsagePlanWeek" xml:space="preserve">
-    <value>AI 用量 {0}% · {1} 後重置 · 本週 {2}%</value>
-  </data>
-  <data name="SettingsUsageConnect" xml:space="preserve">
-    <value>連接 Claude Code…</value>
-  </data>
-  <data name="SettingsUsageConnectAsk" xml:space="preserve">
-    <value>DeskGrid 會修改 Claude Code 的 settings.json 裡的狀態列設定，才能讀到 Claude 自己的用量。你原本的狀態列照常運作，也會在旁邊備份一份 settings.json。要繼續嗎？</value>
-  </data>
-  <data name="SettingsUsageConnectDone" xml:space="preserve">
-    <value>已連接。Claude Code 下一次回應之後就會出現數字。</value>
-  </data>
-  <data name="SettingsUsageConnected" xml:space="preserve">
-    <value>已連接</value>
-  </data>
-  <data name="SettingsUsageDisconnect" xml:space="preserve">
-    <value>中斷與 Claude Code 的連接</value>
-  </data>
-  <data name="SettingsUsageFailed" xml:space="preserve">
-    <value>無法修改 Claude Code 的設定：{0}</value>
-  </data>
-  <data name="SettingsUsageNotConnected" xml:space="preserve">
-    <value>未連接</value>
-  </data>
-  <data name="IslandToolUsage" xml:space="preserve">
-    <value>{0} {1}% · {2} 後重置</value>
-  </data>
-  <data name="IslandToolUsageWeek" xml:space="preserve">
-    <value>{0} {1}% · {2} 後重置 · 本週 {3}%</value>
-  </data>
-  <data name="SettingsUsageFound" xml:space="preserve">
-    <value>這台電腦上找到：{0}</value>
-  </data>
-  <data name="SettingsUsageFoundNone" xml:space="preserve">
-    <value>這台電腦上沒有找到 AI 工具。</value>
-  </data>
-  <data name="SettingsUsageNoData" xml:space="preserve">
-    <value>{0}（讀不到用量）</value>
-  </data>
-  <data name="SettingsIslandCardLook" xml:space="preserve">
-    <value>大小與滑鼠移上去時</value>
-  </data>
-  <data name="SettingsIslandCardPlaces" xml:space="preserve">
-    <value>顯示位置</value>
-  </data>
-  <data name="SettingsIslandSize" xml:space="preserve">
-    <value>大小</value>
-  </data>
-  <data name="SettingsPlaceEdit" xml:space="preserve">
-    <value>編輯</value>
-  </data>
-  <data name="SettingsPlaceNeedsIsland" xml:space="preserve">
-    <value>請先開啟 NotiLand 並按「套用」。</value>
-  </data>
-  <data name="SettingsPlaceReset" xml:space="preserve">
-    <value>重設</value>
-  </data>
-  <data name="SettingsPlaceSet" xml:space="preserve">
-    <value>已設定</value>
-  </data>
-  <data name="SettingsPlaceTop" xml:space="preserve">
-    <value>頂端正中央</value>
-  </data>
-  <data name="SettingsPlaceUnset" xml:space="preserve">
-    <value>同預設</value>
-  </data>
-  <data name="SettingsPlaceOff" xml:space="preserve">
-    <value>關閉</value>
   </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>隱私</value>
@@ -671,9 +413,6 @@
   <data name="HotkeysGroupFolders" xml:space="preserve">
     <value>資料夾</value>
   </data>
-  <data name="HotkeysGroupIsland" xml:space="preserve">
-    <value>NotiLand</value>
-  </data>
   <data name="HotkeysGroupCount" xml:space="preserve">
     <value>已設定 {0}/{1}</value>
   </data>
@@ -760,5 +499,8 @@
   </data>
   <data name="ImportDone" xml:space="preserve">
     <value>已匯入。</value>
+  </data>
+  <data name="SettingsNotiLandOpen" xml:space="preserve">
+    <value>開啟 NotiLand 設定…</value>
   </data>
 </root>

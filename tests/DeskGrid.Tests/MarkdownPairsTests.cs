@@ -33,7 +33,7 @@ public sealed class MarkdownPairsTests
     {
         var tracked = Directory.EnumerateFiles(Root, "*.md", SearchOption.AllDirectories)
             .Select(path => Path.GetRelativePath(Root, path).Replace('\\', '/'))
-            .Where(path => !path.StartsWith("src/") && !path.StartsWith("tests/") && !path.StartsWith("artifacts/") && !path.Contains("/obj/"))
+            .Where(path => !path.StartsWith("src/") && !path.StartsWith("tests/") && !path.StartsWith("artifacts/") && !path.StartsWith("third_party/") && !path.Contains("/obj/"))
             .Where(path => !IsLocalNote(path))
             .Select(path => path.Replace(".zh-TW.md", "").Replace(".md", ""))
             .Distinct();

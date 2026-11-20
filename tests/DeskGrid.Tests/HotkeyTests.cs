@@ -198,7 +198,7 @@ public sealed class HotkeysWindowTests : IDisposable
     public void Dispose() => _ui.Dispose();
 
     [Fact]
-    public async Task TheActions_AreGroupedAsDeskGridFoldersAndIsland_EachWithACountOfWhatIsSet()
+    public async Task TheActions_AreGroupedAsDeskGridAndFolders_EachWithACountOfWhatIsSet()
     {
         var (titles, counts, afterEdit) = await _ui.InvokeAsync(() =>
         {
@@ -213,16 +213,16 @@ public sealed class HotkeysWindowTests : IDisposable
 
             var titlesNow = Read(card => [Heading(card, title: true)]);
             var countsNow = Read(card => [Heading(card, title: false)]);
-            window.BoxFor(HotkeyBindings.IslandTimer).Value = Hotkey.Parse("Ctrl+Alt+T");
+            window.BoxFor(HotkeyBindings.Settings).Value = Hotkey.Parse("Ctrl+Alt+T");
             window.RefreshCounts();
             return (titlesNow, countsNow, Read(card => [Heading(card, title: false)]));
         });
 
         string Count(int set, int of) => string.Format(DeskGrid.Resources.Strings.HotkeysGroupCount, set, of);
 
-        Assert.Equal([DeskGrid.Resources.Strings.HotkeysGroupGeneral, DeskGrid.Resources.Strings.HotkeysGroupIsland, DeskGrid.Resources.Strings.HotkeysGroupFolders], titles);
-        Assert.Equal([Count(1, 3), Count(0, 3), Count(1, 2)], counts); // All folders (Ctrl+M) in DeskGrid, Games in Folders.
-        Assert.Equal(Count(1, 3), afterEdit[1]);
+        Assert.Equal([DeskGrid.Resources.Strings.HotkeysGroupGeneral, DeskGrid.Resources.Strings.HotkeysGroupFolders], titles);
+        Assert.Equal([Count(1, 3), Count(1, 2)], counts); // All folders (Ctrl+M) in DeskGrid, Games in Folders.
+        Assert.Equal(Count(2, 3), afterEdit[0]);
     }
 
     [Fact]

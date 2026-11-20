@@ -2,8 +2,6 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <!-- The 10.0.19041 (Windows 10 2004) SDK projection is what gives access to the system media controls
-         (Windows.Media.Control), which the island's "now playing" reads. -->
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <!-- Window.ThemeMode (Fluent theme) is still marked experimental. -->
     <NoWarn>$(NoWarn);WPF0001</NoWarn>
@@ -59,5 +57,29 @@
       <StronglyTypedClassName>Strings</StronglyTypedClassName>
     </EmbeddedResource>
   </ItemGroup>
+
+  <!-- NotiLand is BrimDeck (third_party/BrimDeck), which runs beside DeskGrid. A development build puts a normal build of it in
+       NotiLand\ next to DeskGrid.exe; a release (PublishNotiLand, set by the publish profile) publishes it as one self-contained
+       exe and embeds that in DeskGrid.exe, where NotiLandHost unpacks it on first use. -->
+  <PropertyGroup>
+    <BrimDeckProject>$(MSBuildThisFileDirectory)../../third_party/BrimDeck/src/BrimDeck/BrimDeck.csproj</BrimDeckProject>
+    <BrimDeckPublishDir>$(MSBuildThisFileDirectory)obj/notiland-publish/</BrimDeckPublishDir>
+    <BrimDeckBuildDir>$(MSBuildThisFileDirectory)obj/notiland-build/</BrimDeckBuildDir>
+  </PropertyGroup>
+
+  <Target Name="PublishNotiLand" BeforeTargets="AssignTargetPaths" Condition="'$(PublishNotiLand)' == 'true'">
+    <Exec Command="dotnet publish &quot;$(BrimDeckProject)&quot; -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:Version=$(Version) -o &quot;$(BrimDeckPublishDir)&quot;" />
+    <ItemGroup>
+      <EmbeddedResource Include="$(BrimDeckPublishDir)BrimDeck.exe" LogicalName="DeskGrid.NotiLand.exe" WithCulture="false" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="BuildNotiLand" AfterTargets="Build" Condition="'$(PublishNotiLand)' != 'true' And '$(BuildNotiLand)' != 'false'">
+    <MSBuild Projects="$(BrimDeckProject)" Targets="Restore;Build" Properties="Configuration=$(Configuration);Platform=x64;OutDir=$(BrimDeckBuildDir);Restore=true" />
+    <ItemGroup>
+      <NotiLandFiles Include="$(BrimDeckBuildDir)**\*" Exclude="$(BrimDeckBuildDir)**\*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(NotiLandFiles)" DestinationFiles="@(NotiLandFiles->'$(OutDir)NotiLand\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

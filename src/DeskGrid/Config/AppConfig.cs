@@ -54,103 +54,9 @@ internal sealed class AppConfig
     /// </summary>
     public bool AllowControl { get; set; }
 
-    /// <summary>Whether the island (a small pill at the top of the screen that shows short messages) exists. Off until the user turns it on.</summary>
-    public bool IslandEnabled { get; set; }
-
-    /// <summary>What the island shows of the music that is playing (read from Windows' system media controls, on this computer only).</summary>
-    public IslandMusicMode IslandMusic { get; set; } = IslandMusicMode.WhilePlaying;
-
-    /// <summary>Whether the island says when the charger is plugged in or out and when the battery runs low.</summary>
-    public bool IslandBattery { get; set; }
-
-    /// <summary>Where the user dragged the island, on any screen: the middle of its top edge in physical screen pixels; null = the top centre of the primary screen.</summary>
-    public int? IslandX { get; set; }
-
-    public int? IslandY { get; set; }
-
-    /// <summary>How many seconds the "show the island" shortcut keeps it up; 0 = until it is pressed again or the hide shortcut.</summary>
-    public int IslandShowSeconds { get; set; } = 5;
-
-    /// <summary>Whether the island watches the AI usage read from Claude Code's logs on this computer and warns (see the other <c>Usage</c> settings).</summary>
-    public bool IslandUsage { get; set; }
-
-    /// <summary>The usage limit per session block in millions of tokens; 0 = the highest earlier block (as ccusage's "max").</summary>
-    public double UsageLimitMillions { get; set; }
-
-    /// <summary>The length of a session block in hours (Claude's is 5).</summary>
-    public int UsageHours { get; set; } = 5;
-
-    /// <summary>
-    /// Whether the usage asks Anthropic for the plan's own percentage, with the sign-in Claude Code keeps on this computer
-    /// (goes online; off by default).
-    /// </summary>
-    public bool UsageOnline { get; set; }
-
-    /// <summary>The percentage of the limit at which the island warns.</summary>
-    public int UsageWarnPercent { get; set; } = 80;
-
-    /// <summary>Whether the island says when a program starts using the microphone or camera.</summary>
-    public bool IslandPrivacy { get; set; }
-
-    /// <summary>Whether the island says when a Bluetooth device connects.</summary>
-    public bool IslandBluetooth { get; set; }
-
-    /// <summary>Whether the island says when a download to the Downloads folder is finished.</summary>
-    public bool IslandDownloads { get; set; }
-
-    /// <summary>Whether the state of the system (processor, memory, network) is part of the island's info and card.</summary>
-    public bool IslandSystem { get; set; }
-
-    /// <summary>The minutes the island's timer runs.</summary>
-    public int IslandTimerMinutes { get; set; } = 25;
-
-    /// <summary>Quiet hours as "HH:mm" (they may span midnight): the island stays away. Empty = none.</summary>
-    public string? IslandQuietFrom { get; set; }
-
-    public string? IslandQuietTo { get; set; }
-
-    /// <summary>Programs (names, comma separated) that hide the island while they are in front.</summary>
-    public string? IslandHideInApps { get; set; }
-
-    /// <summary>Programs the island shows over even when they are full screen.</summary>
-    public string? IslandShowOverApps { get; set; }
-
-    /// <summary>Whether the island, at its default place, appears on the screen the pointer is on.</summary>
-    public bool IslandFollowPointer { get; set; }
-
-    /// <summary>The size of NotiLand, 1 = 100 %.</summary>
-    public double IslandScale { get; set; } = 1;
-
-    /// <summary>What NotiLand does under the pointer: open at all, show a whole line, the music buttons, the song's time.</summary>
-    public bool IslandHoverExpand { get; set; } = true;
-
-    public bool IslandHoverFullText { get; set; } = true;
-
-    public bool IslandHoverButtons { get; set; } = true;
-
-    public bool IslandHoverTime { get; set; } = true;
-
-    /// <summary>
-    /// What the expanded card shows and in which order: ids from <see cref="DeskGrid.Island.CardSections"/> joined by commas
-    /// (a string, not a list, so a file entry cannot be added to the default list). <see langword="null"/> = all, in the default order;
-    /// empty = none.
-    /// </summary>
-    public string? IslandCardSections { get; set; }
-
-    /// <summary>
-    /// NotiLand's place in each situation (desktop, window, maximized, full screen), keyed by its name; the default place is
-    /// <see cref="IslandX"/>, <see cref="IslandY"/>. A situation without one uses the default.
-    /// </summary>
-    [JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
-    public Dictionary<string, IslandPlace> IslandPlaces { get; } = new(StringComparer.OrdinalIgnoreCase);
-
-    /// <summary>
-    /// Whether holding the pointer at the very top centre of the screen for a second opens the list of all folders. Off by
-    /// default (it was on, and opened the folders by accident when the pointer went to a browser's tabs). The file name of the
-    /// setting changed with it, so a settings file from before, which holds the old default, is not taken for a choice.
-    /// </summary>
-    [JsonPropertyName("islandFoldersAtEdge")]
-    public bool IslandFolders { get; set; }
+    /// <summary>Whether NotiLand (BrimDeck, the island at the top of the screen) runs along with DeskGrid. Off until the user turns it on.</summary>
+    [JsonPropertyName("islandEnabled")]
+    public bool NotiLandEnabled { get; set; }
 
     /// <summary>
     /// Keyboard shortcuts of the general actions (see <see cref="HotkeyBindings"/>), written like <c>Ctrl+M</c>. Starts with the
@@ -203,39 +109,7 @@ internal sealed class AppConfig
         AutoBackupDays = other.AutoBackupDays;
         CheckForUpdatesAtStartup = other.CheckForUpdatesAtStartup;
         AllowControl = other.AllowControl;
-        IslandEnabled = other.IslandEnabled;
-        IslandMusic = other.IslandMusic;
-        IslandFolders = other.IslandFolders;
-        IslandBattery = other.IslandBattery;
-        IslandX = other.IslandX;
-        IslandY = other.IslandY;
-        IslandShowSeconds = other.IslandShowSeconds;
-        IslandUsage = other.IslandUsage;
-        UsageLimitMillions = other.UsageLimitMillions;
-        UsageHours = other.UsageHours;
-        UsageOnline = other.UsageOnline;
-        UsageWarnPercent = other.UsageWarnPercent;
-        IslandPrivacy = other.IslandPrivacy;
-        IslandBluetooth = other.IslandBluetooth;
-        IslandDownloads = other.IslandDownloads;
-        IslandSystem = other.IslandSystem;
-        IslandTimerMinutes = other.IslandTimerMinutes;
-        IslandQuietFrom = other.IslandQuietFrom;
-        IslandQuietTo = other.IslandQuietTo;
-        IslandHideInApps = other.IslandHideInApps;
-        IslandShowOverApps = other.IslandShowOverApps;
-        IslandFollowPointer = other.IslandFollowPointer;
-        IslandScale = other.IslandScale;
-        IslandHoverExpand = other.IslandHoverExpand;
-        IslandHoverFullText = other.IslandHoverFullText;
-        IslandHoverButtons = other.IslandHoverButtons;
-        IslandHoverTime = other.IslandHoverTime;
-        IslandCardSections = other.IslandCardSections;
-        IslandPlaces.Clear();
-        foreach (var (scene, place) in other.IslandPlaces)
-        {
-            IslandPlaces[scene] = new IslandPlace { X = place.X, Y = place.Y, Off = place.Off };
-        }
+        NotiLandEnabled = other.NotiLandEnabled;
 
         FolderOrder = [.. other.FolderOrder];
         Hotkeys.Clear();
@@ -253,65 +127,6 @@ internal sealed class AppConfig
                 ItemOrder = [.. widget.ItemOrder],
                 Hotkey = widget.Hotkey,
             };
-        }
-    }
-
-    /// <summary>Whether <paramref name="scene"/> has a custom position of its own.</summary>
-    public bool HasIslandPlace(string scene) =>
-        string.Equals(scene, Island.IslandScene.Default, StringComparison.OrdinalIgnoreCase)
-            ? IslandX is not null && IslandY is not null
-            : IslandPlaces.TryGetValue(scene, out var place) && place.X is not null && place.Y is not null;
-
-    /// <summary>Whether NotiLand is turned off in <paramref name="scene"/>.</summary>
-    public bool IsIslandPlaceOff(string scene) =>
-        IslandPlaces.TryGetValue(scene, out var place) && place.Off;
-
-    /// <summary>Sets or resets the position for <paramref name="scene"/> (resetting also clears <see cref="IslandPlace.Off"/>).</summary>
-    public void SetIslandPlace(string scene, ScreenPoint? place)
-    {
-        if (string.Equals(scene, Island.IslandScene.Default, StringComparison.OrdinalIgnoreCase))
-        {
-            (IslandX, IslandY) = (place?.X, place?.Y);
-            if (place is null)
-            {
-                IslandPlaces.Remove(Island.IslandScene.Default);
-            }
-        }
-        else if (place is { } point)
-        {
-            IslandPlaces[scene] = new IslandPlace { X = point.X, Y = point.Y, Off = IsIslandPlaceOff(scene) };
-        }
-        else
-        {
-            IslandPlaces.Remove(scene);
-        }
-    }
-
-    /// <summary>Turns NotiLand off or back on for <paramref name="scene"/>, keeping any position already set for it.</summary>
-    public void SetIslandPlaceOff(string scene, bool off)
-    {
-        if (off)
-        {
-            if (IslandPlaces.TryGetValue(scene, out var existing))
-            {
-                existing.Off = true;
-            }
-            else
-            {
-                IslandPlaces[scene] = new IslandPlace { Off = true };
-            }
-        }
-        else if (IslandPlaces.TryGetValue(scene, out var existing))
-        {
-            if (!string.Equals(scene, Island.IslandScene.Default, StringComparison.OrdinalIgnoreCase)
-                && existing.X is not null && existing.Y is not null)
-            {
-                existing.Off = false;
-            }
-            else
-            {
-                IslandPlaces.Remove(scene);
-            }
         }
     }
 }
@@ -378,31 +193,6 @@ internal enum PanelOpenMode
 
     /// <summary>In the middle of the widget's screen, always the same size (set by the column count), whatever is in the folder.</summary>
     Centered,
-}
-
-/// <summary>Where NotiLand is in one situation: the middle of its top edge, in screen pixels, or whether it is turned off there.</summary>
-internal sealed class IslandPlace
-{
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public int? X { get; set; }
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public int? Y { get; set; }
-
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public bool Off { get; set; }
-}
-
-internal enum IslandMusicMode
-{
-    /// <summary>Nothing; the system media controls are not even read.</summary>
-    Off,
-
-    /// <summary>The song and its cover for a few seconds when a new one starts.</summary>
-    OnChange,
-
-    /// <summary>The song and its cover for as long as music plays.</summary>
-    WhilePlaying,
 }
 
 /// <summary>The language of DeskGrid's own texts.</summary>

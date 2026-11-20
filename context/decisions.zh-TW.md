@@ -886,3 +886,12 @@
 **Alternatives**：讀 Claude **桌面版**自己的 OAuth token 快取（Chromium 用 DPAPI 包起來的 OSCrypt 金庫，`CodeZeno/Claude-Code-Usage-Monitor` 在 Windows 上就是這樣做），這樣沒有 CLI 登入也能拿到真實百分比——**否決**：解密另一個應用程式的憑證存放區，即使是使用者自己的、即使只是讀取，也是一種憑證提取手法，被寫程式工具自己的安全機制擋下；DeskGrid 不做這件事。依模型價格加權 token 讓本地估算更準、拿掉「歷史最高區塊」這個自動上限，都先留著——使用者要求先推廣既有的官方來源。
 **Consequences**：646 測試通過（`SettingsTests.UsageOnlineStatus_MatchesWhetherThisComputerHasAUsableClaudeCodeSignIn`）。沒有改動：估算公式本身，以及自動上限這個演算法——沒接官方來源時仍然會不準。
 **Author**：Claude（Sonnet 5），依使用者回報
+
+---
+
+### 2026-11-20 — NotiLand 改成 BrimDeck，以伴隨程式執行
+**決定**：DeskGrid 自己的提示島（`Island/`、它的測試、設定頁、`--ctl island` 指令、快速鍵與 `island*` / `usage*` 設定）已刪除。NotiLand 現在就是 [BrimDeck](https://github.com/MoFeng2223/BrimDeck)（Apache-2.0），原始碼放在 `third_party/BrimDeck`，DeskGrid 把它當成獨立程式啟動與停止（`NotiLand/NotiLandHost.cs`）；發行版把它發行後的 exe 內嵌在 DeskGrid.exe 裡（合計約 163 MB）。酷狗 / 網易雲的 `libcef.dll` 修補與增強感測器服務（系統管理員服務加核心驅動程式）不放進來，由 `Native/DisabledFeatures.cs` 取代。BrimDeck 新增 `--deskgrid <pid>` 模式（跟隨 DeskGrid、不開機啟動、不自己更新）和 `--quit` 參數。
+**原因**：擁有者要求把 NotiLand 的程式碼換成 BrimDeck 的，只在整合必要處修改。BrimDeck 的 `App` 是 WPF `Application`（設定、語言、系統匣、快速鍵、約兩千個相依類別），而一個程序只能有一個 `Application`，不重寫就無法放進 DeskGrid 的程序。
+**替代方案**：把 BrimDeck 的 `App` 改寫成一般類別並把設定併入 DeskGrid 設定檔（要好幾天、不是「只在必要處修改」；擁有者不選）；連所有功能一起搬（不選：修改別的程式檔案與特權服務和 DeskGrid 的隱私與簽章政策衝突）；保留舊提示島（與要求相反）。
+**後果**：DeskGrid.exe 從 65 MB 增加到約 163 MB；NotiLand 執行時有兩個系統匣圖示；BrimDeck 的設定是它自己的（不在 DeskGrid 備份中）；舊提示島的快速鍵 / ctl 指令消失；BrimDeck 仍會讀其他 AI 工具的登入資訊來查額度（已在 README「隱私」揭露）。publish 與跟隨 / `--quit` 行為已在真機檢查；從發行版 exe 啟動 NotiLand 未試。
+**作者**：Claude（Sonnet 5.5），依擁有者要求

@@ -175,10 +175,6 @@ DeskGrid.exe --ctl <指令> [參數]
 | `move <資料夾> <項目> <位置>` | 把項目移到資料夾中的某個位置（0 = 第一個）。 |
 | `open [資料夾]` | 在資料夾旁開啟它的面板，或開啟所有資料夾的清單。 |
 | `close` | 關閉開啟中的面板。 |
-| `island show <文字> [秒數] [--icon 名稱] [--color #RRGGBB] [--progress 0-100] [--open 目標]` | 在 NotiLand 上顯示一行字幾秒鐘（預設 5 秒，最多 60 秒），可加符號、顏色、進度條，以及點一下要開啟的目標（`folder:名稱`、http(s) 網址或已存在的路徑）。要先開啟 NotiLand。 |
-| `island hide` | 收起 NotiLand 正在顯示的內容。 |
-| `island timer` / `island card` / `island info` | 開始或停止 NotiLand 計時器；開啟或關閉卡片；顯示資訊（用量、系統、播放器）。 |
-| `island place <情境>` | 設定 NotiLand 在該情境（`default`、`desktop`、`window`、`maximized` 或 `fullScreen`）的位置：所有視窗縮小，拖動它（會吸附），Enter 儲存，Esc 取消。 |
 
 每個指令會印出一行 JSON：`{"ok":true,"result":…}` 或 `{"ok":false,"error":"…"}`，ASCII 以外的字元寫成
 `\uXXXX`；結束代碼為 0（完成）、1（指令失敗）、2（DeskGrid 沒有在執行）或 3（用法錯誤）。項目以檔名指定，與 `list`
@@ -190,13 +186,17 @@ JSON（`{"command":"list","args":["Work"]}`），其他程式也可以直接使�
 
 ### NotiLand
 
-NotiLand（DeskGrid 的「提示島」，正式名稱）是一顆黑色小膠囊，預設在主螢幕頂端正中央，也可以拖到別處，用來顯示簡短訊息。在 設定 → NotiLand 勾選 **顯示 NotiLand**（預設關閉）後，腳本或 AI agent 就能用
-`DeskGrid.exe --ctl island show "建置完成" 10` 在上面放一行字（同時需要勾選 **允許腳本與 AI agent 控制**）。
+NotiLand 就是 [BrimDeck](https://github.com/MoFeng2223/BrimDeck)：螢幕頂端的提示島，展開後可看 AI 程式工具的額度、
+正在播放的音樂、系統讀數、無線裝置電量，還有剪貼簿歷史與檔案暫存。DeskGrid 帶著它，並在自己旁邊執行：到
+設定 → NotiLand 勾選 **顯示 NotiLand**（預設關閉），DeskGrid 就會啟動它；取消勾選就停止；DeskGrid 結束時它也會結束。
+**開啟 NotiLand 設定…** 會開啟 BrimDeck 自己的設定視窗，顯示內容、外觀、快速鍵都在那裡設定；BrimDeck 的
+[README](https://github.com/MoFeng2223/BrimDeck#readme) 有完整說明。
 
-- 一行字預設停 5 秒，也可以指定別的秒數（最多 60 秒）；多則訊息會排隊輪流顯示。
-- 游標指上去它會展開顯示完整文字並等你讀完；點一下就關掉。
-- 它不會搶走鍵盤焦點，全螢幕遊戲、影片或簡報執行時會自動隱藏。
-- 顯示訊息時它會蓋住螢幕頂端正中央底下的東西。它不讀取任何資料、也不連網：訊息只來自 `--ctl`。
+- 這是 BrimDeck 的程式碼（`third_party/BrimDeck`，Apache License 2.0），但拿掉了會修改其他程式檔案或以系統管理員權限
+  安裝服務的部分：酷狗與網易雲音樂播放器的完整控制修補（會改它們的 `libcef.dll`）和增強感測器服務（使用核心驅動程式）。
+  NotiLand 不會自己隨 Windows 啟動，也不會自己更新；這兩件事由 DeskGrid 處理。
+- 它是獨立的程式，有自己的系統匣圖示，資料在 `%LOCALAPPDATA%\BrimDeck`。DeskGrid 的備份不包含它。
+- `--ctl` 原有的 NotiLand 指令（`island show` 等）已移除：BrimDeck 沒有這類介面。
 
 ### 檔案位置
 
@@ -229,11 +229,11 @@ DeskGrid 不蒐集任何資料：沒有遙測、沒有分析、不需要帳號�
 **允許腳本與 AI agent 控制**（預設關閉）只會在這台電腦上監聽一條 named pipe，而且只有以你自己的 Windows 帳戶執行的程式能開啟；
 不使用網路。
 
-**向 Anthropic 讀取方案用量**（NotiLand 的 AI 用量；預設關閉）是唯一另一個使用網路的地方。開啟後，DeskGrid 會讀取
-Claude Code 存在 `~/.claude/.credentials.json` 的存取 token，每隔幾分鐘把它送到 `api.anthropic.com`
-（`/api/oauth/usage`），取得你方案的 5 小時與每週用量，也就是 Claude 自己的用量頁面顯示的數字。token 只用在這個請求：
-不儲存、不寫入 log、不送到別處，也不會送出任何檔案或工作階段的內容。token 過期時 DeskGrid 不會幫你更新（Claude Code 執行時會做）。
-這個端點沒有公開文件，可能改變；失敗時用量會回到依記錄的估算（以 `≈` 表示）。
+**NotiLand** 就是 BrimDeck，是 DeskGrid 在 **顯示 NotiLand** 開啟時啟動的獨立程式，它的網路行為屬於 BrimDeck，不是 DeskGrid。
+例如它會向你使用的 AI 工具（Claude、Codex、Cursor 等）的服務查詢額度，使用的是這些工具已存在這台電腦上的登入資訊（從它們的檔案
+與 Claude 桌面版讀取），也可能查詢歌詞。送出什麼、送去哪裡，請看 BrimDeck 自己的
+[隱私說明](https://github.com/MoFeng2223/BrimDeck#privacy)。取消勾選 **顯示 NotiLand**，這些就都不會執行。
+DeskGrid 本身不會讀取任何這類登入資訊。
 
 ## 程式碼簽章政策
 
@@ -291,7 +291,6 @@ dotnet publish src/DeskGrid/DeskGrid.csproj -p:PublishProfile=win-x64   # -> art
 
 > Copyright (c) 2026 Sepehr Kalanaki (OverShifted/LiquidGlass)
 > Copyright (c) 2025 Shu Ding (shuding/liquid-glass)
-> Copyright (c) 2025 ryoppippi (ryoppippi/ccusage)
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 > documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -306,13 +305,10 @@ dotnet publish src/DeskGrid/DeskGrid.csproj -p:PublishProfile=win-x64   # -> art
 > COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 > OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-NotiLand 的 **AI 用量**（`src/DeskGrid/Island/UsageMonitor.cs`）依
-[ryoppippi/ccusage](https://github.com/ryoppippi/ccusage) 的方式讀取 Claude Code 的記錄：要找的資料夾（`CLAUDE_CONFIG_DIR`、
-`~/.config/claude`、`~/.claude`）、每個回應只算一次（子代理重播的也一樣）、輸入、輸出與快取建立的 token（不算快取讀取：它遠大於其他部分），以及 Claude 的 5 小時工作階段區塊。
-這段邏輯由 ccusage 的 Rust 原始碼（MIT）改寫為 C#，其著作權聲明列在上方，授權條文相同。
-
-NotiLand 在 Windows 上的提示島概念與互動設計靈感啟發自
-[MoFeng2223/BrimDeck](https://github.com/MoFeng2223/BrimDeck)。NotiLand 雖然是為 DeskGrid 從零原生撰寫、未包含 BrimDeck 的程式碼，但我們由衷感謝該專案將提示島體驗帶入 Windows 桌面的先導性探索。
+NotiLand 就是 [MoFeng2223/BrimDeck](https://github.com/MoFeng2223/BrimDeck)，Apache License 2.0，著作權屬其作者。
+原始碼放在 `third_party/BrimDeck`，附有它的 `LICENSE`，`third_party/BrimDeck/DESKGRID.md` 列出 DeskGrid 對它做的修改（移除的檔案，
+以及讓 DeskGrid 能啟動與停止它的幾行程式）。發行版的 exe 內含它的建置結果。BrimDeck 本身使用 AvalonEdit、NAudio、Jint、ZstdSharp 與
+BouncyCastle，它們的聲明在 `third_party/BrimDeck/src/BrimDeck/ThirdPartyNotices.txt`。
 
 「Liquid Glass」是 Apple Inc. 使用的名稱。DeskGrid 的玻璃只是模仿那種外觀，不是 Apple 的程式碼，也與 Apple 無關、
 未獲其認可。

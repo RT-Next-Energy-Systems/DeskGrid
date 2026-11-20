@@ -189,10 +189,6 @@ DeskGrid.exe --ctl <command> [arguments]
 | `move <folder> <item> <index>` | Puts an item at a position (0 = first) in its folder. |
 | `open [folder]` | Opens a folder's panel next to it, or the list of all folders. |
 | `close` | Closes the open panel. |
-| `island show <text> [seconds] [--icon name] [--color #RRGGBB] [--progress 0-100] [--open target]` | Shows a line on NotiLand for a few seconds (default 5, at most 60), optionally with a symbol, a color, a progress bar and what a click opens (`folder:NAME`, an http(s) address or an existing path). NotiLand must be turned on. |
-| `island hide` | Takes away what NotiLand shows. |
-| `island timer` / `island card` / `island info` | Starts or stops the NotiLand timer; opens or closes the card; shows the info (usage, system, players). |
-| `island place <situation>` | Sets where NotiLand is in that situation (`default`, `desktop`, `window`, `maximized` or `fullScreen`): every window goes down, drag it (it snaps), Enter keeps, Esc cancels. |
 
 Each command prints one line of JSON, `{"ok":true,"result":…}` or `{"ok":false,"error":"…"}`, with characters outside
 ASCII written as `\uXXXX`, and exits with 0 (done), 1 (the command failed), 2 (DeskGrid is not running) or 3 (wrong
@@ -205,15 +201,20 @@ taking one line of JSON per connection (`{"command":"list","args":["Work"]}`), w
 
 ### NotiLand
 
-NotiLand (the name DeskGrid gives its "island") is a small black pill, at the top centre of the primary screen unless you
-put it elsewhere, that shows short messages. Tick **Show NotiLand** in Settings → NotiLand (it is off by default), and a script or an AI agent can put a line on it with
-`DeskGrid.exe --ctl island show "Build finished" 10` (it also needs **Allow control from scripts and AI agents**).
+NotiLand is [BrimDeck](https://github.com/MoFeng2223/BrimDeck), an island at the top of the screen that opens to show the
+quotas of your AI coding tools, the music that plays, system readings, wireless device batteries, a clipboard history and a
+file transfer. DeskGrid carries it and runs it beside itself: tick **Show NotiLand** in Settings → NotiLand (it is off by
+default) and DeskGrid starts it; untick it and DeskGrid stops it; it ends with DeskGrid. **Open NotiLand settings…** opens
+BrimDeck's own settings window, where everything about it (what it shows, its look, its shortcuts) is set; BrimDeck's
+[README](https://github.com/MoFeng2223/BrimDeck#readme) describes it.
 
-- A line stays for 5 seconds unless you give another time (up to 60); more lines wait their turn.
-- Point at the pill and it opens to show all of the text and waits while you read; click it to dismiss it.
-- It never takes the keyboard focus, and it hides while a full-screen game, video or presentation is up.
-- It covers whatever is under it at the top centre of the screen while a line is shown. It reads nothing and goes
-  nowhere online: the lines come only from `--ctl`.
+- It is BrimDeck's code (`third_party/BrimDeck`, Apache License 2.0), with the parts that change another program's files
+  or install a service with administrator rights left out: the full-control patch for KuGou and NetEase Cloud Music
+  players (it changes their `libcef.dll`) and the enhanced-sensors service (a kernel driver). NotiLand does not start with
+  Windows by itself and does not update itself; DeskGrid does both.
+- It is a program of its own, with its own tray icon and its own data in `%LOCALAPPDATA%\BrimDeck`. DeskGrid's backup does
+  not include it.
+- The NotiLand commands that `--ctl` had (`island show` and the others) are gone: BrimDeck has no such interface.
 
 ### Files
 
@@ -250,13 +251,12 @@ for removing everything else.
 **Allow control from scripts and AI agents** (off by default) only listens on a named pipe on this PC, which only
 programs running under your own Windows account can open; it uses no network.
 
-**Read plan usage from Anthropic** (NotiLand's AI usage; off by default) is the one other network use. When you turn it
-on, DeskGrid reads the access token that Claude Code keeps in `~/.claude/.credentials.json` and, every few minutes, sends
-it to `api.anthropic.com` (`/api/oauth/usage`) to get your plan's 5-hour and weekly usage, the numbers Claude's own usage
-page shows. The token is used for that request only: it is not stored, logged or sent anywhere else, and nothing about
-your files or sessions is sent. An expired token is not renewed by DeskGrid (Claude Code does that when it runs). The
-endpoint is not publicly documented and may change; when it fails, the usage falls back to the estimate from the logs
-(shown with `≈`).
+**NotiLand** is BrimDeck, a program of its own that DeskGrid starts while **Show NotiLand** is on, and its network use is
+BrimDeck's, not DeskGrid's. Among other things it asks the services of the AI tools you use (Claude, Codex, Cursor and
+others) for your quotas, with the sign-ins those tools already keep on this computer (it reads them from their files and
+from Claude's desktop app), and it can look up lyrics. What it sends and where is described in BrimDeck's own
+[Privacy section](https://github.com/MoFeng2223/BrimDeck#privacy). Untick **Show NotiLand** and none of it runs.
+DeskGrid itself reads none of those sign-ins.
 
 ## Code signing policy
 
@@ -323,7 +323,6 @@ are MIT-licensed and were re-written for the CPU in C#. Their notice and license
 
 > Copyright (c) 2026 Sepehr Kalanaki (OverShifted/LiquidGlass)
 > Copyright (c) 2025 Shu Ding (shuding/liquid-glass)
-> Copyright (c) 2025 ryoppippi (ryoppippi/ccusage)
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 > documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -338,16 +337,11 @@ are MIT-licensed and were re-written for the CPU in C#. Their notice and license
 > COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 > OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-NotiLand's **AI usage** (`src/DeskGrid/Island/UsageMonitor.cs`) reads Claude Code's logs the way
-[ryoppippi/ccusage](https://github.com/ryoppippi/ccusage) does: the folders it looks in (`CLAUDE_CONFIG_DIR`,
-`~/.config/claude`, `~/.claude`), counting each response once (also when a sub-agent replays it), the tokens of input, output and cache creation (cache reads are left out: they dwarf the rest),
-and Claude's 5-hour session blocks. That logic was ported to C# from ccusage's Rust sources (MIT); its copyright line is
-listed above with the same license text.
-
-NotiLand's desktop island concept and interaction design on Windows were inspired by
-[MoFeng2223/BrimDeck](https://github.com/MoFeng2223/BrimDeck). While NotiLand was written from scratch for DeskGrid
-without using BrimDeck's source code, we gratefully acknowledge their pioneering work exploring the island experience
-on the Windows desktop.
+NotiLand is [MoFeng2223/BrimDeck](https://github.com/MoFeng2223/BrimDeck), Apache License 2.0, copyright its authors. Its
+source is in `third_party/BrimDeck` with its `LICENSE`, and `third_party/BrimDeck/DESKGRID.md` lists what DeskGrid changed
+in it (files removed, and a few lines so DeskGrid can start and stop it). The exe of a release carries a built copy.
+BrimDeck itself uses AvalonEdit, NAudio, Jint, ZstdSharp and BouncyCastle, whose notices are in
+`third_party/BrimDeck/src/BrimDeck/ThirdPartyNotices.txt`.
 
 "Liquid Glass" is a name used by Apple Inc. DeskGrid's glass is an approximation of the look, not Apple's code, and is
 not affiliated with or endorsed by Apple.

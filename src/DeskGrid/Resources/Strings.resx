@@ -225,78 +225,6 @@ Cancel: ask again next time.</value>
   <data name="SettingsIsland" xml:space="preserve">
     <value>Show NotiLand</value>
   </data>
-  <data name="SettingsIslandMusic" xml:space="preserve">
-    <value>Music and video</value>
-  </data>
-  <data name="SettingsIslandMusicOff" xml:space="preserve">
-    <value>Don't show</value>
-  </data>
-  <data name="SettingsIslandMusicChange" xml:space="preserve">
-    <value>When the song changes</value>
-  </data>
-  <data name="SettingsIslandMusicWhile" xml:space="preserve">
-    <value>While music plays</value>
-  </data>
-  <data name="SettingsIslandFolders" xml:space="preserve">
-    <value>Open the folders when the pointer rests at the top edge</value>
-  </data>
-  <data name="SettingsIslandBattery" xml:space="preserve">
-    <value>Show battery changes (charger plugged in or out, low battery)</value>
-  </data>
-  <data name="IslandBatteryCharging" xml:space="preserve">
-    <value>Charger connected · {0}%</value>
-  </data>
-  <data name="IslandBatteryUnplugged" xml:space="preserve">
-    <value>On battery · {0}%</value>
-  </data>
-  <data name="IslandBatteryLow" xml:space="preserve">
-    <value>Battery low · {0}%</value>
-  </data>
-  <data name="IslandBatteryCritical" xml:space="preserve">
-    <value>Battery very low · {0}%</value>
-  </data>
-  <data name="SettingsIslandUsage" xml:space="preserve">
-    <value>Warn about AI usage (Claude Code)</value>
-  </data>
-  <data name="SettingsUsageLimit" xml:space="preserve">
-    <value>Limit (million tokens, 0 = highest before)</value>
-  </data>
-  <data name="SettingsUsageOnline" xml:space="preserve">
-    <value>Read plan usage from Anthropic</value>
-  </data>
-  <data name="SettingsUsageOnlineReady" xml:space="preserve">
-    <value>Signed in</value>
-  </data>
-  <data name="SettingsUsageOnlineNotReady" xml:space="preserve">
-    <value>No usable sign-in</value>
-  </data>
-  <data name="SettingsUsageHours" xml:space="preserve">
-    <value>Session length (hours; Claude's is 5)</value>
-  </data>
-  <data name="SettingsUsageWarn" xml:space="preserve">
-    <value>Warn at (% of the limit)</value>
-  </data>
-  <data name="SettingsIslandSeconds" xml:space="preserve">
-    <value>Seconds to show (0 = until pressed again)</value>
-  </data>
-  <data name="SettingsIslandReset" xml:space="preserve">
-    <value>Reset all places</value>
-  </data>
-  <data name="IslandUsageLine" xml:space="preserve">
-    <value>AI usage ≈{0}% · {1} of {2} tokens · resets in {3}</value>
-  </data>
-  <data name="IslandUsageWarn" xml:space="preserve">
-    <value>AI usage is at {0}% of your limit</value>
-  </data>
-  <data name="IslandUsageFull" xml:space="preserve">
-    <value>AI usage reached your limit ({0}%)</value>
-  </data>
-  <data name="IslandNothing" xml:space="preserve">
-    <value>Nothing to show</value>
-  </data>
-  <data name="HotkeyIslandToggle" xml:space="preserve">
-    <value>Show or hide NotiLand</value>
-  </data>
   <data name="CardFolders" xml:space="preserve">
     <value>Folders</value>
   </data>
@@ -312,92 +240,8 @@ Cancel: ask again next time.</value>
   <data name="CardShelfHint" xml:space="preserve">
     <value>Drop files here</value>
   </data>
-  <data name="IslandCameraInUse" xml:space="preserve">
-    <value>Camera in use · {0}</value>
-  </data>
-  <data name="IslandMicInUse" xml:space="preserve">
-    <value>Microphone in use · {0}</value>
-  </data>
-  <data name="IslandBluetooth" xml:space="preserve">
-    <value>{0} connected</value>
-  </data>
-  <data name="IslandBluetoothBattery" xml:space="preserve">
-    <value>{0} connected · {1}%</value>
-  </data>
-  <data name="IslandDownloaded" xml:space="preserve">
-    <value>Downloaded · {0}</value>
-  </data>
-  <data name="IslandTimerDone" xml:space="preserve">
-    <value>Timer done</value>
-  </data>
-  <data name="IslandTimerLeft" xml:space="preserve">
-    <value>Timer {0}</value>
-  </data>
-  <data name="IslandAdded" xml:space="preserve">
-    <value>Added {0} item(s) to {1}</value>
-  </data>
-  <data name="HotkeyIslandTimer" xml:space="preserve">
-    <value>Start or stop the NotiLand timer</value>
-  </data>
-  <data name="HotkeyIslandCard" xml:space="preserve">
-    <value>Open or close the NotiLand card</value>
-  </data>
   <data name="SettingsPageIsland" xml:space="preserve">
     <value>NotiLand</value>
-  </data>
-  <data name="SettingsIslandPrivacy" xml:space="preserve">
-    <value>Tell when a program starts using the microphone or camera</value>
-  </data>
-  <data name="SettingsIslandBluetooth" xml:space="preserve">
-    <value>Tell when a Bluetooth device connects</value>
-  </data>
-  <data name="SettingsIslandDownloads" xml:space="preserve">
-    <value>Tell when a download in the Downloads folder is finished</value>
-  </data>
-  <data name="SettingsIslandSystem" xml:space="preserve">
-    <value>Show processor, memory and network speed in the info and on the card</value>
-  </data>
-  <data name="SettingsIslandTimer" xml:space="preserve">
-    <value>Timer length (minutes)</value>
-  </data>
-  <data name="SettingsIslandQuietFrom" xml:space="preserve">
-    <value>Quiet hours start</value>
-  </data>
-  <data name="SettingsIslandQuietTo" xml:space="preserve">
-    <value>Quiet hours end</value>
-  </data>
-  <data name="SettingsQuietNone" xml:space="preserve">
-    <value>Off</value>
-  </data>
-  <data name="SettingsIslandHideApps" xml:space="preserve">
-    <value>Hide while these programs are in front (names, comma separated)</value>
-  </data>
-  <data name="SettingsIslandShowOver" xml:space="preserve">
-    <value>Show over these programs even when they are full screen (names)</value>
-  </data>
-  <data name="SettingsIslandFollow" xml:space="preserve">
-    <value>Appear on the screen the pointer is on</value>
-  </data>
-  <data name="SettingsIslandCardShow" xml:space="preserve">
-    <value>What it shows</value>
-  </data>
-  <data name="SettingsIslandCardShortcuts" xml:space="preserve">
-    <value>Shortcuts and timer</value>
-  </data>
-  <data name="SettingsIslandCardAway" xml:space="preserve">
-    <value>When it stays away</value>
-  </data>
-  <data name="SettingsIslandCardPlace" xml:space="preserve">
-    <value>Place and behavior</value>
-  </data>
-  <data name="SettingsIslandShortcuts" xml:space="preserve">
-    <value>Shortcuts…</value>
-  </data>
-  <data name="IslandUsageIdle" xml:space="preserve">
-    <value>AI usage: no Claude session running</value>
-  </data>
-  <data name="IslandPlaceEditing" xml:space="preserve">
-    <value>Drag to the place for “{0}” · Enter or double-click: done · Esc: cancel</value>
   </data>
   <data name="SceneDefault" xml:space="preserve">
     <value>Default (anything else)</value>
@@ -414,116 +258,14 @@ Cancel: ask again next time.</value>
   <data name="SceneWindow" xml:space="preserve">
     <value>A window in front</value>
   </data>
-  <data name="SettingsHoverButtons" xml:space="preserve">
-    <value>Show the music buttons (previous, play / pause, next)</value>
-  </data>
-  <data name="SettingsHoverExpand" xml:space="preserve">
-    <value>Open up when the pointer is over it</value>
-  </data>
-  <data name="SettingsHoverFullText" xml:space="preserve">
-    <value>Show all of a long line (up to three lines)</value>
-  </data>
-  <data name="SettingsHoverTime" xml:space="preserve">
-    <value>Show the song’s time</value>
-  </data>
   <data name="CardEmpty" xml:space="preserve">
     <value>Nothing to show. Choose what the card shows in Settings.</value>
-  </data>
-  <data name="CardPartFolders" xml:space="preserve">
-    <value>Folders</value>
-  </data>
-  <data name="CardPartPlayers" xml:space="preserve">
-    <value>Music and video</value>
-  </data>
-  <data name="CardPartShelf" xml:space="preserve">
-    <value>Shelf</value>
-  </data>
-  <data name="CardPartSystem" xml:space="preserve">
-    <value>System</value>
-  </data>
-  <data name="CardPartUsage" xml:space="preserve">
-    <value>AI usage</value>
-  </data>
-  <data name="SettingsIslandCardContents" xml:space="preserve">
-    <value>What the card shows</value>
   </data>
   <data name="SettingsMoveDown" xml:space="preserve">
     <value>Move down</value>
   </data>
   <data name="SettingsMoveUp" xml:space="preserve">
     <value>Move up</value>
-  </data>
-  <data name="IslandUsagePlan" xml:space="preserve">
-    <value>AI usage {0}% · resets in {1}</value>
-  </data>
-  <data name="IslandUsagePlanWeek" xml:space="preserve">
-    <value>AI usage {0}% · resets in {1} · week {2}%</value>
-  </data>
-  <data name="SettingsUsageConnect" xml:space="preserve">
-    <value>Connect to Claude Code…</value>
-  </data>
-  <data name="SettingsUsageConnectAsk" xml:space="preserve">
-    <value>DeskGrid will change the status line in Claude Code’s settings.json so it can read Claude’s own usage. Your current status line keeps working, and a copy of settings.json is saved next to it. Continue?</value>
-  </data>
-  <data name="SettingsUsageConnectDone" xml:space="preserve">
-    <value>Connected. The numbers appear after the next Claude Code response.</value>
-  </data>
-  <data name="SettingsUsageConnected" xml:space="preserve">
-    <value>Connected</value>
-  </data>
-  <data name="SettingsUsageDisconnect" xml:space="preserve">
-    <value>Disconnect from Claude Code</value>
-  </data>
-  <data name="SettingsUsageFailed" xml:space="preserve">
-    <value>Could not change Claude Code’s settings: {0}</value>
-  </data>
-  <data name="SettingsUsageNotConnected" xml:space="preserve">
-    <value>Not connected</value>
-  </data>
-  <data name="IslandToolUsage" xml:space="preserve">
-    <value>{0} {1}% · resets in {2}</value>
-  </data>
-  <data name="IslandToolUsageWeek" xml:space="preserve">
-    <value>{0} {1}% · resets in {2} · week {3}%</value>
-  </data>
-  <data name="SettingsUsageFound" xml:space="preserve">
-    <value>Found on this computer: {0}</value>
-  </data>
-  <data name="SettingsUsageFoundNone" xml:space="preserve">
-    <value>No AI tool found on this computer.</value>
-  </data>
-  <data name="SettingsUsageNoData" xml:space="preserve">
-    <value>{0} (no usage data)</value>
-  </data>
-  <data name="SettingsIslandCardLook" xml:space="preserve">
-    <value>Size and pointer</value>
-  </data>
-  <data name="SettingsIslandCardPlaces" xml:space="preserve">
-    <value>Where it appears</value>
-  </data>
-  <data name="SettingsIslandSize" xml:space="preserve">
-    <value>Size</value>
-  </data>
-  <data name="SettingsPlaceEdit" xml:space="preserve">
-    <value>Edit</value>
-  </data>
-  <data name="SettingsPlaceNeedsIsland" xml:space="preserve">
-    <value>Turn NotiLand on and press Apply first.</value>
-  </data>
-  <data name="SettingsPlaceReset" xml:space="preserve">
-    <value>Reset</value>
-  </data>
-  <data name="SettingsPlaceSet" xml:space="preserve">
-    <value>Set</value>
-  </data>
-  <data name="SettingsPlaceTop" xml:space="preserve">
-    <value>Top centre</value>
-  </data>
-  <data name="SettingsPlaceUnset" xml:space="preserve">
-    <value>Same as default</value>
-  </data>
-  <data name="SettingsPlaceOff" xml:space="preserve">
-    <value>Off</value>
   </data>
   <data name="SettingsPrivacy" xml:space="preserve">
     <value>Privacy</value>
@@ -679,9 +421,6 @@ You can change this in the tray menu.</value>
   <data name="HotkeysGroupFolders" xml:space="preserve">
     <value>Folders</value>
   </data>
-  <data name="HotkeysGroupIsland" xml:space="preserve">
-    <value>NotiLand</value>
-  </data>
   <data name="HotkeysGroupCount" xml:space="preserve">
     <value>{0} of {1} set</value>
   </data>
@@ -773,5 +512,8 @@ Pick other keys in Settings.</value>
   </data>
   <data name="ImportDone" xml:space="preserve">
     <value>Imported.</value>
+  </data>
+  <data name="SettingsNotiLandOpen" xml:space="preserve">
+    <value>Open NotiLand settings…</value>
   </data>
 </root>

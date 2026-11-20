@@ -2,9 +2,18 @@
 
 ## Unreleased
 
+### Changed
+
+- **NotiLand is now BrimDeck.** DeskGrid's own island was replaced by [BrimDeck](https://github.com/MoFeng2223/BrimDeck) (Apache-2.0), which DeskGrid carries and runs beside itself while **Show NotiLand** is on: AI tool quotas, music, system readings, device batteries, a clipboard history and a file transfer. The parts of BrimDeck that change another program's files or install a service with administrator rights are left out (see `third_party/BrimDeck/DESKGRID.md`). The old island's other settings, shortcuts and `--ctl island` commands are gone; BrimDeck is set up in its own settings window. DeskGrid.exe is about 95 MB bigger because it carries BrimDeck.
+
 ### Fixed
 
 - An icon that was dragged off the desktop into a folder could stay on the desktop as a ghost that cannot be deleted ("item no longer found"), because Explorer missed that the file had moved. DeskGrid now tells Explorer the desktop changed right after moving an item off it, so the ghost goes away by itself. If one is already there, press F5 on the desktop.
+- The folder tile follows the size and position of the desktop's own icon pictures. It used to be a fixed 48 units at the top of the cell, which did not match a computer whose desktop icon size or spacing differs (seen on a desktop PC after developing on a laptop).
+
+### How to use
+
+- Settings → **NotiLand** → tick **Show NotiLand**, then **Open NotiLand settings…** to set what it shows and how it looks. Its tray icon and data (`%LOCALAPPDATA%\BrimDeck`) are its own.
 
 ## 0.7.3
 

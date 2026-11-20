@@ -6,7 +6,6 @@ using System.Windows.Media;
 using DeskGrid.Config;
 using DeskGrid.Folders;
 using DeskGrid.Hotkeys;
-using DeskGrid.Island;
 using DeskGrid.Panel;
 using DeskGrid.Resources;
 using DeskGrid.Shell;
@@ -26,35 +25,10 @@ internal sealed record SettingsChoice(
     AppLanguage Language,
     bool CheckForUpdatesAtStartup,
     bool AllowControl,
-    bool IslandEnabled,
-    IslandMusicMode IslandMusic,
-    bool IslandFolders,
-    bool IslandBattery = false,
-    int IslandShowSeconds = 5,
-    bool IslandUsage = false,
-    double UsageLimitMillions = 5,
-    int UsageHours = 5,
-    int UsageWarnPercent = 80,
-    bool IslandPrivacy = false,
-    bool IslandBluetooth = false,
-    bool IslandDownloads = false,
-    bool IslandSystem = false,
-    int IslandTimerMinutes = 25,
-    bool IslandFollowPointer = false,
-    string IslandQuietFrom = "",
-    string IslandQuietTo = "",
-    string IslandHideInApps = "",
-    string IslandShowOverApps = "",
-    double IslandScale = 1,
-    bool HoverExpand = true,
-    bool HoverFullText = true,
-    bool HoverButtons = true,
-    bool HoverTime = true,
-    string? IslandCardSections = null,
+    bool NotiLandEnabled,
     bool AutoBackupEnabled = false,
     int AutoBackupHour = AppConfig.DefaultAutoBackupHour,
-    int AutoBackupDays = AppConfig.DefaultAutoBackupDays,
-    bool UsageOnline = false);
+    int AutoBackupDays = AppConfig.DefaultAutoBackupDays);
 
 /// <summary>One line of the language list: the language and the name it is shown under.</summary>
 internal sealed record LanguageOption(AppLanguage Language, string Label);
@@ -62,8 +36,6 @@ internal sealed record LanguageOption(AppLanguage Language, string Label);
 /// <summary>One hour in the daily automatic backup dropdown.</summary>
 internal sealed record BackupHourOption(int Hour, string Label);
 
-/// <summary>One entry in the scrollable quiet-hours dropdown (<c>""</c> = off, or <c>"HH:mm"</c>).</summary>
-internal sealed record QuietTimeOption(string Value, string Label);
 
 /// <summary>
 /// Edits a copy of the settings; <see cref="Applied"/> fires on Apply (and on Done, when the user wants the changes
@@ -120,34 +92,7 @@ internal partial class SettingsWindow : Window
 
         CheckAtStartupBox.IsChecked = config.CheckForUpdatesAtStartup;
         AllowControlBox.IsChecked = config.AllowControl;
-        IslandBox.IsChecked = config.IslandEnabled;
-        IslandFoldersBox.IsChecked = config.IslandFolders;
-        IslandBatteryBox.IsChecked = config.IslandBattery;
-        IslandUsageBox.IsChecked = config.IslandUsage;
-        UsageLimitBox.Text = config.UsageLimitMillions.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        UsageOnlineBox.IsChecked = config.UsageOnline;
-        UsageHoursBox.Text = config.UsageHours.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        UsageWarnBox.Text = config.UsageWarnPercent.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        IslandSecondsBox.Text = config.IslandShowSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        IslandPrivacyBox.IsChecked = config.IslandPrivacy;
-        IslandBluetoothBox.IsChecked = config.IslandBluetooth;
-        IslandDownloadsBox.IsChecked = config.IslandDownloads;
-        IslandSystemBox.IsChecked = config.IslandSystem;
-        IslandTimerBox.Text = config.IslandTimerMinutes.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        IslandFollowBox.IsChecked = config.IslandFollowPointer;
-        PopulateQuietTime(IslandQuietFromBox, config.IslandQuietFrom);
-        PopulateQuietTime(IslandQuietToBox, config.IslandQuietTo);
-        IslandHideAppsBox.Text = config.IslandHideInApps ?? "";
-        IslandShowOverBox.Text = config.IslandShowOverApps ?? "";
-        IslandSizeSlider.Value = Math.Clamp(Math.Round(config.IslandScale * 20) * 5, IslandSizeSlider.Minimum, IslandSizeSlider.Maximum);
-        HoverExpandBox.IsChecked = config.IslandHoverExpand;
-        HoverFullTextBox.IsChecked = config.IslandHoverFullText;
-        HoverButtonsBox.IsChecked = config.IslandHoverButtons;
-        HoverTimeBox.IsChecked = config.IslandHoverTime;
-        _cardParts = [.. CardSections.ForEditing(config.IslandCardSections)];
-        BuildCardParts();
-        UpdateIslandEnabled();
-        MusicRadioFor(config.IslandMusic).IsChecked = true;
+        IslandBox.IsChecked = config.NotiLandEnabled;
         Pages.SelectedItem = PageGeneralItem;
 
         // Wired after the values are set, so filling the controls does not draw the preview again and again.
@@ -167,12 +112,8 @@ internal partial class SettingsWindow : Window
     // PanelBackground has no value equality, so what the window holds is compared as text.
     private static string Key(SettingsChoice choice) => string.Join('|',
         choice.RootPath, choice.PanelColumns, choice.DropMode, choice.DeleteMode, choice.PanelOpenMode, choice.Language,
-        choice.CheckForUpdatesAtStartup, choice.AllowControl, choice.IslandEnabled, choice.IslandMusic, choice.IslandFolders, choice.IslandBattery,
-        choice.IslandShowSeconds, choice.IslandUsage, choice.UsageLimitMillions, choice.UsageHours, choice.UsageWarnPercent,
-        choice.IslandPrivacy, choice.IslandBluetooth, choice.IslandDownloads, choice.IslandSystem, choice.IslandTimerMinutes, choice.IslandFollowPointer,
-        choice.IslandQuietFrom, choice.IslandQuietTo, choice.IslandHideInApps, choice.IslandShowOverApps,
-        choice.IslandScale, choice.HoverExpand, choice.HoverFullText, choice.HoverButtons, choice.HoverTime, choice.IslandCardSections,
-        choice.AutoBackupEnabled, choice.AutoBackupHour, choice.AutoBackupDays, choice.UsageOnline,
+        choice.CheckForUpdatesAtStartup, choice.AllowControl, choice.NotiLandEnabled,
+        choice.AutoBackupEnabled, choice.AutoBackupHour, choice.AutoBackupDays,
         choice.PanelBackground.Style, choice.PanelBackground.CustomColor, choice.PanelBackground.CustomOpacity,
         choice.PanelBackground.Opacity, choice.PanelBackground.GlassShade);
 
@@ -232,198 +173,14 @@ internal partial class SettingsWindow : Window
     /// <summary>Restores the settings from the chosen automatic backup file path in one click.</summary>
     public Action<string>? RestoreBackup { get; set; }
 
-    /// <summary>Puts the island back at the top centre of the screen.</summary>
-    public Action? ResetIslandPosition { get; set; }
-
     private void OnAutoBackupSwitched(object sender, RoutedEventArgs e) => UpdateAutoBackupEnabled();
 
     private void UpdateAutoBackupEnabled() => AutoBackupOptions.IsEnabled = AutoBackupBox.IsChecked == true;
 
-    private void OnResetIsland(object sender, RoutedEventArgs e)
-    {
-        ResetIslandPosition?.Invoke();
-        RefreshPlaces();
-    }
+    /// <summary>Opens NotiLand's own settings window (BrimDeck's).</summary>
+    public Action? OpenNotiLandSettings { get; set; }
 
-    // What the island does is dimmed while it is off, the usage numbers while usage is off.
-    private void OnIslandSwitched(object sender, RoutedEventArgs e) => UpdateIslandEnabled();
-
-    private void OnUsageSwitched(object sender, RoutedEventArgs e) => UpdateIslandEnabled();
-
-    private void UpdateIslandEnabled()
-    {
-        IslandOptions.IsEnabled = IslandBox.IsChecked == true;
-        UsageFields.IsEnabled = IslandUsageBox.IsChecked == true;
-        UsageOnlineBox.IsEnabled = IslandUsageBox.IsChecked == true;
-        UsageOnlineStatus.IsEnabled = IslandUsageBox.IsChecked == true;
-        HoverOptions.IsEnabled = HoverExpandBox.IsChecked == true;
-    }
-
-    // ---- What the card shows ----
-
-    private List<(string Id, bool Shown)> _cardParts = [];
-
-    internal static string CardPartName(string id) => id switch
-    {
-        CardSections.Players => Strings.CardPartPlayers,
-        CardSections.Usage => Strings.CardPartUsage,
-        CardSections.System => Strings.CardPartSystem,
-        CardSections.Folders => Strings.CardPartFolders,
-        _ => Strings.CardPartShelf,
-    };
-
-    // One row per part: a tick to show it, and arrows to move it. The shown parts keep the order they have here.
-    private void BuildCardParts()
-    {
-        CardSectionsPanel.Children.Clear();
-        for (var i = 0; i < _cardParts.Count; i++)
-        {
-            var index = i;
-            var (id, shown) = _cardParts[i];
-            var row = new Grid { Margin = new Thickness(0, 1, 0, 1) };
-            row.ColumnDefinitions.Add(new ColumnDefinition());
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            var box = new CheckBox { Content = CardPartName(id), IsChecked = shown, MinWidth = 0, VerticalAlignment = VerticalAlignment.Center };
-            box.Click += (_, _) => _cardParts[index] = (id, box.IsChecked == true);
-            row.Children.Add(box);
-            var up = CardMoveButton("", Strings.SettingsMoveUp, index > 0, () => MoveCardPart(index, -1));
-            var down = CardMoveButton("", Strings.SettingsMoveDown, index < _cardParts.Count - 1, () => MoveCardPart(index, 1));
-            Grid.SetColumn(up, 1);
-            Grid.SetColumn(down, 2);
-            row.Children.Add(up);
-            row.Children.Add(down);
-            CardSectionsPanel.Children.Add(row);
-        }
-    }
-
-    private static Button CardMoveButton(string glyph, string tip, bool enabled, Action click)
-    {
-        var button = new Button
-        {
-            Content = new TextBlock { Text = glyph, FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 11 },
-            Padding = new Thickness(8, 4, 8, 4), Margin = new Thickness(4, 0, 0, 0), ToolTip = tip, IsEnabled = enabled,
-        };
-        button.Click += (_, _) => click();
-        return button;
-    }
-
-    private void MoveCardPart(int index, int by)
-    {
-        var other = index + by;
-        if (other < 0 || other >= _cardParts.Count)
-        {
-            return;
-        }
-
-        (_cardParts[index], _cardParts[other]) = (_cardParts[other], _cardParts[index]);
-        BuildCardParts();
-    }
-
-    private static string Home => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-
-    // Whether Claude Code's status line feeds DeskGrid: then the usage is Claude's own number.
-    private void RefreshUsageConnection()
-    {
-        var connected = ClaudeStatusLine.IsConnected(Home);
-        UsageConnectButton.Content = connected ? Strings.SettingsUsageDisconnect : Strings.SettingsUsageConnect;
-        UsageConnectStatus.Text = connected ? Strings.SettingsUsageConnected : Strings.SettingsUsageNotConnected;
-        var tools = AiTools.Detect();
-        UsageFoundText.Text = tools.Count == 0
-            ? Strings.SettingsUsageFoundNone
-            : string.Format(Strings.SettingsUsageFound, string.Join(", ", tools.Select(t => t.ReportsUsage ? t.Name : string.Format(Strings.SettingsUsageNoData, t.Name))));
-        RefreshUsageOnlineStatus();
-    }
-
-    // Whether "Read plan usage from Anthropic" actually has a usable sign-in to read (Claude Code's own CLI login,
-    // ~/.claude/.credentials.json); turning the checkbox on does nothing by itself when there is none.
-    private void RefreshUsageOnlineStatus()
-    {
-        var ready = AnthropicUsage.ReadToken(AnthropicUsage.CredentialsFile(Home), DateTimeOffset.UtcNow) is not null;
-        UsageOnlineStatus.Text = ready ? Strings.SettingsUsageOnlineReady : Strings.SettingsUsageOnlineNotReady;
-    }
-
-    private void OnUsageOnlineClicked(object sender, RoutedEventArgs e) => RefreshUsageOnlineStatus();
-
-    private void OnUsageConnect(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            if (ClaudeStatusLine.IsConnected(Home))
-            {
-                ClaudeStatusLine.Disconnect(Home);
-            }
-            else if (MessageBox.Show(this, Strings.SettingsUsageConnectAsk, Strings.AppName, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes) == MessageBoxResult.Yes)
-            {
-                ClaudeStatusLine.Connect(Home);
-                MessageBox.Show(this, Strings.SettingsUsageConnectDone, Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or InvalidDataException)
-        {
-            MessageBox.Show(this, string.Format(Strings.SettingsUsageFailed, exception.Message), Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
-        }
-
-        RefreshUsageConnection();
-    }
-
-    private void OnHoverSwitched(object sender, RoutedEventArgs e) => UpdateIslandEnabled();
-
-    private void OnIslandSizeChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (IslandSizeValue is not null)
-        {
-            IslandSizeValue.Text = $"{IslandSizeSlider.Value:0}%";
-        }
-    }
-
-    /// <summary>Sets the place of a situation (the app shows the desktop and lets the user drag NotiLand).</summary>
-    public Action<string>? EditIslandPlace { get; set; }
-
-    /// <summary>Gives a situation back the default place.</summary>
-    public Action<string>? ResetIslandPlace { get; set; }
-
-    /// <summary>Shows each situation with whether it has a place of its own, an Edit and a Reset button.</summary>
-    internal void RefreshPlaces()
-    {
-        IslandPlacesPanel.Children.Clear();
-        foreach (var scene in IslandScene.All)
-        {
-            var set = scene == IslandScene.Default ? _config.IslandX is not null : _config.IslandPlaces.ContainsKey(scene);
-            var status = set ? Strings.SettingsPlaceSet : scene == IslandScene.Default ? Strings.SettingsPlaceTop : Strings.SettingsPlaceUnset;
-            var row = new Grid { Margin = new Thickness(0, 3, 0, 3) };
-            row.ColumnDefinitions.Add(new ColumnDefinition());
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            var name = new TextBlock { Text = IslandHost.SceneName(scene), VerticalAlignment = VerticalAlignment.Center, TextWrapping = TextWrapping.Wrap };
-            var state = new TextBlock { Text = status, Opacity = 0.65, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(12, 0, 12, 0) };
-            var edit = new Button { Content = Strings.SettingsPlaceEdit, Padding = new Thickness(12, 4, 12, 4) };
-            var reset = new Button { Content = Strings.SettingsPlaceReset, Padding = new Thickness(12, 4, 12, 4), Margin = new Thickness(6, 0, 0, 0), IsEnabled = set };
-            System.Windows.Automation.AutomationProperties.SetName(edit, $"{Strings.SettingsPlaceEdit}: {name.Text}");
-            System.Windows.Automation.AutomationProperties.SetName(reset, $"{Strings.SettingsPlaceReset}: {name.Text}");
-            edit.Click += (_, _) => EditIslandPlace?.Invoke(scene);
-            reset.Click += (_, _) =>
-            {
-                ResetIslandPlace?.Invoke(scene);
-                RefreshPlaces();
-            };
-            Grid.SetColumn(state, 1);
-            Grid.SetColumn(edit, 2);
-            Grid.SetColumn(reset, 3);
-            row.Children.Add(name);
-            row.Children.Add(state);
-            row.Children.Add(edit);
-            row.Children.Add(reset);
-            IslandPlacesPanel.Children.Add(row);
-        }
-    }
-
-    private void OnIslandShortcuts(object sender, RoutedEventArgs e)
-    {
-        EditHotkeys?.Invoke();
-        ShowHotkeysHint();
-    }
+    private void OnOpenNotiLandSettings(object sender, RoutedEventArgs e) => OpenNotiLandSettings?.Invoke();
 
     private void OnExport(object sender, RoutedEventArgs e) => ExportSettings?.Invoke();
 
@@ -560,40 +317,6 @@ internal partial class SettingsWindow : Window
     private static BackupHourOption[] BackupHourOptions() =>
         [.. Enumerable.Range(0, 24).Select(hour => new BackupHourOption(hour, $"{hour:00}:00"))];
 
-    private static string NormalizedTime(string? text) =>
-        IslandRules.Parse(text) is { } time ? time.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture) : "";
-
-    private static List<QuietTimeOption> QuietTimeOptions(string? current)
-    {
-        var options = new List<QuietTimeOption> { new("", Strings.SettingsQuietNone) };
-        var times = new SortedSet<string>(StringComparer.Ordinal);
-        for (var hour = 0; hour < 24; hour++)
-        {
-            times.Add($"{hour:00}:00");
-            times.Add($"{hour:00}:30");
-        }
-
-        var normalized = NormalizedTime(current);
-        if (normalized.Length > 0)
-        {
-            times.Add(normalized);
-        }
-
-        foreach (var time in times)
-        {
-            options.Add(new QuietTimeOption(time, time));
-        }
-
-        return options;
-    }
-
-    private static void PopulateQuietTime(ComboBox box, string? value)
-    {
-        var normalized = NormalizedTime(value);
-        box.ItemsSource = QuietTimeOptions(normalized);
-        box.SelectedValue = normalized;
-    }
-
     private void LocalizeTexts()
     {
         Title = Strings.SettingsTitle;
@@ -617,45 +340,7 @@ internal partial class SettingsWindow : Window
         ShowHotkeysHint();
         AllowControlBox.Content = Strings.SettingsAllowControl;
         IslandBox.Content = Strings.SettingsIsland;
-        IslandCardShow.Text = Strings.SettingsIslandCardShow;
-        IslandCardShortcuts.Text = Strings.SettingsIslandCardShortcuts;
-        IslandCardAway.Text = Strings.SettingsIslandCardAway;
-        IslandCardPlace.Text = Strings.SettingsIslandCardPlace;
-        IslandShortcutsButton.Content = Strings.SettingsIslandShortcuts;
-        IslandCardPlaces.Text = Strings.SettingsIslandCardPlaces;
-        IslandCardLook.Text = Strings.SettingsIslandCardLook;
-        IslandSizeLabel.Text = Strings.SettingsIslandSize;
-        HoverExpandBox.Content = Strings.SettingsHoverExpand;
-        HoverFullTextBox.Content = Strings.SettingsHoverFullText;
-        HoverButtonsBox.Content = Strings.SettingsHoverButtons;
-        HoverTimeBox.Content = Strings.SettingsHoverTime;
-        IslandCardContents.Text = Strings.SettingsIslandCardContents;
-        BuildCardParts();
-        RefreshPlaces();
-        IslandMusicLabel.Text = Strings.SettingsIslandMusic;
-        MusicOff.Content = Strings.SettingsIslandMusicOff;
-        MusicOnChange.Content = Strings.SettingsIslandMusicChange;
-        MusicWhilePlaying.Content = Strings.SettingsIslandMusicWhile;
-        IslandFoldersBox.Content = Strings.SettingsIslandFolders;
-        IslandBatteryBox.Content = Strings.SettingsIslandBattery;
-        IslandUsageBox.Content = Strings.SettingsIslandUsage;
-        UsageOnlineBox.Content = Strings.SettingsUsageOnline;
-        RefreshUsageConnection();
-        UsageLimitLabel.Text = Strings.SettingsUsageLimit;
-        UsageHoursLabel.Text = Strings.SettingsUsageHours;
-        UsageWarnLabel.Text = Strings.SettingsUsageWarn;
-        IslandSecondsLabel.Text = Strings.SettingsIslandSeconds;
-        IslandResetButton.Content = Strings.SettingsIslandReset;
-        IslandPrivacyBox.Content = Strings.SettingsIslandPrivacy;
-        IslandBluetoothBox.Content = Strings.SettingsIslandBluetooth;
-        IslandDownloadsBox.Content = Strings.SettingsIslandDownloads;
-        IslandSystemBox.Content = Strings.SettingsIslandSystem;
-        IslandTimerLabel.Text = Strings.SettingsIslandTimer;
-        IslandFollowBox.Content = Strings.SettingsIslandFollow;
-        IslandQuietFromLabel.Text = Strings.SettingsIslandQuietFrom;
-        IslandQuietToLabel.Text = Strings.SettingsIslandQuietTo;
-        IslandHideAppsLabel.Text = Strings.SettingsIslandHideApps;
-        IslandShowOverLabel.Text = Strings.SettingsIslandShowOver;
+        NotiLandSettingsButton.Content = Strings.SettingsNotiLandOpen;
         GitHubLabel.Text = Strings.SettingsGitHub;
 
         // Only owner/name: the label already says GitHub, and the whole address would not fit beside the button.
@@ -775,48 +460,9 @@ internal partial class SettingsWindow : Window
         CheckAtStartupBox.IsChecked == true,
         AllowControlBox.IsChecked == true,
         IslandBox.IsChecked == true,
-        MusicOff.IsChecked == true ? IslandMusicMode.Off : MusicWhilePlaying.IsChecked == true ? IslandMusicMode.WhilePlaying : IslandMusicMode.OnChange,
-        IslandFoldersBox.IsChecked == true,
-        IslandBatteryBox.IsChecked == true,
-        Number(IslandSecondsBox, _config.IslandShowSeconds, 0, 3600),
-        IslandUsageBox.IsChecked == true,
-        Math.Clamp(double.TryParse(UsageLimitBox.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var limit) ? limit : _config.UsageLimitMillions, 0, 100000),
-        Number(UsageHoursBox, _config.UsageHours, 1, 720),
-        Number(UsageWarnBox, _config.UsageWarnPercent, 1, 100),
-        IslandPrivacyBox.IsChecked == true,
-        IslandBluetoothBox.IsChecked == true,
-        IslandDownloadsBox.IsChecked == true,
-        IslandSystemBox.IsChecked == true,
-        Number(IslandTimerBox, _config.IslandTimerMinutes, 1, 600),
-        IslandFollowBox.IsChecked == true,
-        Time(IslandQuietFromBox),
-        Time(IslandQuietToBox),
-        IslandHideAppsBox.Text.Trim(),
-        IslandShowOverBox.Text.Trim(),
-        IslandSizeSlider.Value / 100,
-        HoverExpandBox.IsChecked == true,
-        HoverFullTextBox.IsChecked == true,
-        HoverButtonsBox.IsChecked == true,
-        HoverTimeBox.IsChecked == true,
-        CardSections.Store(_cardParts.Where(p => p.Shown).Select(p => p.Id)),
         AutoBackupBox.IsChecked == true,
         AutoBackupHourBox.SelectedValue as int? ?? _config.AutoBackupHour,
-        AutoBackupDaysBox.SelectedItem as int? ?? _config.AutoBackupDays,
-        UsageOnlineBox.IsChecked == true);
-
-    // "HH:mm" as chosen in the scrollable menu, or empty when off.
-    private static string Time(ComboBox box) => box.SelectedValue as string ?? "";
-
-    // A whole number typed in a box; what it held before when the text is not one, kept within the range.
-    private static int Number(TextBox box, int fallback, int min, int max) =>
-        Math.Clamp(int.TryParse(box.Text.Trim(), out var value) ? value : fallback, min, max);
-
-    private RadioButton MusicRadioFor(IslandMusicMode mode) => mode switch
-    {
-        IslandMusicMode.Off => MusicOff,
-        IslandMusicMode.WhilePlaying => MusicWhilePlaying,
-        _ => MusicOnChange,
-    };
+        AutoBackupDaysBox.SelectedItem as int? ?? _config.AutoBackupDays);
 
     /// <summary>Checks what the controls hold and hands it to <see cref="Applied"/>; false (with the reason shown) if it is not valid.</summary>
     private bool Apply()
@@ -839,8 +485,6 @@ internal partial class SettingsWindow : Window
             LocalizeTexts();
             LanguageBox.ItemsSource = LanguageOptions();
             LanguageBox.SelectedValue = choice.Language;
-            PopulateQuietTime(IslandQuietFromBox, choice.IslandQuietFrom);
-            PopulateQuietTime(IslandQuietToBox, choice.IslandQuietTo);
         }
 
         return true;

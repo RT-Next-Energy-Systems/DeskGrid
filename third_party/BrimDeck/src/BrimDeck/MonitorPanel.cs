@@ -1,0 +1,280 @@
+using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Controls;
+using System.Windows.Media.Animation;
+using BrimDeck.Core;
+using BrimDeck.Native;
+
+namespace BrimDeck;
+
+// The system monitor page and the readings in the collapsed row. The sampler (App.Monitor) runs while any panel shows either;
+// every panel draws the same readings. The page is built once per layout step (MonitorLayout), palette, sort, main gauge and
+// theme; within a step it stretches, and each new reading only changes what its parts draw.
+public partial class MainWindow
+{
+    private MonitorView? _monitorView;
+    private string _monitorKey = "";
+    private MonitorStrip? _compactStrip;
+    // Which readings the collapsed row shows and how far each has come in or gone out, kept while the row is built again.
+    private readonly StripPresence _stripPresence = new();
+    // When the temperatures and the drives join the collapsed row: only once their first figures arrive (StripAdmission).
+    private readonly StripAdmission _stripAdmission = new();
+    private bool _monitorShowing, _monitorShown, _stripShowing, _monitorFade, _powerPage;
+
+    private void InitializeMonitor()
+    {
+        IsVisibleChanged += (_, _) => UpdateMonitorDemand();
+        // Pressed anywhere in the window, not only on the page: the page's blank room takes no clicks of its own.
+        PreviewMouseLeftButtonDown += (_, _) => _monitorView?.WindowPressed();
+        _app.MonitorUpdated += MonitorUpdated;
+        // Plugging in or unplugging changes what the power reading can come from (battery discharge on battery only): asked again then.
+        Microsoft.Win32.PowerModeChangedEventHandler powerChanged = (_, e) => { if (e.Mode == Microsoft.Win32.PowerModes.StatusChange) Dispatcher.BeginInvoke(UpdateMonitorDemand); };
+        Microsoft.Win32.SystemEvents.PowerModeChanged += powerChanged;
+        Closed += (_, _) => { _app.MonitorUpdated -= MonitorUpdated; Microsoft.Win32.SystemEvents.PowerModeChanged -= powerChanged; _app.PresentMonitor(this, false, false); };
+    }
+
+    // Asked whenever the panel opens, closes, changes page or is hidden, and whenever the collapsed row is built.
+    private void UpdateMonitorDemand()
+    {
+        // Nothing is read for a display that is off (DisplayPower), nor for a row whose readings got no room (RenderCompactMusic).
+        // A page left open while the display is off stays as it was (its card, the list held under the pointer); it only stops
+        // being read, and takes the current readings when the display is back.
+        bool shown = _expanded && IsMonitorPage && IsVisible && !IsSuppressed;
+        bool page = shown && !DisplayPower.Off;
+        // A row whose chosen readings all wait for their first figures has no width, yet must be read for them (StripAwaits). A row
+        // only hidden for now (the panel open, or a notice in its place, which leaves no row built: RenderCompact) keeps its
+        // temperatures read while the sampler runs (App.UpdateMonitorExtras). A row whose only chosen reading is the battery reads the
+        // devices (UpdateDevicesDemand), not the system.
+        bool heldStrip = StripNeedsSystem && (_compactStrip is not null || StripAwaits() || _alert is not null && Settings.ShowsMonitor(EffectiveStyle)) && IsVisible && !IsSuppressed && !DisplayPower.Off && EffectiveStyle != CompactStyle.Line;
+        bool strip = heldStrip && !_expanded && _alert is null;
+        if (!shown)
+        {
+            // A list that is not on screen cannot be under the pointer, and a closed page keeps no card open.
+            if (_monitorShown && _app.Monitor is { } monitor) monitor.HoldProcesses = false;
+            _monitorView?.CloseCard();
+        }
+        _monitorShown = shown;
+        // The power is read for a page that shows its line (a page too small for it, or with the setting off, reads none of it).
+        bool power = page && _monitorView?.ShowsPower == true;
+        _powerPage = power;
+        _app.PresentMonitor(this, page, strip, power, heldStrip, PageDemand());
+        // Neither took readings while hidden: they show the current ones, or dashes once the sampler has paused, never the
+        // figures they showed last time.
+        if (page && !_monitorShowing) _monitorView?.Update(_app.Monitor?.Latest ?? WaitingSnapshot, motion: false);
+        if (strip && !_stripShowing) UpdateCompactStrips(_app.Monitor?.Latest, motion: false);
+        _monitorShowing = page; _stripShowing = strip;
+        // The devices page and the collapsed battery reading ask on the same occasions.
+        UpdateDevicesDemand();
+    }
+    // The collapsed readings the row was last built without (StripAdmission.Hidden): the drives until their first figures, and for
+    // good on a machine without them; and the temperatures and letters it was built with (StripAdmission.Layout).
+    private CompactMonitorItems _stripUnavailable;
+    private string _stripLayout = "";
+    // A laptop on mains that gave no power reading may give one on battery (the discharge rate): its power is asked again then.
+    private SensorStates StripSensors => _app.Monitor is { } monitor ? new(monitor.CpuSensor, monitor.GpuSensor, monitor.StorageState, monitor.DriveSensor)
+    {
+        Power = monitor.PowerSensor == SensorState.None && Native.BatteryProvider.SystemHasBattery && !Native.BatteryProvider.OnMains ? SensorState.Unknown : monitor.PowerSensor,
+        Charge = monitor.BatterySensor, Frames = monitor.FramesSensor
+    } : SensorStates.Unknown;
+    // Whether this panel's open page shows the frame rate's line (its layout had room for it): the frame rate is read for it then.
+    internal bool PageShowsFrames => _monitorView?.ShowsFrames == true;
+    // Whether this surface shows the system readings and waits for the first figures of one it does not show yet.
+    private bool StripAwaits()
+    {
+        if (!Settings.ShowsMonitor(EffectiveStyle)) return false;
+        return _stripAdmission.Awaits(Settings.CompactReadings, _app.Monitor?.Latest, StripSensors);
+    }
+    // animate: the page is built for the first time, not for a new size, so its power rows come in (PowerOptions.Animate).
+    private PowerOptions PowerBlockFor(bool animate) => Native.BatteryProvider.SystemHasBattery
+        ? new(PowerStyle.For(MonitorThemeColors.For(Settings, Look), Look), BatteryModel.LowPercent, true, Native.BatteryProvider.Quick(), animate)
+        : new(PowerStyle.For(MonitorThemeColors.For(Settings, Look), Look), BatteryModel.LowPercent, false, default, animate);
+    private static MonitorSnapshot WaitingSnapshot => MonitorSnapshot.Empty(Environment.ProcessorCount, Loc.T("正在读取", "Reading"));
+
+    private bool MonitorMotion => Animates;
+
+    private void MonitorUpdated(MonitorSnapshot snapshot)
+    {
+        Motion.Enabled = MonitorMotion;
+        bool admitted = AdmitStrip(snapshot);
+        if (!_expanded)
+        {
+            // The drives or the battery got their first figure: the row is built again with them, and they come in with the row's own
+            // entrance while the others slide aside. Until then the row did not show them, so nothing else changes. A temperature or
+            // a letter that joins or leaves changes its reading's width, and the row is built again for it.
+            if (admitted) return;
+            // A row still waiting for its first figures stops asking for readings once its sensors turn out to be missing.
+            if (_compactStrip is null) { UpdateMonitorDemand(); return; }
+            UpdateCompactStrips(snapshot, MonitorMotion && Settings.CompactSmoothing != CompactSmoothing.Off); return;
+        }
+        if (!IsMonitorPage || _monitorView is null) return;
+        // The sensors and the layout step are worked out once for each reading; the key and what the page was built for follow from them.
+        var sensors = MonitorSensors();
+        var layout = CurrentMonitorPlan(sensors);
+        if (MonitorKey(layout, sensors.Small) != _monitorKey)
+        {
+            // Rebuilt because a kind of sensor turned out to have none (or turned up), the page fades in rather than cuts.
+            if (BuiltSensors(layout, sensors.Small) != _monitorSensors) _monitorFade = true;
+            RenderMonitor(); return;
+        }
+        _monitorView.Update(snapshot, MonitorMotion);
+    }
+
+    // Which later parts the collapsed row shows now (StripAdmission); builds the row again, and returns true, when one joins or
+    // leaves or a reading's width changes. Asked on every system reading and every change of the devices.
+    private bool AdmitStrip(MonitorSnapshot? snapshot)
+    {
+        var (hidden, arriving) = UpdateStripAdmission(snapshot);
+        // Open, the row is not on screen; it is built with the new readings when the panel collapses.
+        if (_expanded || !(_compactStrip is not null || Settings.ShowsMonitor(EffectiveStyle)) || hidden == _stripUnavailable && _stripAdmission.Layout == _stripLayout) return false;
+        _stripPresence.Arrive(arriving); RenderCompact();
+        return true;
+    }
+    private (CompactMonitorItems Hidden, CompactMonitorItems Arriving) UpdateStripAdmission(MonitorSnapshot? snapshot)
+        => _stripAdmission.Update(snapshot, Settings.CompactReadings, StripSensors);
+    // Whether the collapsed row's chosen readings need the system sampler.
+    private bool StripNeedsSystem => CompactMonitor.Shown(Settings.CompactReadings) != 0;
+
+    // The page's bottom margin for a page of this height; its sides are the header's inset.
+    private static double MonitorBottom(double height) => height < 170 ? 10 : 16;
+    // The step the page is built for, kept while a resize stays within MonitorLayout.Hysteresis of it.
+    private ExpandedPlan? _monitorPlan;
+    // The items the page shows, in the table's order (ExpandedMonitor): the layout places them, and only they are read.
+    private ExpandedPlan CurrentMonitorPlan((int Drives, bool Small, int Power) sensors)
+    {
+        double height = ContentCanvas.Height;
+        return ExpandedLayout.For(ExpandedMonitor.Shown(Settings.ExpandedReadings), ContentCanvas.Width - 2 * _header.Side, height - _header.Row - MonitorBottom(height),
+            new ExpandedContent(sensors.Drives, sensors.Power), null, Settings.MonitorMain, _monitorView is not null ? _monitorPlan : null);
+    }
+    // What the open page reads: what its layout kept, before the first one is made what the table chooses.
+    private ExpandedDemand PageDemand() => (_monitorPlan is { } plan ? plan.Demand(Settings.MonitorTemperatures) : ExpandedMonitor.Demand(ExpandedMonitor.Shown(Settings.ExpandedReadings), Settings.MonitorTemperatures));
+
+    // What the view is built from: its layout step, not its exact size, so a page resized within a step is not built again.
+    // The sort is not part of it: a new sort reorders the list in place. The page keeps places for the volumes (as many as were
+    // found, or as many as fit while they are not read yet, within the layout's room: MonitorLayout.StorageLines and StorageColumns)
+    // and room for a temperature beside the small gauge (MonitorSensors), so it is built again only when the places it shows or
+    // that room change: when the volumes are first counted, a sensor turns out to have none or first shows, or a volume comes or
+    // goes past the room.
+    private string MonitorKey(ExpandedPlan plan, bool small) => string.Join("|", plan.Signature, Settings.MonitorPalette, Settings.MonitorPalette == MonitorPalette.Custom ? Settings.MonitorCustomColors.Key : "",
+        Settings.MonitorMain, Settings.MonitorProcessView, Loc.Language, Look.Generation, Settings.MonitorTemperatures, small, Native.BatteryProvider.SystemHasBattery, Settings.CoreDisplay);
+    // What the shown page was built for: its volumes' places, the small gauge's room and the lines for power and the battery.
+    private (int Lines, int Columns, bool Small, int Power) _monitorSensors;
+    private static (int Lines, int Columns, bool Small, int Power) BuiltSensors(ExpandedPlan plan, bool small)
+        => (plan.Steps.StorageLines, plan.Steps.StorageColumns, small, plan.Steps.PowerLines);
+    // Drives: the volumes to keep places for, 0 for none; while they are not counted yet, as many as the page can hold.
+    private (int Drives, bool Small, int Power) MonitorSensors()
+    {
+        var monitor = _app.Monitor;
+        int lines = !Settings.ShowsExpanded(ExpandedItem.Storage) || monitor?.StorageState == SensorState.None ? 0
+            : monitor?.StorageCount is > 0 and var count ? count : MonitorLayout.MaximumStorageLines * MonitorLayout.MaximumStorageColumns;
+        // The processor's zones are reserved for only once one has shown (a fixed zone never does); a graphics adapter is
+        // reserved for until it is known to have no sensor.
+        bool both = Settings.ShowsExpanded(ExpandedItem.Cpu) && Settings.ShowsExpanded(ExpandedItem.Gpu);
+        bool small = both && (Settings.MonitorMain == MonitorMain.Cpu ? monitor?.GpuSensor != SensorState.None : monitor?.CpuSensor == SensorState.Found);
+        // The power line (PowerBlock), with the battery beside it on a machine that has one (known at once from the system): one line,
+        // never two; none once the sampler finds no source and there is no battery (a laptop on battery may have one that the mains did
+        // not give: StripSensors).
+        int power = !Settings.ShowsExpanded(ExpandedItem.Power) ? 0 : Native.BatteryProvider.SystemHasBattery || StripSensors.Power != SensorState.None ? 1 : 0;
+        return (lines, Settings.MonitorTemperatures && small, power);
+    }
+
+    // The page for a selection with nothing to show: nothing chosen (it reads nothing), or what is chosen cannot be read on this PC. The
+    // button opens the monitor's settings, where the readings are chosen.
+    private FrameworkElement? MonitorMessage(ExpandedPlan plan)
+    {
+        if (plan.Kind is not (ExpandedKind.Empty or ExpandedKind.Unavailable)) return null;
+        bool none = plan.Kind == ExpandedKind.Empty;
+        string title = none ? Loc.T("还没有选择要显示的监控项", "No readings chosen") : Loc.T("选中的监控项在这台电脑上读不到", "The chosen readings are not available on this PC");
+        string note = none ? Loc.T("在设置中选择展开时显示的项目。选择之前展开页不会读取任何数据。", "Choose what the expanded page shows in settings. The expanded page reads nothing until you do.")
+            : Loc.T("可以在设置中换成其他监控项。", "You can choose other readings in settings.");
+        var panel = new StackPanel { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Center };
+        panel.Children.Add(Label(title, plan.Body + 1, Look.Secondary, HorizontalAlignment.Center));
+        panel.Children.Add(Label(note, plan.Caption + .5, Look.Tertiary, HorizontalAlignment.Center, top: 4));
+        var open = PillButton(Loc.T("打开设置", "Open settings"), primary: false, () => _app.OpenSettingsPage(SettingsWindow.MonitorSettingsPage));
+        open.Margin = new Thickness(0, 10, 0, 0); open.HorizontalAlignment = HorizontalAlignment.Center; panel.Children.Add(open);
+        AutomationProperties.SetName(panel, title + ". " + note);
+        return panel;
+    }
+
+    private void RenderMonitor()
+    {
+        // A page on screen that is built again (a resize across a step, a sensor found or missing, a new main gauge) gives way to
+        // the new one with a crossfade; a page opened from another one appears as it always has.
+        bool shown = MonitorContent.Visibility == Visibility.Visible && _monitorView is not null && MonitorContent.Children.Contains(_monitorView);
+        RefreshStatus();
+        UsageContent.Visibility = Visibility.Collapsed; MusicContent.Visibility = Visibility.Collapsed; ShelfContent.Visibility = Visibility.Collapsed; DevicesContent.Visibility = Visibility.Collapsed; MonitorContent.Visibility = Visibility.Visible;
+        ModelToolbar.Visibility = Visibility.Collapsed; ApplicationPages.Visibility = Visibility.Collapsed; ClockLabel.Visibility = Visibility.Visible;
+        double width = ContentCanvas.Width, height = ContentCanvas.Height;
+        if (!double.IsFinite(width) || !double.IsFinite(height)) return;
+        // The header keeps the usage page's controls, as the music page does, so the switch does not move between pages. Fitting
+        // the usage page for them is kept until its size, data or settings change: a drag resizes this page many times a second.
+        var header = PanelHeader.For(ToolbarFor(height), height < 170 ? 14 : 20);
+        ApplyHeader(Settings.UsagePage ? header.WithControlsOf(CachedUsageHeader()) : header);
+        MonitorContent.Margin = new Thickness(_header.Side, 0, _header.Side, MonitorBottom(height));
+        Motion.Enabled = MonitorMotion;
+        // Worked out once for each render: a drag renders the page many times a second.
+        var sensors = MonitorSensors();
+        var layout = CurrentMonitorPlan(sensors);
+        var key = MonitorKey(layout, sensors.Small);
+        bool fade = _monitorFade; _monitorFade = false;
+        if (_monitorView is not null && key == _monitorKey && MonitorContent.Children.Contains(_monitorView)) return;
+        _monitorKey = key; _monitorPlan = layout; _monitorSensors = BuiltSensors(layout, sensors.Small);
+        // The list being replaced may have been under the pointer; its leave event never comes.
+        if (_app.Monitor is { } monitor) monitor.HoldProcesses = false;
+        var old = shown ? _monitorView : null;
+        old?.CloseCard();
+        _monitorView = new MonitorView(layout, MonitorThemeColors.For(Settings, Look), Settings.MonitorMain, Settings.MonitorSort,
+            Settings.MonitorProcessView, SwitchMonitorMain, SortProcesses, hold => { if (_app.Monitor is { } sampler) sampler.HoldProcesses = hold; }, SwitchMonitorGpu,
+            Settings.MonitorTemperatures, _monitorSensors.Small, PowerBlockFor(old is null && MonitorMotion && !Resizing), MonitorMessage(layout), Settings.CoreDisplay);
+        _monitorView.Update(_app.Monitor?.Latest ?? WaitingSnapshot, motion: false);
+        // The new page may show the power line where the old one did not, or the other way round: what is read follows
+        // (UpdateMonitorDemand, which asks for the extras as well). And the frame rate's line: the frame rate is read only while a
+        // page or a row shows it.
+        if (_monitorShowing) UpdateMonitorDemand();
+        if (old is not null) MonitorCrossfade.Swap(MonitorContent, _monitorView, old, MonitorMotion);
+        else
+        {
+            MonitorContent.Children.Clear(); MonitorContent.Children.Add(_monitorView);
+            // A new main gauge, asked for on the page, arrives with a short fade instead of a cut.
+            if (fade && MonitorMotion) _monitorView.BeginAnimation(OpacityProperty, Soft.Fade(.15, 1, Soft.Short));
+        }
+    }
+
+    private (double Width, double Height, IReadOnlyList<ProviderSnapshot> Snapshots, DeckSettings Settings, PanelHeader Header)? _usageHeader;
+    private PanelHeader CachedUsageHeader()
+    {
+        double width = _usageWidth, height = UsagePageHeight;
+        if (_usageHeader is { } known && known.Width == width && known.Height == height && ReferenceEquals(known.Snapshots, Snapshots) && ReferenceEquals(known.Settings, Settings))
+            return known.Header;
+        var header = UsageHeader(width, height);
+        _usageHeader = (width, height, Snapshots, Settings, header);
+        return header;
+    }
+
+    // The sort and the main gauge are the same for every panel and are kept with the settings. A new main gauge rebuilds the page,
+    // which fades in; a new sort only reorders the list.
+    private void SortProcesses(ProcessSort sort)
+    {
+        if (Settings.MonitorSort == sort) return;
+        Settings.MonitorSort = sort; _app.PanelSettingsEdited(this);
+        // Every panel's page, shown or not: a page kept for later is not built again, so it must not keep the old sort.
+        foreach (var deck in _app.Decks) deck._monitorView?.SetSort(sort);
+    }
+    private void SwitchMonitorMain(MonitorMain main)
+    {
+        if (Settings.MonitorMain == main) return;
+        Settings.MonitorMain = main; _app.PanelSettingsEdited(this);
+        RefreshMonitorPages();
+    }
+    // The adapter shown on the page is the one the monitor shows everywhere, the collapsed readings too, so a click on the page
+    // keeps it as the choice under the monitor's settings. Every page and strip shows it at once, without waiting for a reading.
+    private void SwitchMonitorGpu(GpuSample gpu)
+    {
+        if (Settings.MonitorGpu == gpu.Key) return;
+        Settings.MonitorGpu = gpu.Key; Settings.MonitorGpuName = gpu.Name; _app.PanelSettingsEdited(this);
+        _app.Monitor?.ShowGpuChoice();
+    }
+    private void RefreshMonitorPages()
+    {
+        foreach (var deck in _app.Decks) if (deck._expanded && deck.IsMonitorPage) { deck._monitorFade = true; deck.RenderMonitor(); }
+    }
+}

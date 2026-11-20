@@ -8,7 +8,7 @@ using DeskGrid.Diagnostics;
 using DeskGrid.Folders;
 using DeskGrid.Hotkeys;
 using DeskGrid.Icons;
-using DeskGrid.Island;
+using DeskGrid.NotiLand;
 using DeskGrid.Panel;
 using DeskGrid.Resources;
 using DeskGrid.Settings;
@@ -45,7 +45,7 @@ public partial class App : Application
     private InstanceChannel? _instanceChannel;
     private ControlChannel? _controlChannel;
     private HotkeyService? _hotkeys;
-    private IslandHost? _island;
+    private NotiLandHost? _noti;
     private DispatcherTimer? _autoBackupTimer;
     private OpenMessage? _pendingOpen;
     private bool _checkingUpdates;
@@ -94,7 +94,6 @@ public partial class App : Application
         _desktopHost.DisplayChanged += (_, _) =>
         {
             _panels?.Close(); // Its widget may be on another monitor now.
-            _island?.OnDisplayChanged();
             _board?.OnDisplayChanged();
         };
         _desktopHost.Start();
@@ -116,13 +115,8 @@ public partial class App : Application
         _panels.DeleteRequested += (_, folder) => DeleteFolder(folder);
         _panels.FolderRenamer = RenameFolder;
         _tray = new TrayIcon(Strings.AppName, TrayMenu);
-        _island = new IslandHost();
-        _island.OpenFoldersRequested += (_, _) => OpenFoldersFromIsland();
-        _island.ActionRequested += RunIslandAction;
-        _island.FolderNames = () => _catalog?.Widgets.Select(w => w.Name).ToList() ?? [];
-        _island.PlaceChanged += SaveIslandPlace;
-        _island.Apply(IslandOptions.From(_configStore.Config));
-        _ = _island.Shelf.PurgeLeftoversAsync(); // What a run that did not end cleanly left on the shelf.
+        _noti = new NotiLandHost();
+        _noti.Apply(_configStore.Config.NotiLandEnabled);
         _hotkeys = new HotkeyService();
         _hotkeys.Pressed += (_, id) => RunHotkey(id);
         ApplyHotkeys(report: false);
@@ -147,7 +141,7 @@ public partial class App : Application
         _instanceChannel?.Dispose();
         _controlChannel?.Dispose();
         _hotkeys?.Dispose();
-        _island?.Dispose();
+        _noti?.Dispose();
         StopWidgets();
         _tray?.Dispose();
         _icons?.Dispose();
@@ -184,81 +178,6 @@ public partial class App : Application
     {
         Log.Error("Unhandled exception", e.Exception);
         e.Handled = _started && e.Exception is not OutOfMemoryException;
-    }
-
-    // A place of NotiLand changed (dragged, set in Settings, reset): the default one is IslandX / IslandY, the others are kept by
-    // situation. The options are applied again so it is where it now belongs.
-    private void SaveIslandPlace(string scene, ScreenPoint? place)
-    {
-        var config = _configStore!.Config;
-        if (scene == IslandScene.Default)
-        {
-            (config.IslandX, config.IslandY) = (place?.X, place?.Y);
-        }
-        else if (place is { } point)
-        {
-            config.IslandPlaces[scene] = new IslandPlace { X = point.X, Y = point.Y };
-        }
-        else
-        {
-            config.IslandPlaces.Remove(scene);
-        }
-
-        _configStore.Save();
-        _island?.Apply(IslandOptions.From(config));
-    }
-
-    // Settings asked to set the place of a situation: every window goes down so the desktop shows (NotiLand is placed on a
-    // clear screen), NotiLand waits to be dragged, and the windows come back when it is done.
-    private void EditIslandPlace(string scene, SettingsWindow? settings)
-    {
-        if (_island is null || !_configStore!.Config.IslandEnabled)
-        {
-            if (settings is not null)
-            {
-                MessageBox.Show(settings, Strings.SettingsPlaceNeedsIsland, Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-
-            return;
-        }
-
-        ShellWindows("MinimizeAll");
-        _island.BeginPlaceEdit(scene, () =>
-        {
-            ShellWindows("UndoMinimizeALL");
-            settings?.RefreshPlaces();
-        });
-    }
-
-    // Shell.Application's "minimize all windows" and its undo, as Win+M and Win+Shift+M do.
-    private static void ShellWindows(string verb)
-    {
-        try
-        {
-            if (Type.GetTypeFromProgID("Shell.Application") is { } type && Activator.CreateInstance(type) is { } shell)
-            {
-                type.InvokeMember(verb, System.Reflection.BindingFlags.InvokeMethod, null, shell, null);
-            }
-        }
-        catch (Exception exception) when (exception is System.Runtime.InteropServices.COMException or System.Reflection.TargetInvocationException)
-        {
-            Log.Error($"The shell could not {verb}", exception);
-        }
-    }
-
-    // The pointer rested at the top centre of the screen: the list of all folders opens right under the island's place.
-    private void OpenFoldersFromIsland()
-    {
-        if (_catalog is not { } catalog || _panels is null || _panels.OpenPanelName == ControlCommands.AllFolders)
-        {
-            return;
-        }
-
-        var area = MonitorArea.Primary;
-        var centre = (area.WorkArea.Left + area.WorkArea.Right) / 2;
-        var half = area.ToPixels(60);
-        var bottom = area.WorkArea.Top + area.ToPixels(IslandWindow.TopGap + 36);
-        _panels.ToggleList(catalog.Widgets, new ScreenRect(centre - half, area.WorkArea.Top, centre + half, bottom), nearAnchor: true);
     }
 
     private IReadOnlyList<TrayMenuItem> TrayMenu() =>
@@ -381,7 +300,6 @@ public partial class App : Application
             board.Show(catalog.Widgets);
             _panels!.Refresh(catalog.Widgets);
             ApplyHotkeys(report: false); // A renamed folder keeps its shortcut under the new name; a deleted one loses it.
-            TellOfNewItems(catalog.Widgets);
 
             if (_pendingOpen is { } request)
             {
@@ -400,7 +318,6 @@ public partial class App : Application
         _catalog?.Dispose();
         _board?.Dispose();
         (_board, _catalog) = (null, null);
-        _itemCounts = null; // Counts of another root's folders: a same-named folder there would be told of as "added to".
     }
 
     // The cursor is read at once: it is where the user clicked the taskbar button, not where it is a second later.
@@ -434,46 +351,6 @@ public partial class App : Application
             // A button pinned for a folder that has been deleted: show the folders there are instead of doing nothing.
             Log.Info($"Taskbar asked for \"{request.Name}\", which is not a widget folder; showing all folders.");
             _panels!.ToggleList(catalog.Widgets, at);
-        }
-    }
-
-    // The counts of the folders at the last look; a folder that holds more now got something, which the island tells of.
-    private Dictionary<string, int>? _itemCounts;
-
-    private void TellOfNewItems(IReadOnlyList<WidgetFolder> widgets)
-    {
-        var counts = widgets.ToDictionary(w => w.Name, w => w.Items.Count, StringComparer.OrdinalIgnoreCase);
-        if (_itemCounts is { } before)
-        {
-            foreach (var (name, count) in counts)
-            {
-                if (before.TryGetValue(name, out var was) && count > was)
-                {
-                    _island?.Show(string.Format(Strings.IslandAdded, count - was, name), TimeSpan.FromSeconds(4),
-                        new IslandLook("folder", "#4CC38A", null, IslandAction.FolderPrefix + name));
-                }
-            }
-        }
-
-        _itemCounts = counts;
-    }
-
-    // A click on an island line (or a folder on its card): open the folder next to the cursor, an address, or a file.
-    private void RunIslandAction(string target)
-    {
-        if (IslandAction.FolderOf(target) is { } folder)
-        {
-            OpenPanel(OpenMessageAtCursor(folder));
-            return;
-        }
-
-        try
-        {
-            ShellItem.Open(target);
-        }
-        catch (Exception exception) when (exception is IOException or System.ComponentModel.Win32Exception)
-        {
-            Log.Error("A click on the island could not open its target", exception);
         }
     }
 
@@ -750,19 +627,6 @@ public partial class App : Application
                     OpenPanel(OpenMessageAtCursor(OpenRequest.AllFolders));
                     break;
 
-                case HotkeyBindings.IslandToggle:
-                    _island?.ToggleInfo();
-                    break;
-
-                case HotkeyBindings.IslandTimer:
-                    _island?.ToggleTimer();
-                    break;
-
-                case HotkeyBindings.IslandCard:
-                    _island?.ToggleCard();
-                    break;
-
-
                 default:
                     if (HotkeyBindings.FolderNameOf(id) is { } folder)
                     {
@@ -823,15 +687,7 @@ public partial class App : Application
         settings.Applied += (_, choice) => ApplySettings(choice);
         settings.CheckForUpdates = () => CheckForUpdatesAsync(manual: true, settings);
         settings.PinAllFolders = PinAllFoldersToTaskbar;
-        settings.ResetIslandPosition = () =>
-        {
-            foreach (var scene in IslandScene.All)
-            {
-                SaveIslandPlace(scene, null);
-            }
-        };
-        settings.ResetIslandPlace = scene => SaveIslandPlace(scene, null);
-        settings.EditIslandPlace = scene => EditIslandPlace(scene, settings);
+        settings.OpenNotiLandSettings = () => _noti?.OpenSettings();
         settings.EditHotkeys = () => EditHotkeys(settings);
         settings.ExportSettings = () => ExportSettings(settings);
         settings.ImportSettings = () => ImportSettings(settings);
@@ -919,7 +775,7 @@ public partial class App : Application
         UiLanguage.Apply(config.Language);
         _configStore.Save();
         CheckAutoBackup();
-        _island!.Apply(IslandOptions.From(config));
+        _noti!.Apply(config.NotiLandEnabled);
         StartWidgets();
         ApplyHotkeys(report: true);
         owner.CloseDiscarding(); // It shows the settings that were just replaced.
@@ -952,33 +808,8 @@ public partial class App : Application
         UiLanguage.Apply(config.Language);
         config.CheckForUpdatesAtStartup = choice.CheckForUpdatesAtStartup;
         config.AllowControl = choice.AllowControl;
-        config.IslandEnabled = choice.IslandEnabled;
-        config.IslandMusic = choice.IslandMusic;
-        config.IslandFolders = choice.IslandFolders;
-        config.IslandBattery = choice.IslandBattery;
-        config.IslandShowSeconds = choice.IslandShowSeconds;
-        config.IslandUsage = choice.IslandUsage;
-        config.UsageLimitMillions = choice.UsageLimitMillions;
-        config.UsageHours = choice.UsageHours;
-        config.UsageOnline = choice.UsageOnline;
-        config.UsageWarnPercent = choice.UsageWarnPercent;
-        config.IslandPrivacy = choice.IslandPrivacy;
-        config.IslandBluetooth = choice.IslandBluetooth;
-        config.IslandDownloads = choice.IslandDownloads;
-        config.IslandSystem = choice.IslandSystem;
-        config.IslandTimerMinutes = choice.IslandTimerMinutes;
-        config.IslandFollowPointer = choice.IslandFollowPointer;
-        config.IslandQuietFrom = choice.IslandQuietFrom.Length == 0 ? null : choice.IslandQuietFrom;
-        config.IslandQuietTo = choice.IslandQuietTo.Length == 0 ? null : choice.IslandQuietTo;
-        config.IslandHideInApps = choice.IslandHideInApps.Length == 0 ? null : choice.IslandHideInApps;
-        config.IslandShowOverApps = choice.IslandShowOverApps.Length == 0 ? null : choice.IslandShowOverApps;
-        config.IslandScale = choice.IslandScale;
-        config.IslandHoverExpand = choice.HoverExpand;
-        config.IslandHoverFullText = choice.HoverFullText;
-        config.IslandHoverButtons = choice.HoverButtons;
-        config.IslandHoverTime = choice.HoverTime;
-        config.IslandCardSections = choice.IslandCardSections;
-        _island!.Apply(IslandOptions.From(config));
+        config.NotiLandEnabled = choice.NotiLandEnabled;
+        _noti!.Apply(config.NotiLandEnabled);
         _configStore.Save();
         CheckAutoBackup();
 
@@ -1025,24 +856,6 @@ public partial class App : Application
         }
 
         public void ClosePanel() => app._panels?.Close();
-
-        public void ShowOnIsland(string text, TimeSpan duration, IslandLook? look = null) => app._island?.Show(text, duration, look);
-
-        public void HideIsland() => app._island?.Hide();
-
-        public System.Text.Json.Nodes.JsonObject? IslandState => app._island?.State();
-
-        public void IslandAction(string action)
-        {
-            switch (action)
-            {
-                case "timer": app._island?.ToggleTimer(); break;
-                case "card": app._island?.ToggleCard(); break;
-                case "open": app._island?.OpenPlayer(); break;
-                case var place when place.StartsWith("place:", StringComparison.Ordinal): app.EditIslandPlace(place["place:".Length..], null); break;
-                default: app._island?.ShowInfo(); break;
-            }
-        }
 
         private static ScreenRect AtCursor()
         {

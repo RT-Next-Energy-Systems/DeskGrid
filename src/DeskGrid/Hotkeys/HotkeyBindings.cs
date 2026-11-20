@@ -14,9 +14,6 @@ internal static class HotkeyBindings
     public const string AllFolders = "allFolders";
     public const string NewFolder = "newFolder";
     public const string Settings = "settings";
-    public const string IslandToggle = "islandToggle";
-    public const string IslandTimer = "islandTimer";
-    public const string IslandCard = "islandCard";
 
     // A folder's action is this plus the folder's name.
     private const string FolderPrefix = "folder:";
@@ -28,10 +25,7 @@ internal static class HotkeyBindings
     public static Hotkey DefaultAllFolders { get; } = new(HotkeyModifiers.Ctrl, 'M');
 
     /// <summary>The actions that don't belong to a folder, in the order the shortcut window lists them.</summary>
-    public static IReadOnlyList<string> GeneralIds { get; } = [AllFolders, IslandToggle, IslandCard, IslandTimer, NewFolder, Settings];
-
-    /// <summary>NotiLand's actions, as the shortcut window groups them: show or hide (for the set seconds), the card, the timer.</summary>
-    public static IReadOnlyList<string> IslandIds { get; } = [IslandToggle, IslandCard, IslandTimer];
+    public static IReadOnlyList<string> GeneralIds { get; } = [AllFolders, NewFolder, Settings];
 
     /// <summary>The actions of DeskGrid itself (not of folders or the island).</summary>
     public static IReadOnlyList<string> AppIds { get; } = [AllFolders, NewFolder, Settings];
