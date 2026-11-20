@@ -7,7 +7,7 @@
        5..91 px in a cell starting at 2, name right under it), so widgets line up with the icons beside them. -->
   <Border x:Name="Highlight" CornerRadius="4" Padding="2,0,2,4">
     <StackPanel>
-      <Border Width="48" Height="48" CornerRadius="10.7" Padding="5.8" Background="#4DFFFFFF">
+      <Border x:Name="Tile" Width="48" Height="48" CornerRadius="10.7" Padding="5.8" Background="#4DFFFFFF">
         <Image x:Name="Preview" RenderOptions.BitmapScalingMode="HighQuality" />
       </Border>
       <!-- Halo: a second shadow around the text and its own shadow, switched on over a light wallpaper. -->

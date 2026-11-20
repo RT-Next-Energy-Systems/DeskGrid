@@ -84,6 +84,12 @@ internal sealed record DesktopIconGrid(int CellWidth, int CellHeight, ScreenPoin
         return new DesktopIconGrid(cellWidth, cellHeight, anchor, icons, autoArranged);
     }
 
+    /// <summary>The width of an icon's picture (physical pixels), or <see langword="null"/> without icons to measure.</summary>
+    public int? ImageWidth => Icons.Count > 0 ? Icons[0].Image.Width : null;
+
+    /// <summary>How far an icon's picture is below the top of its cell (physical pixels).</summary>
+    public int ImageTop => Icons.Count > 0 ? Math.Max(0, Icons[0].Image.Top - Icons[0].Cell.Top) : 0;
+
     /// <summary>The icon whose cell <paramref name="point"/> is in, or <see langword="null"/>.</summary>
     public DesktopIcon? IconAt(ScreenPoint point) => Icons.FirstOrDefault(icon => icon.Cell.Contains(point));
 

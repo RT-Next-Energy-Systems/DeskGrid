@@ -453,7 +453,8 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
     {
         var monitor = MonitorArea.At(surface.Position);
         var (width, height) = CellSize(monitor);
-        view.SetCellSize(width * 96.0 / monitor.Dpi, height * 96.0 / monitor.Dpi);
+        view.SetCellSize(monitor.ToDips(width), monitor.ToDips(height));
+        view.SetTile(_nativeIcons?.ImageWidth is { } image ? monitor.ToDips(image) : null, monitor.ToDips(_nativeIcons?.ImageTop ?? 0));
     }
 
     private HashSet<ScreenPoint> TakenCells(DesktopSurface? except) =>

@@ -40,4 +40,25 @@ public sealed class FolderWidgetTests : IDisposable
             Strings.Culture = before;
         }
     }
+
+    [Fact]
+    public async Task Tile_FollowsTheDesktopIconPicture_AndFallsBackToTheStandardSize()
+    {
+        var (followed, placed, unknown, outOfRange) = await _ui.InvokeAsync(() =>
+        {
+            var widget = new FolderWidget();
+            widget.SetTile(46, 5);
+            var followed = widget.Tile.Width;
+            var placed = widget.Highlight.Padding.Top;
+            widget.SetTile(null, 5);
+            var unknown = (widget.Tile.Width, widget.Highlight.Padding.Top);
+            widget.SetTile(500, 5);
+            return (followed, placed, unknown, widget.Tile.Width);
+        });
+
+        Assert.Equal(46, followed);
+        Assert.Equal(5, placed);
+        Assert.Equal((48d, 0d), unknown);
+        Assert.Equal(48, outOfRange);
+    }
 }

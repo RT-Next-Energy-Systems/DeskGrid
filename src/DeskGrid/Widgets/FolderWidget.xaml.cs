@@ -27,6 +27,11 @@ internal partial class FolderWidget : UserControl
     public const double CellWidth = 76;
     public const double CellHeight = 96;
 
+    private const double StandardTile = 48;
+    private const double MinTile = 16;
+    private const double MaxTile = 160;
+    private const double TileCornerRatio = 10.7 / 48;
+    private const double TilePaddingRatio = 5.8 / 48;
     private const int MaxLabelLines = 2;
     private const int EscapeKey = 0x1B; // VK_ESCAPE
     private static readonly TimeSpan EscapeWatchInterval = TimeSpan.FromMilliseconds(30);
@@ -136,6 +141,21 @@ internal partial class FolderWidget : UserControl
 
     /// <summary>Sets the cell the widget fills (DIP); the content stays centered in it.</summary>
     public void SetCellSize(double width, double height) => (Width, Height) = (width, height);
+
+    /// <summary>
+    /// Sizes and places the tile like the desktop's own icon pictures (DIP): <paramref name="size"/> is the picture's width,
+    /// <paramref name="top"/> its distance from the top of the cell. The desktop's icon size and spacing differ between
+    /// computers (icon size setting, scaling), so the tile follows them instead of keeping one fixed size. A picture
+    /// that is not known (<see langword="null"/>) leaves the tile at its standard size.
+    /// </summary>
+    public void SetTile(double? size, double top)
+    {
+        var side = size is { } s && s >= MinTile && s <= MaxTile ? s : StandardTile;
+        Tile.Width = Tile.Height = side;
+        Tile.CornerRadius = new CornerRadius(side * TileCornerRatio);
+        Tile.Padding = new Thickness(side * TilePaddingRatio);
+        Highlight.Padding = new Thickness(2, size is null ? 0 : Math.Max(0, top), 2, 4);
+    }
 
     public void Show(string name, Task<BitmapSource> preview)
     {
