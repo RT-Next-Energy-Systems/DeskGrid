@@ -144,19 +144,20 @@ internal partial class FolderWidget : UserControl
 
     /// <summary>
     /// Sizes and places the tile like the desktop's own icon pictures (DIP): <paramref name="size"/> is the picture's width,
-    /// <paramref name="top"/> its distance from the top of the cell. The desktop's icon size and spacing differ between
+    /// <paramref name="top"/> its distance from the top of the cell, <paramref name="gap"/> the space left between the tile and the name. The desktop's icon size and spacing differ between
     /// computers (icon size setting, scaling), so the tile follows them instead of keeping one fixed size. A picture
     /// that is not known (<see langword="null"/>) leaves the tile at its standard size.
     /// </summary>
-    public void SetTile((double? Size, double Top) tile) => SetTile(tile.Size, tile.Top);
+    public void SetTile((double? Size, double Top, double Gap) tile) => SetTile(tile.Size, tile.Top, tile.Gap);
 
-    public void SetTile(double? size, double top)
+    public void SetTile(double? size, double top, double gap = 0)
     {
         var side = size is { } s && s >= MinTile && s <= MaxTile ? s : StandardTile;
         Tile.Width = Tile.Height = side;
         Tile.CornerRadius = new CornerRadius(side * TileCornerRatio);
         Tile.Padding = new Thickness(side * TilePaddingRatio);
         Highlight.Padding = new Thickness(2, size is null ? 0 : Math.Max(0, top), 2, 4);
+        Halo.Margin = new Thickness(0, size is null ? 0 : Math.Max(0, gap), 0, 0);
     }
 
     public void Show(string name, Task<BitmapSource> preview)
