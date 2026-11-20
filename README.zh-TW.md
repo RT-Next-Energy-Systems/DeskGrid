@@ -195,7 +195,7 @@ NotiLand 就是 [BrimDeck](https://github.com/MoFeng2223/BrimDeck)：螢幕頂�
 - 這是 BrimDeck 的程式碼（`third_party/BrimDeck`，Apache License 2.0），但拿掉了會修改其他程式檔案或以系統管理員權限
   安裝服務的部分：酷狗與網易雲音樂播放器的完整控制修補（會改它們的 `libcef.dll`）和增強感測器服務（使用核心驅動程式）。
   NotiLand 不會自己隨 Windows 啟動，也不會自己更新；這兩件事由 DeskGrid 處理。
-- 它是獨立的程式，有自己的系統匣圖示，資料在 `%LOCALAPPDATA%\BrimDeck`。DeskGrid 的備份不包含它。
+- 它在 DeskGrid 自己的程序內執行（沒有第二個程式、不用另外安裝），有自己的系統匣圖示，設定與資料在 `%LOCALAPPDATA%\BrimDeck`。DeskGrid 的備份不包含它們。
 - `--ctl` 原有的 NotiLand 指令（`island show` 等）已移除：BrimDeck 沒有這類介面。
 
 ### 檔案位置
@@ -229,7 +229,7 @@ DeskGrid 不蒐集任何資料：沒有遙測、沒有分析、不需要帳號�
 **允許腳本與 AI agent 控制**（預設關閉）只會在這台電腦上監聽一條 named pipe，而且只有以你自己的 Windows 帳戶執行的程式能開啟；
 不使用網路。
 
-**NotiLand** 就是 BrimDeck，是 DeskGrid 在 **顯示 NotiLand** 開啟時啟動的獨立程式，它的網路行為屬於 BrimDeck，不是 DeskGrid。
+**NotiLand** 就是 BrimDeck，是 DeskGrid 在 **顯示 NotiLand** 開啟時在自己程序內執行的程式，它的網路行為屬於 BrimDeck，不是 DeskGrid。
 例如它會向你使用的 AI 工具（Claude、Codex、Cursor 等）的服務查詢額度，使用的是這些工具已存在這台電腦上的登入資訊（從它們的檔案
 與 Claude 桌面版讀取），也可能查詢歌詞。送出什麼、送去哪裡，請看 BrimDeck 自己的
 [隱私說明](https://github.com/MoFeng2223/BrimDeck#privacy)。取消勾選 **顯示 NotiLand**，這些就都不會執行。

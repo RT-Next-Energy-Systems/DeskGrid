@@ -6,7 +6,12 @@ public static class ApplicationVersion
 {
     // Version of the running application: the entry assembly's informational version without build metadata
     // ("0.2.0+abc123" -> "0.2.0", "0.3.0-beta.1+abc123" -> "0.3.0-beta.1"). Release builds receive it from the tag through -p:Version.
-    public static string Current { get; } = Normalize(Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+    // DeskGrid build: BrimDeck runs inside another program, whose entry assembly is not BrimDeck. The BrimDeck assembly says its own
+    // version (UseAssembly, called when it loads); without it this is the entry assembly's, as in the original.
+    public static string Current { get; private set; } = Normalize(Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+
+    public static void UseAssembly(Assembly assembly) =>
+        Current = Normalize(assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
 
     // Major.minor.patch; a prerelease suffix ("0.2.0-beta") compares as its release. Unreadable text counts as 0.0.0.
     public static Version Parse(string? text)

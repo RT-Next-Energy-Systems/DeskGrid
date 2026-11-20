@@ -98,7 +98,7 @@ internal static class ShelfFiles
     private static void Raise()
     {
         if (Interlocked.Exchange(ref _raised, 1) != 0) return;
-        if (Application.Current is not { } app) { Volatile.Write(ref _raised, 0); return; }
+        if (App.Instance is not { } app) { Volatile.Write(ref _raised, 0); return; }
         app.Dispatcher.BeginInvoke(() => { Volatile.Write(ref _raised, 0); Changed?.Invoke(); });
     }
 

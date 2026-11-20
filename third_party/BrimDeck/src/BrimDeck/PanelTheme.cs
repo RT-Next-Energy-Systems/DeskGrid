@@ -214,7 +214,7 @@ internal sealed class PanelLook
         _hex = Hexes(palette); _appColors.Clear(); _warningColor = _criticalColor = null;
         _readable.Clear(); _readableColors.Clear();
         _published = null;
-        if (IsMain) PublishTo(Application.Current?.Resources); else if (_target is not null) PublishTo(_target);
+        if (IsMain) PublishTo(DeckResources.Dictionary); else if (_target is not null) PublishTo(_target);
         return true;
     }
 

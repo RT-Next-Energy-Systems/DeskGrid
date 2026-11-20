@@ -13,7 +13,7 @@ using BrimDeck.Core;
 
 namespace BrimDeck;
 
-public sealed partial class SettingsWindow : Window, IKeepsAppFonts
+public sealed partial class SettingsWindow : DeckWindow, IKeepsAppFonts
 {
     private SettingsPalette _palette = new(false);
     private string Surface => _palette.Surface;
@@ -411,7 +411,7 @@ public sealed partial class SettingsWindow : Window, IKeepsAppFonts
             AutomationProperties.SetName(choice,name); choice.Checked+=(_,_)=> { Change(s=>s.Theme=theme); RebuildTheme(); }; themes.Children.Add(choice);
         }
         // Each language is named in itself. Choosing one rebuilds the window in it, as a theme change does.
-        (string Value, string Name)[] languages = [(Loc.Chinese, "簡體中文"), (Loc.English, "English")];
+        (string Value, string Name)[] languages = [(Loc.Chinese, "繁體中文"), (Loc.English, "English")];
         var language = new ComboBox { Width=150,Style=(Style)FindResource("SettingsCombo"),ItemsSource=languages.Select(l=>l.Name).ToList(),
             SelectedIndex=Math.Max(0,Array.FindIndex(languages,l=>l.Value==S.Language)) };
         AutomationProperties.SetName(language,Loc.T("語言", "Language")); AutomationProperties.SetAutomationId(language,"language"); PopupMotion.Attach(language);

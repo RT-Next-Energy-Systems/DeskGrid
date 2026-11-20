@@ -13,9 +13,22 @@ The code is BrimDeck's own. Only what the integration needs was changed:
   `BrimDeck.Sensors` project (a service installed with administrator rights, using a kernel driver). `Native/DisabledFeatures.cs`
   stands in for them with the same signatures, and every one of them answers "not available". The sensors settings page
   (`SettingsSensors.cs`) is reduced to the helpers other pages use and left out of the page list.
-- **Added** `App.DeskGrid.cs`: when started with `--deskgrid <pid>` BrimDeck ends when that process ends, does not register itself
-  to start with Windows (`StartupRegistration`), does not check for updates on its own (`StartBackgroundUpdates`), and a second
-  start with `--quit` makes the running copy leave cleanly (`App.xaml.cs`, `OnStartup`).
+- **A library inside DeskGrid's process** (2026-11-20; it first ran as a program of its own beside DeskGrid): `BrimDeck.csproj` is a
+  class library that DeskGrid references, and BrimDeck's `App` is no longer a WPF `Application` (a process has one): it is a plain
+  class started by `App.StartHosted()` on DeskGrid's UI thread and stopped by `ExitApplication()` (with the panels' power-off) or
+  `StopNow()`, reporting `Stopped`. `Program.cs` is gone; the two helpers BrimDeck started as copies of itself (portable update, the
+  administrator one for frame rates) are run by DeskGrid's start-up through `App.TryRunHelper`. A BrimDeck of its own that already
+  runs (it keeps the data folder) keeps NotiLand from starting.
+- **Styles stay in BrimDeck's windows** (`DeckResources.xaml`, was `App.xaml`; `DeckResources.cs`; `DeckWindow.cs`): its implicit styles
+  (Button, TextBox, ScrollBar, ToolTip, ...) would restyle DeskGrid's own windows if they were the application's resources. They are
+  one shared `ResourceDictionary` that every BrimDeck window merges into its own resources (`DeckWindow` is the base of all of
+  them; `MainWindow.xaml` merges it with `x:Static`, since its XAML replaces the window's resources). The theme and the fonts are
+  published into it (`PanelTheme`, `Fonts`), the tooltip timing is set on BrimDeck's windows only (it was `OverrideMetadata` on every
+  element), and the global tooltip / menu handlers act only on elements of BrimDeck's windows (`DeckWindow.Holds`).
+- **Other process-wide things dropped or fixed**: the explicit AppUserModelID, the handled-exception behaviour of
+  `DispatcherUnhandledException` (it only records now), the version (`ApplicationVersion.UseAssembly` from a module initializer: the
+  entry assembly is DeskGrid), the tray icon (extracted from BrimDeck's own icon resource, not the exe's). BrimDeck does not register
+  itself to start with Windows (`StartupRegistration`) nor check for updates on its own (`StartBackgroundUpdates`): DeskGrid does both.
 - **Traditional Chinese**: every Simplified Chinese text of the copied source (interface texts, labels, comments, the built-in
   themes' names) was converted to Traditional Chinese with OpenCC (`s2twp`), so the Chinese interface of NotiLand is Traditional.
   Left as they are, because they match text of other programs: NetEase Cloud Music's log lines and its registry display name,

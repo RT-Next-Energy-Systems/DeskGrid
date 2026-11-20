@@ -55,6 +55,14 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // The helpers BrimDeck (NotiLand) starts as copies of this program: they do their one job and end.
+        if (BrimDeck.App.TryRunHelper(e.Args, out var helperExit))
+        {
+            Shutdown(helperExit);
+            return;
+        }
+
         Settings.SmoothWheel.Install();
         if (ControlCli.IsRequest(e.Args))
         {

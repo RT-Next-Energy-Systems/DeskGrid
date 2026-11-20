@@ -1,3 +1,4 @@
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
@@ -53,11 +54,28 @@ public sealed class TrayIcon : IDisposable
     private long _dpi;
     // The notification area shows the small icon size at the primary monitor's scale. The executable's icon group carries
     // every size, so the exact one is extracted instead of scaling another.
+    // DeskGrid build: the process is DeskGrid's, whose icon is not BrimDeck's. BrimDeck's own icon is a resource of this assembly,
+    // written once beside its data, where the shell can extract any size from it.
+    private static string IconFile()
+    {
+        var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BrimDeck", "BrimDeck.ico");
+        try
+        {
+            if (!File.Exists(path) && System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/BrimDeck;component/Assets/BrimDeck.ico")) is { } resource)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                using var file = File.Create(path);
+                resource.Stream.CopyTo(file);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or UriFormatException) { }
+        return File.Exists(path) ? path : Environment.ProcessPath!;
+    }
     private static IntPtr LoadTrayIcon(out bool owned)
     {
         var (_, _, scale) = WindowsHost.PrimaryScreen();
         uint size = (uint)GetSystemMetricsForDpi(49 /* SM_CXSMICON */, (uint)Math.Round(96 * scale));
-        if (SHDefExtractIcon(Environment.ProcessPath!, 0, 0, out var large, out var small, size | size << 16) == 0)
+        if (SHDefExtractIcon(IconFile(), 0, 0, out var large, out var small, size | size << 16) == 0)
         {
             if (large != IntPtr.Zero && large != small) DestroyIcon(large);
             if (small != IntPtr.Zero) { owned = true; return small; }

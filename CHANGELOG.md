@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.0
+
+### Changed
+
+- **NotiLand now runs inside DeskGrid.** BrimDeck was run as a second program beside DeskGrid; its code is now part of DeskGrid's own process: one program in the task manager, no second copy inside the exe (**DeskGrid.exe is about 79 MB again, down from 163 MB**), and starting and stopping it with **Show NotiLand** is instant. BrimDeck's styles apply only to its own windows, so DeskGrid's windows look as before. Its tray icon, settings and data (`%LOCALAPPDATA%\BrimDeck`) are unchanged.
+
+### How to use
+
+- Nothing to do: settings → **NotiLand** → **Show NotiLand** works as before.
+
 ## 0.8.0
 
 ### Changed

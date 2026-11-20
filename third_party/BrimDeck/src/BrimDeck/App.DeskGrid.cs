@@ -1,51 +1,42 @@
-using System.Diagnostics;
+using BrimDeck.Native;
 
 namespace BrimDeck;
 
-// DeskGrid build (see third_party/BrimDeck/DESKGRID.md): DeskGrid starts this program as "NotiLand" with `--deskgrid <pid>`.
-// DeskGrid then owns its life: it starts and stops it, so this program neither registers itself to start with Windows nor
-// checks for updates on its own, and it ends when DeskGrid does.
-public partial class App
+// DeskGrid build (see third_party/BrimDeck/DESKGRID.md): BrimDeck runs inside DeskGrid's process as NotiLand. DeskGrid starts it
+// (StartHosted), asks it to leave (ExitApplication, with the panels' power-off, or StopNow) and is told when it has (Stopped).
+// It neither registers itself to start with Windows (StartupRegistration) nor checks for updates on its own
+// (StartBackgroundUpdates): DeskGrid does both.
+public sealed partial class App
 {
-    internal const string DeskGridSwitch = "--deskgrid";
-
-    // The DeskGrid process that started this one, or 0 when BrimDeck was started on its own.
-    internal static int DeskGridProcess { get; } = ParentFromArguments(Environment.GetCommandLineArgs());
-
-    internal static bool ManagedByDeskGrid => DeskGridProcess != 0;
-
-    internal static int ParentFromArguments(IReadOnlyList<string> args)
-    {
-        for (var i = 0; i < args.Count - 1; i++)
-        {
-            if (args[i] == DeskGridSwitch && int.TryParse(args[i + 1], out var pid) && pid > 0) return pid;
-        }
-
-        return 0;
-    }
+    internal static bool ManagedByDeskGrid => true;
 
     private EventWaitHandle? _quitEvent;
-    private RegisteredWaitHandle? _quitListener;
 
-    private static string QuitEventName(string user) => @"Local\BrimDeck.Quit." + user;
-
-    // A second start with --quit (what DeskGrid does when NotiLand is turned off) raises this event: the running copy leaves cleanly.
-    private void WatchForQuit(string user)
+    /// <summary>Starts BrimDeck on the calling (UI) thread of the host; <see langword="null"/> when a BrimDeck of its own already runs.</summary>
+    public static App? StartHosted(params string[] args)
     {
-        _quitEvent = new EventWaitHandle(false, EventResetMode.AutoReset, QuitEventName(user));
-        _quitListener = ThreadPool.RegisterWaitForSingleObject(_quitEvent, (_, _) => Dispatcher.BeginInvoke(ExitApplication), null, Timeout.Infinite, true);
+        var app = new App();
+        return app.Start(args) ? app : null;
     }
 
-    private void FollowDeskGrid()
+    /// <summary>Stops at once, without the panels' power-off animation (the host is ending).</summary>
+    public void StopNow()
     {
-        if (!ManagedByDeskGrid) return;
-        try
-        {
-            var parent = Process.GetProcessById(DeskGridProcess);
-            parent.EnableRaisingEvents = true;
-            parent.Exited += (_, _) => Dispatcher.BeginInvoke(ExitApplication);
-            if (parent.HasExited) Dispatcher.BeginInvoke(ExitApplication);
-        }
-        catch (ArgumentException) { Dispatcher.BeginInvoke(ExitApplication); } // DeskGrid is already gone.
+        if (Exiting) { Shutdown(); return; }
+        Exiting = true; Lifetime.Cancel();
+        try { _settingsWindow?.RememberSize(); FlushSettings(); FinishWriting(); } catch (Exception ex) when (ex is not OutOfMemoryException) { _recordCrash?.Invoke(ex); }
+        Shutdown();
+    }
+
+    /// <summary>
+    /// The two helpers BrimDeck starts as a copy of its own program (a portable update, and the one that needs administrator
+    /// rights to let the user read frame rates). The host calls this first thing; true means the helper ran and the host must exit.
+    /// </summary>
+    public static bool TryRunHelper(string[] args, out int exitCode)
+    {
+        if (Core.PortableUpdate.TryRun(args, out exitCode)) return true;
+        if (args is [FramePermission.ElevatedSwitch, var user]) { exitCode = FramePermission.RunElevated(user); return true; }
+        exitCode = 0;
+        return false;
     }
 }

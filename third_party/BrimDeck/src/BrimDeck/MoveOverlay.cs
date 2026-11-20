@@ -23,7 +23,7 @@ internal readonly record struct MovePlacement(ScreenEdge Edge, double Offset, do
 // The window the collapsed surface moves in while it is dragged: as large as the monitor, above everything, and transparent to the
 // pointer, which the panel keeps captured and passes on (Pointer). It lives from the moment the surface lifts until it has settled
 // after the drop and faded out over the island shown at its new place.
-internal sealed class MoveOverlay : Window
+internal sealed class MoveOverlay : DeckWindow
 {
     // The look of the panel this element is drawn in (PanelLook.Of); the main look outside a panel.
     private PanelLook Look => PanelLook.Of(this);

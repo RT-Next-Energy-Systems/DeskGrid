@@ -385,7 +385,7 @@ public sealed partial class SettingsWindow
     private void IgnoredAppMenu(Button anchor)
     {
         var menu = AppMenu(anchor);
-        var apps = (((App)Application.Current).Media?.DetectedApps() ?? [])
+        var apps = (App.Instance!.Media?.DetectedApps() ?? [])
             .Where(app => !S.IgnoredMediaApps.Any(entry => string.Equals(entry.AppId, app.AppId, StringComparison.OrdinalIgnoreCase)))
             .OrderBy(app => app.Name, StringComparer.CurrentCultureIgnoreCase).ToList();
         foreach (var app in apps)
@@ -417,7 +417,7 @@ public sealed partial class SettingsWindow
     // its next start. A line beneath only when something needs saying. It follows the player while the page is open.
     private FrameworkElement KugouSwitch()
     {
-        var app = (App)Application.Current;
+        var app = App.Instance!;
         string title = Loc.T("始終啟用完整控制", "Always enable full control");
         // The file is read when the page opens: here for the switch, and by media to change it again when an update left it
         // original while the setting is on. A file another tool or an earlier change left changed is on as well: KuGou starts
@@ -490,7 +490,7 @@ public sealed partial class SettingsWindow
     // player keeps running until its next start.
     private FrameworkElement NeteaseSwitch()
     {
-        var app = (App)Application.Current;
+        var app = App.Instance!;
         string title = Loc.T("始終啟用完整控制", "Always enable full control");
         // Read when the page opens, as KuGou's.
         var read = app.Media?.NeteasePatchState ?? Native.NeteaseInstall.State();

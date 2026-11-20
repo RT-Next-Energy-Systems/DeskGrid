@@ -1,10 +1,10 @@
-<Window x:Class="BrimDeck.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<local:DeckWindow x:Class="BrimDeck.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="clr-namespace:BrimDeck" Title="BrimDeck" WindowStyle="None"
         AllowsTransparency="True" Background="Transparent" ResizeMode="NoResize" Topmost="True"
         ShowActivated="False" ShowInTaskbar="False" Width="760" Height="256" Style="{StaticResource {x:Type Window}}">
-  <Window.Resources>
-    <ResourceDictionary><ResourceDictionary.MergedDictionaries><ResourceDictionary Source="ModelDetailsResources.xaml"/><ResourceDictionary Source="ToolbarResources.xaml"/><ResourceDictionary Source="MusicResources.xaml"/><ResourceDictionary Source="ShelfResources.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary>
-  </Window.Resources>
+  <local:DeckWindow.Resources>
+    <ResourceDictionary><ResourceDictionary.MergedDictionaries><x:Static Member="local:DeckResources.Dictionary"/><ResourceDictionary Source="ModelDetailsResources.xaml"/><ResourceDictionary Source="ToolbarResources.xaml"/><ResourceDictionary Source="MusicResources.xaml"/><ResourceDictionary Source="ShelfResources.xaml"/></ResourceDictionary.MergedDictionaries></ResourceDictionary>
+  </local:DeckWindow.Resources>
   <Grid x:Name="Stage" Background="{x:Null}">
     <!-- Hover state belongs to the zone, so moving between the panel and the strip above it never counts as leaving.
          The zone starts at the island's left edge: its left margin places the island within the window (see SetExpanded). -->
@@ -154,4 +154,4 @@
       </local:IslandBorder>
     </Grid>
   </Grid>
-</Window>
+</local:DeckWindow>

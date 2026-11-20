@@ -212,8 +212,8 @@ BrimDeck's own settings window, where everything about it (what it shows, its lo
   or install a service with administrator rights left out: the full-control patch for KuGou and NetEase Cloud Music
   players (it changes their `libcef.dll`) and the enhanced-sensors service (a kernel driver). NotiLand does not start with
   Windows by itself and does not update itself; DeskGrid does both.
-- It is a program of its own, with its own tray icon and its own data in `%LOCALAPPDATA%\BrimDeck`. DeskGrid's backup does
-  not include it.
+- It runs inside DeskGrid's own process (no second program, nothing to install), with its own tray icon and its own settings and
+  data in `%LOCALAPPDATA%\BrimDeck`. DeskGrid's backup does not include them.
 - The NotiLand commands that `--ctl` had (`island show` and the others) are gone: BrimDeck has no such interface.
 
 ### Files
@@ -251,7 +251,7 @@ for removing everything else.
 **Allow control from scripts and AI agents** (off by default) only listens on a named pipe on this PC, which only
 programs running under your own Windows account can open; it uses no network.
 
-**NotiLand** is BrimDeck, a program of its own that DeskGrid starts while **Show NotiLand** is on, and its network use is
+**NotiLand** is BrimDeck, which DeskGrid runs inside its process while **Show NotiLand** is on, and its network use is
 BrimDeck's, not DeskGrid's. Among other things it asks the services of the AI tools you use (Claude, Codex, Cursor and
 others) for your quotas, with the sign-ins those tools already keep on this computer (it reads them from their files and
 from Claude's desktop app), and it can look up lyrics. What it sends and where is described in BrimDeck's own

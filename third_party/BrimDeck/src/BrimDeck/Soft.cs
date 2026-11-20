@@ -44,7 +44,7 @@ internal static class Soft
     // "Enable animations" belongs to a profile, and a panel may show another profile than the one in use (App.SettingsFor): a panel
     // asks with its own settings (For, MainWindow.Animates), what lies in a window asks by that window (At), and Enabled, the
     // profile in use, is for the settings window and what belongs to no panel.
-    public static bool Enabled => For((Application.Current as App)?.Settings);
+    public static bool Enabled => For(App.Instance?.Settings);
     public static bool For(DeckSettings? settings) =>
         MotionConditions.Allowed(settings?.Animations != false, SystemParameters.ClientAreaAnimation, SystemParameters.HighContrast);
     // For something on screen: its panel's settings when it belongs to a panel, otherwise the profile in use.

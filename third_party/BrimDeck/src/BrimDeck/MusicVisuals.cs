@@ -715,7 +715,7 @@ internal sealed class QuotaCarousel : GlideCarousel
         // Empty without the setting (DeckSettings.QuotaRingLetters): the ring is then as it was without letters.
         if (item.Letter.Length > 0
             && RingLetter.Create(item.Letter, Math.Max(1, BrimDeck.Core.CompactMusicLayout.Half(7 * scale)), size, Math.Max(1, hole),
-                Application.Current?.MainWindow is { } window ? VisualTreeHelper.GetDpi(window).PixelsPerDip : 1, UI.PanelFont, UI.Brush(Look.Secondary)) is { } letter)
+                App.Instance?.MainWindow is { } window ? VisualTreeHelper.GetDpi(window).PixelsPerDip : 1, UI.PanelFont, UI.Brush(Look.Secondary)) is { } letter)
             ring.Children.Add(letter);
         // A reading of the previous run (UsageLastSeen) is dimmed until the new one replaces it.
         if (item.Stale) ring.Opacity = BrimDeck.Core.UsageLastSeen.Dimmed;
@@ -731,7 +731,7 @@ internal sealed class QuotaCarousel : GlideCarousel
     {
         // Ring positions, the window and the travel all use whole device pixels. Layout rounding would otherwise widen each gap
         // at 150 % and carry the last ring into the edge fade.
-        double scale = VisualTreeHelper.GetDpi(Application.Current?.MainWindow ?? (Visual)this).DpiScaleX;
+        double scale = VisualTreeHelper.GetDpi(App.Instance?.MainWindow ?? (Visual)this).DpiScaleX;
         double Snap(double value) => Math.Round(value * scale, MidpointRounding.AwayFromZero) / scale;
         double step = Snap(size + gap);
         int shown = Math.Clamp(count, 0, items.Count);

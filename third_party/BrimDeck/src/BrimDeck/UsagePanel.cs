@@ -248,7 +248,7 @@ public partial class MainWindow
         {
             var text = centerText ? UI.Centered(item.Text, fontSize, Look.Secondary) : UI.Fixed(item.Text, fontSize, lineHeight, Look.Secondary);
             text.ClearValue(TextBlock.ForegroundProperty); text.ClearValue(TextBlock.FontWeightProperty);
-            var button = new Button { Style = (Style)Application.Current.FindResource("SegmentButton"), Content = text, Height = lineHeight, FontSize = fontSize,
+            var button = new Button { Style = (Style)DeckResources.Dictionary["SegmentButton"], Content = text, Height = lineHeight, FontSize = fontSize,
                 Padding = new Thickness(padX, 0, padX, 0), Tag = item.Active ? glide is null ? "Selected" : "Chosen" : null, ToolTip = item.Tip };
             button.Click += (_, _) =>
             {

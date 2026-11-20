@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\BrimDeck.Core\BrimDeck.Core.csproj" />
@@ -11,19 +11,17 @@
     <PackageReference Include="System.Management" Version="10.0.0" />
     <PackageReference Include="System.ServiceProcess.ServiceController" Version="10.0.0" />
     <Resource Include="Assets\Fonts\*.ttf" />
+    <Resource Include="Assets\BrimDeck.ico" />
     <Content Include="ThirdPartyNotices.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="..\..\LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <StartupObject>BrimDeck.Program</StartupObject>
+    <OutputType>Library</OutputType>
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>Assets\BrimDeck.ico</ApplicationIcon>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
     <!-- A panel that mostly sits idle: no background collection thread, and a collector that compacts and returns memory rather

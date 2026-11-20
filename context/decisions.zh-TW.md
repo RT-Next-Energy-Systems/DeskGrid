@@ -895,3 +895,12 @@
 **替代方案**：把 BrimDeck 的 `App` 改寫成一般類別並把設定併入 DeskGrid 設定檔（要好幾天、不是「只在必要處修改」；擁有者不選）；連所有功能一起搬（不選：修改別的程式檔案與特權服務和 DeskGrid 的隱私與簽章政策衝突）；保留舊提示島（與要求相反）。
 **後果**：DeskGrid.exe 從 65 MB 增加到約 163 MB；NotiLand 執行時有兩個系統匣圖示；BrimDeck 的設定是它自己的（不在 DeskGrid 備份中）；舊提示島的快速鍵 / ctl 指令消失；BrimDeck 仍會讀其他 AI 工具的登入資訊來查額度（已在 README「隱私」揭露）。publish 與跟隨 / `--quit` 行為已在真機檢查；從發行版 exe 啟動 NotiLand 未試。
 **作者**：Claude（Sonnet 5.5），依擁有者要求
+
+---
+
+### 2026-11-20 — NotiLand 在 DeskGrid 程序內執行（BrimDeck 改成類別庫）
+**決定**：BrimDeck 不再是第二個程式。`BrimDeck.csproj` 是 DeskGrid 參考的類別庫；BrimDeck 的 `App` 是一般類別（`App.StartHosted()` / `ExitApplication()` / `StopNow()` / `Stopped`），不再是 WPF `Application`；它的全應用程式資源（`App.xaml`）改成一個 `ResourceDictionary`（`DeckResources`），由 BrimDeck 的視窗（都繼承 `DeckWindow`）合併到自己的資源，所以它的隱含樣式只作用在這些視窗；全域的工具提示時間與工具提示 / 選單處理限定在 BrimDeck 的視窗；版本、系統匣圖示和輔助程式啟動（`App.TryRunHelper`）不再假設程序是 BrimDeck 的。`NotiLandHost` 在程序內啟動與停止它；第二個程式的機制（內嵌 BrimDeck.exe、解開、`--quit`、`--deskgrid`）已移除。
+**原因**：擁有者問能不能直接整合 BrimDeck，而不是另外安裝或在 DeskGrid 旁邊執行；一個程序、少一個要解釋的程式，發行版 exe 也從 163 MB 變成 79 MB。
+**替代方案**：維持伴隨程式（簡單，但是兩個程式和 163 MB 的 exe）；把 BrimDeck 載入自己的 AssemblyLoadContext（沒有幫助：WPF 的 `Application` 與資源查詢由整個程序共用）。
+**後果**：BrimDeck 的程式碼被修改的地方比以前多（列在 `third_party/BrimDeck/DESKGRID.md`），所以改用較新的 BrimDeck 時要重新套用；BrimDeck 程式碼中未處理的例外現在由 DeskGrid 承擔（`NotiLandHost` 保護啟動與停止）；BrimDeck 自己的系統匣圖示仍是第二個圖示。已驗證：島顯示在 DeskGrid 的單一程序內、BrimDeck 設定視窗樣式正常而 DeskGrid 自己的設定視窗不變、啟動 / 停止 / 再啟動兩輪不留視窗（`NotiLandTests`）、發行版單一 exe 能執行它。未驗證：長時間執行（數日的記憶體）、BrimDeck 的音樂與裝置功能在這個程序內的表現。
+**作者**：Claude（Sonnet 5.5），依擁有者要求

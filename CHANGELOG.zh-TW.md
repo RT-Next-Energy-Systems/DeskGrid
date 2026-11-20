@@ -2,6 +2,16 @@
 
 與 `CHANGELOG.md`（英文）內容相同，設定視窗在繁體中文介面顯示這一份。兩份要一起維護。
 
+## 0.9.0
+
+### 變更
+
+- **NotiLand 現在在 DeskGrid 裡面執行。** BrimDeck 原本是在 DeskGrid 旁邊的第二個程式；現在它的程式碼成為 DeskGrid 自己程序的一部分：工作管理員只有一個程式、exe 裡不再內嵌第二份（**DeskGrid.exe 約 79 MB，從 163 MB 縮小**），用「顯示 NotiLand」開關也是即時的。BrimDeck 的樣式只作用在它自己的視窗，所以 DeskGrid 的視窗外觀不變。它的系統匣圖示、設定與資料（`%LOCALAPPDATA%\BrimDeck`）都沒變。
+
+### 使用方法
+
+- 不用做任何事：設定 → **NotiLand** → **顯示 NotiLand** 和以前一樣。
+
 ## 0.8.0
 
 ### 變更

@@ -11,7 +11,7 @@ namespace BrimDeck;
 // or by its changed file): a title, what the control adds and does to the player in a few lines, a notice about the debugging
 // port where one is opened, and Cancel beside the button that confirms. In the settings window's voice: plain sentences,
 // neutral surfaces, the accent only on the primary action. DialogResult is true once confirmed.
-internal abstract class ControlDialog : Window
+internal abstract class ControlDialog : DeckWindow
 {
     protected readonly SettingsPalette Palette;
     protected readonly StackPanel Body = new();

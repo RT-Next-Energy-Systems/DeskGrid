@@ -14,7 +14,7 @@ using BrimDeck.Native;
 
 namespace BrimDeck;
 
-public partial class MainWindow : Window
+public partial class MainWindow : DeckWindow
 {
     private readonly App _app;
     // Hover timing runs on PromptTimer rather than DispatcherTimer; see PromptTimer for why.

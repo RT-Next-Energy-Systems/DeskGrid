@@ -9,8 +9,18 @@ using BrimDeck.Native;
 
 namespace BrimDeck;
 
-public partial class App : Application
+public sealed partial class App
 {
+    // DeskGrid build: BrimDeck runs inside DeskGrid's process, so it is not the WPF Application any more. What it took from the
+    // Application is here: the dispatcher (DeskGrid's), the resources (DeckResources: merged into BrimDeck's windows only), the
+    // main window and the end of the run (Stopped).
+    public static App? Instance { get; private set; }
+    public System.Windows.Threading.Dispatcher Dispatcher => System.Windows.Application.Current.Dispatcher;
+    public ResourceDictionary Resources => DeckResources.Dictionary;
+    public Window? MainWindow { get; set; }
+    /// <summary>Raised once everything is stopped and disposed (after <see cref="ExitApplication"/>).</summary>
+    public event Action? Stopped;
+
     private Mutex? _mutex;
     private EventWaitHandle? _settingsEvent;
     private RegisteredWaitHandle? _listener;
@@ -63,42 +73,35 @@ public partial class App : Application
     public CancellationTokenSource Lifetime { get; } = new();
     public bool Exiting { get; private set; }
 
-    // Tooltip delays are not inherited, so the defaults are replaced for every element before any window exists.
-    // The system hover time on some machines is a full second; every tooltip here opens after the same short pause.
-    static App()
-    {
-        System.Windows.Controls.ToolTipService.InitialShowDelayProperty.OverrideMetadata(typeof(FrameworkElement), new FrameworkPropertyMetadata(120));
-        System.Windows.Controls.ToolTipService.BetweenShowDelayProperty.OverrideMetadata(typeof(FrameworkElement), new FrameworkPropertyMetadata(400));
-        System.Windows.Controls.ToolTipService.ShowDurationProperty.OverrideMetadata(typeof(FrameworkElement), new FrameworkPropertyMetadata(20000));
-    }
-
     // The element whose tooltip opens next (OnStartup).
     private WeakReference<DependencyObject>? _toolTipOwner;
-    protected override void OnStartup(StartupEventArgs e)
+    /// <summary>Starts BrimDeck on the calling (UI) thread; false when another BrimDeck is already running.</summary>
+    internal bool Start(string[] args)
     {
-        base.OnStartup(e);
+        Instance = this;
         // Menus and tooltips take the text rendering of what they open from as they open (PanelTheme.Text). A tooltip opened by
         // the service has no placement target, so its owner is noted as the service raises ToolTipOpening on it.
         EventManager.RegisterClassHandler(typeof(FrameworkElement), FrameworkElement.ToolTipOpeningEvent,
-            new System.Windows.Controls.ToolTipEventHandler((_, args) => _toolTipOwner = new WeakReference<DependencyObject>((DependencyObject)args.OriginalSource)), true);
+            new System.Windows.Controls.ToolTipEventHandler((_, a) => { if (DeckWindow.Holds(a.OriginalSource as DependencyObject)) _toolTipOwner = new WeakReference<DependencyObject>((DependencyObject)a.OriginalSource); }), true);
         EventManager.RegisterClassHandler(typeof(System.Windows.Controls.ToolTip), System.Windows.Controls.ToolTip.OpenedEvent, new RoutedEventHandler((sender, _) =>
         {
             var tip = (System.Windows.Controls.ToolTip)sender;
+            if (!DeckWindow.Holds(tip.PlacementTarget) && !(_toolTipOwner?.TryGetTarget(out var seen) == true && DeckWindow.Holds(seen))) return;
             PanelTheme.Text(tip, tip.PlacementTarget ?? (_toolTipOwner?.TryGetTarget(out var owner) == true ? owner : null));
         }));
         EventManager.RegisterClassHandler(typeof(System.Windows.Controls.ContextMenu), System.Windows.Controls.ContextMenu.OpenedEvent,
-            new RoutedEventHandler((sender, _) => PanelTheme.Text((System.Windows.Controls.ContextMenu)sender, ((System.Windows.Controls.ContextMenu)sender).PlacementTarget)));
+            new RoutedEventHandler((sender, _) => { var menu = (System.Windows.Controls.ContextMenu)sender; if (DeckWindow.Holds(menu.PlacementTarget)) PanelTheme.Text(menu, menu.PlacementTarget); }));
         Resources[SystemParameters.VerticalScrollBarWidthKey] = 7.0;
         var suffix = Environment.UserName;
         var eventName = "Local\\BrimDeck.Settings." + suffix;
         _mutex = new Mutex(true, "Local\\BrimDeck.Instance." + suffix, out var first);
         if (!first)
         {
-            // DeskGrid asks a running copy to leave with --quit (App.DeskGrid.cs); anything else raises the settings.
-            try { using var existing = EventWaitHandle.OpenExisting(e.Args.Contains("--quit") ? QuitEventName(suffix) : eventName); existing.Set(); } catch (WaitHandleCannotBeOpenedException) { }
-            Shutdown(); return;
+            // A BrimDeck of its own is running (it keeps the data folder): leave it alone and tell it to show its settings.
+            try { using var existing = EventWaitHandle.OpenExisting(eventName); existing.Set(); } catch (WaitHandleCannotBeOpenedException) { }
+            _mutex.Dispose(); _mutex = null; Instance = null;
+            return false;
         }
-        SetCurrentProcessExplicitAppUserModelID("BrimDeck.Desktop");
         RecordCrashes();
         var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BrimDeck");
         Store = new SettingsStore(folder); Settings = Store.Load();
@@ -144,7 +147,6 @@ public partial class App : Application
         Step(() => _dataKey = DataKey());
         Step(ApplyProfileRules);
         Step(() => { if (!ManagedByDeskGrid) StartBackgroundUpdates(); });
-        Step(FollowDeskGrid);
         // Only for a user who has the monitor page with its power line: the rest never open it.
         Step(() => { if (Settings.MonitorPage && Settings.ShowsExpanded(ExpandedItem.Power)) PowerWarm.Start(Dispatcher); });
         Step(WarmSettingsWriter);
@@ -157,10 +159,10 @@ public partial class App : Application
             _settingsEvent = new EventWaitHandle(false, EventResetMode.AutoReset, eventName);
             _listener = ThreadPool.RegisterWaitForSingleObject(_settingsEvent, (_, _) => Dispatcher.BeginInvoke(ShowFromRelaunch), null, Timeout.Infinite, false);
         });
-        Step(() => WatchForQuit(suffix));
-        if (e.Args.Contains("--settings")) OpenSettings();
+        if (args.Contains("--settings")) OpenSettings();
         // An update that kept this version says why on the About page.
         else if (Updates.RestartFailed) OpenUpdateSettings();
+        return true;
     }
     // A resident app must not vanish without a trace. Unhandled errors are appended to crash.log in the data folder;
     // errors on the UI thread are logged and the app keeps running, and unobserved task errors are only logged.
@@ -187,7 +189,8 @@ public partial class App : Application
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
         _recordCrash = Write;
-        DispatcherUnhandledException += (_, args) => { Write(args.Exception); args.Handled = !Exiting; };
+        // DeskGrid's own handler decides whether the error is survived; this one only keeps the record.
+        System.Windows.Application.Current.DispatcherUnhandledException += (_, args) => Write(args.Exception);
         AppDomain.CurrentDomain.UnhandledException += (_, args) => Write(args.ExceptionObject);
         TaskScheduler.UnobservedTaskException += (_, args) => { Write(args.Exception); args.SetObserved(); };
     }
@@ -641,12 +644,23 @@ public partial class App : Application
     {
         if (Updates.PrepareRestart(() => { FinishWriting(); Profiles.Keep(Settings); Store.Save(Settings); })) ExitApplication();
     }
-    protected override void OnExit(ExitEventArgs e)
+    // Everything BrimDeck holds is let go, and the host is told (the Application, which is DeskGrid's, goes on).
+    private bool _stopped;
+    private void Shutdown()
+    {
+        if (_stopped) return;
+        _stopped = true;
+        Exiting = true; // so the windows let themselves be closed (MainWindow keeps itself open otherwise)
+        foreach (var window in System.Windows.Application.Current.Windows.OfType<DeckWindow>().ToList()) window.Close();
+        Cleanup();
+        Instance = null;
+        Stopped?.Invoke();
+    }
+    private void Cleanup()
     {
         Exiting = true; Lifetime.Cancel(); _save.Stop(); _trim?.Stop(); _release?.Stop(); FinishWriting(); StopBackgroundUpdates(); DisplayPower.Uninstall(); Microsoft.Win32.SystemEvents.UserPreferenceChanged -= SystemThemeChanged; _tray?.Dispose(); DisposeHotkeys(); WindowDrags?.Dispose(); _listener?.Unregister(null); _settingsEvent?.Dispose();
         ClipboardSync?.Dispose();
         if (Shelf is not null) { Shelf.Exit(); Shelf.Dispose(); }
-        Media?.Dispose(); _restingMedia?.Dispose(); Monitor?.Dispose(); SensorGuard.Finish(); Devices?.Dispose(); DeviceReadStore.Finish(); Lyrics?.Dispose(); Prices?.Dispose(); _mutex?.Dispose(); base.OnExit(e);
+        Media?.Dispose(); _restingMedia?.Dispose(); Monitor?.Dispose(); SensorGuard.Finish(); Devices?.Dispose(); DeviceReadStore.Finish(); Lyrics?.Dispose(); Prices?.Dispose(); _mutex?.Dispose(); _quitEvent?.Dispose(); _settingsEvent?.Dispose();
     }
-    [DllImport("shell32", CharSet = CharSet.Unicode)] private static extern int SetCurrentProcessExplicitAppUserModelID(string id);
 }

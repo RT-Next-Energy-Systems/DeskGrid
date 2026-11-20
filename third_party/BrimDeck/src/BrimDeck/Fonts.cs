@@ -103,7 +103,7 @@ internal static class Fonts
             foreach (var (role, chain) in before)
                 if (!string.Equals(chain, UiFonts.Chain(role, clean), StringComparison.Ordinal)) follow[chain] = Of(role);
         }
-        if (Application.Current is { } app) { Publish(app.Resources); Retarget(app, follow); }
+        if (Application.Current is not null) { Publish(DeckResources.Dictionary); Retarget(follow); }
         Changed?.Invoke();
         return true;
     }
@@ -111,11 +111,11 @@ internal static class Fonts
     // Walks every window (visual and logical trees, and the menus and tips hung on the elements) and puts the new family where the
     // old text family was set on the element itself; what is bound to a resource follows by itself. Layout and drawing are asked
     // again, since both were made with the old family's metrics.
-    internal static void Retarget(Application app, IReadOnlyDictionary<string, FontFamily> follow)
+    internal static void Retarget(IReadOnlyDictionary<string, FontFamily> follow)
     {
         var seen = new HashSet<DependencyObject>(ReferenceEqualityComparer.Instance);
         var pending = new Stack<DependencyObject>();
-        foreach (Window window in app.Windows) if (window is not IKeepsAppFonts) pending.Push(window);
+        foreach (Window window in Application.Current.Windows) if (window is DeckWindow and not IKeepsAppFonts) pending.Push(window);
         while (pending.Count > 0)
         {
             var node = pending.Pop();

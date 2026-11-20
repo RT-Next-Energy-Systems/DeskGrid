@@ -8,7 +8,7 @@ namespace BrimDeck;
 // and accepts keyboard input while the overlay itself stays non-activating.
 // It holds the picker (ModelDatePicker), which moves as the panel does, and opens and closes as the panel's other pop-ups
 // (ModelDetails.ShowModelPopup).
-internal sealed class ModelDateWindow : Window
+internal sealed class ModelDateWindow : DeckWindow
 {
     internal ModelDatePicker Picker { get; }
     internal event Action<UsageDateRange>? Applied;

@@ -22,7 +22,7 @@
     <TieredPGO>false</TieredPGO>
 
     <!-- Release builds override Version from the git tag (see .github/workflows/release.yml). -->
-    <Version>0.8.0</Version>
+    <Version>0.9.0</Version>
     <!-- The SDK would append "+<commit>" to the product version, so it differed between builds of one release.
          Code-signing services (SignPath Foundation) require the product name and version to be fixed. -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
@@ -58,28 +58,11 @@
     </EmbeddedResource>
   </ItemGroup>
 
-  <!-- NotiLand is BrimDeck (third_party/BrimDeck), which runs beside DeskGrid. A development build puts a normal build of it in
-       NotiLand\ next to DeskGrid.exe; a release (PublishNotiLand, set by the publish profile) publishes it as one self-contained
-       exe and embeds that in DeskGrid.exe, where NotiLandHost unpacks it on first use. -->
-  <PropertyGroup>
-    <BrimDeckProject>$(MSBuildThisFileDirectory)../../third_party/BrimDeck/src/BrimDeck/BrimDeck.csproj</BrimDeckProject>
-    <BrimDeckPublishDir>$(MSBuildThisFileDirectory)obj/notiland-publish/</BrimDeckPublishDir>
-    <BrimDeckBuildDir>$(MSBuildThisFileDirectory)obj/notiland-build/</BrimDeckBuildDir>
-  </PropertyGroup>
-
-  <Target Name="PublishNotiLand" BeforeTargets="AssignTargetPaths" Condition="'$(PublishNotiLand)' == 'true'">
-    <Exec Command="dotnet publish &quot;$(BrimDeckProject)&quot; -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:Version=$(Version) -o &quot;$(BrimDeckPublishDir)&quot;" />
-    <ItemGroup>
-      <EmbeddedResource Include="$(BrimDeckPublishDir)BrimDeck.exe" LogicalName="DeskGrid.NotiLand.exe" WithCulture="false" />
-    </ItemGroup>
-  </Target>
-
-  <Target Name="BuildNotiLand" AfterTargets="Build" Condition="'$(PublishNotiLand)' != 'true' And '$(BuildNotiLand)' != 'false'">
-    <MSBuild Projects="$(BrimDeckProject)" Targets="Restore;Build" Properties="Configuration=$(Configuration);Platform=x64;OutDir=$(BrimDeckBuildDir);Restore=true" />
-    <ItemGroup>
-      <NotiLandFiles Include="$(BrimDeckBuildDir)**\*" Exclude="$(BrimDeckBuildDir)**\*.pdb" />
-    </ItemGroup>
-    <Copy SourceFiles="@(NotiLandFiles)" DestinationFiles="@(NotiLandFiles->'$(OutDir)NotiLand\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
-  </Target>
+  <!-- NotiLand is BrimDeck (third_party/BrimDeck), which runs inside DeskGrid's process: a library of its own, built with DeskGrid
+       and, in a release, part of the single exe. -->
+  <ItemGroup>
+    <!-- The release passes -p:Version for DeskGrid; BrimDeck keeps its own version (from its release notes). -->
+    <ProjectReference Include="../../third_party/BrimDeck/src/BrimDeck/BrimDeck.csproj" GlobalPropertiesToRemove="Version" />
+  </ItemGroup>
 
 </Project>
