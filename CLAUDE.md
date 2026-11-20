@@ -275,6 +275,9 @@ Do one stage at a time; stop after finishing it and wait for the user to verify.
 
 # Way of working
 
+- **Run the latest build on the owner's computer** (2026-11-20, the owner asked): after every change to the program that builds and passes the tests, run `powershell -ExecutionPolicy Bypass -File tools\run-latest.ps1` (stops the running DeskGrid, publishes `artifacts\publish\DeskGrid.exe`, starts it). That exe is the one DeskGrid runs from on the owner's computer, and its "start with Windows" entry points at it (DeskGrid updates the entry itself); the downloaded `DeskGrid-0.7.3-win-x64.exe` is not used any more. Say in the answer that it was restarted. The version number stays 0.7.3 until a release is made.
+- **Run the latest build on the owner's computer** (2026-11-20, the owner asked): after every change to the program that builds and passes the tests, run `powershell -ExecutionPolicy Bypass -File tools
+un-latest.ps1` (stops the running DeskGrid, publishes `artifacts\publish\DeskGrid.exe`, starts it). That exe is the one DeskGrid runs from on the owner's computer, and its "start with Windows" entry points at it (DeskGrid updates the entry itself); the downloaded `DeskGrid-0.7.3-win-x64.exe` is not used any more. Say in the answer that it was restarted. The version number stays 0.7.3 until a release is made.
 - Use Git; commit once per stage, with English conventional-commit messages
 - At the end of each stage tell the user: what was done, how to test it by hand, known issues
 - For uncertain design decisions, ask the user first; don't assume
