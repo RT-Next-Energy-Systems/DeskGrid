@@ -179,6 +179,7 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
         var taken = TakenCells(except: null);
         ScreenPoint position;
         var keep = false;
+        var hadPlace = SavedPosition(folder.Name) is not null;
         if (SavedPosition(folder.Name) is { } saved)
         {
             // Without the desktop's icons to line up with (Explorer hasn't filled the desktop yet), snapping would move
@@ -197,8 +198,11 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
         ApplyCellSize(entry.View, entry.Surface);
         host.Add(entry.Surface);
 
-        // A widget whose monitor is gone waits on another one but remembers where it was put.
-        return !keep && SavePosition(folder.Name, position);
+        // A widget gets a place here only when it has none. A saved place is where the owner put it and changes only when they drag
+        // it: snapping to today's grid and saving that would rewrite every place for good when the display is turned to portrait or the
+        // icon spacing or the scaling changes, and turning it back would not bring the places back. (A widget whose monitor is gone
+        // waits on another one, and remembers where it was put, in the same way.)
+        return !hadPlace && SavePosition(folder.Name, position);
     }
 
     /// <summary>
@@ -209,7 +213,7 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
     public void OnDisplayChanged()
     {
         _nativeIcons = host.ReadIconGrid();
-        var configChanged = false;
+        ClearSelection(); // Whatever was picked or under the pointer belongs to the layout that is gone.
         foreach (var entry in _entries.Values)
         {
             var saved = SavedPosition(entry.Folder.Name) ?? entry.Surface.Position;
@@ -221,9 +225,9 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
             }
             else if (grid.FollowsIcons)
             {
-                // The cells themselves may have moved (icon spacing, taskbar size, DPI): land on the nearest one of today's.
+                // The cells themselves may have moved (icon spacing, taskbar size, DPI, the display turned): the widget is shown on the
+                // nearest one of today's, and what was saved stays, so it goes back where it was when the layout does.
                 position = grid.NearestFree(saved, TakenCells(except: entry.Surface));
-                configChanged |= SavePosition(entry.Folder.Name, position);
             }
             else
             {
@@ -232,11 +236,7 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
 
             entry.Surface.MoveTo(position);
             ApplyCellSize(entry.View, entry.Surface);
-        }
-
-        if (configChanged)
-        {
-            configStore.Save();
+            entry.View.RefreshHighlight();
         }
 
         Log.Info($"Display or desktop layout changed; {_entries.Count} widget(s) checked.");

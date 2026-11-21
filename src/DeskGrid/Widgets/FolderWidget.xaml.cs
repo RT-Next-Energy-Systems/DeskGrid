@@ -110,6 +110,9 @@ internal partial class FolderWidget : UserControl
         }
     }
 
+    /// <summary>Draws the cell as it should look now: lit only if the pointer is on it or it is selected (a highlight can be left behind when a touch or a drag ends elsewhere).</summary>
+    public void RefreshHighlight() => Highlight.Background = IsMouseOver ? HoverBrush : RestingBrush;
+
     // What the cell looks like when the mouse isn't on it.
     private Brush RestingBrush => IsSelected ? SelectedBrush : IdleBrush;
 

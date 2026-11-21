@@ -8,6 +8,7 @@
 
 ### Fixed
 
+- **Turning the display to portrait (or changing the icon spacing or the scaling) rewrote the places of your folder widgets for good.** DeskGrid snapped every widget to the cells of the new layout and saved that, so turning the display back did not bring them back, and in portrait they ended up stacked in one column. A saved place now changes only when you drag that widget; in another layout the widgets are shown on the nearest free cells and go back where they were when the layout does. Anything picked with the rubber band or lit under the pointer is cleared when the layout changes. (Places already rewritten by an earlier version are not restored: move the widgets back once.)
 - Folder widgets could sometimes not be moved to the leftmost and rightmost columns of the screen, and could then do so again by themselves. The cells widgets snap to follow the lattice the desktop's icons sit on, and that lattice was taken from the first icon in Explorer's list: while that icon was off the lattice (being dragged, just created, Explorer arranging the icons) every cell was shifted by that much, which left a gap at both edges. The lattice is now the one most icons are on, and a desktop whose icons are scattered (no grid alignment) has none. When Explorer does not answer for a moment, the last grid that was read is kept instead of the built-in one, so a widget let go at that moment is no longer saved on the wrong cells. The log line `Desktop icon grid` now also says where the lattice is and how many icons are off it.
 
 ## 0.9.1

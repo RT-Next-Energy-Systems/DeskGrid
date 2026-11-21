@@ -938,3 +938,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: keep the icon behind a switch (the owner said no); move its menu entries (hide, click-through, profile, exit) into DeskGrid's tray menu (not asked for, not done).
 **Consequences**: the tray menu actions of NotiLand are gone; hiding and click-through remain reachable through its hotkeys and settings, and exit through the *Show NotiLand* switch. Seen on the real tray: one DeskGrid icon, none of BrimDeck's. 470 tests pass.
 **Author**: Claude (Sonnet 5.5), on the owner's request
+
+---
+
+### 2026-11-21 (2) — A saved widget place changes only when the user drags it
+**Decision**: `WidgetBoard.Add` saves a position only for a widget that had none, and `OnDisplayChanged` shows each widget on the nearest free cell of today's grid without saving it (and clears the rubber-band selection). Dragging (`Snap`) is the one thing that rewrites a saved place.
+**Reason**: a user's phone video of a portrait monitor showed the widgets stacked in one column with a faint strip behind them. Rotating the real display here (`ChangeDisplaySettingsEx` to portrait and back) reproduced the cause: on the display change every widget was snapped to the portrait grid (cells 77x97 on another lattice) and saved, and the landscape grid then snapped those places again, so the layout came out changed (Game moved two columns, Dev, Browser and Team one). After the fix the same rotation leaves the layout identical.
+**Alternatives**: keep saving but only when the lattice is the one the place was saved on (needs the lattice stored with every place; more state for little); save a separate place per orientation (not asked for).
+**Consequences**: places already overwritten stay overwritten (the owner's own layout was changed by the first rotation experiment and was put back by dragging each widget). The auto-arranged desktop branch of `ClearIconsOffWidgets` still saves a widget that gives way to an icon. Not explained by this: the faint strip, the doubled images and the small yellow folder in the video; the strip matches the cell highlight (hover or rubber-band selection) of stacked widgets, but no ghost or strip came up in the rotation experiment, so those are not claimed as fixed. 470 tests pass.
+**Author**: Claude (Sonnet 5.5), on a user's report
