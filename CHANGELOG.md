@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.1
+
+### Fixed
+
+- **The 0.9.0 download did not start on any computer** (it ended at once with `FileNotFoundException: BrimDeck.Core`). The release was built with a version number that left one of NotiLand's two parts out of step with the other. A copy of 0.9.0 you have already downloaded is no use; this version has the same content and starts. The build now has a check that the published exe starts and stays up before a release is made.
+
+### How to use
+
+- Delete the 0.9.0 exe you downloaded and download `DeskGrid-0.9.1-win-x64.exe`.
+
 ## 0.9.0
 
 ### Changed
