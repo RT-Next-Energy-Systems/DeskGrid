@@ -101,7 +101,9 @@ internal sealed class DesktopHost : IDisposable
             Log.Info(grid is null
                 ? "Desktop icon grid unavailable; widgets use their own grid."
                 : $"Desktop icon grid: cell {grid.CellWidth}x{grid.CellHeight} px, {grid.Icons.Count} icon(s)"
-                    + (grid.Icons.Count > 0 ? $", picture {grid.Icons[0].Image.Width}x{grid.Icons[0].Image.Height} px {grid.ImageTop} px below the cell's top." : "."));
+                    + (grid.Icons.Count > 0 ? $", picture {grid.Icons[0].Image.Width}x{grid.Icons[0].Image.Height} px {grid.ImageTop} px below the cell's top" : "")
+                    + (grid.Anchor is { } anchor ? $", lattice at {anchor.X},{anchor.Y} ({grid.OffLattice} icon(s) off it)" : ", no lattice (the icons are scattered)")
+                    + ".");
         }
 
         return grid;

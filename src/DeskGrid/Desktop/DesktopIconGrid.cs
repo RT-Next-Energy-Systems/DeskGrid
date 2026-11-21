@@ -24,7 +24,8 @@ internal sealed record DesktopIcon(int Index, ScreenRect Cell, Point ViewPositio
 /// <param name="Anchor">The top-left corner of one icon cell (all cells lie on the lattice through it).</param>
 /// <param name="Icons">Every icon on the desktop.</param>
 /// <param name="AutoArranged">Explorer arranges the icons itself ("Auto arrange icons"), so they can't be moved.</param>
-internal sealed record DesktopIconGrid(int CellWidth, int CellHeight, ScreenPoint? Anchor, IReadOnlyList<DesktopIcon> Icons, bool AutoArranged)
+/// <param name="OffLattice">How many icons are not on the lattice most of them are on (see <see cref="IconLattice"/>).</param>
+internal sealed record DesktopIconGrid(int CellWidth, int CellHeight, ScreenPoint? Anchor, IReadOnlyList<DesktopIcon> Icons, bool AutoArranged, int OffLattice = 0)
 {
     // Messages of the list view (commctrl.h): LVM_FIRST = 0x1000.
     private const uint GetItemCount = 0x1004;
@@ -79,9 +80,10 @@ internal sealed record DesktopIconGrid(int CellWidth, int CellHeight, ScreenPoin
             })
             .ToList();
 
-        var anchor = icons.Count > 0 ? new ScreenPoint(icons[0].Cell.Left, icons[0].Cell.Top) : (ScreenPoint?)null;
+        // The lattice most icons are on, not the first icon's cell: that one may be off it.
+        var (anchor, offLattice) = IconLattice.Find([.. icons.Select(i => i.Cell)], cellWidth, cellHeight);
         var autoArranged = (PInvoke.GetWindowLong(listView, WINDOW_LONG_PTR_INDEX.GWL_STYLE) & AutoArrangeStyle) != 0;
-        return new DesktopIconGrid(cellWidth, cellHeight, anchor, icons, autoArranged);
+        return new DesktopIconGrid(cellWidth, cellHeight, anchor, icons, autoArranged, offLattice);
     }
 
     /// <summary>The height of the rectangle the list view reports for an icon's picture (physical pixels; the picture plus a little padding), or <see langword="null"/> without icons.</summary>

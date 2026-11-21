@@ -54,7 +54,8 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
 
     public void Show(IReadOnlyList<WidgetFolder> folders)
     {
-        _nativeIcons = host.ReadIconGrid();
+        // Explorer may not answer for a moment: the last grid that was read stays (the fallback grid is not the desktop's).
+        _nativeIcons = host.ReadIconGrid() ?? _nativeIcons;
         var present = folders.Select(f => f.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var name in _entries.Keys.Where(n => !present.Contains(n)).ToList())
         {
@@ -255,12 +256,13 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
     /// </summary>
     public void ClearIconsOffWidgets()
     {
-        _nativeIcons = host.ReadIconGrid();
-        if (_nativeIcons is not { } grid)
+        // Icons are moved by what is read now, so a stale grid is no use here.
+        if (host.ReadIconGrid() is not { } grid)
         {
             return;
         }
 
+        _nativeIcons = grid;
         var placed = Placed().ToList();
         var widgetCells = placed.Select(p => BoundsOf(p.Surface)).ToList();
         var covering = grid.Icons.Where(i => widgetCells.Any(cell => WidgetGrid.Covers(i.Cell, cell))).ToList();
@@ -306,7 +308,8 @@ internal sealed class WidgetBoard(DesktopHost host, ConfigStore configStore, Ico
     // Widgets were dragged and let go: each snaps to the nearest free cell. The desktop's icons are read once for all.
     private void Snap(IEnumerable<Entry> dropped)
     {
-        _nativeIcons = host.ReadIconGrid();
+        // A widget let go while Explorer does not answer must not land on (and be saved to) the fallback grid.
+        _nativeIcons = host.ReadIconGrid() ?? _nativeIcons;
         var configChanged = false;
         foreach (var entry in dropped)
         {
