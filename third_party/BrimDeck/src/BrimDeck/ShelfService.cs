@@ -74,6 +74,9 @@ internal sealed class ShelfService : IDisposable
         else if (!record && _watch is not null) { _watch.Dispose(); _watch = null; }
     }
 
+    // The picture recorded last, to tell a copy written twice (ClipDuplicates).
+    private (Guid Id, byte[] Hash)? _lastPicture;
+
     private void Copied(ClipCopy copy)
     {
         if (BrimDeck.Core.ClipboardSync.LanClipboardLink.ContainsInvitation(copy.Text)) return;
@@ -81,9 +84,19 @@ internal sealed class ShelfService : IDisposable
         ClipEntry entry;
         if (copy.Png is { } png)
         {
+            // DeskGrid change: the snipping tool writes one screenshot twice; the second write is the same copy.
+            byte[] hash = SHA256.HashData(png);
+            if (_lastPicture is { } last && Data.Clips.FirstOrDefault(c => c.Id == last.Id) is { } recorded
+                && ClipDuplicates.IsSameCopy(last.Hash, recorded.Copied, hash, now))
+            {
+                recorded.Source = ClipDuplicates.Source(recorded.Source, copy.Source);
+                Changed?.Invoke(); QueueSave();
+                return;
+            }
             entry = new ClipEntry { Kind = ClipKind.Image, PixelWidth = copy.PixelWidth, PixelHeight = copy.PixelHeight, Copied = now, Source = copy.Source };
             if (!WritePicture(entry.Id, png)) return;
             Data.Clips.Insert(0, entry);
+            _lastPicture = (entry.Id, hash);
         }
         else
         {

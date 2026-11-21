@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.9.3
+
+### Added
+
+- **NotiLand stays in sight on another monitor while a full-screen app hides it.** With a full-screen video (or a game) on the monitor NotiLand sits on, it used to disappear altogether, even while you worked on the other monitor. When every NotiLand on show is hidden that way and another monitor has none, NotiLand now shows there (the monitor under the pointer, if there is a choice) and goes away again as soon as the full-screen app is gone. A monitor that is full-screen too, or one you hid NotiLand on yourself, shows nothing.
+
+### Fixed
+
+- **NotiLand's level bars stayed flat for good after Apple Music restarted its background program (AMPLibraryAgent), and could with any player whose sound moved to another process.** The bars read the player's sound through a capture of one process, chosen once when playing starts. When that process ended (Apple Music restarts its agent: after the app is restarted, an output change or a crash), the capture went on without an error and without sound, the bars reported as running and never moved, and nothing looked for the new process. Now NotiLand notices a process that has ended and looks for the player's sessions again (every 5 seconds at most), notices a capture that has been silent for 2 seconds while the player plays on another process, and captures another process of the player when its own level meters hear sound that the capture does not (failing that the bars follow the level meter). Seen on the real machine: with the agent killed the old build stayed flat on the dead process; with Apple Music closed and opened again the bars were back on the new agent and moved as soon as the song played.
+- **A screenshot copied to the clipboard (Win+Shift+S) showed twice in NotiLand's clipboard history.** The snipping tool writes the same picture to the clipboard twice, a moment apart, and each write was kept as a copy, sometimes under a different source. A picture equal to the one kept in the last two seconds is now the same copy, kept once (under the first source that is known).
+
+### How to use
+
+- Nothing to set: NotiLand moves to another monitor by itself while a full-screen app on its own monitor hides it. Screenshots to the clipboard now show once in the clipboard history.
+
 ## 0.9.2
 
 ### Changed

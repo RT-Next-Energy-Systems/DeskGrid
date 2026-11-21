@@ -36,6 +36,12 @@ The code is BrimDeck's own. Only what the integration needs was changed:
   choice (`App.StartHosted(english)` and `App.FollowLanguage` take DeskGrid's language). The caption, the brand and the window's size and
   position settings (`SettingsWindowWidth` ...) are no longer used.
 - **No tray icon of its own** (2026-11-21): `App.ApplyTray` returns at once when `ManagedByDeskGrid`, and the *Show tray icon* switch is out of the General page (`SettingsPages.General`). `TrayIcon.cs` stays in the tree, unused.
+- **Stand-in panel on another monitor** (2026-11-21): when a window rule hides every panel on show (`MainWindow.HiddenByContext`, raised by
+  `ContextHideChanged`), `App.UpdateStandIn` shows one more panel on a monitor no panel owns (`DisplayLayout.StandIn`), kept in
+  `_otherDecks` under `StandInKey`, and retires it when one of the others is back. Seen on the real desktop with a full-screen browser.
+- **One screenshot, one copy** (2026-11-21): the snipping tool writes the same picture to the clipboard twice about 125 ms apart;
+  `ShelfService.Copied` keeps it once (`ClipDuplicates`).
+- **A capture that hears nothing, or whose process ended, is replaced** (2026-11-21): `CaptureWatch`, `AudioLevelMeter.Retarget`, `Alive`, `FindPlayingPid`; see `context/decisions.md` (2026-11-21 (4) and (5)).
 - **Styles stay in BrimDeck's windows** (`DeckResources.xaml`, was `App.xaml`; `DeckResources.cs`; `DeckWindow.cs`): its implicit styles
   (Button, TextBox, ScrollBar, ToolTip, ...) would restyle DeskGrid's own windows if they were the application's resources. They are
   one shared `ResourceDictionary` that every BrimDeck window merges into its own resources (`DeckWindow` is the base of all of

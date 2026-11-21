@@ -109,6 +109,17 @@ public partial class MainWindow : DeckWindow
     private bool TextScrolls => Soft.Scrolls(Settings);
     public bool IsExpanded => _expanded;
     public bool IsSuppressed => !_preview && (Settings.Behavior(_context, _host.App.Name, _host.App.Path, _host.BackgroundKind) == WindowBehavior.Hide || HiddenByUser);
+    // DeskGrid change: hidden by a window rule for the window on this monitor, not by the user. When every panel on show is, the
+    // app shows a stand-in panel on another monitor (App.UpdateStandIn).
+    internal bool HiddenByContext => !_preview && Settings.Behavior(_context, _host.App.Name, _host.App.Path, _host.BackgroundKind) == WindowBehavior.Hide;
+    internal event Action? ContextHideChanged;
+    private bool _hiddenByContext;
+    private void NoteContextHide()
+    {
+        bool now = HiddenByContext;
+        if (now == _hiddenByContext) return;
+        _hiddenByContext = now; ContextHideChanged?.Invoke();
+    }
     // The panel is a topmost overlay: kept above other windows, or an ordinary panel a window rule turns into the indicator,
     // which shows above the window that fills the screen.
     private bool KeepsAbove => Settings.AlwaysOnTop
@@ -459,6 +470,7 @@ public partial class MainWindow : DeckWindow
             if ((newEdge || cleared) && wasVisible && !appearing) FadeInOnNewEdge(cleared);
         }
         UpdatePointerTracking();
+        NoteContextHide();
         RenderUsage();
         CheckMoveOvertaken();
         ReportMoveShape();

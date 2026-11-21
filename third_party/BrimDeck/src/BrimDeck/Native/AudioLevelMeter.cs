@@ -22,6 +22,9 @@ internal sealed class AudioLevelMeter : IDisposable
     private bool _disposed;
     private float _peak;
     private volatile ProcessLoopbackCapture? _capture;
+    // DeskGrid change: notices a capture that cannot hear the player, and the processes already tried for it.
+    private readonly CaptureWatch _watch = new();
+    private readonly HashSet<uint> _tried = [];
     // The target that stands for the whole system; no application has this id or process name.
     private static readonly MediaAppOwner Everything = new(null, "\0", "\0");
     public float Peak => Volatile.Read(ref _peak);
@@ -68,7 +71,8 @@ internal sealed class AudioLevelMeter : IDisposable
     // the levels.Length bars.
     public bool TryFill(Span<double> levels, EqualizerMode mode)
     {
-        if (_capture is not { } capture) return false;
+        // DeskGrid change: a capture that hears nothing while the session meters do leaves the bars to the peak meter (CaptureWatch).
+        if (_capture is not { } capture || _watch.Deaf) return false;
         capture.Signal.Fill(levels, Now, mode);
         return true;
     }
@@ -77,7 +81,8 @@ internal sealed class AudioLevelMeter : IDisposable
         int revision = -1;
         MediaAppOwner? target = null;
         bool retried = false;
-        double nextPeak = 0;
+        double nextPeak = 0, nextWatch = 0, nextAlive = 0, nextLook = 0, lastTry = double.NegativeInfinity;
+        bool refreshed = false;
         // A player may create its audio session after it reports playback; look again with growing pauses.
         int searchDelay = 1000;
         WaitHandle[]? waits = null;
@@ -93,10 +98,40 @@ internal sealed class AudioLevelMeter : IDisposable
                     if (changed) { revision = _revision; target = _requested; }
                 }
                 // Starting a capture waits for the system; do it outside the lock SetSource takes on the UI thread.
-                if (changed) { Clear(); if (target is not null) Enumerate(target); retried = false; searchDelay = 1000; }
+                if (changed) { _tried.Clear(); _watch.Reset(); refreshed = false; Clear(); if (target is not null) Enumerate(target); retried = false; searchDelay = 1000; }
                 var capture = _capture;
                 double now = Now;
                 if (capture is not null && !capture.Drain(now)) { StopCapture(); capture = null; }
+                // DeskGrid change: a capture of a process that has ended (Apple Music restarts its AMPLibraryAgent) goes on without an
+                // error and without sound, and the sessions read before are gone with it: the player's sessions are looked for
+                // again, and the pauses of that search are kept short, as the player usually has a new process within moments.
+                if (capture is not null && target is not null && target != Everything && now >= nextAlive)
+                {
+                    nextAlive = now + .5;
+                    if (!Alive(capture.ProcessId)) { Clear(); Enumerate(target); capture = _capture; _watch.Reset(); retried = false; searchDelay = 1000; }
+                    // Silent for a while although the player plays: it may have moved its sound to another process.
+                    else if (now - capture.LastLoud > 2 && now >= nextLook)
+                    {
+                        nextLook = now + 2;
+                        if (FindPlayingPid(target) is { } playing && playing != capture.ProcessId) { Clear(); Enumerate(target); capture = _capture; _watch.Reset(); }
+                    }
+                }
+                // A capture that hears nothing while the player's session meters do: capture another process of the player, or
+                // look for its sessions again; failing that the bars follow the peak meter (TryFill).
+                if (capture is not null && target is not null && target != Everything && now >= nextWatch)
+                {
+                    nextWatch = now + .1;
+                    float heard = SessionPeak();
+                    Volatile.Write(ref _peak, heard);
+                    _watch.Update(now, now - capture.LastLoud < .3, heard);
+                    if (_watch.Deaf && now - lastTry > 1)
+                    {
+                        lastTry = now;
+                        // The sessions are looked for again once; after that the bars stay with the peak meter.
+                        if (!Retarget(capture.ProcessId) && !refreshed) { refreshed = true; Clear(); Enumerate(target); _watch.Reset(); }
+                    }
+                    capture = _capture;
+                }
                 // Captured audio drives the bars whenever a capture runs, so session peaks are only read without one.
                 if (capture is null && now >= nextPeak)
                 {
@@ -123,7 +158,8 @@ internal sealed class AudioLevelMeter : IDisposable
                 else if (target is null) _wake.WaitOne();
                 else if (!_wake.WaitOne(searchDelay))
                 {
-                    searchDelay = Math.Min(searchDelay * 2, 30_000);
+                    // DeskGrid change: 5 seconds at most (was 30) for a player, whose process may only be restarting.
+                    searchDelay = Math.Min(searchDelay * 2, target == Everything ? 30_000 : 5_000);
                     Clear(); Enumerate(target);
                 }
             }
@@ -169,6 +205,67 @@ internal sealed class AudioLevelMeter : IDisposable
         }
         catch { Clear(); return; }
         _capture = ProcessLoopbackCapture.TryStart((uint)Environment.ProcessId, exclude: true);
+    }
+    private static bool Alive(uint processId)
+    {
+        try { using var process = Process.GetProcessById((int)processId); return !process.HasExited; }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception) { return false; }
+    }
+    // The process of a session of the player that is playing now; null when there is none. Read afresh, touching nothing held.
+    private static uint? FindPlayingPid(MediaAppOwner target)
+    {
+        try
+        {
+            using var enumerator = new MMDeviceEnumerator();
+            foreach (var device in enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
+                using (device)
+                {
+                    var sessions = device.AudioSessionManager.Sessions;
+                    for (int i = 0; i < sessions.Count; i++)
+                    {
+                        var session = sessions[i];
+                        try
+                        {
+                            if (session.State == AudioSessionState.AudioSessionStateActive && MediaAppTarget.Plays(target, AppIdentity.Describe((int)session.GetProcessID)))
+                                return session.GetProcessID;
+                        }
+                        catch { }
+                        finally { session.Dispose(); }
+                    }
+                }
+        }
+        catch { }
+        return null;
+    }
+    // The loudest of the player's session meters; 0 when they cannot be read.
+    private float SessionPeak()
+    {
+        float peak = 0;
+        foreach (var session in _sessions)
+            try { peak = Math.Max(peak, session.AudioMeterInformation.MasterPeakValue); } catch { }
+        return peak;
+    }
+    // Captures the player's loudest session of another process than the one that hears nothing; false when there is none to try.
+    private bool Retarget(uint deaf)
+    {
+        uint best = 0; float loudest = 0;
+        foreach (var session in _sessions)
+        {
+            try
+            {
+                uint pid = session.GetProcessID;
+                if (pid == deaf || _tried.Contains(pid)) continue;
+                float peak = session.AudioMeterInformation.MasterPeakValue;
+                if (peak >= CaptureWatch.Heard && peak > loudest) { best = pid; loudest = peak; }
+            }
+            catch { }
+        }
+        if (best == 0) return false;
+        _tried.Add(deaf); _tried.Add(best);
+        StopCapture();
+        _capture = ProcessLoopbackCapture.TryStart(best);
+        _watch.Reset();
+        return _capture is not null;
     }
     private void StopCapture()
     {

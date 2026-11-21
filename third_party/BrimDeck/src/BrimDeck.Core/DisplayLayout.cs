@@ -13,6 +13,17 @@ public static class DisplayLayout
         public Guid? ProfileOf(string monitor) => Profiles.GetValueOrDefault(monitor);
     }
 
+    // DeskGrid change: the monitor a stand-in panel shows on while a window rule hides every panel on show (App.UpdateStandIn): one
+    // no panel owns. It stays where it is while that monitor is still free; otherwise the monitor under the pointer, otherwise the
+    // first free one. Null when every monitor has a panel.
+    public static string? StandIn(IReadOnlyList<string> monitors, IReadOnlyCollection<string?> owned, string? current, string? underPointer)
+    {
+        var free = monitors.Where(id => !owned.Contains(id)).ToList();
+        if (current is not null && free.Contains(current)) return current;
+        if (underPointer is not null && free.Contains(underPointer)) return underPointer;
+        return free.FirstOrDefault();
+    }
+
     public static Plan Arrange(DisplayPlacement placement, IReadOnlyCollection<string> chosen, IReadOnlyList<(string Id, bool Primary)> monitors)
         => Arrange(placement, chosen.Select(id => new ChosenDisplay(id, "")).ToList(), null, monitors);
 

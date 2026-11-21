@@ -395,18 +395,55 @@ public sealed partial class App
         Deck.Display = Displays.FirstOrDefault(d => d.Id == plan.Main);
         Deck.Profile = Shown(plan.Main); Deck.UseLook();
         if (plan.Hidden != RuleHidesAll) { RuleHidesAll = plan.Hidden; if (Deck.IsLoaded) Deck.UserHiddenChanged(); }
-        foreach (var id in _otherDecks.Keys.Except(plan.Others).ToList())
+        foreach (var id in _otherDecks.Keys.Except(plan.Others).Where(id => id != StandInKey).ToList())
         { var deck = _otherDecks[id]; _otherDecks.Remove(id); deck.Retire(); }
         // Panels are opened only once the main panel runs, so that they can take its data.
         if (!Deck.IsLoaded) return;
+        Deck.ContextHideChanged -= StandInDue; Deck.ContextHideChanged += StandInDue;
         foreach (var id in plan.Others)
         {
             var display = Displays.First(d => d.Id == id);
             if (_otherDecks.TryGetValue(id, out var deck)) { deck.Display = display; deck.Profile = Shown(id); deck.UseLook(); continue; }
             deck = new MainWindow(this, Deck) { Display = display, Profile = Shown(id) };
             deck.UseLook();
+            deck.ContextHideChanged += StandInDue;
             _otherDecks[id] = deck; deck.Show();
         }
+        StandInDue();
+    }
+    // DeskGrid change: when a window rule hides every panel on show (a full-screen video on the main monitor, say) while another
+    // monitor is free, the user is working there and would otherwise see no island at all: a stand-in panel shows on that monitor
+    // until one of the others is back. The panels on show keep watching their own monitors, so the stand-in never decides for them.
+    private const string StandInKey = "\0stand-in";
+    private bool _standInPending;
+    private void StandInDue()
+    {
+        if (_standInPending || Exiting) return;
+        _standInPending = true;
+        Dispatcher.BeginInvoke(DispatcherPriority.Background, () => { _standInPending = false; UpdateStandIn(); });
+    }
+    private void UpdateStandIn()
+    {
+        if (Exiting || !Deck.IsLoaded) return;
+        _otherDecks.TryGetValue(StandInKey, out var standIn);
+        var regular = Decks.Where(deck => !ReferenceEquals(deck, standIn)).ToList();
+        var target = StandInDisplay(regular, standIn?.Display, !UserHidden && !RuleHidesAll && regular.All(deck => deck.IsLoaded && deck.HiddenByContext));
+        if (standIn is not null && standIn.Display?.Id == target?.Id) return;
+        if (standIn is not null) { _otherDecks.Remove(StandInKey); standIn.Retire(); }
+        if (target is null) return;
+        var created = new MainWindow(this, Deck) { Display = target };
+        created.UseLook();
+        _otherDecks[StandInKey] = created; created.Show();
+    }
+    // Where the stand-in shows, null for nowhere: not while a panel is on show or the user hid them, and only on a monitor no panel
+    // owns. It stays where it is while that holds; otherwise it goes to the monitor under the pointer.
+    private DisplayInfo? StandInDisplay(IReadOnlyList<MainWindow> regular, DisplayInfo? current, bool wanted)
+    {
+        if (!wanted) return null;
+        var pointer = Native.WindowsHost.Cursor();
+        var id = DisplayLayout.StandIn(Displays.Select(display => display.Id).ToList(), regular.Select(deck => deck.Display?.Id).ToHashSet(),
+            current?.Id, Displays.FirstOrDefault(display => display.Bounds.Contains(pointer))?.Id);
+        return Displays.FirstOrDefault(display => display.Id == id);
     }
     internal void StartMedia()
     {

@@ -24,6 +24,10 @@ internal sealed class ProcessLoopbackCapture : IDisposable
     public AutoResetEvent Ready { get; } = new(false);
     public EqualizerSignal Signal { get; } = new(Format.SampleRate);
     public uint ProcessId { get; }
+    // DeskGrid change: when a packet last held sound above the noise of dither (CaptureWatch).
+    private long _loudAt = BitConverter.DoubleToInt64Bits(double.NegativeInfinity);
+    public double LastLoud => BitConverter.Int64BitsToDouble(Interlocked.Read(ref _loudAt));
+    private const int LoudSample = 16;
 
     private ProcessLoopbackCapture(uint processId, AudioClient client)
     {
@@ -86,7 +90,9 @@ internal sealed class ProcessLoopbackCapture : IDisposable
                 {
                     // One block copy per packet instead of a marshalled read per sample.
                     Marshal.Copy(data, _pcm, 0, count);
-                    for (int i = 0; i < count; i++) _buffer[i] = _pcm[i] / 32768f;
+                    int loudest = 0;
+                    for (int i = 0; i < count; i++) { _buffer[i] = _pcm[i] / 32768f; loudest = Math.Max(loudest, Math.Abs((int)_pcm[i])); }
+                    if (loudest >= LoudSample) Interlocked.Exchange(ref _loudAt, BitConverter.DoubleToInt64Bits(now));
                 }
                 _capture.ReleaseBuffer(frames);
                 Signal.Push(_buffer.AsSpan(0, count), Format.Channels, now);
