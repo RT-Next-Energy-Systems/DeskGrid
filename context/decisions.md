@@ -929,3 +929,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: let widgets stand flush against the edges whatever the lattice (breaks the alignment with the desktop's own icons; not done); log only (would not fix it).
 **Consequences**: not reproduced on the laptop (the cause is deduced from the code and one description, no screenshot or log of the failing moment); the unit tests (`IconLatticeTests`) cover a stray first icon, scattered icons, tolerance, negative coordinates and that the edge cells stay reachable; on this computer the real desktop looks the same after the change and the log shows the lattice. If it comes back, the log line now shows the lattice and the number of icons off it. 470 tests pass.
 **Author**: Claude (Sonnet 5.5), on the owner's report
+
+---
+
+### 2026-11-21 — NotiLand has no tray icon of its own
+**Decision**: BrimDeck's tray icon is not created in DeskGrid's build (`App.ApplyTray` returns when `ManagedByDeskGrid`), and its switch is removed from NotiLand's General settings.
+**Reason**: the owner did not want a second (BrimDeck's) icon among the tray icons when NotiLand is on, and wants everything to go through DeskGrid.
+**Alternatives**: keep the icon behind a switch (the owner said no); move its menu entries (hide, click-through, profile, exit) into DeskGrid's tray menu (not asked for, not done).
+**Consequences**: the tray menu actions of NotiLand are gone; hiding and click-through remain reachable through its hotkeys and settings, and exit through the *Show NotiLand* switch. Seen on the real tray: one DeskGrid icon, none of BrimDeck's. 470 tests pass.
+**Author**: Claude (Sonnet 5.5), on the owner's request

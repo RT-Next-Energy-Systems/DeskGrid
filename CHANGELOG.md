@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- **NotiLand no longer has a tray icon of its own.** With **Show NotiLand** on, a second icon (BrimDeck's) showed among the tray icons next to DeskGrid's. DeskGrid's is now the only one, and the **Show tray icon** switch is gone from NotiLand's General page. NotiLand is opened and set up from DeskGrid's Settings (its gear opens them too); what its own tray menu offered (hide it, click-through, switch profile, exit) is not there any more.
+
 ### Fixed
 
 - Folder widgets could sometimes not be moved to the leftmost and rightmost columns of the screen, and could then do so again by themselves. The cells widgets snap to follow the lattice the desktop's icons sit on, and that lattice was taken from the first icon in Explorer's list: while that icon was off the lattice (being dragged, just created, Explorer arranging the icons) every cell was shifted by that much, which left a gap at both edges. The lattice is now the one most icons are on, and a desktop whose icons are scattered (no grid alignment) has none. When Explorer does not answer for a moment, the last grid that was read is kept instead of the built-in one, so a widget let go at that moment is no longer saved on the wrong cells. The log line `Desktop icon grid` now also says where the lattice is and how many icons are off it.

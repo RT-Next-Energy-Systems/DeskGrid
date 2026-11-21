@@ -35,6 +35,7 @@ The code is BrimDeck's own. Only what the integration needs was changed:
   check, links; `SettingsUpdates.cs` and `SettingsReleaseNotes.cs` deleted), the Start with Windows switch, the Exit row and the language
   choice (`App.StartHosted(english)` and `App.FollowLanguage` take DeskGrid's language). The caption, the brand and the window's size and
   position settings (`SettingsWindowWidth` ...) are no longer used.
+- **No tray icon of its own** (2026-11-21): `App.ApplyTray` returns at once when `ManagedByDeskGrid`, and the *Show tray icon* switch is out of the General page (`SettingsPages.General`). `TrayIcon.cs` stays in the tree, unused.
 - **Styles stay in BrimDeck's windows** (`DeckResources.xaml`, was `App.xaml`; `DeckResources.cs`; `DeckWindow.cs`): its implicit styles
   (Button, TextBox, ScrollBar, ToolTip, ...) would restyle DeskGrid's own windows if they were the application's resources. They are
   one shared `ResourceDictionary` that every BrimDeck window merges into its own resources (`DeckWindow` is the base of all of

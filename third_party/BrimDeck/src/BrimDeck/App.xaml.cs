@@ -236,6 +236,8 @@ public sealed partial class App
     // Adds or removes the tray icon to match the settings.
     private void ApplyTray()
     {
+        // DeskGrid build: NotiLand has no tray icon of its own, DeskGrid's is the only one (see DESKGRID.md).
+        if (ManagedByDeskGrid) { _tray?.Dispose(); _tray = null; return; }
         if (Settings.ShowTrayIcon && _tray is null) _tray = new TrayIcon(Deck, OpenSettings, ExitApplication, ToggleHidden, () => UserHidden, ToggleClickThrough, () => Settings.ClickThrough,
             () => Settings.Profiles.Count < 2 ? [] : Settings.Profiles.Select(profile => (Profiles.Name(profile), profile.Id == Settings.CurrentProfile, (Action)(() => ChooseProfile(profile.Id)))).ToList());
         else if (!Settings.ShowTrayIcon && _tray is not null) { _tray.Dispose(); _tray = null; }

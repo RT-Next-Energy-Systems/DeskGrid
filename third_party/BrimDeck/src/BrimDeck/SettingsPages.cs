@@ -323,9 +323,6 @@ public sealed partial class SettingsPages : UserControl
     private void General()
     {
         SectionTitle(Loc.T("啟動與資源佔用", "Startup and resources")); Group(
-            Toggle(Loc.T("顯示托盤圖示", "Show tray icon"), S.ShowTrayIcon, value => Change(s => s.ShowTrayIcon = value),
-                help: Loc.T("關閉後，NotiLand 不顯示系統匣圖示；設定仍在 DeskGrid 的設定視窗中。",
-                    "When off, NotiLand shows no tray icon; its settings stay in DeskGrid's settings window.")),
             Row(Loc.T("資源佔用", "Resource use"), SegmentBorder(MemoryModes()), help: () => Loc.T(
                 "省資源：收起後很快回收暫時不用的記憶體，並在空閒期間持續回收，佔用最少；再次使用時需要重新讀取，部分操作可能稍有卡頓。\n平衡：幾分鐘沒有使用後回收不用的記憶體，兼顧佔用與流暢。\n流暢：收起後不回收記憶體，常用的資料保留更久，展開和切換頁面更流暢，佔用較多。\n在設定中關閉的頁面，其佔用的資源會在一段時間後釋放。",
                 "Saver: frees memory not in use soon after the panel closes and keeps freeing it while idle, using the least. It is read again when needed, so some actions may stutter slightly.\nBalanced: frees unused memory after a few minutes without use, balancing resource use and smoothness.\nSmooth: frees no memory after the panel closes and keeps frequently used data longer, so opening the panel and switching pages feel smoother, using more resources.\nThe resources of a page switched off in the settings are released a while later.")));
