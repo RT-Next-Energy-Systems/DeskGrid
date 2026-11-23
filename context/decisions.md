@@ -1050,3 +1050,12 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: copying GPL code from HeadsetControl (rejected: DeskGrid is MIT; facts only, as the other families do); adding keyboards the sources do not list (impossible without their receiver ids).
 **Consequences**: the three reads were not run against any hardware (the tests only check the frames), as is true of many of BrimDeck's families. Whether an AULA (狼蛛) keyboard shows depends on its model and receiver id; a model that is not listed is not read. NotiLand's tests fail while DeskGrid itself runs on the same computer (they start BrimDeck in the test process).
 **Author**: Claude (Sonnet 5.5), on the owner's request
+
+---
+
+### 2026-11-23 (9) — HERO 68 Air, and "asleep" as an answer
+**Decision**: BrimDeck gets `AulaHero68` for the 8K receiver 372E:106C, through a new hook, `BrandWay.Exchange` (a family runs a whole exchange over the collection instead of one request and one answer). A receiver that answers nothing to the first fragment is read as "asleep" (`BatteryRead(null, Asleep: true)`), not as a failure.
+**Reason**: the owner's keyboard was missing: decision (8) compared brand names against the device lists and so overlooked it. On the real keyboard the exchange works (35 % in about 80 ms, three times). But `DeviceReadBook` tries a device that has never answered only three times (first sight, +5 min, +30 min) and then lets it go, so after restarts while the keyboard slept, the page kept saying "battery cannot be read". An answer of "asleep" counts as an answer: the device is remembered, kept on the list with its last level, and read again at every pass.
+**Alternatives**: letting `DeviceReadBook` retry forever for this read (a change to the shared rule for every brand, and its tests were not copied); copying vigil-watt's circuit breaker (not needed: one 20-byte write and 0.5 s of listening per pass).
+**Consequences**: another keyboard of the same receiver (HERO 68 XS, 75 HE, MINI Air), asleep when first seen, is listed as "AULA HERO 68 Air" asleep until it answers (its name comes from the identity answer); awake, it is not read. USB and Bluetooth are not read. The comparison method of (8) was too coarse: names matched where ids did not; other brands' lists may hide the same kind of gap.
+**Author**: Claude (Sonnet 5.5), on the owner's request

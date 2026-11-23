@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.7
+
+### Added
+
+- **The AULA (狼蛛) HERO 68 Air keyboard shows its battery** on NotiLand's devices page, on its 2.4 GHz receiver (8K, 372E:106C). The receiver talks in fragments that each have to be acknowledged, which DeskGrid did not do before; it reads the level and whether the keyboard is charging. Seen on a real keyboard (35 %). USB and Bluetooth are not read.
+- **A keyboard that is asleep is listed as asleep** (with its last level once it has had one), and is read again at every pass. A device that had never answered used to be tried three times and then given up on until it was plugged in again, so a keyboard that slept when DeskGrid started stayed on "battery cannot be read".
+
+### How to use
+
+- Nothing to set. With NotiLand on (**Settings → NotiLand**), put the keyboard in its 2.4 GHz mode: it appears on the devices page, and a key press wakes it if it sleeps. Other keyboards of the same receiver (HERO 68 XS, 75 HE, MINI Air) are not read.
+
 ## 0.9.6
 
 ### Added
