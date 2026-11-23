@@ -15,6 +15,15 @@ public readonly record struct HidShape(int Vendor, int Product, int UsagePage, i
     };
 }
 
+// What a read with its own exchange (BrandWay.Exchange) has of the collection: a report written (padded to the collection's
+// output length), and the next input report waited for (null when none came in time). Reports left over from before are
+// dropped before the exchange starts.
+public interface IHidExchange
+{
+    void Write(byte[] report);
+    byte[]? Read(int timeoutMs);
+}
+
 // How a read goes over the collection:
 // - Output: an output report (Request, report id first) is written; the answer comes as an input report (Parse).
 // - Feature: a feature report is set (Request), then after GapMs got back (report id Request[0], FeatureLength bytes) (Parse).
@@ -55,6 +64,10 @@ public sealed record BrandWay(string Name, WayTransport Transport, byte[] Reques
     // as read. Not for Listen (nothing is sent).
     public byte[]? Then { get; init; }
     public Func<byte[], bool?>? Charging { get; init; }
+    // A read whose exchange is more than a request and an answer (a request cut in fragments, each acknowledged one by one, a
+    // reply to acknowledge the same way): it runs the whole exchange itself over the collection (IHidExchange), and the
+    // fields above are not used. Request[0] is still the report id the collection must declare (HidShape.Declares).
+    public Func<IHidExchange, BatteryRead?>? Exchange { get; init; }
 
     // The level with the charging question's answer.
     public static BatteryRead WithCharging(BatteryRead level, bool? charging) => charging is true ? level with { Charging = true } : level;

@@ -1083,9 +1083,22 @@ internal sealed class HidBatteries(Dispatcher dispatcher, Action<DeviceSource, I
         return read;
     }
 
+    // The collection as a read with an exchange of its own has it (IHidExchange).
+    private sealed class DeviceExchange(HidDevice device) : IHidExchange
+    {
+        public void Write(byte[] report) => device.Write(report, 500);
+        public byte[]? Read(int timeoutMs) => device.Read(timeoutMs);
+    }
+
     private static BatteryRead? RunNow(HidInfo info, BrandWay way)
     {
         using var device = new HidDevice(info) { StripZero = way.StripZero };
+        // A read with an exchange of its own (BrandWay.Exchange) runs it over the collection, after the old reports are dropped.
+        if (way.Exchange is { } exchange)
+        {
+            device.Flush();
+            return exchange(new DeviceExchange(device));
+        }
         bool feature = way.Transport is WayTransport.Feature or WayTransport.FeatureListen or WayTransport.FeatureGet;
         void Send(byte[] frame)
         {

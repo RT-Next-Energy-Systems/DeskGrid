@@ -900,7 +900,7 @@ https://github.com/evren-oct/vigil-watt
 The devices page's ATK, HECATE and VGN collections for the Compx frame, the LINGBAO M5PRO Max, CHERRY PIXIU75 and HECATE
 G5M Pro reads, the MCHOSE G3 V2 query, the ROG Delta II headset, the ROG Omni receiver's pairing table, and the DELUX,
 Inphic ZHEN, Rapoo, AULA G9 and HyperX Cloud Flight 2 reports (Core/DeviceProtocols.cs), and the brand reads of EWEADN,
-AULA, Thunderobot, AJAZZ AK870, GANSS, AKG, the Razer headsets, DARKRIM, the Logitech PRO X 2, the MOJHON GALE2 and the 3554:FA09 keyboards'
+AULA, Thunderobot, AJAZZ AK870, GANSS, AKG, the Razer headsets, DARKRIM, the Logitech PRO X 2, the MOJHON GALE2, the AULA HERO 68 Air (Core/Brands/AulaHero68.cs) and the 3554:FA09 keyboards'
 model codes (Core/Brands, Core/DeviceProtocols.cs), follow vigil-watt's docs/hardware notes.
 
 MIT License

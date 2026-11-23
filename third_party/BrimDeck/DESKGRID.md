@@ -67,6 +67,13 @@ The code is BrimDeck's own. Only what the integration needs was changed:
   split over several reports, and a CoAP tunnel for the Stealth 700 Gen 3), Nintendo controllers (Bluetooth sub-commands), DJI Mic Mini 2
   (WinUSB, not HID), Haute42's DualSense adapter (identified by a firmware string, not by its ids), and the wired headsets that have no
   battery (HyperX Cloud Alpha S, ROCCAT Elo 7.1: HeadsetControl reads only lights and auto-off there).
+- **AULA HERO 68 Air, and a read with an exchange of its own** (2026-11-23): `Core/Brands/AulaHero68.cs`, for the 8K receiver 372E:106C: a
+  packet cut in fragments, each acknowledged one by one, both ways (from vigil-watt's codec, MIT). BrimDeck's reads were one request and
+  one answer, so `BrandWay.Exchange` (a `Func<IHidExchange, BatteryRead?>`) lets a family run the whole exchange itself over the
+  collection (`IHidExchange`: `Write`, `Read(timeout)`), and `HidBatteries.RunNow` runs it after the old reports are dropped
+  (`DeviceExchange`). **Seen on the real keyboard** (the shipped path, 35 % in 80 ms, three times in a row). A receiver that answers
+  nothing is read as "asleep" (`BatteryRead(null, Asleep: true)`), not as a failure: a device that never answered is tried three
+  times and let go (`DeviceReadBook`), so a keyboard that slept when the program started stayed unread ("battery cannot be read").
 - **Not copied**: BrimDeck's tests, documentation, installer and scripts.
 - `Directory.Build.props` and `.editorconfig` keep DeskGrid's build rules (warnings as errors, style) off this folder.
 
