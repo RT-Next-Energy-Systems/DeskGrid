@@ -17,7 +17,7 @@ internal static class PinShortcut
     private const double TileCornerRadius = 57;
 
     // Each shortcut is an app of its own to the taskbar; otherwise pins of the same program merge into one.
-    private const string AppIdPrefix = "DeskGrid.Pin.";
+    internal const string AppIdPrefix = "DeskGrid.Pin.";
 
     // Not the "DeskGrid.Pin.All" of the shortcut up to 0.2.2: the taskbar treats a shortcut with the ID of a pinned
     // one as already pinned, so the renamed shortcut couldn't be pinned while (or after, its entry lingering hidden)
@@ -44,7 +44,7 @@ internal static class PinShortcut
         var shortcutPath = Path.Combine(FolderPath, folderName + ".lnk");
 
         File.WriteAllBytes(iconPath, ToIcon(preview));
-        ShortcutFile.Create(shortcutPath, Environment.ProcessPath!, OpenRequest.Arguments(folderName), iconPath, AppId(folderName));
+        ShortcutFile.Create(shortcutPath, OpenLauncher.Install() ?? Environment.ProcessPath!, OpenRequest.Arguments(folderName), iconPath, AppId(folderName));
         return shortcutPath;
     }
 
@@ -85,8 +85,9 @@ internal static class PinShortcut
             }
         }
 
+        // The launcher starts the button, DeskGrid's own exe gives it its icon.
         var program = Environment.ProcessPath!;
-        ShortcutFile.Create(shortcutPath, program, OpenRequest.AllFoldersArguments, program, AllFoldersAppId);
+        ShortcutFile.Create(shortcutPath, OpenLauncher.Install() ?? program, OpenRequest.AllFoldersArguments, program, AllFoldersAppId);
         return shortcutPath;
     }
 

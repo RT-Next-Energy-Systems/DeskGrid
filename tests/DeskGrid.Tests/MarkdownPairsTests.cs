@@ -13,7 +13,7 @@ public sealed class MarkdownPairsTests
     // Every pair of version-controlled documents; add new ones here.
     private static readonly string[] Documents =
     [
-        "README", "CHANGELOG", "CLAUDE", "AGENTS", "context/decisions", "context/project-summary",
+        "README", "CHANGELOG", "CLAUDE", "AGENTS", "context/decisions", "context/project-summary", "context/memory",
     ];
 
     public static TheoryData<string> Names => [.. Documents];

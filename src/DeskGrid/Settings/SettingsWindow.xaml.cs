@@ -30,7 +30,8 @@ internal sealed record SettingsChoice(
     bool NotiLandEnabled,
     bool AutoBackupEnabled = false,
     int AutoBackupHour = AppConfig.DefaultAutoBackupHour,
-    int AutoBackupDays = AppConfig.DefaultAutoBackupDays);
+    int AutoBackupDays = AppConfig.DefaultAutoBackupDays,
+    bool InstantTaskbarButtons = true);
 
 /// <summary>One line of the language list: the language and the name it is shown under.</summary>
 internal sealed record LanguageOption(AppLanguage Language, string Label);
@@ -99,6 +100,7 @@ internal partial class SettingsWindow : Window
 
         CheckAtStartupBox.IsChecked = config.CheckForUpdatesAtStartup;
         AllowControlBox.IsChecked = config.AllowControl;
+        InstantTaskbarBox.IsChecked = config.InstantTaskbarButtons;
         IslandBox.IsChecked = config.NotiLandEnabled;
         Pages.SelectedItem = PageGeneralItem;
 
@@ -121,7 +123,7 @@ internal partial class SettingsWindow : Window
     private static string Key(SettingsChoice choice) => string.Join('|',
         choice.RootPath, choice.PanelColumns, choice.DropMode, choice.DeleteMode, choice.PanelOpenMode, choice.Language,
         choice.CheckForUpdatesAtStartup, choice.AllowControl, choice.NotiLandEnabled,
-        choice.AutoBackupEnabled, choice.AutoBackupHour, choice.AutoBackupDays,
+        choice.AutoBackupEnabled, choice.AutoBackupHour, choice.AutoBackupDays, choice.InstantTaskbarButtons,
         choice.PanelBackground.Style, choice.PanelBackground.CustomColor, choice.PanelBackground.CustomOpacity,
         choice.PanelBackground.Opacity, choice.PanelBackground.GlassShade);
 
@@ -507,6 +509,7 @@ internal partial class SettingsWindow : Window
         HotkeysButton.Content = Strings.SettingsHotkeysEdit;
         ShowHotkeysHint();
         AllowControlBox.Content = Strings.SettingsAllowControl;
+        InstantTaskbarBox.Content = Strings.SettingsInstantTaskbar;
         IslandBox.Content = Strings.SettingsIsland;
         GitHubLabel.Text = Strings.SettingsGitHub;
 
@@ -635,7 +638,8 @@ internal partial class SettingsWindow : Window
         IslandBox.IsChecked == true,
         AutoBackupBox.IsChecked == true,
         AutoBackupHourBox.SelectedValue as int? ?? _config.AutoBackupHour,
-        AutoBackupDaysBox.SelectedItem as int? ?? _config.AutoBackupDays);
+        AutoBackupDaysBox.SelectedItem as int? ?? _config.AutoBackupDays,
+        InstantTaskbarBox.IsChecked == true);
 
     /// <summary>Checks what the controls hold and hands it to <see cref="Applied"/>; false (with the reason shown) if it is not valid.</summary>
     private bool Apply()

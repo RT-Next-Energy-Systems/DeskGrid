@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.9.4
+
+### Added
+
+- **Instant taskbar buttons.** A button you pinned from DeskGrid now opens its panel about as fast as a folder on the desktop (a click to the panel's first pixels: 58 ms for the button, 66 ms for a desktop folder). DeskGrid keeps a small hidden window for each pinned button, so a click on it is a message to DeskGrid instead of a program Windows has to start first. The price is that Windows marks the button as running (a dot under it). **Settings → Shortcuts → Instant taskbar buttons** (on by default) turns it off, and the button starts a small program again, a few tens of milliseconds slower.
+
+### Changed
+
+- **Less memory.** Idle private memory fell from 195 to 129 MB, and the 140 MB a panel left behind for minutes is given back about 20 seconds after you stop using DeskGrid (to about 15 MB). Nothing you can do changed, and clicks are as fast as before (56-70 ms). The cost is the download: the exe is about 189 MB instead of 83 MB, because it is no longer compressed (a compressed exe is unpacked into memory every time it starts). Every start is about 130 ms faster.
+- **Opening a panel is faster** (44 → 29 ms inside DeskGrid): the liquid glass reads only the part of the screen around the panel, not the whole screen. A taskbar button starts a small launcher (6 KB) instead of DeskGrid itself; a button pinned before keeps working and also starts faster.
+- **New command `DeskGrid.exe --ctl memory`** reports the memory DeskGrid uses (for scripts and AI agents, when control is allowed).
+
+### Fixed
+
+- **NotiLand's level bars could stay flat under Apple Music on another computer.** When none of the player's sound sessions could be recognised (another version of the player, another Windows), the bars had nothing to read. NotiLand now listens to everything but DeskGrid itself in that case, looks for the player's session every 3 seconds and switches to it when it shows up, and follows the sound devices' meters on a Windows too old to capture a program's sound. What it found is written to the log (`NotiLand audio:`), so a case that is still flat can be told apart.
+- Restoring settings from a backup did not apply **Instant taskbar buttons** until DeskGrid was restarted.
+- A folder name that is too long showed Windows' own error message instead of being refused with the usual one.
+- The first button you pin, when Windows has no folder for pinned buttons yet, did not get its instant window until DeskGrid was restarted.
+- The small launcher of a taskbar button crashed when DeskGrid was run as administrator.
+- When the settings file stayed locked (a virus scanner, a sync client), DeskGrid crashed at start with no explanation. It now says so and stops, so that your settings are not replaced by the defaults.
+- Turning **Show NotiLand** off and on again while it was still shutting down left it off.
+- Renaming a folder left the shortcut made for pinning it under the old name.
+
+### How to use
+
+- Pin a button as before (right-click a folder → **Pin to taskbar…**, or **Settings → Shortcuts → Pin all folders…**, then drag the shortcut onto the taskbar). It opens instantly; the dot under it is Windows saying DeskGrid is running. Buttons you pinned earlier are instant too, with nothing to do. To switch it off, untick **Instant taskbar buttons** in **Settings → Shortcuts**.
+- Nothing to set for the memory: it is given back by itself. The first download of this version is larger.
+
 ## 0.9.3
 
 ### Added

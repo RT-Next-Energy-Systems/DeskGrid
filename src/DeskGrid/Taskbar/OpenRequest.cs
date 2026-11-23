@@ -20,6 +20,24 @@ internal static class OpenRequest
     /// The folder name asked for, <see cref="AllFolders"/>, or <see langword="null"/> if <paramref name="args"/>
     /// isn't an open request.
     /// </summary>
+    /// <summary>
+    /// What <see cref="Parse"/> gives for the arguments as a shortcut stores them (<see cref="Arguments"/> and
+    /// <see cref="AllFoldersArguments"/> are what is written), or <see langword="null"/> if they are not an open request.
+    /// </summary>
+    public static string? ParseArguments(string arguments)
+    {
+        var text = arguments.Trim();
+        if (string.Equals(text, AllSwitch, StringComparison.OrdinalIgnoreCase))
+        {
+            return AllFolders;
+        }
+
+        var prefix = Switch + " \"";
+        return text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && text.EndsWith('"') && text.Length > prefix.Length + 1
+            ? text[prefix.Length..^1]
+            : null;
+    }
+
     public static string? Parse(IReadOnlyList<string> args) => args switch
     {
         [var option, ..] when string.Equals(option, AllSwitch, StringComparison.OrdinalIgnoreCase) => AllFolders,

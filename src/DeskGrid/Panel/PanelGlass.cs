@@ -22,8 +22,13 @@ internal sealed class PanelGlass(PanelTheme theme, Action<Brush> apply, Action<b
 
     private static readonly TimeSpan Debounce = TimeSpan.FromMilliseconds(40);
 
+    // How far around the panel the screen is read, in pixels: more than the glass reaches into (its bend and blur), and room for
+    // the panel to grow by a few rows while something is dragged in. Where the glass reaches past the picture it repeats the edge.
+    internal const int CaptureMargin = 240;
+
     private DispatcherTimer? _timer;
     private ScreenImage? _screen;
+    private ScreenRect _screenArea; // The work area of the monitor the picture was taken on (the picture itself is a part of it).
     private bool _captured;
     private bool _drawn;
     private (ScreenRect Window, ScreenRect Area, double Scale)? _target;
@@ -72,7 +77,11 @@ internal sealed class PanelGlass(PanelTheme theme, Action<Brush> apply, Action<b
         if (!_captured)
         {
             _captured = true;
-            _screen = ScreenSampler.Capture(area) is { } bgra ? new ScreenImage(area, bgra) : null;
+            // Only the part the glass looks through (the panel and a margin for what it may grow into): reading the whole work area took
+            // 18 ms of the 45 that opening a panel took, the part around the panel about 3.
+            var part = Inflate(window, CaptureMargin, area);
+            _screenArea = area;
+            _screen = ScreenSampler.Capture(part) is { } bgra ? new ScreenImage(part, bgra) : null;
             if (_screen is null)
             {
                 // Nothing to look through: a frosted panel that is still readable.
@@ -88,7 +97,7 @@ internal sealed class PanelGlass(PanelTheme theme, Action<Brush> apply, Action<b
         }
 
         // Another monitor than the one that was read (the panel was moved): keep what is drawn rather than look at itself.
-        if (_screen is null || _screen.Area != area || window.Width <= 0 || window.Height <= 0)
+        if (_screen is null || _screenArea != area || window.Width <= 0 || window.Height <= 0)
         {
             return;
         }
@@ -109,6 +118,11 @@ internal sealed class PanelGlass(PanelTheme theme, Action<Brush> apply, Action<b
 
         _drawn = true;
     }
+
+    // The rectangle grown by margin on every side, but not out of bounds.
+    internal static ScreenRect Inflate(ScreenRect rect, int margin, ScreenRect bounds) => new(
+        Math.Max(rect.Left - margin, bounds.Left), Math.Max(rect.Top - margin, bounds.Top),
+        Math.Min(rect.Right + margin, bounds.Right), Math.Min(rect.Bottom + margin, bounds.Bottom));
 
     // Average brightness (0 to 1) of what the glass shows, from premultiplied BGRA.
     internal static double Brightness(byte[] premultipliedBgra)

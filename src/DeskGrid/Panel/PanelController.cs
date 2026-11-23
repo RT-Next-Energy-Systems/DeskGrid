@@ -29,6 +29,9 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
     // click sends comes a moment later and must not open the same panel again.
     private (string Key, long Time)? _closedForTaskbar;
 
+    /// <summary>Raised when a panel has closed.</summary>
+    public event EventHandler? PanelClosed;
+
     /// <summary>Raised when the user dragged an item to another place in its panel.</summary>
     public event EventHandler<ItemReorderedEventArgs>? ItemReordered;
 
@@ -203,6 +206,8 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
             {
                 _panel = null;
             }
+
+            PanelClosed?.Invoke(this, EventArgs.Empty);
 
             if (TaskbarIsForeground())
             {

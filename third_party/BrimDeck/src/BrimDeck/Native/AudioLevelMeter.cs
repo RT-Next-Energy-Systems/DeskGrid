@@ -25,6 +25,11 @@ internal sealed class AudioLevelMeter : IDisposable
     // DeskGrid change: notices a capture that cannot hear the player, and the processes already tried for it.
     private readonly CaptureWatch _watch = new();
     private readonly HashSet<uint> _tried = [];
+    // DeskGrid change: no session of the player could be told from the others (its executable, package or id is not the one
+    // looked for: another Apple Music version, another Windows), so the capture hears everything but this program instead of
+    // leaving the bars flat. Only touched on the meter's thread.
+    private bool _systemFallback;
+    private string _lastNote = "";
     // The target that stands for the whole system; no application has this id or process name.
     private static readonly MediaAppOwner Everything = new(null, "\0", "\0");
     public float Peak => Volatile.Read(ref _peak);
@@ -81,7 +86,7 @@ internal sealed class AudioLevelMeter : IDisposable
         int revision = -1;
         MediaAppOwner? target = null;
         bool retried = false;
-        double nextPeak = 0, nextWatch = 0, nextAlive = 0, nextLook = 0, lastTry = double.NegativeInfinity;
+        double nextPeak = 0, nextWatch = 0, nextAlive = 0, nextLook = 0, nextSearch = 0, lastTry = double.NegativeInfinity;
         bool refreshed = false;
         // A player may create its audio session after it reports playback; look again with growing pauses.
         int searchDelay = 1000;
@@ -98,7 +103,7 @@ internal sealed class AudioLevelMeter : IDisposable
                     if (changed) { revision = _revision; target = _requested; }
                 }
                 // Starting a capture waits for the system; do it outside the lock SetSource takes on the UI thread.
-                if (changed) { _tried.Clear(); _watch.Reset(); refreshed = false; Clear(); if (target is not null) Enumerate(target); retried = false; searchDelay = 1000; }
+                if (changed) { _tried.Clear(); _watch.Reset(); refreshed = false; Clear(); if (target is not null) Enumerate(target); retried = false; searchDelay = 1000; nextSearch = Now + searchDelay; }
                 var capture = _capture;
                 double now = Now;
                 if (capture is not null && !capture.Drain(now)) { StopCapture(); capture = null; }
@@ -109,10 +114,11 @@ internal sealed class AudioLevelMeter : IDisposable
                 {
                     nextAlive = now + .5;
                     if (!Alive(capture.ProcessId)) { Clear(); Enumerate(target); capture = _capture; _watch.Reset(); retried = false; searchDelay = 1000; }
-                    // Silent for a while although the player plays: it may have moved its sound to another process.
-                    else if (now - capture.LastLoud > 2 && now >= nextLook)
+                    // Silent for a while although the player plays: it may have moved its sound to another process. A capture of the
+                    // whole system (no session of the player known) keeps looking, as the player's session may only appear later.
+                    else if ((_systemFallback || now - capture.LastLoud > 2) && now >= nextLook)
                     {
-                        nextLook = now + 2;
+                        nextLook = now + (_systemFallback ? 3 : 2);
                         if (FindPlayingPid(target) is { } playing && playing != capture.ProcessId) { Clear(); Enumerate(target); capture = _capture; _watch.Reset(); }
                     }
                 }
@@ -139,7 +145,8 @@ internal sealed class AudioLevelMeter : IDisposable
                     float peak = 0;
                     try
                     {
-                        if (target == Everything) foreach (var device in _devices) peak = Math.Max(peak, device.AudioMeterInformation.MasterPeakValue);
+                        // DeskGrid change: a player none of whose sessions was found follows the devices' meters, like the whole system.
+                        if (target == Everything || _sessions.Count == 0) foreach (var device in _devices) peak = Math.Max(peak, device.AudioMeterInformation.MasterPeakValue);
                         else foreach (var session in _sessions) peak = Math.Max(peak, session.AudioMeterInformation.MasterPeakValue);
                     }
                     catch
@@ -154,7 +161,16 @@ internal sealed class AudioLevelMeter : IDisposable
                     if (waits?[1] != capture.Ready) waits = [_wake, capture.Ready];
                     WaitHandle.WaitAny(waits, 20);
                 }
-                else if (_sessions.Count > 0 || target == Everything && _devices.Count > 0) _wake.WaitOne(33);
+                else if (_sessions.Count > 0 || _devices.Count > 0)
+                {
+                    _wake.WaitOne(33);
+                    // DeskGrid change: no session of the player yet (only the devices' meters are read): look again with growing pauses.
+                    if (target is not null && target != Everything && _sessions.Count == 0 && Now >= nextSearch)
+                    {
+                        searchDelay = Math.Min(searchDelay * 2, 5_000); nextSearch = Now + searchDelay;
+                        Clear(); Enumerate(target);
+                    }
+                }
                 else if (target is null) _wake.WaitOne();
                 else if (!_wake.WaitOne(searchDelay))
                 {
@@ -169,6 +185,7 @@ internal sealed class AudioLevelMeter : IDisposable
     private void Enumerate(MediaAppOwner target)
     {
         if (target == Everything) { EnumerateEverything(); return; }
+        var others = new List<string>();
         try
         {
             using var enumerator = new MMDeviceEnumerator();
@@ -182,17 +199,37 @@ internal sealed class AudioLevelMeter : IDisposable
                     var session = sessions[i]; bool keep = false;
                     try
                     {
-                        if (MediaAppTarget.Plays(target, AppIdentity.Describe((int)session.GetProcessID))) { _sessions.Add(session); keep = true; }
+                        var process = AppIdentity.Describe((int)session.GetProcessID);
+                        if (MediaAppTarget.Plays(target, process)) { _sessions.Add(session); keep = true; }
+                        else if (others.Count < 8) others.Add($"{process.ProcessName}[{process.PackageFamily}|{process.AppId}]");
                     }
                     catch { }
                     finally { if (!keep) session.Dispose(); }
                 }
             }
         }
-        catch { Clear(); return; }
+        catch (Exception ex) { Note($"listing the audio sessions failed: {ex.GetType().Name} {ex.Message}"); Clear(); return; }
         // Capture the process that owns the playing session; its child processes are included.
         var playing = _sessions.FirstOrDefault(s => s.State == AudioSessionState.AudioSessionStateActive) ?? _sessions.FirstOrDefault();
         if (playing is not null) _capture = ProcessLoopbackCapture.TryStart(playing.GetProcessID);
+        // DeskGrid change: none of the audio sessions is the player's (another version of it, another way Windows names its
+        // processes): hear everything but this program rather than show flat bars.
+        else if (_devices.Count > 0)
+        {
+            _capture = ProcessLoopbackCapture.TryStart((uint)Environment.ProcessId, exclude: true);
+            _systemFallback = _capture is not null;
+        }
+        Note($"player id '{target.AppId}' name '{target.ProcessName}': {_sessions.Count} session(s) of it, capture "
+            + (_capture is null ? "none" : _systemFallback ? "of the whole system" : $"of process {_capture.ProcessId}")
+            + $", Windows build {Environment.OSVersion.Version.Build}"
+            + (_sessions.Count == 0 ? $", other sessions: {(others.Count == 0 ? "none" : string.Join(", ", others))}" : ""));
+    }
+    // Says what the meter found, to the host's log (DeskGrid's), once for each different thing.
+    private void Note(string message)
+    {
+        if (message == _lastNote) return;
+        _lastNote = message;
+        try { App.Trace?.Invoke("NotiLand audio: " + message); } catch { }
     }
     // Every render device, for their peak meters, and a capture of every process but this one.
     private void EnumerateEverything()
@@ -269,7 +306,7 @@ internal sealed class AudioLevelMeter : IDisposable
     }
     private void StopCapture()
     {
-        var capture = _capture; _capture = null;
+        var capture = _capture; _capture = null; _systemFallback = false;
         capture?.Dispose();
     }
     private void Clear()

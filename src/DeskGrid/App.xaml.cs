@@ -24,7 +24,14 @@ namespace DeskGrid;
 public partial class App : Application
 {
     // Per sign-in session: a second launch (e.g. auto-start plus a manual start) just exits.
-    private const string SingleInstanceName = @"Local\DeskGrid.SingleInstance";
+    internal const string SingleInstanceName = @"Local\DeskGrid.SingleInstance";
+
+    // The open request of a start made from a taskbar button, read by Program before this class was made (the cursor is then
+    // where the button was clicked), when this start became the running DeskGrid.
+    internal static OpenMessage? EarlyOpen { get; set; }
+
+    // Requests from the taskbar closer together than this are one click.
+    private static readonly TimeSpan RepeatedOpenWindow = TimeSpan.FromMilliseconds(300);
 
     private static readonly TimeSpan StartupUpdateCheckDelay = TimeSpan.FromSeconds(8);
 
@@ -43,11 +50,15 @@ public partial class App : Application
     private WidgetCatalog? _catalog;
     private SettingsWindow? _settings;
     private InstanceChannel? _instanceChannel;
+    private TaskbarAnchors? _anchors;
+    private DispatcherTimer? _trimTimer;
     private ControlChannel? _controlChannel;
     private HotkeyService? _hotkeys;
     private NotiLandHost? _noti;
     private DispatcherTimer? _autoBackupTimer;
     private OpenMessage? _pendingOpen;
+    private string? _lastOpenName;
+    private long _lastOpenTick;
     private bool _checkingUpdates;
     private bool _runningHotkey;
     private bool _started;
@@ -72,7 +83,7 @@ public partial class App : Application
             return;
         }
 
-        var openRequest = OpenRequest.Parse(e.Args) is { } requested ? OpenMessageAtCursor(requested) : (OpenMessage?)null;
+        var openRequest = EarlyOpen ?? (OpenRequest.Parse(e.Args) is { } requested ? OpenMessageAtCursor(requested) : (OpenMessage?)null);
         _singleInstance = new Mutex(initiallyOwned: true, SingleInstanceName, out var isFirstInstance);
         if (!isFirstInstance)
         {
@@ -86,12 +97,27 @@ public partial class App : Application
             return;
         }
 
+        // Keeps the launcher of the pinned taskbar buttons current (an update brings a new one, the exe may have moved).
+        _ = Task.Run(() => OpenLauncher.Install());
+
         DispatcherUnhandledException += OnUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += (_, args) => Log.Error("Unhandled exception on a background thread", (Exception)args.ExceptionObject);
         TaskScheduler.UnobservedTaskException += (_, args) => Log.Error("Unobserved task exception", args.Exception);
         Log.Info("DeskGrid starting.");
 
-        _configStore = ConfigStore.Open(ConfigStore.DefaultFilePath);
+        try
+        {
+            _configStore = ConfigStore.Open(ConfigStore.DefaultFilePath);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            // Starting with defaults would overwrite the real settings at the next save: say so and stop instead of crashing.
+            Log.Error("The settings file could not be read", exception);
+            MessageBox.Show(string.Format(Strings.ConfigLocked, ConfigStore.DefaultFilePath), Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Warning);
+            Shutdown(1);
+            return;
+        }
+
         UiLanguage.Apply(_configStore.Config.Language);
         EnsureUsableRootFolder(_configStore);
         _autoStart = AutoStart.ForCurrentUser();
@@ -118,6 +144,7 @@ public partial class App : Application
                 _catalog?.MoveItem(e.FolderName, e.ItemName, e.Index);
             }
         };
+        _panels.PanelClosed += (_, _) => RequestMemoryTrim();
         _panels.ItemsDropped += (_, e) => AddDroppedItems(e);
         _panels.NewFolderRequested += (_, _) => CreateFolder();
         _panels.DeleteRequested += (_, folder) => DeleteFolder(folder);
@@ -132,6 +159,7 @@ public partial class App : Application
         ApplyHotkeys(report: false);
         _pendingOpen = openRequest;
         _instanceChannel = new InstanceChannel(message => Dispatcher.BeginInvoke(() => OpenPanel(message)));
+        _anchors = new TaskbarAnchors(OpenPanel) { Enabled = _configStore.Config.InstantTaskbarButtons };
         var commands = new ControlCommands(new ControlHost(this), FolderPaths.Desktops);
         _controlChannel = new ControlChannel(request => Dispatcher.InvokeAsync(() => commands.Execute(request)).Task);
         _ = StartWidgetsAsync(startedByWindows: AutoStart.WasStartedByWindows(e.Args));
@@ -149,6 +177,8 @@ public partial class App : Application
         _autoBackupTimer?.Stop();
         _settings?.CloseDiscarding(); // Exiting: no question to ask.
         _instanceChannel?.Dispose();
+        _trimTimer?.Stop();
+        _anchors?.Dispose();
         _controlChannel?.Dispose();
         _hotkeys?.Dispose();
         _noti?.Dispose();
@@ -210,12 +240,42 @@ public partial class App : Application
         }
     }
 
+    // After a quiet stretch following any use (a panel closed, the settings closed, the start), the memory that use took is given
+    // back (MemoryTrim). Asked again while something is in use, and while the mouse button is down (a drag).
+    private static readonly TimeSpan MemoryTrimQuiet = TimeSpan.FromSeconds(20);
+
+    private void RequestMemoryTrim()
+    {
+        if (_trimTimer is null)
+        {
+            _trimTimer = new DispatcherTimer(DispatcherPriority.ApplicationIdle, Dispatcher) { Interval = MemoryTrimQuiet };
+            _trimTimer.Tick += (_, _) =>
+            {
+                _trimTimer.Stop();
+                if (_panels?.OpenPanelName is not null || _settings is { IsVisible: true } || _noti?.InUse == true || MouseButtonIsDown())
+                {
+                    _trimTimer.Start();
+                    return;
+                }
+
+                MemoryTrim.Run();
+            };
+        }
+
+        _trimTimer.Stop();
+        _trimTimer.Start();
+    }
+
+    private static bool MouseButtonIsDown() =>
+        ((PInvoke.GetAsyncKeyState(0x01) | PInvoke.GetAsyncKeyState(0x02)) & 0x8000) != 0;
+
     // Once the widgets are up: the first-run question, then what's new if the version changed (after an update).
     private void AfterFirstShow()
     {
         var firstRun = !_configStore!.Config.AutoStartAsked;
         OfferAutoStart();
         ShowWhatsNew(firstRun);
+        RequestMemoryTrim();
     }
 
     // After an update, shows what changed since the last version the user saw (and how to use it), in the interface
@@ -331,7 +391,7 @@ public partial class App : Application
     }
 
     // The cursor is read at once: it is where the user clicked the taskbar button, not where it is a second later.
-    private static OpenMessage OpenMessageAtCursor(string name)
+    internal static OpenMessage OpenMessageAtCursor(string name)
     {
         PInvoke.GetCursorPos(out var cursor);
         return new OpenMessage(name, cursor.X, cursor.Y);
@@ -340,6 +400,16 @@ public partial class App : Application
     // A taskbar button was clicked: show that folder's panel, or the list of all folders, where it was clicked.
     private void OpenPanel(OpenMessage request)
     {
+        // The same request again within a moment is a repeat of one click (seen once in the log: two second processes 76 ms apart
+        // from a single click); taken as a second click it would close the panel the first one has just opened.
+        long now = Environment.TickCount64;
+        if (string.Equals(request.Name, _lastOpenName, StringComparison.OrdinalIgnoreCase) && now - _lastOpenTick < RepeatedOpenWindow.TotalMilliseconds)
+        {
+            Log.Info($"Ignored a repeated taskbar request for \"{request.Name}\".");
+            return;
+        }
+
+        (_lastOpenName, _lastOpenTick) = (request.Name, now);
         if (_catalog is not { } catalog)
         {
             // The widgets aren't up yet (a start at sign-in waits for the desktop): opened once the folders are read.
@@ -409,6 +479,13 @@ public partial class App : Application
             // At once, not when the file watcher reports it: a rescan in between (the control pipe does one) would otherwise
             // find the new name without the old settings and start it afresh.
             _catalog?.MoveSettings(oldName, newName);
+
+            // The shortcut made for pinning the folder under its old name would open nothing: it goes, as when a folder is deleted.
+            if (!caseOnly)
+            {
+                PinShortcut.Remove(oldName);
+            }
+
             return null;
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
@@ -703,7 +780,11 @@ public partial class App : Application
         settings.ExportSettings = () => ExportSettings(settings);
         settings.ImportSettings = () => ImportSettings(settings);
         settings.RestoreBackup = path => RestoreFromFile(settings, path, confirm: true); // One click on a date must not replace every setting unasked.
-        settings.Closed += (_, _) => _settings = null;
+        settings.Closed += (_, _) =>
+        {
+            _settings = null;
+            RequestMemoryTrim();
+        };
         _settings = settings;
         settings.NotiLand = _noti;
         settings.Show();
@@ -797,6 +878,7 @@ public partial class App : Application
         _configStore.Save();
         CheckAutoBackup();
         _noti!.Apply(config.NotiLandEnabled);
+        _anchors!.Enabled = config.InstantTaskbarButtons;
         StartWidgets();
         ApplyHotkeys(report: true);
         owner.CloseDiscarding(); // It shows the settings that were just replaced.
@@ -829,6 +911,8 @@ public partial class App : Application
         UiLanguage.Apply(config.Language);
         config.CheckForUpdatesAtStartup = choice.CheckForUpdatesAtStartup;
         config.AllowControl = choice.AllowControl;
+        config.InstantTaskbarButtons = choice.InstantTaskbarButtons;
+        _anchors!.Enabled = config.InstantTaskbarButtons;
         config.NotiLandEnabled = choice.NotiLandEnabled;
         _noti!.Apply(config.NotiLandEnabled);
         _configStore.Save();

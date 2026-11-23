@@ -974,3 +974,61 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: start the capture again on every song (does not help when the process is gone and a new one comes in between); poll the sessions all the time (wasteful: only a silent capture or a dead process asks for it).
 **Consequences**: seen on the real machine: with Apple Music closed and opened again while the meter ran, the capture was cleared at once, found the new AMPLibraryAgent about 6 seconds after it started and flowed as soon as the song played (max level 0.85). Not seen: the published app's island with this exact sequence (the harness around the real `AudioLevelMeter` was used). What made the agent restart on the owner's computer is not known; the fix covers any restart. 487 tests pass.
 **Author**: Claude (Sonnet 5.5), on the owner's answer
+
+---
+
+### 2026-11-23 — NotiLand level bars: when no session of the player is found, hear the whole system
+**Decision**: when `AudioLevelMeter` finds no audio session of the playing player (`MediaAppTarget.Plays` matches none), it captures everything but DeskGrid's own process (the capture "Everything" already uses), keeps looking for the player's session every 3 seconds and switches to it when one shows up, and, when no capture can be made at all (Windows before build 20348), follows the render devices' peak meters. The meter also says what it found (player id and name, sessions found, the capture, Windows build, and the other sessions' process / package / id when none matched) to DeskGrid's log through `BrimDeck.App.Trace`, once for each different result.
+**Reason**: the owner's bars move under Apple Music, but other users on the latest version report flat bars. The owner's machine could not show why; what the code showed is that every path needs one of the player's sessions to be recognised by its process name (`AMPLibraryAgent`), package family or id, and a miss left the bars flat for good with nothing in the log. A probe with a player that matches no session gave a flat 0 before and moved bars after the change (real meter, a tone played by another process).
+**Alternatives**: widen the Apple Music name list (guesses at what other versions call themselves); drive the bars from the device meters only (loses the flow and spectrum). Both left as they were; the log line tells which case a user is in.
+**Consequences**: while the fallback runs, sound of other programs moves the bars too. Not seen on another user's computer: whether this is their cause is not known until a log line from it is read (`NotiLand audio:` in `%LOCALAPPDATA%\DeskGrid\deskgrid.log`).
+**Author**: Claude (Sonnet 5.5), on the owner's report
+
+
+---
+
+### 2026-11-23 (2) — Taskbar buttons are answered before WPF starts
+**Decision**: `Program.Main` (new, `StartupObject`) handles `--ctl` and `--open` / `--all` before an `App` is made. For `--open` / `--all` it reads the cursor, probes the `Local\DeskGrid.SingleInstance` mutex, and when a DeskGrid runs sends the request over `DeskGrid.Open.<user>` and returns; when none runs it releases the probe and goes on to `new App().Run()` with the request in `App.EarlyOpen`. Single-file compression stays on.
+**Reason**: the owner said the pinned taskbar button stutters before the panel opens. Measured on the published exe: a second process took 271 ms (`--ctl status`), the panel then 46–160 ms in the running DeskGrid. Uncompressed the same exe took 140 ms, so the bundle's decompression is about 130 ms of it, and WPF's application and theme the rest; the 1 s that `Start-Process -Wait` shows is the tool's own overhead.
+**Alternatives**: no compression (the exe grows from 83 to 198 MB, every download and update); drop the WinForms, Design and other framework assemblies the self-contained bundle carries (about 25 MB, not trimmable the supported way for WPF); a small separate client exe for pinned buttons (NativeAOT needs the C++ build tools, which this machine does not have; a trimmed self-contained client would add 10+ MB). Left for later if 140 ms is still felt.
+**Consequences**: 271 → 140 ms per taskbar click on this machine; the panel's own 46–160 ms (the first one is the slowest) is unchanged. A real taskbar click was not tried, and neither was Explorer's own time to launch the shortcut.
+**Author**: Claude (Sonnet 5.5), on the owner's report
+
+
+---
+
+### 2026-11-23 (3) — Pinned buttons start a tiny launcher
+**Decision**: the shortcuts DeskGrid writes for the taskbar target `DeskGridOpen.exe` (new project `src/DeskGrid.Open`, .NET Framework 4.8, 6.6 KB) in `%LOCALAPPDATA%\DeskGrid`, put there by `OpenLauncher.Install` from a copy embedded in DeskGrid.exe. It passes the request to the running DeskGrid over the existing pipe, or starts DeskGrid.exe (path in `DeskGridOpen.target`) when the single-instance mutex does not exist. DeskGrid.exe keeps its own `Program.Main` fast path for buttons pinned earlier. The launcher is not in the solution file.
+**Reason**: after 2026-11-23 (2) the owner still found the button slow. Measured with real clicks, click to panel took about 190 ms through DeskGrid.exe, almost all of it the 83 MB single-file exe unpacking itself; a 4.6 KB trial launcher took 77 ms. Also seen in the log once: a single click started two second processes 76 ms apart, so a repeated request within 300 ms is now ignored (`App.OpenPanel`).
+**Alternatives**: a NativeAOT launcher (needs the C++ build tools, not installed here); a trimmed self-contained .NET launcher (10+ MB more in the exe, about 60 ms of its own); uncompressed single file (83 → 198 MB); rewriting the shortcuts the user has already pinned (not done: they are the user's files, and a change to them was refused).
+**Consequences**: 190 → about 80 ms click to panel for a button pinned from now on; buttons pinned before keep the 190 ms until pinned again from Settings → Taskbar. A second small exe lives in DeskGrid's folder (updated at every start). Not tried: a real click on a button pinned with the launcher; a moved DeskGrid.exe while DeskGrid is not running (the launcher then does nothing until DeskGrid is started once).
+**Author**: Claude (Sonnet 5.5), on the owner's report
+
+
+---
+
+### 2026-11-23 (4) — Opening a panel reads only the screen around it
+**Decision**: `PanelGlass` captures the panel's rectangle grown by 240 px (clamped to the monitor's work area) instead of the whole work area; the monitor is still remembered as the work area (`_screenArea`) so a panel that moves to another monitor keeps its glass as before.
+**Reason**: the goal was a pinned taskbar button as fast as a click on a desktop widget. Timing logs on the real machine showed the panel's own opening was the larger part of both (44 ms: 18 ms of it reading the 1920×1032 work area, 4 ms building the window, 10 ms in `Show()`), and the process start the taskbar needs about 35 ms (a trivial native process takes as long here). Reading about a third as much screen cuts the 18 ms to 5.
+**Alternatives**: a pre-built hidden panel kept ready (a large change to a 1,500-line class whose state depends on the folder, anchor and theme); starting the capture on a worker thread while the window is built (about 4 ms, more moving parts); a window of DeskGrid's own for each pinned button, which the taskbar would activate instead of starting a program (no launch at all, but the button shows as running with a thumbnail, and Alt+Tab lists it: a change to how the taskbar looks, to be decided by the owner).
+**Consequences**: median click to panel, real clicks, 10 each: desktop widget 47 ms (was 62), pinned button about 70 ms (was about 90), two slow outliers on the desktop (112, 142 ms). A panel that grows more than 240 px past its first size while something is dragged in repeats the picture's edge there. Not seen: another monitor or DPI.
+**Author**: Claude (Sonnet 5.5), on the owner's goal
+
+
+---
+
+### 2026-11-23 (5) — Pinned buttons open the panel through a window of DeskGrid's own
+**Decision**: `TaskbarAnchors` keeps a minimized, cloaked, iconic top-level window with the AppUserModelID of every pinned DeskGrid button, so a click on the button is a message to DeskGrid (`SC_RESTORE`) instead of a program to start; the answer opens the panel and leaves the window minimized. New setting `instantTaskbarButtons`, on by default, part of backup and restore, in Settings → Shortcuts.
+**Reason**: the owner's goal was a pinned button as fast as a click on a desktop folder. After 2026-11-23 (4) the button was about 70 ms against the desktop's 47, the difference being Windows starting the launcher, which no launcher can shorten (a trivial native process takes as long here). A click reaching a window that already exists takes 7-22 ms (a throwaway prototype first, then the real thing).
+**Alternatives**: a native launcher (no C++ build tools here, and the floor of starting any process is the same); a pre-built hidden panel (does nothing for the launch); leaving the button as it was (the owner's goal asked for "thoroughly").
+**Consequences**: median click to the panel's first pixels on screen, real clicks, 10 each: button 58 ms, desktop folder 66 ms. The button now shows as running (a dot under it): a visible change to the owner's taskbar, which the setting undoes; **"on by default" is the author's choice for the owner's goal and is the owner's to change**. Not seen: thumbnails on hover, several taskbars, Win+number, an Explorer restart; the first click after a long pause was slower twice in ten (about 150 ms). 509 tests pass.
+**Author**: Claude (Sonnet 5.5), on the owner's goal
+
+---
+
+### 2026-11-23 (6) — Memory: the bundle is not compressed, and the memory a use took is given back when idle
+**Decision**: (1) the single-file exe is published without compression (`EnableCompressionInSingleFile` false); (2) `MemoryTrim` runs 20 s after any use (a panel closed, the settings closed, the start) unless a panel, NotiLand, the settings or a drag is in use; (3) `context/memory.md` (+ `memory.zh-TW.md`) holds the numbers, the rules and how to measure; (4) a `--ctl memory` command reports the heap, the working set and the private memory. Nothing a user can do changed.
+**Reason**: the owner asked for less memory with no change of function or speed, from architecture and logic only. Measured on the real machine: the .NET heap is 9-17 MB, but private memory was 195 MB; the same program with an uncompressed bundle had 127 MB, so unpacking every assembly into private memory at the start cost 68 MB (and 130 MB of working set, and about 130 ms of each start). A panel that had been opened left about 90 MB of working set for minutes (until NotiLand's own clean-up, up to 5 min later). 40 openings and closings left no leak (7 MB above the start after a clean-up, handles back to what they were).
+**Alternatives**: software rendering for the panel (changes the speed, and the acrylic can turn black, see `CLAUDE.md`); smaller icon pictures or no icon cache (slower panels); leaving out unused framework assemblies from the bundle (about 25 MB of WinForms and Design, not tried: a missing assembly would only show at run time in a rarely used path); releasing Direct3D after a panel closes (not controllable from WPF). The trim of the working set only changes what Task Manager shows if the pages come back at once: measured, the first panel after it opens in 57-65 ms against 56-70 ms warm.
+**Consequences**: private memory at idle 195 → 129 MB, after a panel was closed 231 → 141 MB, working set at the start 375 → 245 MB, working set after a panel 139-147 MB for minutes → 16 MB 27 s later; every start about 130 ms faster. The cost is the exe: about 189 MB instead of 83 MB (the release asset and every update download), to be said in the release notes. Functions checked before and after with the same 21 checks (every folder's panel, the list, a real click on the pinned button and on a desktop folder, creating, filling, renaming and deleting a folder, NotiLand, the log): 21 of 21 both times; 515 tests pass.
+**Author**: Claude (Sonnet 5.5), on the owner's goal

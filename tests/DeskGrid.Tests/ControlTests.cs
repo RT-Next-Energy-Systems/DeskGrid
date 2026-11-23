@@ -284,6 +284,18 @@ public sealed class ControlCommandsTests : IDisposable
     }
 
     [Fact]
+    public void Memory_ReportsWhatTheProcessHolds()
+    {
+        var memory = Run("memory");
+
+        Assert.True(memory.Ok);
+        Assert.True(memory.Result!["privateMB"]!.GetValue<long>() > 0);
+        Assert.True(memory.Result["workingSetMB"]!.GetValue<long>() > 0);
+        Assert.True(memory.Result["managedMB"]!.GetValue<long>() >= 0);
+        Assert.Contains("Usage: memory", Run("memory", "x").Error);
+    }
+
+    [Fact]
     public void WhileStarting_FolderCommandsWait()
     {
         _host.Ready = false;

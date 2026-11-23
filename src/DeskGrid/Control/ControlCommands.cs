@@ -53,6 +53,7 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
         ("move <folder> <item> <index>", "Puts an item at a position (0 = first) in its folder's order."),
         ("open [folder]", "Opens a folder's panel next to its widget, or the list of all folders."),
         ("close", "Closes the open panel."),
+        ("memory", "Memory in use: the managed heap, what the garbage collector holds, the working set and the private memory (MB)."),
     ];
 
     public ControlResponse Execute(ControlRequest request)
@@ -67,6 +68,7 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
         return request.Command switch
         {
             "status" => Status(),
+            "memory" when args.Count == 0 => Memory(),
             "list" when args.Count <= 1 => List(args.Count == 1 ? args[0] : null),
             "new" when args.Count == 1 => New(args[0]),
             "rename" when args.Count == 2 => Rename(args[0], args[1]),
@@ -88,6 +90,27 @@ internal sealed class ControlCommands(IControlHost host, IEnumerable<string> des
         ["path"] = folder.FullPath,
         ["items"] = new JsonArray([.. folder.Items.Select(item => (JsonNode)new JsonObject { ["name"] = item.Name, ["path"] = item.FullPath })]),
     };
+
+    // What DeskGrid holds: the managed heap and what the process has committed, to check a change against context/memory.md.
+    private static ControlResponse Memory()
+    {
+        var info = GC.GetGCMemoryInfo(GCKind.Any);
+        using var proc = System.Diagnostics.Process.GetCurrentProcess();
+        var gens = new List<long>(); foreach (var g in info.GenerationInfo) gens.Add(g.SizeAfterBytes / 1048576);
+        return ControlResponse.Success(new JsonObject
+        {
+            ["managedMB"] = GC.GetTotalMemory(false) / 1048576,
+            ["gcHeapMB"] = info.HeapSizeBytes / 1048576,
+            ["gcCommittedMB"] = info.TotalCommittedBytes / 1048576,
+            ["fragmentedMB"] = info.FragmentedBytes / 1048576,
+            ["gens"] = string.Join(",", gens),
+            ["assemblies"] = AppDomain.CurrentDomain.GetAssemblies().Length,
+            ["workingSetMB"] = proc.WorkingSet64 / 1048576,
+            ["privateMB"] = proc.PrivateMemorySize64 / 1048576,
+            ["gcMode"] = System.Runtime.GCSettings.IsServerGC ? "server" : "workstation",
+            ["concurrent"] = System.Runtime.GCSettings.LatencyMode.ToString(),
+        });
+    }
 
     private ControlResponse Status() => ControlResponse.Success(new JsonObject
     {

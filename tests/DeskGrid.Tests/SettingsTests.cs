@@ -53,6 +53,13 @@ public sealed class WidgetFolderNameTests : IDisposable
     public void Dispose() => _root.Dispose();
 
     [Fact]
+    public void Validate_RefusesANameThatIsTooLong()
+    {
+        Assert.NotNull(WidgetFolderName.Validate(_root.Path, new string('a', 300)));
+        Assert.Null(WidgetFolderName.Validate(_root.Path, new string('a', 50)));
+    }
+
+    [Fact]
     public void Suggest_NumbersTheDefaultNameWhenTaken()
     {
         Assert.Equal(Strings.NewFolderDefaultName, WidgetFolderName.Suggest(_root.Path));
@@ -344,6 +351,28 @@ public sealed class SettingsWindowTests : IDisposable
             window.AllowControlBox.IsChecked = !initial;
             window.ApplyButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
             return (shown, choice?.AllowControl);
+        });
+
+        Assert.Equal(initial, shown);
+        Assert.Equal(!initial, applied);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task InstantTaskbarButtons_ShowsTheSetting_AndApplyReportsItFlipped(bool initial)
+    {
+        var (shown, applied) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var window = new SettingsWindow(new AppConfig { RootPath = _root.Path, InstantTaskbarButtons = initial });
+            SettingsChoice? choice = null;
+            window.Applied += (_, c) => choice = c;
+            window.Show();
+            var shown = window.InstantTaskbarBox.IsChecked == true;
+            window.InstantTaskbarBox.IsChecked = !initial;
+            window.ApplyButton.RaiseEvent(new System.Windows.RoutedEventArgs(System.Windows.Controls.Primitives.ButtonBase.ClickEvent));
+            return (shown, choice?.InstantTaskbarButtons);
         });
 
         Assert.Equal(initial, shown);

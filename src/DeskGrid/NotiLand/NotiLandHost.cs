@@ -14,7 +14,13 @@ internal sealed class NotiLandHost : IDisposable
     private global::BrimDeck.App? _app;
     private NotiLandSettings? _settings;
     private bool _stopping;
+
+    // What the setting says now: turned on again while NotiLand was still powering off, it starts once it has stopped.
+    private bool _wanted;
     private bool _disposed;
+
+    /// <summary>Whether someone is using NotiLand's panels or settings now.</summary>
+    public bool InUse => _app?.InUse ?? false;
 
     /// <summary>Whether NotiLand runs now.</summary>
     public bool IsRunning => _app is not null;
@@ -33,6 +39,7 @@ internal sealed class NotiLandHost : IDisposable
             return;
         }
 
+        _wanted = enabled;
         if (enabled)
         {
             Start();
@@ -83,6 +90,7 @@ internal sealed class NotiLandHost : IDisposable
             return;
         }
 
+        global::BrimDeck.App.Trace = Log.Info;
         Guard("started", () =>
         {
             if (global::BrimDeck.App.StartHosted(English) is not { } app)
@@ -122,6 +130,10 @@ internal sealed class NotiLandHost : IDisposable
         _app = null;
         _stopping = false;
         StateChanged?.Invoke();
+        if (_wanted && !_disposed)
+        {
+            Start();
+        }
     }
 
     // NotiLand is someone else's code: whatever it throws must not take DeskGrid down.

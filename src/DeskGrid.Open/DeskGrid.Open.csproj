@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The program a pinned taskbar button starts (see Program.cs). Windows 10 and 11 ship .NET Framework 4.8, so this needs no
+       runtime of its own and starts in a few milliseconds, where the DeskGrid.exe it hands over to spends about 130 ms
+       unpacking itself. DeskGrid.csproj embeds the built exe and writes it to %LOCALAPPDATA%\DeskGrid when a button is pinned. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>DeskGridOpen</AssemblyName>
+    <RootNamespace>DeskGrid.Open</RootNamespace>
+    <Optimize>true</Optimize>
+    <DebugType>none</DebugType>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <!-- One fixed place whatever the configuration, which DeskGrid.csproj embeds from. -->
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <OutputPath>$(MSBuildThisFileDirectory)..\..\artifacts\open\</OutputPath>
+    <IntermediateOutputPath>$(MSBuildThisFileDirectory)obj\$(Configuration)\</IntermediateOutputPath>
+  </PropertyGroup>
+
+</Project>

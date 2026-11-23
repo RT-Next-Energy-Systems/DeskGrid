@@ -42,6 +42,7 @@ The code is BrimDeck's own. Only what the integration needs was changed:
 - **One screenshot, one copy** (2026-11-21): the snipping tool writes the same picture to the clipboard twice about 125 ms apart;
   `ShelfService.Copied` keeps it once (`ClipDuplicates`).
 - **A capture that hears nothing, or whose process ended, is replaced** (2026-11-21): `CaptureWatch`, `AudioLevelMeter.Retarget`, `Alive`, `FindPlayingPid`; see `context/decisions.md` (2026-11-21 (4) and (5)).
+- **No session of the player found = hear the whole system** (2026-11-23): `AudioLevelMeter.Enumerate` (capture of everything but this process, the devices' peak meters without a capture), `App.Trace` (the meter's findings go to the host's log); see `context/decisions.md` (2026-11-23).
 - **Styles stay in BrimDeck's windows** (`DeckResources.xaml`, was `App.xaml`; `DeckResources.cs`; `DeckWindow.cs`): its implicit styles
   (Button, TextBox, ScrollBar, ToolTip, ...) would restyle DeskGrid's own windows if they were the application's resources. They are
   one shared `ResourceDictionary` that every BrimDeck window merges into its own resources (`DeckWindow` is the base of all of

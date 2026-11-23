@@ -63,6 +63,26 @@ public sealed class NotiLandTests : IDisposable
         Assert.True(gone);
     }
 
+    // Turned off and on again at once, while it is still powering off: it must end up running, as the setting says.
+    [Fact]
+    public async Task TurnedOnAgainWhileStopping_NotiLandRunsAgainOnceItHasStopped()
+    {
+        var running = await await _ui.InvokeAsync(async () =>
+        {
+            TestApplication.Ensure();
+            var host = new DeskGrid.NotiLand.NotiLandHost();
+            host.Apply(true);
+            host.Apply(false);
+            host.Apply(true);
+            await Task.Delay(5000); // Longer than it takes to power off.
+            var result = host.IsRunning && global::BrimDeck.App.Instance is not null;
+            host.Dispose();
+            return result;
+        });
+
+        Assert.True(running);
+    }
+
     // NotiLand's own settings (BrimDeck's pages) are entries of the list below "NotiLand" while it runs, shown on the right, and gone when it stops.
     [Fact]
     public async Task NotiLandPages_AreListedBelowNotiLand_WhileItRuns_AndGoWhenItStops()

@@ -216,6 +216,15 @@
   <data name="SettingsAllowControl" xml:space="preserve">
     <value>允許腳本與 AI agent 控制</value>
   </data>
+  <data name="SettingsInstantTaskbar" xml:space="preserve">
+    <value>工作列按鈕即時開啟</value>
+  </data>
+  <data name="ConfigLocked" xml:space="preserve">
+    <value>無法讀取設定檔（可能有其他程式正在使用它）：
+{0}
+
+為了不覆蓋你的設定，DeskGrid 沒有啟動。請稍後再試一次。</value>
+  </data>
   <data name="SettingsIsland" xml:space="preserve">
     <value>顯示 NotiLand</value>
   </data>

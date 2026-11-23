@@ -125,6 +125,7 @@ public sealed class ConfigPorterTests : IDisposable
             AutoBackupDays = 14,
             CheckForUpdatesAtStartup = false,
             AllowControl = true,
+            InstantTaskbarButtons = false,
             NotiLandEnabled = true,
             FolderOrder = ["Work", "Games"],
         };

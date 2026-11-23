@@ -28,6 +28,29 @@ public sealed class OpenRequestTests
     public void AllFoldersArguments_ParseToAllFolders() =>
         Assert.Equal(OpenRequest.AllFolders, OpenRequest.Parse([OpenRequest.AllFoldersArguments]));
 
+    [Theory]
+    [InlineData("--all", "*")]
+    [InlineData("  --all ", "*")]
+    [InlineData("--open \"Dev tools\"", "Dev tools")]
+    [InlineData("--OPEN \"開發工具\"", "開發工具")]
+    public void ParseArguments_ReadsWhatAShortcutStores(string arguments, string expected) =>
+        Assert.Equal(expected, OpenRequest.ParseArguments(arguments));
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("--open")]
+    [InlineData("--open Dev")]
+    [InlineData("--open \"\"")]
+    [InlineData("--other \"Dev\"")]
+    public void ParseArguments_ReturnsNull_WhenNotAnOpenRequest(string arguments) =>
+        Assert.Null(OpenRequest.ParseArguments(arguments));
+
+    [Theory]
+    [InlineData("Dev tools")]
+    [InlineData("開發工具")]
+    public void ParseArguments_UndoesArguments(string folder) =>
+        Assert.Equal(folder, OpenRequest.ParseArguments(OpenRequest.Arguments(folder)));
+
     [Fact]
     public void AllFolders_IsNoValidFolderName() =>
         Assert.Contains(OpenRequest.AllFolders, new string(System.IO.Path.GetInvalidFileNameChars()));

@@ -136,7 +136,10 @@ Tray menu → **Settings…**:
   If an item can't be moved, the folder is kept.
 - **Background** of a panel.
 - **Taskbar**: **Pin all folders…** makes the shortcut for one taskbar button that lists every folder; drag it
-  onto the taskbar yourself (Windows only lets you do the pinning).
+  onto the taskbar yourself (Windows only lets you do the pinning). **Instant taskbar buttons** (on by default) makes
+  a pinned button open its panel about as fast as a folder on the desktop, by keeping a small hidden window for each
+  pinned button; Windows then marks the button as running (a dot under it). Turn it off and the button starts a small
+  program instead, which takes a few tens of milliseconds longer.
 - **Check for updates**: looks for a newer release. If there is one you can update (downloads it, checks its SHA-256,
   and restarts into the new version), keep the current version (not asked about this release again), or cancel
   (asked again next start).
@@ -189,6 +192,7 @@ DeskGrid.exe --ctl <command> [arguments]
 | `move <folder> <item> <index>` | Puts an item at a position (0 = first) in its folder. |
 | `open [folder]` | Opens a folder's panel next to it, or the list of all folders. |
 | `close` | Closes the open panel. |
+| `memory` | Memory in use: the managed heap, what the garbage collector holds, the working set and the private memory (MB). |
 
 Each command prints one line of JSON, `{"ok":true,"result":…}` or `{"ok":false,"error":"…"}`, with characters outside
 ASCII written as `\uXXXX`, and exits with 0 (done), 1 (the command failed), 2 (DeskGrid is not running) or 3 (wrong

@@ -11,6 +11,12 @@ public sealed partial class App
 {
     internal static bool ManagedByDeskGrid => true;
 
+    /// <summary>Where the audio level meter says what it found (which sessions, which capture); the host writes it to its log. May be called on any thread.</summary>
+    public static Action<string>? Trace { get; set; }
+
+    /// <summary>Whether someone is using NotiLand now (a panel is open or being resized, or its settings are shown): the host leaves its memory alone then.</summary>
+    public bool InUse => !Exiting && (Decks.Any(deck => deck.IsExpanded || deck.IsResizing) || _settingsPages is { IsVisible: true });
+
     private EventWaitHandle? _quitEvent;
 
     private string? _hostLanguage;

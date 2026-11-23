@@ -21,6 +21,12 @@ internal static partial class WidgetFolderName
         }
 
         var path = Path.Combine(rootPath, name);
+        // Too long for Windows (a name of 255, or a path of 259 with room for the items inside): it would fail with the system's own message.
+        if (name.Length > 100 || path.Length > 200)
+        {
+            return Strings.NewFolderInvalidName;
+        }
+
         return Directory.Exists(path) || File.Exists(path) ? Strings.NewFolderExists : null;
     }
 

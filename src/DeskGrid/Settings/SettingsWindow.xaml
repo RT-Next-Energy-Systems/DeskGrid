@@ -223,6 +223,12 @@
 
           <Border Style="{StaticResource Card}">
             <StackPanel>
+              <CheckBox x:Name="InstantTaskbarBox" MinWidth="0" />
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource Card}">
+            <StackPanel>
               <CheckBox x:Name="AllowControlBox" MinWidth="0" />
             </StackPanel>
           </Border>

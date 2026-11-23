@@ -147,6 +147,32 @@ public sealed class LiquidGlassTests
     }
 
     [Fact]
+    public void Inflate_GrowsEverySide_ButNotOutOfTheBounds()
+    {
+        Assert.Equal(new ScreenRect(30, 20, 170, 140), PanelGlass.Inflate(Window, 10, Area));
+        Assert.Equal(Area, PanelGlass.Inflate(Window, 500, Area));
+        Assert.Equal(new ScreenRect(0, 0, 50, 40), PanelGlass.Inflate(new ScreenRect(0, 0, 40, 30), 10, Area));
+    }
+
+    [Fact]
+    public void Render_FromOnlyThePartAroundThePanel_IsTheSameAsFromTheWholeScreen()
+    {
+        // What the panel takes: the part of the screen around it, not all of it (reading all of it took 18 ms of opening a panel).
+        var whole = Ramp();
+        var part = PanelGlass.Inflate(Window, 20, Area);
+        var bgra = new byte[part.Width * part.Height * 4];
+        for (var y = 0; y < part.Height; y++)
+        {
+            Array.Copy(whole.Bgra, ((part.Top + y) * Area.Width + part.Left) * 4, bgra, y * part.Width * 4, part.Width * 4);
+        }
+
+        var fromWhole = LiquidGlass.Render(whole, Window, Clear);
+        var fromPart = LiquidGlass.Render(new ScreenImage(part, bgra), Window, Clear);
+
+        Assert.Equal(fromWhole, fromPart);
+    }
+
+    [Fact]
     public void Render_IsTheSameEveryTime()
     {
         Assert.Equal(LiquidGlass.Render(Ramp(), Window, Clear), LiquidGlass.Render(Ramp(), Window, Clear));
