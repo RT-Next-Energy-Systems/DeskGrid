@@ -141,8 +141,5 @@ GetWindowTextLength
 SwitchToThisWindow
 FindWindowEx
 GetPackageFamilyName
-SHGetPropertyStoreForWindow
-PropVariantClear
-EnumThreadWindows
 SetProcessWorkingSetSize
 GetCurrentProcess

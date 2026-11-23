@@ -44,50 +44,6 @@ internal static class ShortcutFile
     }
 
     /// <summary>
-    /// The arguments and the AppUserModelID of <paramref name="shortcutPath"/> (either may be <see langword="null"/> or empty), or
-    /// <see langword="null"/> if it can't be read.
-    /// </summary>
-    public static unsafe (string Arguments, string? AppUserModelId)? TryReadLaunch(string shortcutPath)
-    {
-        var link = (IShellLinkW)new ShellLink();
-        try
-        {
-            ((IPersistFile)link).Load(shortcutPath, STGM.STGM_READ);
-            Span<char> arguments = stackalloc char[1024];
-            fixed (char* buffer = arguments)
-            {
-                link.GetArguments(buffer, arguments.Length);
-            }
-
-            string? appId = null;
-            var properties = (IPropertyStore)link;
-            properties.GetValue(PInvoke.PKEY_AppUserModel_ID, out var value);
-            try
-            {
-                if (value.Anonymous.Anonymous.vt == VARENUM.VT_LPWSTR && value.Anonymous.Anonymous.Anonymous.pwszVal.Value is not null)
-                {
-                    appId = new string(value.Anonymous.Anonymous.Anonymous.pwszVal.Value);
-                }
-            }
-            finally
-            {
-                PInvoke.PropVariantClear(ref value);
-            }
-
-            var length = arguments.IndexOf('\0');
-            return (new string(length >= 0 ? arguments[..length] : arguments), appId);
-        }
-        catch (Exception exception) when (exception is COMException or IOException or UnauthorizedAccessException)
-        {
-            return null;
-        }
-        finally
-        {
-            Marshal.ReleaseComObject(link);
-        }
-    }
-
-    /// <summary>
     /// Creates <paramref name="shortcutPath"/>, a shortcut to the Shell item <paramref name="idList"/> (an absolute
     /// identifier list): for things that have no file path, like the apps of the Start menu.
     /// </summary>

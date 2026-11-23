@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.5
+
+### Changed
+
+- **No more line under a pinned taskbar button.** 0.9.4 kept a hidden window for each pinned button so a click was instant, and Windows marks such a button as running (a line under it). That is gone, and so is the setting **Instant taskbar buttons**: a button starts the small launcher again, about 20 ms slower than a folder on the desktop (77-93 ms).
+
+### Fixed
+
+- A second click on a taskbar button on another monitor did not close the panel, it opened it again. It closes it now, on every monitor.
+
+### How to use
+
+- Nothing to set. A button you pinned works as before; if you unticked or ticked **Instant taskbar buttons**, the setting is gone and ignored.
+
 ## 0.9.4
 
 ### Added

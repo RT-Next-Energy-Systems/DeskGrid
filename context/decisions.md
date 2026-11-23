@@ -1032,3 +1032,13 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: software rendering for the panel (changes the speed, and the acrylic can turn black, see `CLAUDE.md`); smaller icon pictures or no icon cache (slower panels); leaving out unused framework assemblies from the bundle (about 25 MB of WinForms and Design, not tried: a missing assembly would only show at run time in a rarely used path); releasing Direct3D after a panel closes (not controllable from WPF). The trim of the working set only changes what Task Manager shows if the pages come back at once: measured, the first panel after it opens in 57-65 ms against 56-70 ms warm.
 **Consequences**: private memory at idle 195 → 129 MB, after a panel was closed 231 → 141 MB, working set at the start 375 → 245 MB, working set after a panel 139-147 MB for minutes → 16 MB 27 s later; every start about 130 ms faster. The cost is the exe: about 189 MB instead of 83 MB (the release asset and every update download), to be said in the release notes. Functions checked before and after with the same 21 checks (every folder's panel, the list, a real click on the pinned button and on a desktop folder, creating, filling, renaming and deleting a folder, NotiLand, the log): 21 of 21 both times; 515 tests pass.
 **Author**: Claude (Sonnet 5.5), on the owner's goal
+
+---
+
+### 2026-11-23 (7) — The taskbar anchor windows are removed
+**Decision**: `TaskbarAnchors` (decision (5)), its setting `instantTaskbarButtons` and `ShortcutFile.TryReadLaunch` are deleted. A pinned button starts the small launcher again, as in decision (4).
+**Reason**: the owner did not want the line Windows draws under a button that has a window, which no setting of ours can hide (the window is what makes the click fast), and asked for it to be off for everyone, not an option. The anchor also failed to close a panel on a second click on a taskbar of a second monitor.
+**Alternatives**: keeping it as an option that is off by default (a stored "on" from 0.9.4 would keep the line until unticked).
+**Consequences**: a button is about 20 ms slower than a desktop folder (launcher, 77-93 ms against 58 ms); no line under the button. An old `instantTaskbarButtons` in a config file is ignored. A second click on a taskbar button of another monitor now also closes the panel (`PanelController.CursorIsOnTaskbar`: no foreground window is set there when the panel closes).
+**Author**: Claude (Sonnet 5.5), on the owner's request
+

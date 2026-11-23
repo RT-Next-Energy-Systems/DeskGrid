@@ -54,12 +54,6 @@ internal sealed class AppConfig
     /// </summary>
     public bool AllowControl { get; set; }
 
-    /// <summary>
-    /// Whether the buttons the user pinned to the taskbar open their panel at once (<c>TaskbarAnchors</c>: DeskGrid keeps a hidden window for
-    /// each, which Windows then marks as running) instead of starting a program that has to reach DeskGrid first, about 35 ms slower.
-    /// </summary>
-    public bool InstantTaskbarButtons { get; set; } = true;
-
     /// <summary>Whether NotiLand (BrimDeck, the island at the top of the screen) runs along with DeskGrid. Off until the user turns it on.</summary>
     [JsonPropertyName("islandEnabled")]
     public bool NotiLandEnabled { get; set; }
@@ -115,7 +109,6 @@ internal sealed class AppConfig
         AutoBackupDays = other.AutoBackupDays;
         CheckForUpdatesAtStartup = other.CheckForUpdatesAtStartup;
         AllowControl = other.AllowControl;
-        InstantTaskbarButtons = other.InstantTaskbarButtons;
         NotiLandEnabled = other.NotiLandEnabled;
 
         FolderOrder = [.. other.FolderOrder];

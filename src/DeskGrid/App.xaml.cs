@@ -50,7 +50,6 @@ public partial class App : Application
     private WidgetCatalog? _catalog;
     private SettingsWindow? _settings;
     private InstanceChannel? _instanceChannel;
-    private TaskbarAnchors? _anchors;
     private DispatcherTimer? _trimTimer;
     private ControlChannel? _controlChannel;
     private HotkeyService? _hotkeys;
@@ -159,7 +158,6 @@ public partial class App : Application
         ApplyHotkeys(report: false);
         _pendingOpen = openRequest;
         _instanceChannel = new InstanceChannel(message => Dispatcher.BeginInvoke(() => OpenPanel(message)));
-        _anchors = new TaskbarAnchors(OpenPanel) { Enabled = _configStore.Config.InstantTaskbarButtons };
         var commands = new ControlCommands(new ControlHost(this), FolderPaths.Desktops);
         _controlChannel = new ControlChannel(request => Dispatcher.InvokeAsync(() => commands.Execute(request)).Task);
         _ = StartWidgetsAsync(startedByWindows: AutoStart.WasStartedByWindows(e.Args));
@@ -178,7 +176,6 @@ public partial class App : Application
         _settings?.CloseDiscarding(); // Exiting: no question to ask.
         _instanceChannel?.Dispose();
         _trimTimer?.Stop();
-        _anchors?.Dispose();
         _controlChannel?.Dispose();
         _hotkeys?.Dispose();
         _noti?.Dispose();
@@ -878,7 +875,6 @@ public partial class App : Application
         _configStore.Save();
         CheckAutoBackup();
         _noti!.Apply(config.NotiLandEnabled);
-        _anchors!.Enabled = config.InstantTaskbarButtons;
         StartWidgets();
         ApplyHotkeys(report: true);
         owner.CloseDiscarding(); // It shows the settings that were just replaced.
@@ -911,8 +907,6 @@ public partial class App : Application
         UiLanguage.Apply(config.Language);
         config.CheckForUpdatesAtStartup = choice.CheckForUpdatesAtStartup;
         config.AllowControl = choice.AllowControl;
-        config.InstantTaskbarButtons = choice.InstantTaskbarButtons;
-        _anchors!.Enabled = config.InstantTaskbarButtons;
         config.NotiLandEnabled = choice.NotiLandEnabled;
         _noti!.Apply(config.NotiLandEnabled);
         _configStore.Save();

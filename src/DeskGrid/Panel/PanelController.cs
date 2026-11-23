@@ -209,7 +209,7 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
 
             PanelClosed?.Invoke(this, EventArgs.Empty);
 
-            if (TaskbarIsForeground())
+            if (TaskbarIsForeground() || CursorIsOnTaskbar())
             {
                 _closedForTaskbar = (panel.IsFolderList ? ListKey : panel.Folder?.Name ?? "", Environment.TickCount64);
             }
@@ -235,11 +235,22 @@ internal sealed class PanelController(ConfigStore configStore, IconService icons
             && Environment.TickCount64 - c.Time < TaskbarRequestDelay.TotalMilliseconds;
     }
 
-    private static unsafe bool TaskbarIsForeground()
+    private static unsafe bool TaskbarIsForeground() => IsTaskbar(PInvoke.GetForegroundWindow());
+
+    // The taskbar on a second monitor does not always hold the foreground yet when the panel closes (measured: no
+    // foreground window at all), so where the cursor is says the click was on a taskbar too.
+    private static bool CursorIsOnTaskbar()
+    {
+        PInvoke.GetCursorPos(out var cursor);
+        var window = PInvoke.WindowFromPoint(cursor);
+        return !window.IsNull && IsTaskbar(PInvoke.GetAncestor(window, Windows.Win32.UI.WindowsAndMessaging.GET_ANCESTOR_FLAGS.GA_ROOT));
+    }
+
+    private static unsafe bool IsTaskbar(Windows.Win32.Foundation.HWND window)
     {
         const int MaxLength = 64;
         var name = stackalloc char[MaxLength];
-        var length = PInvoke.GetClassName(PInvoke.GetForegroundWindow(), name, MaxLength);
+        var length = PInvoke.GetClassName(window, name, MaxLength);
         return new ReadOnlySpan<char>(name, length) is "Shell_TrayWnd" or "Shell_SecondaryTrayWnd";
     }
 }

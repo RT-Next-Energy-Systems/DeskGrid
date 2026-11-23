@@ -136,10 +136,7 @@ Tray menu → **Settings…**:
   If an item can't be moved, the folder is kept.
 - **Background** of a panel.
 - **Taskbar**: **Pin all folders…** makes the shortcut for one taskbar button that lists every folder; drag it
-  onto the taskbar yourself (Windows only lets you do the pinning). **Instant taskbar buttons** (on by default) makes
-  a pinned button open its panel about as fast as a folder on the desktop, by keeping a small hidden window for each
-  pinned button; Windows then marks the button as running (a dot under it). Turn it off and the button starts a small
-  program instead, which takes a few tens of milliseconds longer.
+  onto the taskbar yourself (Windows only lets you do the pinning).
 - **Check for updates**: looks for a newer release. If there is one you can update (downloads it, checks its SHA-256,
   and restarts into the new version), keep the current version (not asked about this release again), or cancel
   (asked again next start).
