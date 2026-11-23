@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.6
+
+### Added
+
+- **Three more devices show their battery on NotiLand's devices page:** the Poly Voyager 8200 UC (behind its BT600 adapter), the MOJHON GALE2 gamepad (2.4 GHz) and the EPOS H3PRO Hybrid (dongle or cable). Their protocols come from open-source projects (HaloBattery, vigil-watt, HeadsetControl) and every frame is checked in tests, but they have **not been run on the real devices yet**: if one does not show, or shows a wrong level, report it with its vendor and product id.
+
+### How to use
+
+- Nothing to set. With NotiLand on (**Settings → NotiLand**), plug in or turn on the device and it appears on the devices page. A keyboard or mouse whose model is not listed is not read: 2.4 GHz receivers have no common standard, so each model needs an entry of its own.
+
 ## 0.9.5
 
 ### Changed

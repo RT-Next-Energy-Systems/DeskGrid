@@ -1044,3 +1044,11 @@
 **後果**：按鈕比桌面資料夾慢約 20 ms（啟動器 77-93 ms，對照 58 ms）；按鈕下方沒有線。設定檔裡舊的 `instantTaskbarButtons` 會被忽略。在另一個螢幕的工作列上第二次點擊按鈕，現在也會關掉面板（`PanelController.CursorIsOnTaskbar`：面板關閉時那裡沒有設定前景視窗）。
 **作者**：Claude (Sonnet 5.5)，依擁有者的要求
 
+---
+
+### 2026-11-23 (8) — 再多幾種電量讀法，只做來源有印出封包的
+**決定**：BrimDeck 新增三個品牌家族（`PlantronicsBt600`、`Mojhon`、`EposH3Pro`），每個只認確切的廠商 ID、產品 ID 與集合形狀。封包來自有印出來的來源（HaloBattery 與 vigil-watt，MIT；HeadsetControl，GPL，只取事實、沒有複製程式碼），並逐位元組測試。沒有加的：Turtle Beach（回答是分在好幾個報告裡的 JSON 記錄，Stealth 700 Gen 3 還要走 CoAP 隧道：超過無狀態解析能處理的範圍，這裡也沒有設備能試）、Nintendo 手把（藍牙子命令）、DJI Mic Mini 2（WinUSB）、Haute42 的轉接器（靠韌體字串辨認，不是靠 ID）、沒有電量的有線耳機（Cloud Alpha S、Elo 7.1）。
+**原因**：擁有者要求盡可能納入所有設備。把 BrimDeck 的家族和 HaloBattery、vigil-watt、HeadsetControl 的設備清單比對後，發現幾乎都已經有了，剩下的就是上面列的。猜出來的協定會把封包送給根本沒打算收的設備，所以一個都不做。
+**其他做法**：從 HeadsetControl 複製 GPL 程式碼（不採用：DeskGrid 是 MIT；和其他家族一樣只取事實）；加入來源沒列出的鍵盤（沒有它們的接收器 ID 做不到）。
+**後果**：這三個讀法沒有在任何實體設備上跑過（測試只檢查封包），BrimDeck 的許多家族也是如此。狼蛛（AULA）鍵盤能不能顯示，取決於型號與接收器 ID；沒列出的型號不會被讀。同一台電腦上 DeskGrid 本身正在執行時，NotiLand 的測試會失敗（它們在測試程序裡啟動 BrimDeck）。
+**作者**：Claude (Sonnet 5.5)，依擁有者的要求

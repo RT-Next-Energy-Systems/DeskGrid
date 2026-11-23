@@ -1042,3 +1042,11 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Consequences**: a button is about 20 ms slower than a desktop folder (launcher, 77-93 ms against 58 ms); no line under the button. An old `instantTaskbarButtons` in a config file is ignored. A second click on a taskbar button of another monitor now also closes the panel (`PanelController.CursorIsOnTaskbar`: no foreground window is set there when the panel closes).
 **Author**: Claude (Sonnet 5.5), on the owner's request
 
+---
+
+### 2026-11-23 (8) — More battery reads, only where a source prints the frames
+**Decision**: Three brand families were added to BrimDeck (`PlantronicsBt600`, `Mojhon`, `EposH3Pro`), each taking only an exact vendor id, product ids and collection shape. Their frames come from sources that print them (HaloBattery and vigil-watt, MIT; HeadsetControl, GPL, facts only, no code copied) and are tested byte for byte. Not added: Turtle Beach (the answer is a JSON record split over several reports, and a CoAP tunnel for the Stealth 700 Gen 3: more than a stateless parse can hold, and nothing here to try it on), Nintendo controllers (Bluetooth sub-commands), DJI Mic Mini 2 (WinUSB), Haute42's adapter (named by a firmware string, not by ids), and the wired headsets with no battery (Cloud Alpha S, Elo 7.1).
+**Reason**: the owner asked for as many devices as possible. Comparing BrimDeck's families with the device lists of HaloBattery, vigil-watt and HeadsetControl showed that nearly all of them were already there; what was left is what is listed above. A protocol that is guessed would send frames to a device that was never meant to get them, so none is.
+**Alternatives**: copying GPL code from HeadsetControl (rejected: DeskGrid is MIT; facts only, as the other families do); adding keyboards the sources do not list (impossible without their receiver ids).
+**Consequences**: the three reads were not run against any hardware (the tests only check the frames), as is true of many of BrimDeck's families. Whether an AULA (狼蛛) keyboard shows depends on its model and receiver id; a model that is not listed is not read. NotiLand's tests fail while DeskGrid itself runs on the same computer (they start BrimDeck in the test process).
+**Author**: Claude (Sonnet 5.5), on the owner's request
