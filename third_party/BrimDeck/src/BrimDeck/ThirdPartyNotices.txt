@@ -869,7 +869,7 @@ Corsair receivers' get-property exchange and the JBL Quantum 910's reports (Core
 to the receivers that report on their own (Native/PushEvents.cs, after jbl.py's reader), and the brand reads of
 Flydigi, 8BitDo, NVIDIA SHIELD, BETOP, Glorious, Keychron, EWEADN, Finalmouse, HyperX, Pulsar, Alienware, URX, Lofree,
 MonsGeek, the Razer, Jabra and ASUS headsets, Logitech headsets, Corsair Void, iRocks, DAREU, Endgame Gear, Rapoo and
-MCHOSE V9 Pro, the Audeze and Skullcandy headsets and the Razer BlackShark V3 (Core/Brands, Core/DeviceProtocols.cs),
+MCHOSE V9 Pro, the Audeze and Skullcandy headsets, the Razer BlackShark V3 and the Plantronics BT600 (Core/Brands, Core/DeviceProtocols.cs),
 follow HaloBattery's providers and docs/protocols.md.
 
 MIT License
@@ -900,7 +900,7 @@ https://github.com/evren-oct/vigil-watt
 The devices page's ATK, HECATE and VGN collections for the Compx frame, the LINGBAO M5PRO Max, CHERRY PIXIU75 and HECATE
 G5M Pro reads, the MCHOSE G3 V2 query, the ROG Delta II headset, the ROG Omni receiver's pairing table, and the DELUX,
 Inphic ZHEN, Rapoo, AULA G9 and HyperX Cloud Flight 2 reports (Core/DeviceProtocols.cs), and the brand reads of EWEADN,
-AULA, Thunderobot, AJAZZ AK870, GANSS, AKG, the Razer headsets, DARKRIM, the Logitech PRO X 2 and the 3554:FA09 keyboards'
+AULA, Thunderobot, AJAZZ AK870, GANSS, AKG, the Razer headsets, DARKRIM, the Logitech PRO X 2, the MOJHON GALE2 and the 3554:FA09 keyboards'
 model codes (Core/Brands, Core/DeviceProtocols.cs), follow vigil-watt's docs/hardware notes.
 
 MIT License
@@ -1006,6 +1006,14 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+HeadsetControl
+https://github.com/Sapd/HeadsetControl
+
+The EPOS H3PRO Hybrid's frames and CRC-8 and the Plantronics BT600's operations (Core/Brands/EposH3Pro.cs,
+Core/Brands/PlantronicsBt600.cs), and the other headset reads whose comments name it, follow the facts HeadsetControl
+documents: vendor and product ids, report layouts, checksums. HeadsetControl is licensed under the GNU General Public
+License v3; no code was copied, only those facts, written again here.
 
 MouseDock
 https://github.com/late-autumn-gif/mousedock

@@ -59,6 +59,14 @@ The code is BrimDeck's own. Only what the integration needs was changed:
   the lyric notices of NetEase, and the quotes of NetEase and KuGou's own (Simplified) menus. The keyword tables of
   `Devices.cs` and `PhoneLinkCard.cs` keep the Simplified words and got the Traditional ones added. The settings tag for the
   Chinese interface is still `zh-CN` (it is stored in BrimDeck's settings), the text is Traditional.
+- **Three battery reads added** (2026-11-23; the owner asked for as many devices as possible; found by comparing BrimDeck's brand families
+  with the device lists of HaloBattery (MIT), vigil-watt (MIT) and HeadsetControl (GPL, facts only)): `Core/Brands/PlantronicsBt600.cs`
+  (Poly Voyager 8200 UC behind the BT600 adapter), `Core/Brands/Mojhon.cs` (MOJHON GALE2 gamepad on its 2.4 GHz link) and
+  `Core/Brands/EposH3Pro.cs` (EPOS H3PRO Hybrid, dongle and cable). None was run against the hardware; the tests
+  (`DeviceProtocolTests`) check every frame byte for byte against what the sources print. Left out on purpose: Turtle Beach (a JSON record
+  split over several reports, and a CoAP tunnel for the Stealth 700 Gen 3), Nintendo controllers (Bluetooth sub-commands), DJI Mic Mini 2
+  (WinUSB, not HID), Haute42's DualSense adapter (identified by a firmware string, not by its ids), and the wired headsets that have no
+  battery (HyperX Cloud Alpha S, ROCCAT Elo 7.1: HeadsetControl reads only lights and auto-off there).
 - **Not copied**: BrimDeck's tests, documentation, installer and scripts.
 - `Directory.Build.props` and `.editorconfig` keep DeskGrid's build rules (warnings as errors, style) off this folder.
 
