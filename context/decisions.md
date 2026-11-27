@@ -1059,3 +1059,16 @@ Also: `PopupPanel.SlideEasing` is frozen (shared across panels; the fix was lost
 **Alternatives**: letting `DeviceReadBook` retry forever for this read (a change to the shared rule for every brand, and its tests were not copied); copying vigil-watt's circuit breaker (not needed: one 20-byte write and 0.5 s of listening per pass).
 **Consequences**: another keyboard of the same receiver (HERO 68 XS, 75 HE, MINI Air), asleep when first seen, is listed as "AULA HERO 68 Air" asleep until it answers (its name comes from the identity answer); awake, it is not read. USB and Bluetooth are not read. The comparison method of (8) was too coarse: names matched where ids did not; other brands' lists may hide the same kind of gap.
 **Author**: Claude (Sonnet 5.5), on the owner's request
+
+---
+
+### 2026-11-27 — Full bug sweep across DeskGrid and NotiLand integration
+**Decision**:
+1. Case-only folder renames (`WidgetCatalog.RenameFolder`) trim whitespace, no-op on exact string equality, roll back if the second `Directory.Move` fails, and tag the temporary directory with `FolderScanner.TemporaryRenamePrefix` so delayed `FileSystemWatcher` rename events never overwrite or purge the folder's saved settings.
+2. `PopupPanel` dismisses immediately on `Esc` while watching an external drag (#29), disposes/vanishes `DragGhost` safely if the panel closes during a modal `DoDragDrop` loop instead of calling `Items.PointToScreen` on a disconnected visual, updates `_list` in place when renaming a folder opened from the All-Folders list, and reports the open subfolder's name before `*` in `PanelController.OpenPanelName`.
+3. `App.RestoreFromFile` only restarts widgets if `_catalog` is already up (preventing a duplicate widget board during `--autostart` desktop-settle wait), `DesktopHost.EnsureAttached` syncs icon visibility before attaching surfaces, `FolderDeleter.CopyDirectory` tracks canonical ancestor paths to break cyclic junctions, `DroppedItems.FileName` strips trailing spaces/dots and prefixes reserved Windows device names, `PanelPreview.DrawGlassAsync` skips applying stale column sizes, and `ControlCli.ToRequest` guards `Path.GetFullPath` on blank/malformed arguments.
+4. In hosted `BrimDeck` (`NotiLand`), WPF class handlers and global crash hooks are registered once per process, resetting General settings preserves DeskGrid's language and skips standalone startup registry writes, `DeckWindow.ParentOf` removes `CS0108`, and `BrimDeck.App.IsolationForTest` gives `NotiLandTests` a per-test temp directory and mutex/event suffix.
+**Reason**: Line-by-line bug audit requested by the owner (`/goal 徹查所有的bug並修正`), plus investigating why 4 `NotiLandTests` failed whenever DeskGrid was already running on the machine (and touched real `%LOCALAPPDATA%\BrimDeck` when it wasn't).
+**Alternatives**: Telling contributors to kill `DeskGrid.exe` before running `dotnet test` (fragile and mutates user data when forgotten); keeping `OpenPanelName` returning `*` when drilled into a folder (hid which folder was actually open from `--ctl status` and `OpenList`).
+**Consequences**: Zero build warnings across the entire solution, all tests pass even while `DeskGrid.exe` runs with NotiLand enabled, and issue #29 is fixed in code (real-desktop Explorer drag + Esc remains for manual check).
+**Author**: Antigravity, on the owner's goal

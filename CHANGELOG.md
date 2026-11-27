@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.8
+
+### Fixed
+
+- **Pressing Esc while dragging a file over an auto-opened folder panel closes the panel** (#29). Previously Esc cancelled the drag in Explorer while leaving the unactivated panel open until the drop delay elapsed or the pointer moved away.
+- **Renaming a folder by letter case only (for example `games` → `Games`) keeps its position, item order and shortcut.** The file watcher's delayed events for the temporary intermediate folder name could previously move or drop the folder's saved settings.
+- **Closing an open folder panel while an item is being dragged out of it no longer crashes or leaves the floating drag icon on screen.**
+- **Restoring defaults on NotiLand's General settings page keeps DeskGrid's chosen interface language** instead of switching NotiLand to Windows' display language, and toggling NotiLand off and on repeatedly no longer accumulates duplicate event handlers.
+- **Restoring a backup while DeskGrid is still waiting for the desktop at sign-in** no longer mounts a duplicate set of widgets, and widgets respect Windows' "Show desktop icons" visibility immediately on attach instead of flashing for up to two seconds.
+- **Folder deletion to the desktop, Start-menu app drops, panel list navigation and `--ctl` commands handle edge cases cleanly:** cyclic directory junctions no longer loop infinitely during cross-volume moves, Start-menu app names with trailing dots or reserved device names produce valid `.lnk` filenames, renaming a folder opened from the All-Folders list updates the list when going back, and `--ctl add` with an empty path returns a JSON error instead of throwing.
+
 ## 0.9.7
 
 ### Added

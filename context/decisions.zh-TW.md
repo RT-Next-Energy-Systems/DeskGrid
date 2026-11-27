@@ -1061,3 +1061,16 @@
 **其他做法**：讓 `DeviceReadBook` 對這個讀法無限重試（這會改到所有品牌共用的規則，而且它的測試沒有複製過來）；照搬 vigil-watt 的斷路器（不需要：每輪只寫一個 20 位元組、聽 0.5 秒）。
 **後果**：同一個接收器上的其他鍵盤（HERO 68 XS、75 HE、MINI Air），第一次看到時如果在休眠，會被列成休眠的「AULA HERO 68 Air」，直到它回應（名稱來自辨識回應）；醒著時則不會被讀。USB 與藍牙不讀。(8) 的比對方法太粗：名稱對得上但 ID 對不上；其他品牌的清單可能也藏著同類缺口。
 **作者**：Claude (Sonnet 5.5)，依擁有者的要求
+
+---
+
+### 2026-11-27 — DeskGrid 與 NotiLand 整合全面錯誤排查
+**決定**：
+1. 僅變更大小寫的資料夾改名（`WidgetCatalog.RenameFolder`）會先去除頭尾空白、完全同名時直接略過、第二步 `Directory.Move` 失敗時自動回滾，並以 `FolderScanner.TemporaryRenamePrefix` 標記暫存目錄名稱，避免 `FileSystemWatcher` 延遲送達的改名事件把設定移走或清掉。
+2. `PopupPanel` 在外部拖曳懸停自動展開期間按 `Esc` 會立即收合（#29）；若面板在 `DoDragDrop` 巢狀訊息迴圈期間被關閉，不再對已斷開的視覺樹呼叫 `Items.PointToScreen`，並確保置頂 `DragGhost` 正常消失；從所有資料夾列表點入子資料夾改名時同步更新 `_list`，且 `PanelController.OpenPanelName` 優先回報當前開啟的資料夾名稱。
+3. `App.RestoreFromFile` 僅在 `_catalog` 已啟動時重建小工具（避免 `--autostart` 等待桌面期間還原備份掛出兩份小工具）、`DesktopHost.EnsureAttached` 在掛載前先同步桌面圖示顯示狀態、`FolderDeleter.CopyDirectory` 追蹤正規化祖先路徑以阻斷循環 junction、`DroppedItems.FileName` 清理結尾空白／句點並避開保留裝置名稱、`PanelPreview.DrawGlassAsync` 略過舊欄數繪圖結果、`ControlCli.ToRequest` 防護空白或異常路徑參數。
+4. 內嵌的 `BrimDeck`（`NotiLand`）改為每個程序僅註冊一次 WPF 類別事件與崩潰記錄處理器、「常規」頁恢復預設時保留 DeskGrid 介面語言且不動獨立版開機機碼、`DeckWindow.ParentOf` 消除 `CS0108` 警告，並新增 `BrimDeck.App.IsolationForTest` 讓 `NotiLandTests` 使用獨立暫存目錄與互斥鎖後綴。
+**原因**：擁有者要求全專案錯誤排查與修正（`/goal 徹查所有的bug並修正`），同時追查 `DeskGrid.exe` 在背景執行時 `NotiLandTests` 4 個測試失敗（且未執行時會直接讀寫真實 `%LOCALAPPDATA%\BrimDeck`）的根因。
+**其他做法**：維持跑測試前必須先手動關閉 `DeskGrid.exe`（容易遺忘且會污染真實設定目錄）；從列表點進資料夾時 `OpenPanelName` 仍回傳 `*`（使 `--ctl status` 與 `OpenList` 無法反映實際畫面）。
+**後果**：全方案 0 警告建置通過，即使背景開著啟用 NotiLand 的 `DeskGrid.exe` 也能通過全部單元測試，#29 程式碼已修正（檔案總管真實拖曳按 Esc 待人工桌面確認）。
+**作者**：Antigravity，依擁有者的目標
