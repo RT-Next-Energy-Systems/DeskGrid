@@ -93,6 +93,17 @@ public sealed class ControlCliTests
         Assert.Equal(["Work", Path.GetFullPath("notes.txt"), @"C:\x.exe"], request.Args);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Add_WithBlankPath_DoesNotThrowInToRequest(string blank)
+    {
+        var request = ControlCli.ToRequest(["--ctl", "add", "Work", blank]);
+
+        Assert.NotNull(request);
+        Assert.Equal(["Work", blank], request.Args);
+    }
+
     [Fact]
     public void HelpText_ListsEveryCommand()
     {

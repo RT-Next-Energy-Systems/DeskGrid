@@ -63,6 +63,8 @@ internal sealed unsafe class DragGhost
     private byte _opacity = 255;
     private bool _closed;
 
+    internal bool IsClosed => _closed;
+
     /// <param name="center">Where the icon's center first appears, in physical screen pixels.</param>
     /// <param name="tile">The plate under the icon of a folder, or <see langword="null"/> for a file.</param>
     public DragGhost(ImageSource? icon, ScreenPoint center, Brush? tile = null)

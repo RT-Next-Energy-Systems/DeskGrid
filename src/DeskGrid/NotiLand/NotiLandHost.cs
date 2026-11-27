@@ -43,7 +43,10 @@ internal sealed class NotiLandHost : IDisposable
         if (enabled)
         {
             Start();
-            _app?.FollowLanguage(English);
+            if (_app is { } app && !_stopping)
+            {
+                Guard("updated for language", () => app.FollowLanguage(English));
+            }
         }
         else
         {
@@ -115,7 +118,18 @@ internal sealed class NotiLandHost : IDisposable
             _stopping = true;
             CloseSettingsPages();
             StateChanged?.Invoke();
-            Guard("stopped", app.ExitApplication);
+            var asked = false;
+            Guard("stopped", () =>
+            {
+                app.ExitApplication();
+                asked = true;
+            });
+            if (!asked)
+            {
+                _app = null;
+                _stopping = false;
+                StateChanged?.Invoke();
+            }
         }
     }
 

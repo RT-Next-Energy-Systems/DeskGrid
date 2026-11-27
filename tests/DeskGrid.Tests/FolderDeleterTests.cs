@@ -86,6 +86,26 @@ public sealed class FolderDeleterTests : IDisposable
     }
 
     [Fact]
+    public void CopyThenDelete_AFolderHoldingASelfReferencingJunction_DoesNotLoopForever()
+    {
+        var source = Path.Combine(Folder, "Notes");
+        var loop = Path.Combine(source, "Loop");
+        using (var mklink = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe", $"/c mklink /J \"{loop}\" \"{source}\"") { CreateNoWindow = true, UseShellExecute = false })!)
+        {
+            mklink.WaitForExit();
+        }
+
+        Assert.True(File.GetAttributes(loop).HasFlag(FileAttributes.ReparsePoint));
+
+        var target = Path.Combine(Desktop, "Notes");
+        FolderDeleter.CopyThenDelete(source, target);
+
+        Assert.False(Directory.Exists(source));
+        Assert.True(File.Exists(Path.Combine(target, "todo.txt")));
+        Assert.True(Directory.Exists(Path.Combine(target, "Loop")));
+    }
+
+    [Fact]
     public void CopyThenDelete_WithReadOnlyFiles_DeletesSuccessfully()
     {
         _temp.CreateFile(@"root\Dev\Notes\readonly.txt", FileAttributes.ReadOnly);

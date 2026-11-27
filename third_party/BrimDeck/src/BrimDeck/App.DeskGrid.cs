@@ -21,6 +21,24 @@ public sealed partial class App
 
     private string? _hostLanguage;
 
+    private static string? s_testDataFolder;
+    private static string? s_testInstanceId;
+
+    /// <summary>
+    /// For tests of the host: gives BrimDeck a throwaway data folder and instance name so tests neither collide with a running
+    /// DeskGrid nor touch <c>%LOCALAPPDATA%\BrimDeck</c>.
+    /// </summary>
+    public static IDisposable IsolationForTest(string dataFolder, string instanceId)
+    {
+        (s_testDataFolder, s_testInstanceId) = (dataFolder, instanceId);
+        return new TestIsolationScope();
+    }
+
+    private sealed class TestIsolationScope : IDisposable
+    {
+        public void Dispose() => (s_testDataFolder, s_testInstanceId) = (null, null);
+    }
+
     /// <summary>
     /// Starts BrimDeck on the calling (UI) thread of the host, in the host's language (<paramref name="english"/>: English, else Traditional
     /// Chinese); <see langword="null"/> when a BrimDeck of its own already runs.

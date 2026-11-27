@@ -225,6 +225,64 @@ public sealed class WidgetCatalogTests : IDisposable
         Assert.InRange(await _ui.InvokeAsync(() => refreshes), 1, 2);
     }
 
+    [Fact]
+    public async Task CaseOnlyRename_WithWatcherAndImmediateRescan_KeepsPositionOrderAndHotkey()
+    {
+        _temp.CreateFile(@"root\games\a.lnk");
+        _temp.CreateFile(@"root\games\b.lnk");
+        var catalog = await StartCatalogAsync(config =>
+        {
+            config.FolderOrder = ["games"];
+            config.Widgets["games"] = new WidgetConfig { Position = new ScreenPoint(12, 34), ItemOrder = ["b.lnk", "a.lnk"], Hotkey = "Ctrl+Alt+G" };
+        });
+
+        var problem = await _ui.InvokeAsync(() =>
+        {
+            var err = WidgetCatalog.RenameFolder(RootPath, "games", "Games", catalog);
+            catalog.Rescan();
+            return err;
+        });
+
+        // Let the delayed FileSystemWatcher callbacks from the two-step temporary move arrive on the UI thread as well.
+        await Task.Delay(600, TestContext.Current.CancellationToken);
+        var widgets = await _ui.InvokeAsync(() =>
+        {
+            catalog.Rescan();
+            return catalog.Widgets;
+        });
+
+        Assert.Null(problem);
+        var saved = ConfigStore.Open(ConfigPath).Config;
+        Assert.Equal(["Games"], widgets.Select(w => w.Name));
+        Assert.Equal(["Games"], saved.Widgets.Keys);
+        Assert.Equal(["Games"], saved.FolderOrder);
+        Assert.Equal(new ScreenPoint(12, 34), saved.Widgets["Games"].Position);
+        Assert.Equal(["b.lnk", "a.lnk"], saved.Widgets["Games"].ItemOrder);
+        Assert.Equal("Ctrl+Alt+G", saved.Widgets["Games"].Hotkey);
+    }
+
+    [Fact]
+    public async Task RenameFolder_TrimsWhitespace_AndSkipsIdenticalName()
+    {
+        _temp.CreateFile(@"root\Games\a.lnk");
+        var catalog = await StartCatalogAsync(config =>
+            config.Widgets["Games"] = new WidgetConfig { Position = new ScreenPoint(7, 8), ItemOrder = ["a.lnk"] });
+
+        var (sameErr, trimErr) = await _ui.InvokeAsync(() =>
+        {
+            var same = WidgetCatalog.RenameFolder(RootPath, "Games", "  Games  ", catalog);
+            var trimmed = WidgetCatalog.RenameFolder(RootPath, "Games", "  Play  ", catalog);
+            catalog.Rescan();
+            return (same, trimmed);
+        });
+
+        Assert.Null(sameErr);
+        Assert.Null(trimErr);
+        var saved = ConfigStore.Open(ConfigPath).Config;
+        Assert.Equal(["Play"], saved.Widgets.Keys);
+        Assert.Equal(new ScreenPoint(7, 8), saved.Widgets["Play"].Position);
+    }
+
     private static Dictionary<string, WidgetConfig> Settings(params (string Name, List<string> Order)[] widgets) =>
         widgets.ToDictionary(w => w.Name, w => new WidgetConfig { ItemOrder = w.Order }, StringComparer.OrdinalIgnoreCase);
 

@@ -75,10 +75,27 @@ internal static class ControlCli
         var rest = args.Skip(2).ToList();
         if (command == "add")
         {
-            rest = [.. rest.Select((arg, i) => i == 0 ? arg : Path.GetFullPath(arg))];
+            rest = [.. rest.Select((arg, i) => i == 0 ? arg : TryFullPath(arg))];
         }
 
         return new ControlRequest(command, rest);
+    }
+
+    private static string TryFullPath(string arg)
+    {
+        if (string.IsNullOrWhiteSpace(arg))
+        {
+            return arg;
+        }
+
+        try
+        {
+            return Path.GetFullPath(arg);
+        }
+        catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return arg;
+        }
     }
 
     internal static string HelpText()

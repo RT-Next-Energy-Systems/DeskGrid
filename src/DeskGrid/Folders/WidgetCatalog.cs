@@ -1,5 +1,7 @@
+using System.IO;
 using DeskGrid.Config;
 using DeskGrid.Diagnostics;
+using DeskGrid.Resources;
 
 namespace DeskGrid.Folders;
 
@@ -180,6 +182,66 @@ internal sealed class WidgetCatalog : IDisposable
     private void OnWidgetRenamed(object? sender, WidgetRenamedEventArgs e) => MoveSettings(e.OldName, e.NewName);
 
     /// <summary>
+    /// Renames a widget folder on disk and moves its settings in <paramref name="catalog"/> at once.
+    /// Returns why not, or <see langword="null"/> on success.
+    /// </summary>
+    internal static string? RenameFolder(string rootPath, string oldName, string newName, WidgetCatalog? catalog = null)
+    {
+        newName = newName.Trim();
+        var caseOnly = string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase);
+        if (WidgetFolderName.Validate(rootPath, newName) is { } problem && !(caseOnly && problem == Strings.NewFolderExists))
+        {
+            return problem;
+        }
+
+        if (string.Equals(oldName, newName, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        string? temporary = null;
+        var from = Path.Combine(rootPath, oldName);
+        var to = Path.Combine(rootPath, newName);
+        try
+        {
+            if (caseOnly)
+            {
+                // A move onto the same name (ignoring case) is refused by Directory.Move, so go through a temporary name.
+                temporary = Path.Combine(rootPath, $"{FolderScanner.TemporaryRenamePrefix}{Guid.NewGuid():N}");
+                Directory.Move(from, temporary);
+                Directory.Move(temporary, to);
+                temporary = null;
+            }
+            else
+            {
+                Directory.Move(from, to);
+            }
+
+            // At once, not when the file watcher reports it: a rescan in between (the control pipe does one) would otherwise
+            // find the new name without the old settings and start it afresh.
+            catalog?.MoveSettings(oldName, newName);
+            return null;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            if (temporary is not null && Directory.Exists(temporary) && !Directory.Exists(from))
+            {
+                try
+                {
+                    Directory.Move(temporary, from);
+                }
+                catch (Exception rollback) when (rollback is IOException or UnauthorizedAccessException)
+                {
+                    Log.Error($"Rolling back temporary rename \"{temporary}\" to \"{from}\" failed", rollback);
+                }
+            }
+
+            Log.Error($"Renaming \"{oldName}\" to \"{newName}\" failed", exception);
+            return string.Format(Strings.RenameFailed, exception.Message);
+        }
+    }
+
+    /// <summary>
     /// Makes the settings of folder <paramref name="oldName"/> (position, item order, shortcut, place in the folder order) those of
     /// <paramref name="newName"/>. Done by whoever renames a folder, <b>before</b> anything rescans: a rescan that finds the new
     /// name and not the old one drops the old settings as those of a vanished folder. The file watcher reports the rename later
@@ -187,6 +249,11 @@ internal sealed class WidgetCatalog : IDisposable
     /// </summary>
     public void MoveSettings(string oldName, string newName)
     {
+        if (string.Equals(oldName, newName, StringComparison.Ordinal))
+        {
+            return;
+        }
+
         var widgets = _store.Config.Widgets;
         if (!widgets.Remove(oldName, out var widgetConfig))
         {

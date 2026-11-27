@@ -12,10 +12,17 @@ namespace DeskGrid.Tests;
 public sealed class NotiLandTests : IDisposable
 {
     private readonly DispatcherThread _ui = TestApplication.Ui;
+    private readonly TempDirectory _data = new();
+    private readonly IDisposable _isolation;
+
+    public NotiLandTests() =>
+        _isolation = global::BrimDeck.App.IsolationForTest(_data.Path, $"DeskGrid.Tests.{Guid.NewGuid():N}");
 
     public void Dispose()
     {
-        // SharedUi lives until the test run ends.
+        _ui.InvokeAsync(() => global::BrimDeck.App.Instance?.StopNow()).GetAwaiter().GetResult();
+        _isolation.Dispose();
+        _data.Dispose();
     }
 
     [Fact]
@@ -168,5 +175,28 @@ public sealed class NotiLandTests : IDisposable
         Assert.True(result.shownAtStart);
         Assert.Equal((true, SettingsWindow.Page.Island, true, false), result.folded);
         Assert.Equal((true, true, Visibility.Visible), result.unfolded);
+    }
+
+    [Fact]
+    public async Task ResettingGeneralPage_KeepsDeskGridLanguage()
+    {
+        var systemLanguage = global::BrimDeck.Core.Loc.SystemLanguage();
+        var chooseEnglish = systemLanguage != global::BrimDeck.Core.Loc.English;
+        var expectedLanguage = chooseEnglish ? global::BrimDeck.Core.Loc.English : global::BrimDeck.Core.Loc.Chinese;
+
+        var afterReset = await _ui.InvokeAsync(() =>
+        {
+            TestApplication.Ensure();
+            var app = global::BrimDeck.App.StartHosted(chooseEnglish)!;
+            var pages = app.CreateSettingsPages();
+            pages.ShowPage(0);
+            pages.ResetCurrentPageForTest();
+            var language = app.Settings.Language;
+            pages.Release();
+            app.StopNow();
+            return language;
+        });
+
+        Assert.Equal(expectedLanguage, afterReset);
     }
 }

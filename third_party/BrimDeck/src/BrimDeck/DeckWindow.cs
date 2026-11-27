@@ -24,7 +24,7 @@ public class DeckWindow : Window
     /// <summary>Whether <paramref name="element"/> belongs to one of BrimDeck's windows (its visual or logical parents lead to one).</summary>
     internal static bool Holds(DependencyObject? element)
     {
-        for (var node = element; node is not null; node = Parent(node))
+        for (var node = element; node is not null; node = ParentOf(node))
         {
             if (node is DeckWindow) return true;
         }
@@ -32,7 +32,7 @@ public class DeckWindow : Window
         return false;
     }
 
-    private static DependencyObject? Parent(DependencyObject node)
+    private static DependencyObject? ParentOf(DependencyObject node)
     {
         try
         {

@@ -362,6 +362,96 @@ public sealed class PopupPanelTests : IDisposable
     }
 
     [Fact]
+    public async Task PanelOpenedByADrag_ClosesImmediately_WhenEscapeIsPressed()
+    {
+        var closed = new TaskCompletionSource();
+        await _ui.InvokeAsync(() =>
+        {
+            using var icons = new IconService();
+            var theme = PanelTheme.Resolve(new PanelBackground { Style = PanelBackgroundStyle.Dark }, false, false);
+            var panel = new PopupPanel(new ScreenRect(200, 200, 201, 201), 3, theme, icons)
+            {
+                ActivateWhenShown = false,
+                ShowActivated = false,
+                IsMouseButtonDown = () => true,
+                IsEscapeDown = () => true,
+            };
+            panel.ShowFolder(Folder("Dragged", 2));
+            panel.Closed += (_, _) => closed.SetResult();
+            panel.Show();
+        });
+
+        await closed.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task FinishDrag_AfterPanelClosed_DismissesDragGhostWithoutThrowing()
+    {
+        var ghost = await _ui.InvokeAsync(() =>
+        {
+            using var icons = new IconService();
+            var theme = PanelTheme.Resolve(new PanelBackground { Style = PanelBackgroundStyle.Dark }, false, false);
+            var panel = new PopupPanel(new ScreenRect(200, 200, 201, 201), 3, theme, icons) { ShowActivated = false };
+            panel.ShowFolder(Folder("Notes", 2));
+            panel.Show();
+
+            var icon = new DrawingImage(new GeometryDrawing(Brushes.SteelBlue, null, new RectangleGeometry(new(0, 0, 48, 48))));
+            var created = new DragGhost(icon, new ScreenPoint(220, 220));
+            created.Show();
+
+            panel.Close();
+            panel.FinishDragAfterCloseForTest(created, 0, "Item 1.txt");
+            return created;
+        });
+
+        for (var i = 0; i < 50 && !await _ui.InvokeAsync(() => ghost.IsClosed); i++)
+        {
+            await Task.Delay(50, TestContext.Current.CancellationToken);
+        }
+
+        Assert.True(await _ui.InvokeAsync(() => ghost.IsClosed));
+    }
+
+    [Fact]
+    public async Task RenamingFolderOpenedFromList_UpdatesListShownOnBack_AndOpenPanelName()
+    {
+        using var temp = new TempDirectory();
+        var store = ConfigStore.Open(temp.Combine("config.json"));
+        var (listName, folderName, backName, shownInList) = await _ui.InvokeAsync(() =>
+        {
+            using var icons = new IconService();
+            var controller = new PanelController(store, icons) { FolderRenamer = (_, _) => null };
+            var oldFolder = Folder("Old", 1);
+            var other = Folder("Other", 1);
+            controller.ToggleList([oldFolder, other], new ScreenRect(200, 200, 201, 201));
+            var initial = controller.OpenPanelName;
+
+            var panel = controller.CurrentPanel ?? throw new InvalidOperationException("PopupPanel not found");
+            try
+            {
+                panel.ShowFolder(oldFolder);
+                var drilled = controller.OpenPanelName;
+                Assert.True(panel.BeginRename());
+                panel.HeadingEditor.Text = "New";
+                panel.CommitRename(keepOpenOnError: false);
+                panel.GoBack();
+                var back = controller.OpenPanelName;
+                var firstItem = ((PanelItem)panel.Items.Items[0]!).Name;
+                return (initial, drilled, back, firstItem);
+            }
+            finally
+            {
+                controller.Close();
+            }
+        });
+
+        Assert.Equal("*", listName);
+        Assert.Equal("Old", folderName);
+        Assert.Equal("*", backName);
+        Assert.Equal("New", shownInList);
+    }
+
+    [Fact]
     public async Task ItemHighlight_CornerRadius_MatchesPanelFrame()
     {
         await _ui.InvokeAsync(() =>

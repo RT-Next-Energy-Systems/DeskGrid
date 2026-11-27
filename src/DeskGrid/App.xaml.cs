@@ -339,8 +339,11 @@ public partial class App : Application
         // Nobody awaits this method: a failure here has to be logged, or it vanishes with the task.
         try
         {
-            StartWidgets();
-            _ = Dispatcher.BeginInvoke(AfterFirstShow, DispatcherPriority.ApplicationIdle);
+            if (_catalog is null)
+            {
+                StartWidgets();
+                _ = Dispatcher.BeginInvoke(AfterFirstShow, DispatcherPriority.ApplicationIdle);
+            }
         }
         catch (Exception exception)
         {
@@ -450,46 +453,15 @@ public partial class App : Application
     // Renames a widget folder on disk; the scanner moves its settings along. Returns why not, or null.
     private string? RenameFolder(string oldName, string newName)
     {
-        var root = _configStore!.Config.RootPath;
-        var caseOnly = string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase);
-        if (WidgetFolderName.Validate(root, newName) is { } problem && !(caseOnly && problem == Strings.NewFolderExists))
+        var trimmed = newName.Trim();
+        var problem = WidgetCatalog.RenameFolder(_configStore!.Config.RootPath, oldName, trimmed, _catalog);
+        if (problem is null && !string.Equals(oldName, trimmed, StringComparison.OrdinalIgnoreCase))
         {
-            return problem;
-        }
-
-        try
-        {
-            var from = Path.Combine(root, oldName);
-            var to = Path.Combine(root, newName);
-            if (caseOnly)
-            {
-                // A move onto the same name (ignoring case) is refused, so go through a temporary name.
-                var temporary = Path.Combine(root, $"{newName}.{Guid.NewGuid():N}.tmp");
-                Directory.Move(from, temporary);
-                Directory.Move(temporary, to);
-            }
-            else
-            {
-                Directory.Move(from, to);
-            }
-
-            // At once, not when the file watcher reports it: a rescan in between (the control pipe does one) would otherwise
-            // find the new name without the old settings and start it afresh.
-            _catalog?.MoveSettings(oldName, newName);
-
             // The shortcut made for pinning the folder under its old name would open nothing: it goes, as when a folder is deleted.
-            if (!caseOnly)
-            {
-                PinShortcut.Remove(oldName);
-            }
+            PinShortcut.Remove(oldName);
+        }
 
-            return null;
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        {
-            Log.Error($"Renaming \"{oldName}\" to \"{newName}\" failed", exception);
-            return string.Format(Strings.RenameFailed, exception.Message);
-        }
+        return problem;
     }
 
     // Asks, then deletes a widget's folder (the Recycle Bin keeps it); the scanner takes the widget down.
@@ -869,13 +841,22 @@ public partial class App : Application
             imported.RootPath = config.RootPath;
         }
 
-        StopWidgets();
+        var widgetsStarted = _catalog is not null;
+        if (widgetsStarted)
+        {
+            StopWidgets();
+        }
+
         config.ReplaceWith(imported);
         UiLanguage.Apply(config.Language);
         _configStore.Save();
         CheckAutoBackup();
         _noti!.Apply(config.NotiLandEnabled);
-        StartWidgets();
+        if (widgetsStarted)
+        {
+            StartWidgets();
+        }
+
         ApplyHotkeys(report: true);
         owner.CloseDiscarding(); // It shows the settings that were just replaced.
         MessageBox.Show(Strings.ImportDone + note, Strings.AppName, MessageBoxButton.OK, MessageBoxImage.Information);
@@ -888,7 +869,10 @@ public partial class App : Application
         // Widgets that aren't up yet (a start at sign-in still waits for the desktop) start from the new root anyway;
         // starting them here as well would put up a second set.
         var rootChanged = _catalog is not null
-            && !string.Equals(Path.GetFullPath(choice.RootPath), Path.GetFullPath(config.RootPath), StringComparison.OrdinalIgnoreCase);
+            && !string.Equals(
+                Path.TrimEndingDirectorySeparator(Path.GetFullPath(choice.RootPath)),
+                Path.TrimEndingDirectorySeparator(Path.GetFullPath(config.RootPath)),
+                StringComparison.OrdinalIgnoreCase);
         if (rootChanged)
         {
             StopWidgets();
@@ -950,7 +934,8 @@ public partial class App : Application
         {
             if (OpenPanel != ControlCommands.AllFolders && app._catalog is { } catalog)
             {
-                app._panels!.ToggleList(catalog.Widgets, AtCursor());
+                app._panels!.Close();
+                app._panels.ToggleList(catalog.Widgets, AtCursor());
             }
         }
 

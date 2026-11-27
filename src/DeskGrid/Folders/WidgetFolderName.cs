@@ -15,7 +15,7 @@ internal static partial class WidgetFolderName
     public static string? Validate(string rootPath, string name)
     {
         name = name.Trim();
-        if (name.Length == 0 || name.EndsWith('.') || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || ReservedName().IsMatch(name))
+        if (name.Length == 0 || name.EndsWith('.') || name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || IsReservedDeviceName(name))
         {
             return Strings.NewFolderInvalidName;
         }
@@ -29,6 +29,8 @@ internal static partial class WidgetFolderName
 
         return Directory.Exists(path) || File.Exists(path) ? Strings.NewFolderExists : null;
     }
+
+    internal static bool IsReservedDeviceName(string name) => ReservedName().IsMatch(name);
 
     // Device names Windows won't create as folders, with or without an extension.
     [GeneratedRegex(@"^(CON|PRN|AUX|NUL|COM\d|LPT\d)(\..*)?$", RegexOptions.IgnoreCase)]

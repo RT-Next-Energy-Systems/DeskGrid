@@ -73,37 +73,48 @@ public sealed partial class App
     public CancellationTokenSource Lifetime { get; } = new();
     public bool Exiting { get; private set; }
 
-    // The element whose tooltip opens next (OnStartup).
-    private WeakReference<DependencyObject>? _toolTipOwner;
+    // The element whose tooltip opens next (OnStartup). Class handlers live for the whole process, so register them once.
+    private static WeakReference<DependencyObject>? s_toolTipOwner;
+    private static bool s_classHandlersInstalled;
+    private static void EnsureClassHandlers()
+    {
+        if (s_classHandlersInstalled) return;
+        s_classHandlersInstalled = true;
+        // Menus and tooltips take the text rendering of what they open from as they open (PanelTheme.Text). A tooltip opened by
+        // the service has no placement target, so its owner is noted as the service raises ToolTipOpening on it.
+        EventManager.RegisterClassHandler(typeof(FrameworkElement), FrameworkElement.ToolTipOpeningEvent,
+            new System.Windows.Controls.ToolTipEventHandler((_, a) => { if (DeckWindow.Holds(a.OriginalSource as DependencyObject)) s_toolTipOwner = new WeakReference<DependencyObject>((DependencyObject)a.OriginalSource); }), true);
+        EventManager.RegisterClassHandler(typeof(System.Windows.Controls.ToolTip), System.Windows.Controls.ToolTip.OpenedEvent, new RoutedEventHandler((sender, _) =>
+        {
+            var tip = (System.Windows.Controls.ToolTip)sender;
+            if (!DeckWindow.Holds(tip.PlacementTarget) && !(s_toolTipOwner?.TryGetTarget(out var seen) == true && DeckWindow.Holds(seen))) return;
+            PanelTheme.Text(tip, tip.PlacementTarget ?? (s_toolTipOwner?.TryGetTarget(out var owner) == true ? owner : null));
+        }));
+        EventManager.RegisterClassHandler(typeof(System.Windows.Controls.ContextMenu), System.Windows.Controls.ContextMenu.OpenedEvent,
+            new RoutedEventHandler((sender, _) => { var menu = (System.Windows.Controls.ContextMenu)sender; if (DeckWindow.Holds(menu.PlacementTarget)) PanelTheme.Text(menu, menu.PlacementTarget); }));
+    }
+
     /// <summary>Starts BrimDeck on the calling (UI) thread; false when another BrimDeck is already running.</summary>
     internal bool Start(string[] args)
     {
         Instance = this;
-        // Menus and tooltips take the text rendering of what they open from as they open (PanelTheme.Text). A tooltip opened by
-        // the service has no placement target, so its owner is noted as the service raises ToolTipOpening on it.
-        EventManager.RegisterClassHandler(typeof(FrameworkElement), FrameworkElement.ToolTipOpeningEvent,
-            new System.Windows.Controls.ToolTipEventHandler((_, a) => { if (DeckWindow.Holds(a.OriginalSource as DependencyObject)) _toolTipOwner = new WeakReference<DependencyObject>((DependencyObject)a.OriginalSource); }), true);
-        EventManager.RegisterClassHandler(typeof(System.Windows.Controls.ToolTip), System.Windows.Controls.ToolTip.OpenedEvent, new RoutedEventHandler((sender, _) =>
-        {
-            var tip = (System.Windows.Controls.ToolTip)sender;
-            if (!DeckWindow.Holds(tip.PlacementTarget) && !(_toolTipOwner?.TryGetTarget(out var seen) == true && DeckWindow.Holds(seen))) return;
-            PanelTheme.Text(tip, tip.PlacementTarget ?? (_toolTipOwner?.TryGetTarget(out var owner) == true ? owner : null));
-        }));
-        EventManager.RegisterClassHandler(typeof(System.Windows.Controls.ContextMenu), System.Windows.Controls.ContextMenu.OpenedEvent,
-            new RoutedEventHandler((sender, _) => { var menu = (System.Windows.Controls.ContextMenu)sender; if (DeckWindow.Holds(menu.PlacementTarget)) PanelTheme.Text(menu, menu.PlacementTarget); }));
+        EnsureClassHandlers();
         Resources[SystemParameters.VerticalScrollBarWidthKey] = 7.0;
-        var suffix = Environment.UserName;
+        var suffix = s_testInstanceId ?? Environment.UserName;
         var eventName = "Local\\BrimDeck.Settings." + suffix;
         _mutex = new Mutex(true, "Local\\BrimDeck.Instance." + suffix, out var first);
         if (!first)
         {
-            // A BrimDeck of its own is running (it keeps the data folder): leave it alone and tell it to show its settings.
-            try { using var existing = EventWaitHandle.OpenExisting(eventName); existing.Set(); } catch (WaitHandleCannotBeOpenedException) { }
+            // A BrimDeck of its own is running (it keeps the data folder): leave it alone, and in standalone mode tell it to show its settings.
+            if (!ManagedByDeskGrid)
+            {
+                try { using var existing = EventWaitHandle.OpenExisting(eventName); existing.Set(); } catch (WaitHandleCannotBeOpenedException) { }
+            }
             _mutex.Dispose(); _mutex = null; Instance = null;
             return false;
         }
-        RecordCrashes();
-        var folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BrimDeck");
+        var folder = s_testDataFolder ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BrimDeck");
+        RecordCrashes(folder);
         Store = new SettingsStore(folder); Settings = Store.Load();
         ReturnFromRule(); Profiles.Keep(Settings);
         // Before anything is read: a reading left unanswered when the last run ended stops now (SensorGuard).
@@ -175,10 +186,12 @@ public sealed partial class App
         try { step(); }
         catch (Exception ex) when (ex is not OutOfMemoryException) { _recordCrash?.Invoke(ex); }
     }
+    private static Action<object>? s_crashWriter;
+    private static bool s_crashHandlersInstalled;
     private Action<object>? _recordCrash;
-    private void RecordCrashes()
+    private void RecordCrashes(string folder)
     {
-        var log = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BrimDeck", "crash.log");
+        var log = Path.Combine(folder, "crash.log");
         void Write(object error)
         {
             try
@@ -191,10 +204,13 @@ public sealed partial class App
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }
         _recordCrash = Write;
+        s_crashWriter = Write;
+        if (s_crashHandlersInstalled) return;
+        s_crashHandlersInstalled = true;
         // DeskGrid's own handler decides whether the error is survived; this one only keeps the record.
-        System.Windows.Application.Current.DispatcherUnhandledException += (_, args) => Write(args.Exception);
-        AppDomain.CurrentDomain.UnhandledException += (_, args) => Write(args.ExceptionObject);
-        TaskScheduler.UnobservedTaskException += (_, args) => { Write(args.Exception); args.SetObserved(); };
+        System.Windows.Application.Current.DispatcherUnhandledException += (_, args) => s_crashWriter?.Invoke(args.Exception);
+        AppDomain.CurrentDomain.UnhandledException += (_, args) => s_crashWriter?.Invoke(args.ExceptionObject);
+        TaskScheduler.UnobservedTaskException += (_, args) => { s_crashWriter?.Invoke(args.Exception); args.SetObserved(); };
     }
     // The user's own font goes in front of the interface's families (Fonts); false when it is the one already in use.
     // The families are published at the start whatever is chosen, so the XAML defaults are never what the text is drawn in by accident.
@@ -693,14 +709,15 @@ public sealed partial class App
         Exiting = true; // so the windows let themselves be closed (MainWindow keeps itself open otherwise)
         foreach (var window in System.Windows.Application.Current.Windows.OfType<DeckWindow>().ToList()) window.Close();
         Cleanup();
+        if (s_crashWriter == _recordCrash) s_crashWriter = null;
         Instance = null;
         Stopped?.Invoke();
     }
     private void Cleanup()
     {
-        Exiting = true; Lifetime.Cancel(); _save.Stop(); _trim?.Stop(); _release?.Stop(); FinishWriting(); StopBackgroundUpdates(); DisplayPower.Uninstall(); Microsoft.Win32.SystemEvents.UserPreferenceChanged -= SystemThemeChanged; _tray?.Dispose(); DisposeHotkeys(); WindowDrags?.Dispose(); _listener?.Unregister(null); _settingsEvent?.Dispose();
+        Exiting = true; Lifetime.Cancel(); _save.Stop(); _pageLinger?.Stop(); _trim?.Stop(); _release?.Stop(); FinishWriting(); StopBackgroundUpdates(); DisplayPower.Uninstall(); Microsoft.Win32.SystemEvents.UserPreferenceChanged -= SystemThemeChanged; _tray?.Dispose(); DisposeHotkeys(); WindowDrags?.Dispose(); _listener?.Unregister(null); _settingsEvent?.Dispose();
         ClipboardSync?.Dispose();
         if (Shelf is not null) { Shelf.Exit(); Shelf.Dispose(); }
-        Media?.Dispose(); _restingMedia?.Dispose(); Monitor?.Dispose(); SensorGuard.Finish(); Devices?.Dispose(); DeviceReadStore.Finish(); Lyrics?.Dispose(); Prices?.Dispose(); _mutex?.Dispose(); _quitEvent?.Dispose(); _settingsEvent?.Dispose();
+        Media?.Dispose(); _restingMedia?.Dispose(); Monitor?.Dispose(); SensorGuard.Finish(); Devices?.Dispose(); DeviceReadStore.Finish(); Lyrics?.Dispose(); Prices?.Dispose(); _mutex?.Dispose(); _quitEvent?.Dispose();
     }
 }

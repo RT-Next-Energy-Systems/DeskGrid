@@ -87,6 +87,16 @@ public sealed class WidgetFolderNameTests : IDisposable
         Assert.Equal(Strings.NewFolderExists, WidgetFolderName.Validate(_root.Path, "games"));
         Assert.Null(WidgetFolderName.Validate(_root.Path, "  Work  "));
     }
+
+    [Theory]
+    [InlineData("App .", "App")]
+    [InlineData("...", "App")]
+    [InlineData("   ", "App")]
+    [InlineData("CON", "_CON")]
+    [InlineData("nul.txt", "_nul.txt")]
+    [InlineData("Visual:Studio?", "Visual_Studio_")]
+    public void DroppedItems_FileName_ProducesSafeWindowsShortcutBaseName(string raw, string expected) =>
+        Assert.Equal(expected, DroppedItems.FileName(raw));
 }
 
 public sealed class AutoStartTests : IDisposable
@@ -542,6 +552,25 @@ public sealed class SettingsWindowTests : IDisposable
         var shown = await _ui.InvokeAsync(() => ((System.Windows.Controls.Border)preview.Child).Background);
 
         Assert.IsType<SolidColorBrush>(shown);
+    }
+
+    [Fact]
+    public async Task PanelPreview_ColumnChangeWhileLiquidGlassDraws_EndsWithTheLatestColumns()
+    {
+        var (preview, drawing) = await _ui.InvokeAsync(() =>
+        {
+            EnsureApplication();
+            var preview = new PanelPreview();
+            preview.Update(new PanelBackground { Style = PanelBackgroundStyle.LiquidGlass }, 3);
+            preview.Update(new PanelBackground { Style = PanelBackgroundStyle.LiquidGlass }, 5);
+            return (preview, preview.Drawing);
+        });
+
+        await drawing;
+        var columns = await _ui.InvokeAsync(() =>
+            ((System.Windows.Controls.Grid)((System.Windows.Controls.Panel)((System.Windows.Controls.Border)preview.Child).Child).Children[1]).ColumnDefinitions.Count);
+
+        Assert.Equal(5, columns);
     }
 
     [Theory]

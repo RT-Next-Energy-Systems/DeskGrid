@@ -160,9 +160,14 @@ internal sealed class PanelPreview : Border
         {
             var pixels = await Task.Run(() => LiquidGlass.Render(job.Stage, job.Window, job.Style));
             drawn = job;
-            if (_glass is null)
+            if (_glass is not { } current)
             {
                 return; // Another look was chosen while this was drawn.
+            }
+
+            if (current.Columns != job.Columns || current.Window != job.Window)
+            {
+                continue; // The preview changed size meanwhile; draw the new size instead of showing the old one.
             }
 
             var bitmap = BitmapSource.Create(job.Window.Width, job.Window.Height, 96, 96, PixelFormats.Pbgra32, null, pixels, job.Window.Width * 4);

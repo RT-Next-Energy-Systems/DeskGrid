@@ -91,9 +91,15 @@ internal sealed class DroppedItems : IDisposable
         return new DroppedItems(shortcuts, shortcuts.Count > 0 ? folder : null);
     }
 
-    private static string FileName(string name)
+    internal static string FileName(string name)
     {
         var invalid = System.IO.Path.GetInvalidFileNameChars();
-        return string.Concat(name.Select(c => Array.IndexOf(invalid, c) >= 0 ? '_' : c)).Trim().TrimEnd('.');
+        var cleaned = string.Concat(name.Select(c => Array.IndexOf(invalid, c) >= 0 ? '_' : c)).Trim().TrimEnd('.', ' ');
+        if (cleaned.Length == 0)
+        {
+            return "App";
+        }
+
+        return WidgetFolderName.IsReservedDeviceName(cleaned) ? "_" + cleaned : cleaned;
     }
 }

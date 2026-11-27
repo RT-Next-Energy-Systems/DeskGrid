@@ -51,8 +51,11 @@ The code is BrimDeck's own. Only what the integration needs was changed:
   element), and the global tooltip / menu handlers act only on elements of BrimDeck's windows (`DeckWindow.Holds`).
 - **Other process-wide things dropped or fixed**: the explicit AppUserModelID, the handled-exception behaviour of
   `DispatcherUnhandledException` (it only records now), the version (`ApplicationVersion.UseAssembly` from a module initializer: the
-  entry assembly is DeskGrid), the tray icon (extracted from BrimDeck's own icon resource, not the exe's). BrimDeck does not register
-  itself to start with Windows (`StartupRegistration`) nor check for updates on its own (`StartBackgroundUpdates`): DeskGrid does both.
+  entry assembly is DeskGrid), the tray icon (extracted from BrimDeck's own icon resource, not the exe's), and the WPF class handlers /
+  crash-log hooks (installed once per process instead of once per NotiLand start). BrimDeck does not register itself to start with
+  Windows (`StartupRegistration`, including on General-page reset) nor check for updates on its own (`StartBackgroundUpdates`): DeskGrid
+  does both. Restoring defaults on General keeps DeskGrid's language (`SettingsPages.ResetPage`), and `App.IsolationForTest` gives host
+  tests a throwaway data folder and instance name.
 - **Traditional Chinese**: every Simplified Chinese text of the copied source (interface texts, labels, comments, the built-in
   themes' names) was converted to Traditional Chinese with OpenCC (`s2twp`), so the Chinese interface of NotiLand is Traditional.
   Left as they are, because they match text of other programs: NetEase Cloud Music's log lines and its registry display name,

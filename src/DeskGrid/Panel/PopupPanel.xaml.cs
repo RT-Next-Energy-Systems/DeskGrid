@@ -126,6 +126,8 @@ internal partial class PopupPanel : Window
             _resize?.Stop(); // A growth animation still running would keep resizing a window that is gone.
             _capture?.Dispose();
             _glass?.Dispose();
+            _ghost?.Land(default, vanish: true);
+            _ghost = null;
         };
         _watch.Tick += OnWatch;
         // While an item is being dragged the drop target (the desktop, another app) takes activation; a command of
@@ -204,6 +206,10 @@ internal partial class PopupPanel : Window
 
     /// <summary>Whether something dragged in from another place was dropped here.</summary>
     public bool TookDrop => _tookDrop;
+
+    internal Func<bool> IsMouseButtonDown { get; init; } = MouseButtonDown;
+
+    internal Func<bool> IsEscapeDown { get; init; } = EscapeDown;
 
     private HWND Hwnd => new(new WindowInteropHelper(this).Handle);
 
@@ -516,12 +522,16 @@ internal partial class PopupPanel : Window
         else if (_awaitsClick)
         {
             // A click on the widget itself closes the panel through the widget.
-            if (EscapeDown() || (MouseButtonDown() && !CursorOverWindow() && !_anchor.Contains(ScreenPoint.AtCursor())))
+            if (IsEscapeDown() || (IsMouseButtonDown() && !CursorOverWindow() && !_anchor.Contains(ScreenPoint.AtCursor())))
             {
                 Dismiss();
             }
         }
-        else if (MouseButtonDown())
+        else if (IsEscapeDown())
+        {
+            Dismiss();
+        }
+        else if (IsMouseButtonDown())
         {
             _released.Reset();
             if (HasLeft())
@@ -859,9 +869,17 @@ internal partial class PopupPanel : Window
 
     private void OnHeadingClick(object sender, MouseButtonEventArgs e)
     {
+        if (BeginRename())
+        {
+            e.Handled = true;
+        }
+    }
+
+    internal bool BeginRename()
+    {
         if (_renaming || !CanRename)
         {
-            return;
+            return false;
         }
 
         _renaming = true;
@@ -873,7 +891,7 @@ internal partial class PopupPanel : Window
         HeadingEditor.Visibility = Visibility.Visible;
         HeadingEditor.Focus();
         HeadingEditor.SelectAll();
-        e.Handled = true;
+        return true;
     }
 
     private void OnEditorKeyDown(object sender, KeyEventArgs e)
@@ -898,7 +916,7 @@ internal partial class PopupPanel : Window
         }
     }
 
-    private void CommitRename(bool keepOpenOnError)
+    internal void CommitRename(bool keepOpenOnError)
     {
         var name = HeadingEditor.Text.Trim();
         if (Folder is not { } folder || name == folder.Name || Renamer is null)
@@ -923,7 +941,13 @@ internal partial class PopupPanel : Window
         }
 
         // The folder is renamed on disk; follow it, so the rescan that comes with it still finds this panel's folder.
-        Folder = folder with { Name = name, FullPath = Path.Combine(Path.GetDirectoryName(folder.FullPath) ?? "", name) };
+        var renamed = folder with { Name = name, FullPath = Path.Combine(Path.GetDirectoryName(folder.FullPath) ?? "", name) };
+        Folder = renamed;
+        if (_list is not null)
+        {
+            _list = [.. _list.Select(f => string.Equals(f.Name, folder.Name, StringComparison.OrdinalIgnoreCase) ? renamed : f)];
+        }
+
         Heading.Text = name;
         EndRename();
     }
@@ -1020,6 +1044,11 @@ internal partial class PopupPanel : Window
     private void OnBackClick(object sender, MouseButtonEventArgs e)
     {
         e.Handled = true;
+        GoBack();
+    }
+
+    internal void GoBack()
+    {
         if (_list is { } list)
         {
             ShowList(list);
@@ -1154,6 +1183,13 @@ internal partial class PopupPanel : Window
         HideForDrag();
     }
 
+    internal void FinishDragAfterCloseForTest(DragGhost ghost, int index, string itemName)
+    {
+        _ghost = ghost;
+        _dragIndex = index;
+        FinishDrag(DragDropEffects.None, itemName);
+    }
+
     private void FinishDrag(DragDropEffects effect, string itemName)
     {
         var ghost = _ghost;
@@ -1169,6 +1205,11 @@ internal partial class PopupPanel : Window
         {
             // Taken elsewhere (or let go outside the closed folder): the icon shrinks into whatever it was dropped on.
             ghost?.Land(default, vanish: true);
+        }
+        else if (ghost is not null && (_closing || PresentationSource.FromVisual(Items) is null))
+        {
+            // The panel closed while the drag loop was running: its visual tree has no screen coordinates left.
+            ghost.Land(default, vanish: true);
         }
         else if (ghost is not null)
         {

@@ -173,6 +173,7 @@ internal sealed class DesktopHost : IDisposable
 
         _retryTimer.Stop();
         _layer = layer;
+        FollowIconVisibility();
         _iconWatcher.Watch(layer.FindListView());
         var attached = _surfaces.Where(s => !s.IsAttachedTo(layer.Handle)).ToList().Count(s => TryAttach(s, layer));
         if (attached > 0)

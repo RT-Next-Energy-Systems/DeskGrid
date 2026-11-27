@@ -234,6 +234,9 @@ internal sealed class FolderScanner : IDisposable
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
+    // Marks the intermediate directory name of a case-only rename so the watcher does not treat either leg as a user rename.
+    internal const string TemporaryRenamePrefix = ".deskgrid-rename-";
+
     private void OnEntryChanged(object sender, FileSystemEventArgs e)
     {
         if (RelativeSegments(e.FullPath).Length <= 2)
@@ -246,7 +249,9 @@ internal sealed class FolderScanner : IDisposable
     {
         var oldSegments = RelativeSegments(e.OldFullPath);
         var newSegments = RelativeSegments(e.FullPath);
-        if (oldSegments.Length == 1 && newSegments.Length == 1)
+        if (oldSegments.Length == 1 && newSegments.Length == 1
+            && !oldSegments[0].StartsWith(TemporaryRenamePrefix, StringComparison.Ordinal)
+            && !newSegments[0].StartsWith(TemporaryRenamePrefix, StringComparison.Ordinal))
         {
             Post(() => WidgetRenamed?.Invoke(this, new WidgetRenamedEventArgs(oldSegments[0], newSegments[0])));
         }

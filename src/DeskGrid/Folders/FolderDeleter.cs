@@ -162,17 +162,50 @@ internal static class FolderDeleter
         Directory.Delete(path, recursive: false);
     }
 
-    internal static void CopyDirectory(string source, string target)
+    internal static void CopyDirectory(string source, string target) =>
+        CopyDirectory(source, target, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+
+    private static void CopyDirectory(string source, string target, HashSet<string> ancestors)
     {
+        var canonical = CanonicalDirectoryPath(source);
         Directory.CreateDirectory(target);
-        foreach (var file in Directory.EnumerateFiles(source, "*", AllEntries))
+        if (!ancestors.Add(canonical))
         {
-            File.Copy(file, Path.Combine(target, Path.GetFileName(file)));
+            // A junction or symbolic link pointing back to an enclosing folder would otherwise copy into itself forever.
+            return;
         }
 
-        foreach (var folder in Directory.EnumerateDirectories(source, "*", AllEntries))
+        try
         {
-            CopyDirectory(folder, Path.Combine(target, Path.GetFileName(folder)));
+            foreach (var file in Directory.EnumerateFiles(source, "*", AllEntries))
+            {
+                File.Copy(file, Path.Combine(target, Path.GetFileName(file)));
+            }
+
+            foreach (var folder in Directory.EnumerateDirectories(source, "*", AllEntries))
+            {
+                CopyDirectory(folder, Path.Combine(target, Path.GetFileName(folder)), ancestors);
+            }
         }
+        finally
+        {
+            ancestors.Remove(canonical);
+        }
+    }
+
+    private static string CanonicalDirectoryPath(string path)
+    {
+        try
+        {
+            if (Directory.ResolveLinkTarget(path, returnFinalTarget: true) is { } resolved)
+            {
+                path = resolved.FullName;
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+        }
+
+        return Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
     }
 }
